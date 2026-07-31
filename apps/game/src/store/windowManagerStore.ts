@@ -199,6 +199,9 @@ export const useWindowManagerStore = create<WindowManagerStore>()((set) => ({
           case 'character-faceclaim':
             windowSize = { width: 1200, height: 700 };
             break;
+          case 'market':
+            windowSize = { width: 900, height: 650 };
+            break;
           // Add more custom utility sizes here as needed
         }
       }

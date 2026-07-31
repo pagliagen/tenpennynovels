@@ -533,48 +533,6 @@ export const TypingIndicatorSchema = z.object({
 export type TypingIndicator = z.infer<typeof TypingIndicatorSchema>;
 
 /**
- * Market Item Schema
- *
- * Represents an item for sale in the market.
- * Future expansion planned for inventory, crafting, etc.
- *
- * @constant
- * @since 2.0.0
- *
- * @property {string} _id - MongoDB ObjectId
- * @property {string} sellerId - Seller character ID
- * @property {string} sellerName - Seller character name
- * @property {string} name - Item name (2-100 characters)
- * @property {string} description - Item description (max 1000 chars)
- * @property {number} price - Price in game currency (positive integer)
- * @property {number} quantity - Available quantity (positive integer)
- * @property {string} category - Item category
- * @property {string | null} imageUrl - Item image URL
- * @property {string} createdAt - Listing creation timestamp
- * @property {string} updatedAt - Last update timestamp
- */
-export const MarketItemSchema = z.object({
-  _id: MongoIdSchema,
-  sellerId: MongoIdSchema,
-  sellerName: z.string(),
-  name: z.string().min(2).max(100),
-  description: z.string().max(1000),
-  price: z.number().int().positive(),
-  quantity: z.number().int().positive(),
-  category: z.string(),
-  imageUrl: z.string().url().nullable(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-});
-
-/**
- * MarketItem type inferred from MarketItemSchema
- *
- * @since 2.0.0
- */
-export type MarketItem = z.infer<typeof MarketItemSchema>;
-
-/**
  * API Response Wrapper Schema Factory
  *
  * Creates a schema for standardized API responses.

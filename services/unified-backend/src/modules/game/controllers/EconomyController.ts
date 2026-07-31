@@ -123,6 +123,164 @@ export class EconomyController {
   }
 
   /**
+   * POST /game/economy/general-store/:itemId/purchase
+   * Buy a public general-store item, paying either from cash+bankDeposit or
+   * from the weekly credit line.
+   * Body: { paymentMethod: 'cash' | 'credit' }
+   */
+  static async purchaseItem(req: Request<{ itemId: string }>, res: Response): Promise<void> {
+    try {
+      const { itemId } = req.params;
+      const { paymentMethod } = req.body as { paymentMethod?: 'cash' | 'credit' };
+      const characterId = req.character!.characterId;
+
+      if (paymentMethod !== 'cash' && paymentMethod !== 'credit') {
+        res.status(400).json(errorResponse(
+          'paymentMethod deve essere "cash" o "credit"',
+          'INVALID_PAYMENT_METHOD',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const [character, item, finances] = await Promise.all([
+        Character.findById(characterId),
+        Item.findOne({ _id: itemId, isPublic: true }).lean(),
+        CharacterFinances.findOne({ characterId })
+      ]);
+
+      if (!character) {
+        res.status(404).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+      if (!item) {
+        res.status(404).json(errorResponse('Oggetto non trovato', 'ITEM_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+      if (!finances) {
+        res.status(404).json(errorResponse('Finanze del personaggio non trovate', 'FINANCES_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+
+      const itemWithRequirements = {
+        ...item,
+        requirements: {
+          occupations: item.prerequisites?.requiredOccupations || [],
+          corporations: item.prerequisites?.requiredCorporations || [],
+          skills: item.prerequisites?.minimumSkills || {},
+          socialClass: item.prerequisites?.requiredSocialClass || [],
+          financialClasses: item.prerequisites?.requiredFinancialClasses || []
+        }
+      };
+
+      if (!EconomyController.meetsRequirements(itemWithRequirements, character)) {
+        res.status(403).json(errorResponse('Requisiti non soddisfatti per questo oggetto', 'REQUIREMENTS_NOT_MET', undefined, 403, getRequestId(req)));
+        return;
+      }
+
+      const price = item.basePrice;
+
+      if (paymentMethod === 'cash') {
+        const totalCash = finances.cash + finances.bankDeposit;
+        if (totalCash < price) {
+          res.status(400).json(errorResponse(
+            'Fondi insufficienti',
+            'INSUFFICIENT_FUNDS',
+            { required: price, available: totalCash },
+            400,
+            getRequestId(req)
+          ));
+          return;
+        }
+
+        if (finances.cash >= price) {
+          finances.cash -= price;
+        } else {
+          const remainder = price - finances.cash;
+          finances.cash = 0;
+          finances.bankDeposit -= remainder;
+        }
+      } else {
+        if (!item.financialSettings?.eligibleForCredit) {
+          res.status(403).json(errorResponse('Oggetto non acquistabile a credito', 'CREDIT_NOT_ELIGIBLE', undefined, 403, getRequestId(req)));
+          return;
+        }
+        if (!EconomyController.canPurchaseBySocialClass(itemWithRequirements, finances.socialClass)) {
+          res.status(403).json(errorResponse('La classe sociale del personaggio non permette questo acquisto a credito', 'SOCIAL_CLASS_INELIGIBLE', undefined, 403, getRequestId(req)));
+          return;
+        }
+        if (finances.creditLine.currentAvailable < price) {
+          res.status(400).json(errorResponse(
+            'Credito settimanale insufficiente',
+            'INSUFFICIENT_CREDIT',
+            { required: price, available: finances.creditLine.currentAvailable },
+            400,
+            getRequestId(req)
+          ));
+          return;
+        }
+
+        finances.creditLine.currentAvailable -= price;
+      }
+
+      finances.lastCalculated = new Date();
+      await finances.save();
+
+      let inventory = await CharacterInventory.findOne({ characterId });
+      if (!inventory) {
+        inventory = new CharacterInventory({ characterId, items: [], lastUpdated: new Date() });
+      }
+      (inventory as any).addItem(item._id, 1, 'purchase');
+      await inventory.save();
+
+      logger.info('Item purchased', { characterId, itemId, paymentMethod, price });
+
+      res.json(successResponse(
+        {
+          finances: {
+            cash: finances.cash,
+            bankDeposit: finances.bankDeposit,
+            totalWealth: finances.cash + finances.bankDeposit,
+            creditLine: {
+              maxWeekly: finances.creditLine.maxWeekly,
+              currentAvailable: finances.creditLine.currentAvailable
+            }
+          },
+          purchasedItem: {
+            id: item._id,
+            name: item.name,
+            price,
+            priceFormatted: EconomyController.formatCurrency(price)
+          }
+        },
+        undefined,
+        getRequestId(req)
+      ));
+
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error('Purchase item error:', {
+        error: err.message,
+        stack: err.stack,
+        name: err.name,
+        characterId: req.character?.characterId,
+        itemId: req.params?.itemId,
+        requestBody: req.body
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile completare l\'acquisto',
+        'PURCHASE_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
    * GET /game/economy/shops/:locationId
    * Get shop items for a location with access filtering and financial options
    * Query params: filter (credit_only|all)

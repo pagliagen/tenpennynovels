@@ -1,0 +1,243 @@
+/**
+ * Market Styles — Mercato (catalogo strumenti + servizi continuativi)
+ *
+ * Same Victorian palette as CharacterDirectory.module.scss for visual
+ * consistency across utility windows.
+ */
+
+.marketContainer {
+  padding: 24px;
+  font-family: 'Playfair Display', serif;
+  color: #2c2416;
+  background: #faf8f3;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.header {
+  margin-bottom: 16px;
+  border-bottom: 2px solid #8b7355;
+  padding-bottom: 16px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: bold;
+  margin: 0 0 12px 0;
+  color: #3d2f1f;
+}
+
+.walletBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 14px;
+  color: #5a4a3a;
+  background: #f5f1e8;
+  border: 1px solid #d4c4a8;
+  border-radius: 4px;
+  padding: 10px 14px;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tab {
+  padding: 8px 20px;
+  border: 1px solid #8b7355;
+  background: #f5f1e8;
+  color: #5a4a3a;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  font-family: inherit;
+  font-size: 15px;
+}
+
+.tabActive {
+  background: #8b7355;
+  color: #faf8f3;
+  font-weight: bold;
+}
+
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.searchInput,
+.select {
+  padding: 8px 12px;
+  border: 1px solid #d4c4a8;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  background: #fff;
+  color: #2c2416;
+}
+
+.itemGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.itemCard {
+  border: 1px solid #d4c4a8;
+  border-radius: 6px;
+  padding: 14px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.itemCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.itemName {
+  font-weight: bold;
+  font-size: 16px;
+  color: #3d2f1f;
+}
+
+.itemPrice {
+  font-weight: bold;
+  color: #6b5335;
+}
+
+.itemDescription {
+  font-size: 13px;
+  color: #5a4a3a;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.itemRequirement {
+  font-size: 12px;
+  color: #a03d3d;
+  font-style: italic;
+  margin: 0;
+}
+
+.emptyState {
+  text-align: center;
+  color: #5a4a3a;
+  padding: 24px;
+  font-style: italic;
+}
+
+.modalDescription {
+  color: #5a4a3a;
+  line-height: 1.5;
+}
+
+.modalPrice {
+  font-weight: bold;
+  color: #3d2f1f;
+}
+
+.modalWarning {
+  color: #a03d3d;
+  font-style: italic;
+}
+
+.paymentOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.paymentOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.primaryButton {
+  background: #8b7355;
+  color: #faf8f3;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+
+  &:disabled {
+    background: #c4b8a4;
+    cursor: not-allowed;
+  }
+}
+
+.secondaryButton {
+  background: transparent;
+  color: #5a4a3a;
+  border: 1px solid #8b7355;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+
+  &:disabled {
+    color: #c4b8a4;
+    border-color: #d4c4a8;
+    cursor: not-allowed;
+  }
+}
+
+.vcSummary {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  color: #5a4a3a;
+  background: #f5f1e8;
+  border: 1px solid #d4c4a8;
+  border-radius: 4px;
+  padding: 10px 14px;
+}
+
+.serviceCategoryGroup {
+  border-top: 1px solid #d4c4a8;
+  padding-top: 12px;
+}
+
+.serviceCategoryTitle {
+  font-size: 18px;
+  color: #3d2f1f;
+  margin: 0 0 8px 0;
+}
+
+.serviceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ede5d5;
+}
+
+.serviceName {
+  font-weight: bold;
+  margin-right: 12px;
+}
+
+.serviceCost {
+  color: #6b5335;
+  font-size: 13px;
+}

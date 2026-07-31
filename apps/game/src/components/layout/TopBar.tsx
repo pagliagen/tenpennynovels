@@ -7,8 +7,8 @@
  * - Quick navigation (Map, OnGame Mail, OffGame Chat)
  * - Location display with conditional actions
  * - "Utilità" feature hub popup, split in two sections:
- *   - Utility OnGame: character/game-world features (Mercato, Banca —
- *     not yet built, shown disabled rather than omitted or silently dead)
+ *   - Utility OnGame: character/game-world features (Mercato — wired to the
+ *     market utility window; Banca — not yet built, shown disabled)
  *   - Utility OffGame: player-level features not tied to a single character
  *     (Anagrafica, il mio Prestavolto)
  * - Separate ☰ menu (linguetta): audio/chat options, admin panel access
@@ -66,6 +66,9 @@ interface TopBarProps {
 
   /** Chat options button click handler */
   onChatOptionsClick?: () => void;
+
+  /** Market (Mercato) button click handler */
+  onMarketClick?: () => void;
 
   /** Character directory button click handler */
   onCharacterDirectoryClick?: () => void;
@@ -134,6 +137,7 @@ export function TopBar({
   onLogoutClick,
   onAudioOptionsClick,
   onChatOptionsClick,
+  onMarketClick,
   onCharacterDirectoryClick,
   onCharacterFaceClaimClick,
   unreadOnGameMailCount = 0,
@@ -421,12 +425,18 @@ export function TopBar({
                   {/* Utility OnGame: features tied to the character/game world. */}
                   <div className={styles.featureHubSectionTitle}>Utility OnGame</div>
 
-                  {/* Coming soon: not implemented yet, shown disabled rather than hidden. */}
-                  <div className={`${styles.featureHubItem} ${styles.featureHubItemDisabled}`} role="menuitem" aria-disabled="true">
-                    <span>🏪 Mercato</span>
-                    <span className={styles.featureHubComingSoon}>Presto disponibile</span>
-                  </div>
+                  {onMarketClick && (
+                    <button
+                      type="button"
+                      onClick={() => handleFeatureHubItemClick(onMarketClick)}
+                      className={styles.featureHubItem}
+                      role="menuitem"
+                    >
+                      🏪 Mercato
+                    </button>
+                  )}
 
+                  {/* Coming soon: not implemented yet, shown disabled rather than hidden. */}
                   <div className={`${styles.featureHubItem} ${styles.featureHubItemDisabled}`} role="menuitem" aria-disabled="true">
                     <span>🏦 Banca</span>
                     <span className={styles.featureHubComingSoon}>Presto disponibile</span>

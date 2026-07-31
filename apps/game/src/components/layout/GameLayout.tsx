@@ -257,6 +257,15 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   };
 
   /**
+   * Open Market window (Mercato)
+   */
+  const handleMarketClick = () => {
+    openWindow('utility', {
+      utilityName: 'market',
+    });
+  };
+
+  /**
    * Open Character Directory window (Anagrafica)
    */
   const handleCharacterDirectoryClick = () => {
@@ -441,6 +450,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             onTicketClick={handleTicketClick}
             onAudioOptionsClick={handleAudioOptionsClick}
             onChatOptionsClick={handleChatOptionsClick}
+            onMarketClick={handleMarketClick}
             onCharacterDirectoryClick={handleCharacterDirectoryClick}
             onCharacterFaceClaimClick={handleCharacterFaceClaimClick}
             onLogoutClick={handleLogout}

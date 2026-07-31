@@ -317,5 +317,8 @@ export const queryKeys = {
   economy: {
     /** Wallet balance query key */
     wallet: ['economy', 'wallet'] as const,
+
+    /** Continuative services (servitù, comunicazioni, trasporti, sicurezza) query key */
+    services: ['economy', 'services'] as const,
   },
 } as const;
