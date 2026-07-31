@@ -31,10 +31,11 @@ import { CharacterSelectModal } from '@/components/modals/CharacterSelectModal';
 import { useFormState } from '@/hooks/useFormState';
 import { authService } from '@/services/AuthService';
 import { LoginSchema } from '@/lib/validation/schemas';
-import { handleApiFormErrors } from '@/utils/formErrorHandler';
+import { handleApiFormErrors, getAllFormErrorsMessage } from '@/utils/formErrorHandler';
 import { homeSchema } from '@/utils/schemas';
 import { ApiError } from '@/lib/api/errors';
 import type { Character } from '@/types';
+import type { FieldErrors } from 'react-hook-form';
 
 /**
  * Login form data type (inferred from Zod schema)
@@ -151,6 +152,15 @@ export default function LoginPage() {
   };
 
   /**
+   * Handle client-side validation failure: show all field errors in the top banner
+   * instead of inline under each field.
+   */
+  const onInvalid = (formErrors: FieldErrors<LoginFormData>) => {
+    const message = getAllFormErrorsMessage(formErrors);
+    if (message) setError(message);
+  };
+
+  /**
    * Handle form submission
    */
   const onSubmit = async (data: LoginFormData) => {
@@ -249,7 +259,7 @@ export default function LoginPage() {
       onDismissError={clearMessages}
       onDismissSuccess={clearMessages}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="login-form">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="login-form">
         <div className="login-fields">
           <MaskedInput
             id="username"

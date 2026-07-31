@@ -121,6 +121,34 @@ export function getFormErrorMessage(message: any): string {
 }
 
 /**
+ * Get All Form Errors Message
+ *
+ * Aggregates every field-level validation error (react-hook-form's `formState.errors`)
+ * into a single newline-separated message, meant for the global Alert banner instead of
+ * per-field inline error text.
+ *
+ * @template T - Form data type
+ * @param {FieldErrors<T>} errors - Form errors object
+ * @returns {string} Combined error message (empty string if no errors)
+ *
+ * @example
+ * ```typescript
+ * const onInvalid = (errors: FieldErrors<LoginFormData>) => {
+ *   setError(getAllFormErrorsMessage(errors));
+ * };
+ * <form onSubmit={handleSubmit(onSubmit, onInvalid)}>
+ * ```
+ */
+export function getAllFormErrorsMessage<T extends Record<string, any>>(
+  errors: FieldErrors<T>
+): string {
+  return Object.values(errors)
+    .map((error) => getFormErrorMessage((error as { message?: unknown } | undefined)?.message))
+    .filter(Boolean)
+    .join('\n');
+}
+
+/**
  * Check if Field Has Error
  *
  * @template T - Form data type

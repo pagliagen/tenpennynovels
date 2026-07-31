@@ -244,9 +244,6 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({
             className={`password-field__input ${error ? 'password-field__input--error' : ''}`}
             {...(register || {})}
           />
-
-          {/* Error message */}
-          {error && <div className="password-field__error">{error}</div>}
         </div>
       ) : (
         // Hidden: Victorian masked input

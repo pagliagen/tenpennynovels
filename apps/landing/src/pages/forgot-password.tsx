@@ -18,6 +18,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
+import type { FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
@@ -27,6 +28,7 @@ import { FormActions } from '@/components/forms/FormActions';
 import { useFormState } from '@/hooks/useFormState';
 import { authService } from '@/services/AuthService';
 import { ForgotPasswordSchema } from '@/lib/validation/schemas';
+import { getAllFormErrorsMessage } from '@/utils/formErrorHandler';
 
 /**
  * Forgot password form data type
@@ -56,6 +58,15 @@ export default function ForgotPasswordPage() {
 
   // Watch field for Victorian mask
   const identifierValue = watch('identifier', '');
+
+  /**
+   * Handle client-side validation failure: show all field errors in the top banner
+   * instead of inline under each field.
+   */
+  const onInvalid = (formErrors: FieldErrors<ForgotPasswordFormData>) => {
+    const message = getAllFormErrorsMessage(formErrors);
+    if (message) setError(message);
+  };
 
   /**
    * Handle form submission
@@ -96,7 +107,7 @@ export default function ForgotPasswordPage() {
       onDismissError={clearMessages}
       onDismissSuccess={clearMessages}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="forgot-password-form">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="forgot-password-form">
         <div className="forgot-password-fields">
           <MaskedInput
             id="identifier"

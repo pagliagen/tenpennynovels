@@ -16,6 +16,7 @@
 
 .gameContainer {
   min-height: 100vh;
+  min-width: 1500px;
   display: flex;
   flex-direction: row; // Sidebar | Main Content
   color: var(--color-text-primary);

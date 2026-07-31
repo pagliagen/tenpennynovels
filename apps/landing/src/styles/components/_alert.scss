@@ -44,6 +44,7 @@
     flex: 1;
     font-size: var(--font-size-base);
     line-height: var(--line-height-normal);
+    white-space: pre-line; /* preserve \n when multiple field errors are joined */
   }
 
   /**
@@ -80,7 +81,7 @@
    * Error variant (red)
    */
   &--error {
-    color: var(--color-error);
+    color: var(--color-text-primary);
     border-color: var(--color-error-border);
     background: var(--color-error-bg);
   }

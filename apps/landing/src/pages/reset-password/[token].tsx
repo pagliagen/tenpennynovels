@@ -19,6 +19,7 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
+import type { FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
@@ -29,7 +30,7 @@ import { useFormState } from '@/hooks/useFormState';
 import { useTokenFromUrl } from '@/hooks/useTokenFromUrl';
 import { authService } from '@/services/AuthService';
 import { ResetPasswordSchema } from '@/lib/validation/schemas';
-import { handleApiFormErrors } from '@/utils/formErrorHandler';
+import { handleApiFormErrors, getAllFormErrorsMessage } from '@/utils/formErrorHandler';
 
 /**
  * Reset password form data type
@@ -64,6 +65,15 @@ export default function ResetPasswordPage() {
   // Watch passwords for masked display
   const passwordValue = watch('password', '');
   const confirmPasswordValue = watch('confirmPassword', '');
+
+  /**
+   * Handle client-side validation failure: show all field errors in the top banner
+   * instead of inline under each field.
+   */
+  const onInvalid = (formErrors: FieldErrors<ResetPasswordFormData>) => {
+    const message = getAllFormErrorsMessage(formErrors);
+    if (message) setError(message);
+  };
 
   /**
    * Handle form submission
@@ -110,7 +120,7 @@ export default function ResetPasswordPage() {
       onDismissError={clearMessages}
       onDismissSuccess={clearMessages}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="reset-password-form">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="reset-password-form">
         <div className="reset-password-fields">
           <PasswordField
             id="password"

@@ -209,9 +209,6 @@ export const MaskedInput: React.FC<MaskedInputProps> = ({
           </div>
         )}
       </div>
-
-      {/* Error message */}
-      {error && <div className="masked-field__error">{error}</div>}
     </div>
   );
 };

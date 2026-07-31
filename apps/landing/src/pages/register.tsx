@@ -19,6 +19,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
+import type { FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
@@ -32,7 +33,7 @@ import { useFormState } from '@/hooks/useFormState';
 import { useDebounce } from '@/hooks/useDebounce';
 import { authService } from '@/services/AuthService';
 import { RegisterSchema } from '@/lib/validation/schemas';
-import { handleApiFormErrors } from '@/utils/formErrorHandler';
+import { handleApiFormErrors, getAllFormErrorsMessage } from '@/utils/formErrorHandler';
 
 /**
  * Register form data type (inferred from Zod schema)
@@ -125,6 +126,15 @@ export default function RegisterPage() {
   }, [debouncedEmail, setFormError, clearErrors]);
 
   /**
+   * Handle client-side validation failure: show all field errors in the top banner
+   * instead of inline under each field.
+   */
+  const onInvalid = (formErrors: FieldErrors<RegisterFormData>) => {
+    const message = getAllFormErrorsMessage(formErrors);
+    if (message) setError(message);
+  };
+
+  /**
    * Handle form submission
    */
   const onSubmit = async (data: RegisterFormData) => {
@@ -163,7 +173,7 @@ export default function RegisterPage() {
       activeInfo={activeInfo}
       onSetActiveInfo={setActiveInfo}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="register-form"> 
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="register-form">
         <div className="register-fields">
           <MaskedInput
             id="username"
@@ -242,11 +252,6 @@ export default function RegisterPage() {
                 </button>
               </label>
             </div>
-            {errors.agreeToTerms && (
-              <div className="register-terms__error">
-                {errors.agreeToTerms.message}
-              </div>
-            )}
           </div>
         </div>
 
