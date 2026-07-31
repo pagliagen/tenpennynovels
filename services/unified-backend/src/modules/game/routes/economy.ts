@@ -50,6 +50,12 @@ router.post('/economy/shops/:shopId/restock',
   EconomyController.restockShop
 );
 
+router.post('/economy/general-store/:itemId/purchase',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:shops:purchase'),
+  EconomyController.purchaseItem
+);
+
 // ========================================================================
 // CONTINUATIVE SERVICES (servitù, comunicazioni, trasporti, sicurezza)
 // ========================================================================

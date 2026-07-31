@@ -79,7 +79,12 @@ export class ServicesController {
           committedTotal,
           available: capacity - committedTotal,
           catalog,
-          activeServices: finances.activeServices.filter((entry: any) => isStillCommitted(entry, now))
+          activeServices: finances.activeServices.filter((entry: any) => isStillCommitted(entry, now)),
+          properties: finances.properties.map((property: any, index: number) => ({
+            index,
+            type: property.type,
+            name: property.name
+          }))
         },
         undefined,
         getRequestId(req)
