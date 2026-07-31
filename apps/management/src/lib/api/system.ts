@@ -31,11 +31,6 @@ export interface SystemConfigRecord {
 export interface SystemConfig {
   gameSettings: {
   };
-  economySettings: {
-    startingCash: number;
-    startingDeposit: number;
-    dailySalaryEnabled: boolean;
-  };
   moderationSettings: {
     reportSystemEnabled: boolean;
   };

@@ -20,9 +20,8 @@ export class SystemConfigController {
       const { ConfigurationService } = await import('@shared/services/ConfigurationService');
       const configService = new ConfigurationService(redis.getClient(), logger);
 
-      const [gameConfigs, economyConfigs, moderationConfigs, postalConfigs] = await Promise.all([
+      const [gameConfigs, moderationConfigs, postalConfigs] = await Promise.all([
         configService.getConfigsBySection('character_creation'),
-        configService.getConfigsBySection('economy'),
         configService.getConfigsBySection('moderation'),
         configService.getConfigsBySection('postal_system'),
       ]);
@@ -31,13 +30,6 @@ export class SystemConfigController {
 
       const config: SystemConfig = {
         gameSettings: {
-        },
-        economySettings: {
-          startingCash: economyConfigs.starting_cash ?? 50,
-          startingDeposit: economyConfigs.starting_deposit ?? 200,
-          dailySalaryEnabled: economyConfigs.daily_salary_enabled ?? true,
-          inflationRate: economyConfigs.inflation_rate ?? 0.02,
-          taxationEnabled: economyConfigs.taxation_enabled ?? false,
         },
         moderationSettings: {
           reportSystemEnabled: moderationConfigs.report_system_enabled ?? true,
@@ -110,7 +102,6 @@ export class SystemConfigController {
 
       const sectionMap: Record<string, Record<string, any>> = {};
       if (updates.gameSettings) sectionMap['character_creation'] = updates.gameSettings;
-      if (updates.economySettings) sectionMap['economy'] = updates.economySettings;
       if (updates.moderationSettings) sectionMap['moderation'] = updates.moderationSettings;
       if (updates.messageSettings) sectionMap['postal_system'] = updates.messageSettings;
 
