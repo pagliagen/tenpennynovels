@@ -2,7 +2,7 @@
  * MarketItemsTab — "Strumenti" tab: browse + buy the general-store catalog.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { usePurchaseItem } from '@/hooks/useMarketCatalog';
 import { useUIStore } from '@/store/uiStore';
@@ -15,6 +15,10 @@ interface MarketItemsTabProps {
   data: GeneralStoreResponse;
 }
 
+const DEFAULT_ITEM_IMAGE = '/images/objects/default-image.png';
+const MIN_NAME_FONT_SIZE = 10;
+const MAX_NAME_FONT_SIZE = 16;
+
 function requirementsHint(item: MarketItem): string | null {
   const req = item.requirements;
   if (!req) return null;
@@ -25,6 +29,36 @@ function requirementsHint(item: MarketItem): string | null {
   }
   if (req.requiredSocialClass?.length) parts.push(`classe sociale: ${req.requiredSocialClass.join(', ')}`);
   return parts.length ? `Richiede: ${parts.join(' · ')}` : null;
+}
+
+// Shrinks the font size until the name fits on a single line, instead of truncating it.
+function FitItemName({ name }: { name: string }): React.ReactElement {
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const fit = () => {
+      let size = MAX_NAME_FONT_SIZE;
+      el.style.fontSize = `${size}px`;
+      while (el.scrollWidth > el.clientWidth && size > MIN_NAME_FONT_SIZE) {
+        size -= 0.5;
+        el.style.fontSize = `${size}px`;
+      }
+    };
+
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [name]);
+
+  return (
+    <span ref={ref} className={styles.itemName}>
+      {name}
+    </span>
+  );
 }
 
 export function MarketItemsTab({ data }: MarketItemsTabProps): React.ReactElement {
@@ -90,18 +124,26 @@ export function MarketItemsTab({ data }: MarketItemsTabProps): React.ReactElemen
             const purchasable = item.canPurchaseWithCash || item.canPurchaseWithCredit;
             return (
               <div key={item.id} className={styles.itemCard}>
-                <div className={styles.itemCardHeader}>
-                  <span className={styles.itemName}>{item.name}</span>
-                  <span className={styles.itemPrice}>{item.priceFormatted}</span>
+                <div className={styles.itemImageWrapper}>
+                  <img
+                    src={item.imageUrl || DEFAULT_ITEM_IMAGE}
+                    alt={item.name}
+                    className={styles.itemImage}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = DEFAULT_ITEM_IMAGE;
+                    }}
+                  />
+                  <div className={styles.itemImageOverlay}>{item.description}</div>
                 </div>
-                <p className={styles.itemDescription}>{item.description}</p>
+                <FitItemName name={item.name} />
                 {hint && !item.canPurchase && <p className={styles.itemRequirement}>{hint}</p>}
                 <button
                   className={styles.primaryButton}
                   disabled={!item.canPurchase || !purchasable}
                   onClick={() => setPurchasingItem(item)}
                 >
-                  Compra
+                  Compra ({item.priceFormatted})
                 </button>
               </div>
             );
