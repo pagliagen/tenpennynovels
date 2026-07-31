@@ -95,7 +95,10 @@
     flex-direction: column;
     align-items: center;
 
-    &--login-page .victorian-layout-desktop__page-info {
+    /* Reserve aspect-ratio height only when no info popup (terms/privacy/credits) is open;
+       otherwise let __page-info use its normal height (same as register/other pages),
+       so popups opened from the login page position identically to popups from any other page. */
+    &--login-page .victorian-layout-desktop__page-info:not(.active) {
       padding-bottom: 83.3%;
       flex-grow: 0;
       flex-shrink: 0;

@@ -38,9 +38,9 @@ export interface PageLayoutProps extends Omit<SEOProps, 'title' | 'description'>
   /** Optional info panel rendered above page content */
   pageInfo?: React.ReactNode;
   /** Optional active info type (for controlling info modal) */
-  activeInfo?: 'terms' | 'privacy' | 'credits' | null;
+  activeInfo?: 'terms' | 'privacy' | null;
   /** Optional callback to set active info */
-  onSetActiveInfo?: (info: 'terms' | 'privacy' | 'credits' | null) => void;
+  onSetActiveInfo?: (info: 'terms' | 'privacy' | null) => void;
 }
 
 /**

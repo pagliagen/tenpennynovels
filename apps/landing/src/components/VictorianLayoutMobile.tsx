@@ -17,8 +17,6 @@ const LOGO_IMAGE_SRC = '/images/title.png';
 export interface VictorianLayoutMobileProps {
   /** Page content rendered inside the main area. */
   children: React.ReactNode;
-  /** When true, shows only "Chiudi" in the nav (info pages: credits). */
-  isInfoPage: boolean;
   /** Page identifier for main content (e.g. "login-page", "register-page"). */
   pageClass: string;
   /** Called for internal navigation (e.g. /register). */
@@ -37,7 +35,6 @@ export interface VictorianLayoutMobileProps {
 
 export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
   children,
-  isInfoPage,
   pageClass,
   onNavigate,
   onDocsClick,
@@ -78,16 +75,6 @@ export const VictorianLayoutMobile: React.FC<VictorianLayoutMobileProps> = ({
           ✕
         </button>
         <nav className="victorian-layout-mobile__nav-content">
-          {isInfoPage && (
-            <Button
-              variant="ghost"
-              onClick={() => onNavigate('/')}
-              className="victorian-layout-mobile__nav-button"
-            >
-              Torna al Login
-            </Button>
-          )}
-
           <Button
             variant="ghost"
             onClick={() => onNavigate('/register')}

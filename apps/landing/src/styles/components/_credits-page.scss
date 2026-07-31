@@ -8,9 +8,13 @@
   position: relative;
   background-color: rgba(0, 0, 0, 0.5);
   border: 1px solid var(--color-homepage-yellow);
-  max-height: 400px; 
+  /* Layout root has overflow: hidden — without a cap, long content would be
+     clipped invisibly instead of scrolling. -60px accounts for the box's own
+     top offset (page-form padding + border) so the bottom edge stays on screen
+     instead of being clipped by the ancestor's overflow: hidden. */
+  max-height: calc(100vh - 60px);
   overflow-y: auto;
- 
+
   h2 {
     color: #ffa748;
     margin-bottom: 32px;

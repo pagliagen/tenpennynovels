@@ -20,7 +20,6 @@ import { VictorianLayoutDesktop } from './VictorianLayoutDesktop';
 import { VictorianLayoutMobile } from './VictorianLayoutMobile';
 import { TermsContent } from './content/TermsContent';
 import { PrivacyContent } from './content/PrivacyContent';
-import { CreditsContent } from './content/CreditsContent';
 
 export interface VictorianLayoutProps {
   /** Page content to render inside the layout. */
@@ -30,9 +29,9 @@ export interface VictorianLayoutProps {
   /** Optional info panel rendered above page content */
   pageInfo?: React.ReactNode;
   /** Optional active info type (for controlling externally, e.g., from register page) */
-  activeInfo?: 'terms' | 'privacy' | 'credits' | null;
+  activeInfo?: 'terms' | 'privacy' | null;
   /** Optional callback to set active info (for controlling externally) */
-  onSetActiveInfo?: (info: 'terms' | 'privacy' | 'credits' | null) => void;
+  onSetActiveInfo?: (info: 'terms' | 'privacy' | null) => void;
 }
 
 /** Breakpoint in px: viewport >= this is desktop. */
@@ -69,13 +68,11 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
   const router = useRouter();
   const isDesktop = useIsDesktop(LAYOUT_BREAKPOINT_PX);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [internalActiveInfo, setInternalActiveInfo] = useState<'terms' | 'privacy' | 'credits' | null>(null);
+  const [internalActiveInfo, setInternalActiveInfo] = useState<'terms' | 'privacy' | null>(null);
 
   // Use external state if provided, otherwise use internal state
   const activeInfo = externalActiveInfo !== undefined ? externalActiveInfo : internalActiveInfo;
   const setActiveInfo = externalSetActiveInfo || setInternalActiveInfo;
-
-  const isInfoPage = router.pathname === '/credits';
 
   const handleNavigate = useCallback(
     (path: string) => {
@@ -93,10 +90,10 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
   }, []);
 
   const handleCreditsClick = useCallback(() => {
-    // Toggle pattern: if already open, close; otherwise open
-    setActiveInfo(activeInfo === 'credits' ? null : 'credits');
-    setIsMobileMenuOpen(false);
-  }, [activeInfo, setActiveInfo]);
+    // Real page navigation (same pattern as "Registrati"): replaces the current
+    // form/page content in the shared page-form box, instead of an overlay panel.
+    handleNavigate('/credits');
+  }, [handleNavigate]);
 
   const toggleMobileMenu = useCallback(() => {
     setIsMobileMenuOpen((prev) => !prev);
@@ -108,7 +105,6 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
   const infoComponents = {
     terms: <TermsContent />,
     privacy: <PrivacyContent />,
-    credits: <CreditsContent />,
   } as const;
 
   // Modal info panel (only if no external pageInfo and activeInfo is set)
@@ -136,7 +132,6 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
   if (isDesktop) {
     return (
       <VictorianLayoutDesktop
-        isInfoPage={isInfoPage}
         pageClass={pageClass}
         onNavigate={handleNavigate}
         onDocsClick={handleDocsClick}
@@ -150,7 +145,6 @@ export const VictorianLayout: React.FC<VictorianLayoutProps> = ({
 
   return (
     <VictorianLayoutMobile
-      isInfoPage={isInfoPage}
       pageClass={pageClass}
       onNavigate={handleNavigate}
       onDocsClick={handleDocsClick}

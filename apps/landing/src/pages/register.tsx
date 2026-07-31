@@ -26,9 +26,6 @@ import type { z } from 'zod';
 import { FormPageLayout } from '@/components/layouts/FormPageLayout';
 import { MaskedInput } from '@/components/forms/MaskedInput';
 import { FormActions } from '@/components/forms/FormActions';
-import { TermsContent } from '@/components/content/TermsContent';
-import { PrivacyContent } from '@/components/content/PrivacyContent';
-import { CreditsContent } from '@/components/content/CreditsContent';
 import { useFormState } from '@/hooks/useFormState';
 import { useDebounce } from '@/hooks/useDebounce';
 import { authService } from '@/services/AuthService';
@@ -50,16 +47,7 @@ type RegisterFormData = z.infer<typeof RegisterSchema>;
 export default function RegisterPage() {
   const router = useRouter();
   const { globalError, globalSuccess, loading, setError, setSuccess, setLoading, clearMessages, handleApiError } = useFormState();
-  const [activeInfo, setActiveInfo] = useState<'terms' | 'privacy' | 'credits' | null>(null);
-
-  const infoComponents = {
-    terms: <TermsContent />,
-    privacy: <PrivacyContent />,
-    credits: <CreditsContent />,
-  } as const;
-
-  // No longer needed - VictorianLayout handles modal rendering
-  // We just pass activeInfo and setActiveInfo as props
+  const [activeInfo, setActiveInfo] = useState<'terms' | 'privacy' | null>(null);
 
   const {
     register,

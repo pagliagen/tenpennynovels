@@ -32,9 +32,9 @@ export interface FormPageLayoutProps extends Omit<PageLayoutProps, 'children'> {
   /** Optional info panel rendered above page content (e.g. terms, privacy inline) */
   pageInfo?: React.ReactNode;
   /** Optional active info type (for controlling info modal) */
-  activeInfo?: 'terms' | 'privacy' | 'credits' | null;
+  activeInfo?: 'terms' | 'privacy' | null;
   /** Optional callback to set active info */
-  onSetActiveInfo?: (info: 'terms' | 'privacy' | 'credits' | null) => void;
+  onSetActiveInfo?: (info: 'terms' | 'privacy' | null) => void;
   /** Global error message (null if no error) */
   globalError?: string | null;
   /** Global success message (null if no success) */

@@ -15,8 +15,6 @@ const LOGO_IMAGE_SRC = '/images/title.png';
 export interface VictorianLayoutDesktopProps {
   /** Page content rendered inside the main area. */
   children: React.ReactNode;
-  /** When true, shows only "Chiudi" in the nav (info pages: credits). */
-  isInfoPage: boolean;
   /** Page identifier for main content (e.g. "login-page", "register-page"). */
   pageClass: string;
   /** Called for internal navigation (e.g. /register). */
@@ -31,7 +29,6 @@ export interface VictorianLayoutDesktopProps {
 
 export const VictorianLayoutDesktop: React.FC<VictorianLayoutDesktopProps> = ({
   children,
-  isInfoPage,
   pageClass,
   onNavigate,
   onDocsClick,
@@ -52,16 +49,6 @@ export const VictorianLayoutDesktop: React.FC<VictorianLayoutDesktopProps> = ({
         </div>
         <nav className="victorian-layout-desktop__nav" aria-label="Navigazione principale">
           <h2 className="victorian-layout-desktop__nav-title">Chapter One</h2>
-
-          {isInfoPage && (
-            <Button
-              variant="ghost"
-              onClick={() => onNavigate('/')}
-              className="victorian-layout-desktop__nav-button"
-            >
-              Torna al Login
-            </Button>
-          )}
 
           <Button
             variant="ghost"

@@ -17,6 +17,17 @@ export default function CreditsPage() {
       schema={creditsBreadcrumb}
     >
       <div className="crediti-page">
+        <div className="page-info-panel__close-container">
+          <button
+            type="button"
+            className="page-info-panel__close"
+            onClick={() => router.push('/')}
+            aria-label="Chiudi"
+          >
+            ✕
+          </button>
+        </div>
+
         <h2>Crediti</h2>
         <h4>Sviluppo</h4>
         <p>
