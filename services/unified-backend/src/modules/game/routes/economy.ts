@@ -51,6 +51,7 @@ router.post('/economy/shops/:shopId/restock',
 );
 
 router.post('/economy/general-store/:itemId/purchase',
+  servicesWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:shops:purchase'),
   EconomyController.purchaseItem
