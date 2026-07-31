@@ -6,6 +6,7 @@ import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { useCharacterForWizard, useCreateCharacter, useUpdateCharacter } from '@/hooks/useCharacter';
 import { characterApi } from '@/lib/api/character';
 import { api } from '@/lib/api/client';
+import { logger } from '@/lib/logger';
 import { useAuthStore } from '@/store/authStore';
 import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/WizardContainer.module.scss';
@@ -59,8 +60,24 @@ function useStoreHydrated(): boolean {
       setHydrated(true);
       return;
     }
-    const unsub = useWizardStore.persist.onFinishHydration(() => setHydrated(true));
-    return () => unsub();
+
+    let cancelled = false;
+    const unsub = useWizardStore.persist.onFinishHydration(() => {
+      if (!cancelled) setHydrated(true);
+    });
+
+    // Safety net: onFinishHydration doesn't reliably fire in some dev
+    // environments (observed with Turbopack HMR) even though localStorage
+    // reads are synchronous — force rehydration explicitly rather than
+    // waiting indefinitely on an event that may never come.
+    Promise.resolve(useWizardStore.persist.rehydrate()).then(() => {
+      if (!cancelled) setHydrated(true);
+    });
+
+    return () => {
+      cancelled = true;
+      unsub();
+    };
   }, []);
   return hydrated;
 }
@@ -116,8 +133,16 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
     // React Query may return cached data synchronously on first render,
     // which would cause loadFromDraft to overwrite localStorage data
     // before Zustand has had a chance to rehydrate from it.
-    if (!hasHydrated) return;
-    if (!characterId || !existingCharacter) return;
+    if (!hasHydrated) {
+      logger.info('[WizardContainer] load-effect: skipped, store not hydrated yet');
+      return;
+    }
+    if (!characterId || !existingCharacter) {
+      logger.info('[WizardContainer] load-effect: skipped, missing characterId or existingCharacter', {
+        value: { characterId, hasExistingCharacter: !!existingCharacter, isLoadingCharacter, isCharacterError },
+      });
+      return;
+    }
 
     // ✅ FIX: Read firstName from store at execution time (not from dependencies)
     // This prevents infinite loop when user types in firstName field
@@ -130,12 +155,18 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
       const serverDataChanged = existingCharacter.updatedAt
         && _serverUpdatedAt !== existingCharacter.updatedAt;
       if (!serverDataChanged) {
+        logger.info('[WizardContainer] load-effect: skipped, draft already matches and server unchanged', {
+          value: { _draftCharacterId, _serverUpdatedAt, serverUpdatedAt: existingCharacter.updatedAt },
+        });
         return;
       }
     }
 
+    logger.info('[WizardContainer] load-effect: calling loadFromDraft', {
+      value: { characterId, name: existingCharacter.name },
+    });
     loadFromDraft(existingCharacter);
-  }, [hasHydrated, characterId, existingCharacter, _draftCharacterId, _serverUpdatedAt, loadFromDraft]);
+  }, [hasHydrated, characterId, existingCharacter, _draftCharacterId, _serverUpdatedAt, loadFromDraft, isLoadingCharacter, isCharacterError]);
 
   // Load character creation config from backend on mount
   useEffect(() => {
