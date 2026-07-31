@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { CharacterApprovalController } from '../controllers/CharacterApprovalController';
 import { CharacterBanController } from '../controllers/CharacterBanController';
+import { CharacterFinancesManagementController } from '../controllers/CharacterFinancesManagementController';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { requireViewPermission } from '../utils/permissions';
 import { autoLogOutcome } from '../middleware/auditMiddleware';
@@ -95,6 +96,22 @@ router.delete(
   AdminAuthMiddleware.logAdminAction('character.unban', 'character_management'),
   autoLogOutcome,
   CharacterBanController.unbanCharacter
+);
+
+// Character finances - specific route (patrimonio, Valore di Credito, rendita settimanale)
+router.get(
+  '/:characterId/finances',
+  requireViewPermission('characters.finances.access'),
+  AdminAuthMiddleware.logAdminAction('character.finances.view', 'character_management'),
+  CharacterFinancesManagementController.getFinances
+);
+
+router.patch(
+  '/:characterId/finances',
+  requireViewPermission('characters.finances.manage'),
+  AdminAuthMiddleware.logAdminAction('character.finances.update', 'character_management'),
+  autoLogOutcome,
+  CharacterFinancesManagementController.updateFinances
 );
 
 // Get complete character details - generic route

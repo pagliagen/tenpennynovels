@@ -132,6 +132,13 @@
       "visible": true
     },
     {
+      "key": "finances",
+      "label": "Finanze",
+      "icon": "💰",
+      "type": "secondary",
+      "visible": true
+    },
+    {
       "key": "delete",
       "label": "Elimina",
       "icon": "🗑️",
