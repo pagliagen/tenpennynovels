@@ -107,6 +107,10 @@ async function startServer(): Promise<void> {
     await import('@modules/game/jobs/messageBackupCleanup');
     logger.info('✅ Message backup cleanup CRON job started');
 
+    // Start Service Cancellation Cleanup CRON Job (daily at midnight, Europe/London)
+    await import('@modules/game/jobs/serviceCancellationCleanup');
+    logger.info('✅ Service cancellation cleanup CRON job started');
+
     // Start HTTP server
     // IMPORTANT: Bind to 0.0.0.0 for Docker internal networking
     // Security is handled by api-gateway (only gateway can access backend)

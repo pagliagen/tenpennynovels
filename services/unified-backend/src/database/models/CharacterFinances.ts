@@ -26,7 +26,20 @@ export interface ICharacterFinances extends Document {
     private: boolean; // Whether it's a private location in game
     locationId?: mongoose.Types.ObjectId; // Reference to Location if it exists
   }];
-  
+
+  // Continuative services (servitù, comunicazioni, trasporti, sicurezza) — VC is a capacity,
+  // not a consumable pool: Σ(activeServices.monthlyCost where not yet freed) must stay ≤ financeSkillValue.
+  // A service occupies its VC cost indefinitely once subscribed, until explicitly cancelled.
+  activeServices: [{
+    serviceId: mongoose.Types.ObjectId; // Reference to Service
+    category: string; // Snapshot of Service.category, for quick total-committed calculation
+    monthlyCost: number; // Snapshot of Service.monthlyCost at subscription time
+    activatedAt: Date;
+    cancelledAt?: Date; // Set only when the player cancels ("licenzia") the service
+    pointsFreeAt?: Date; // Set only alongside cancelledAt — end of the already-paid-for monthly cycle
+    propertyIndex?: number; // Required only when category is 'sicurezza' — index into properties[]
+  }];
+
   // Financial history
   lastCalculated: Date; // When finances were last calculated
   createdAt: Date;
@@ -104,6 +117,29 @@ const CharacterFinancesSchema = new Schema<ICharacterFinances>({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Location'
     }
+  }],
+  activeServices: [{
+    serviceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Service',
+      required: true
+    },
+    category: {
+      type: String,
+      required: true
+    },
+    monthlyCost: {
+      type: Number,
+      required: true,
+      min: 1
+    },
+    activatedAt: {
+      type: Date,
+      required: true
+    },
+    cancelledAt: Date,
+    pointsFreeAt: Date,
+    propertyIndex: Number
   }],
   lastCalculated: {
     type: Date,

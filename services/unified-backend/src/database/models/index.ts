@@ -45,6 +45,13 @@ export {
   ITEM_CATEGORY_LABELS
 } from './Item';
 
+// Continuative Services System (VC-budget subscriptions: servitù, comunicazioni, trasporti, sicurezza)
+export {
+  Service,
+  type IService,
+  ServiceCategory
+} from './Service';
+
 // OffGame Chat System (LEGACY - Group chats with admin roles)
 // NOTE: This is the ORIGINAL system that coexists with the NEW OffGameThread system
 // LEGACY system: Supports groups, admins, configurable retention

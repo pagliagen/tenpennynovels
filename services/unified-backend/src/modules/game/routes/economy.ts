@@ -3,6 +3,7 @@ import { AuthMiddleware } from '../middleware/auth';
 import { requireGamePermission } from '../middleware/gamePermissions';
 import { EconomyController } from '../controllers/EconomyController';
 import { FinancialController } from '../controllers/FinancialController';
+import { ServicesController } from '../controllers/ServicesController';
 
 const router = Router();
 
@@ -23,6 +24,34 @@ router.post('/economy/shops/:shopId/restock',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:admin:shops:restock'),
   EconomyController.restockShop
+);
+
+// ========================================================================
+// CONTINUATIVE SERVICES (servitù, comunicazioni, trasporti, sicurezza)
+// ========================================================================
+
+router.get('/economy/services',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:economy:services:read'),
+  ServicesController.getServices
+);
+
+router.post('/economy/services/:serviceId/subscribe',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:economy:services:subscribe'),
+  ServicesController.subscribeService
+);
+
+router.post('/economy/services/:serviceId/unsubscribe',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:economy:services:subscribe'),
+  ServicesController.unsubscribeService
+);
+
+router.post('/economy/admin/force-service-renewal',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:admin:economy:services:renew'),
+  ServicesController.adminForceRenewal
 );
 
 // ========================================================================
