@@ -416,58 +416,6 @@ const ALL_CONFIGS: ConfigRecord[] = [
     metadata: { version: 1 },
   },
 
-  // ── economy ─────────────────────────────────────────────────────
-  {
-    configKey: 'starting_cash',
-    configSection: 'economy',
-    configType: 'number',
-    value: 50,
-    defaultValue: 50,
-    description: 'Contanti iniziali per un nuovo personaggio (£)',
-    isActive: true,
-    metadata: { version: 1 },
-  },
-  {
-    configKey: 'starting_deposit',
-    configSection: 'economy',
-    configType: 'number',
-    value: 200,
-    defaultValue: 200,
-    description: 'Deposito bancario iniziale per un nuovo personaggio (£)',
-    isActive: true,
-    metadata: { version: 1 },
-  },
-  {
-    configKey: 'daily_salary_enabled',
-    configSection: 'economy',
-    configType: 'boolean',
-    value: true,
-    defaultValue: true,
-    description: 'Abilita il salario giornaliero automatico',
-    isActive: true,
-    metadata: { version: 1 },
-  },
-  {
-    configKey: 'inflation_rate',
-    configSection: 'economy',
-    configType: 'number',
-    value: 0.02,
-    defaultValue: 0.02,
-    description: 'Tasso di inflazione applicato ai prezzi (0.02 = 2%)',
-    isActive: true,
-    metadata: { version: 1 },
-  },
-  {
-    configKey: 'taxation_enabled',
-    configSection: 'economy',
-    configType: 'boolean',
-    value: false,
-    defaultValue: false,
-    description: 'Abilita il sistema di tassazione',
-    isActive: true,
-    metadata: { version: 1 },
-  },
-
   // ── moderation ──────────────────────────────────────────────────
   {
     configKey: 'report_system_enabled',

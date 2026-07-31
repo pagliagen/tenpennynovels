@@ -310,21 +310,12 @@ export interface LocationAccessRules {
 // System Configuration Types
 export interface SystemConfig {
   gameSettings: GameSettings;
-  economySettings: EconomySettings;
   moderationSettings: ModerationSettings;
   messageSettings: MessageSettings;
   maintenanceMode: MaintenanceMode;
 }
 
 export interface GameSettings {
-}
-
-export interface EconomySettings {
-  startingCash: number;
-  startingDeposit: number;
-  dailySalaryEnabled: boolean;
-  inflationRate: number;
-  taxationEnabled: boolean;
 }
 
 export interface ModerationSettings {
