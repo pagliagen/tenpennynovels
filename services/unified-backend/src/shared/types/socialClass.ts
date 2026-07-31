@@ -90,33 +90,33 @@ const FINANZA_RANGES: Record<SocialClass, { min: number; max: number }> = {
 };
 
 /**
- * Weekly credit amounts (in pounds) for each social class
+ * Weekly credit amounts (in pence — the only monetary unit in this game) for each social class
  * Based on character-creation.json configuration
  */
 const WEEKLY_CREDIT: Record<SocialClass, number> = {
-  'destitute': 2,
-  'poor': 5,
-  'modest': 15,
-  'lower_middle': 30,
-  'middle_class': 75,
-  'wealthy': 150,
-  'affluent': 300,
-  'elite': 500
+  'destitute': 480,
+  'poor': 1200,
+  'modest': 3600,
+  'lower_middle': 7200,
+  'middle_class': 18000,
+  'wealthy': 36000,
+  'affluent': 72000,
+  'elite': 120000
 };
 
 /**
- * Initial wealth ranges (in pounds) for each social class
+ * Initial wealth ranges (in pence — the only monetary unit in this game) for each social class
  * Based on character-creation.json configuration
  */
 const INITIAL_WEALTH: Record<SocialClass, { min: number; max: number }> = {
-  'destitute': { min: 5, max: 15 },
-  'poor': { min: 20, max: 40 },
-  'modest': { min: 50, max: 100 },
-  'lower_middle': { min: 150, max: 300 },
-  'middle_class': { min: 400, max: 800 },
-  'wealthy': { min: 1000, max: 2000 },
-  'affluent': { min: 3000, max: 5000 },
-  'elite': { min: 8000, max: 15000 }
+  'destitute': { min: 1200, max: 3600 },
+  'poor': { min: 4800, max: 9600 },
+  'modest': { min: 12000, max: 24000 },
+  'lower_middle': { min: 36000, max: 72000 },
+  'middle_class': { min: 96000, max: 192000 },
+  'wealthy': { min: 240000, max: 480000 },
+  'affluent': { min: 720000, max: 1200000 },
+  'elite': { min: 1920000, max: 3600000 }
 };
 
 // ============================================================================
@@ -267,7 +267,7 @@ export class SocialClassHelper {
    * Get weekly credit amount for a social class
    *
    * @param socialClass - The social class
-   * @returns Weekly credit in pounds
+   * @returns Weekly credit in pence
    */
   static getWeeklyCredit(socialClass: SocialClass): number {
     return WEEKLY_CREDIT[socialClass];

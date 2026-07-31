@@ -1,9 +1,9 @@
 name;label;minFinanceSkill;maxFinanceSkill;weeklyCredit;minCash;maxCash;hasPrivateApartment;apartmentType;bonusItems;displayOrder;description
-destitute;Indigente;01;09;2;5;15;false;;[];1;Classe più povera della società, lotta per la sopravvivenza quotidiana
-poor;Povero;10;19;5;20;40;false;;[];2;Classe operaia con reddito molto basso, vive in condizioni precarie
-modest;Modesto;20;39;15;50;100;false;;[];3;Lavoratori e artigiani con reddito modesto ma stabile
-lower_middle;Piccola borghesia;40;49;30;150;300;true;Casa modesta;[];4;Commercianti e impiegati con buona stabilità economica
-middle_class;Media borghesia;50;69;75;400;800;true;Casa confortevole;[];5;Professionisti e commercianti benestanti
-wealthy;Ricco;70;79;150;1000;2000;true;Palazzo signorile;[];6;Proprietari terrieri e industriali di successo
-affluent;Facoltoso;80;89;300;3000;5000;true;Tenuta elegante;[];7;Ricchi imprenditori con investimenti multipli
-elite;Élite;90;99;500;8000;15000;true;Proprietà multiple;[];8;Aristocrazia e magnati dell'industria
+destitute;Indigente;01;09;480;1200;3600;false;;[];1;Classe più povera della società, lotta per la sopravvivenza quotidiana
+poor;Povero;10;19;1200;4800;9600;false;;[];2;Classe operaia con reddito molto basso, vive in condizioni precarie
+modest;Modesto;20;39;3600;12000;24000;false;;[];3;Lavoratori e artigiani con reddito modesto ma stabile
+lower_middle;Piccola borghesia;40;49;7200;36000;72000;true;Casa modesta;[];4;Commercianti e impiegati con buona stabilità economica
+middle_class;Media borghesia;50;69;18000;96000;192000;true;Casa confortevole;[];5;Professionisti e commercianti benestanti
+wealthy;Ricco;70;79;36000;240000;480000;true;Palazzo signorile;[];6;Proprietari terrieri e industriali di successo
+affluent;Facoltoso;80;89;72000;720000;1200000;true;Tenuta elegante;[];7;Ricchi imprenditori con investimenti multipli
+elite;Élite;90;99;120000;1920000;3600000;true;Proprietà multiple;[];8;Aristocrazia e magnati dell'industria

@@ -1,9 +1,10 @@
 /**
  * Character Finances API types
  *
- * Patrimonio, Valore di Credito (financeSkillValue) e rendita settimanale
- * (creditLine) di un personaggio — gestiti dal pannello per correzioni
- * narrative/premi/penalità, non toccati dal normale flusso di gioco.
+ * Liquidità (cash/bankDeposit, in penny), Valore di Credito (financeSkillValue)
+ * e rendita settimanale (creditLine, in penny) di un personaggio — gestiti dal
+ * pannello per correzioni narrative/premi/penalità, non toccati dal normale
+ * flusso di gioco.
  */
 
 export type SocialClass =

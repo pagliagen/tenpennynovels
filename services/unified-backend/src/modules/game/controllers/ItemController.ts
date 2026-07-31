@@ -601,25 +601,7 @@ async function checkItemEligibility(character: any, item: any): Promise<{
 
 // Helper functions
 function formatPrice(pence: number): string {
-  if (pence >= 240) {
-    const pounds = Math.floor(pence / 240);
-    const remainingPence = pence % 240;
-    const shillings = Math.floor(remainingPence / 12);
-    const finalPence = remainingPence % 12;
-    
-    let result = `£${pounds}`;
-    if (shillings > 0) result += ` ${shillings}s`;
-    if (finalPence > 0) result += ` ${finalPence}d`;
-    return result;
-  } else if (pence >= 12) {
-    const shillings = Math.floor(pence / 12);
-    const remainingPence = pence % 12;
-    let result = `${shillings}s`;
-    if (remainingPence > 0) result += ` ${remainingPence}d`;
-    return result;
-  } else {
-    return `${pence}d`;
-  }
+  return `${pence} penny`;
 }
 
 async function getAvailableCategories(): Promise<string[]> {

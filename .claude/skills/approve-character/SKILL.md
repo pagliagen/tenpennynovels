@@ -47,8 +47,8 @@ Created with:
 - **characterId** - Reference to approved character
 - **socialClass** - Name of social class based on FINANZA skill
 - **financeSkillValue** - Value of FINANZA skill (1-99)
-- **cash** - 30% of calculated initial wealth
-- **bankDeposit** - 70% of calculated initial wealth
+- **cash** - Always `0` at approval. The character only carries cash withdrawn via the (not yet implemented) "Banca" feature.
+- **bankDeposit** - Full calculated initial wealth (all currency fields are in pence — the only monetary unit in this game). The patrimonio assigned by social class starts as bank deposit, not cash.
 - **creditLine**:
   - `maxWeekly` - Weekly credit from social class config
   - `currentAvailable` - Initially equal to maxWeekly
@@ -104,12 +104,12 @@ When user requests character approval:
    - Find where `minFinanceSkill <= finanzaSkill <= maxFinanceSkill`
    - Throw error if not found
 
-8. **Calculate initial wealth**:
+8. **Calculate initial wealth** (all values in pence):
    - Use `socialClassConfig.initialWealth.minCash` and `maxCash`
-   - Default: `240` if not specified
+   - Default: `240` (1 pound in pence) if not specified
    - Random: `Math.floor(Math.random() * (maxWealth - minWealth + 1)) + minWealth`
-   - Cash: `Math.floor(baseWealth * 0.3)` (30%)
-   - Bank: `Math.floor(baseWealth * 0.7)` (70%)
+   - Cash: `0` (the character starts with nothing withdrawn)
+   - Bank: `baseWealth` (the full amount — the initial patrimonio lands in the bank deposit; withdrawing to cash is a future "Banca" feature, not yet implemented)
 
 9. **Create CharacterFinances**:
    - Delete existing: `await CharacterFinances.deleteOne({ characterId: character._id })`

@@ -1,8 +1,8 @@
 /**
  * CharacterFinancesContent
  *
- * Form per il pannello "Finanze" di character-list.tsx: patrimonio (cash/bankDeposit),
- * Valore di Credito (financeSkillValue) e rendita settimanale (creditLine). Component
+ * Form per il pannello "Finanze" di character-list.tsx: liquidità (cash/bankDeposit, in penny),
+ * Valore di Credito (financeSkillValue) e rendita settimanale (creditLine, in penny). Component
  * puramente presentazionale — stato del form e mutation restano nel genitore, stesso
  * pattern già usato da CharacterEditContent per l'avatar (editFormData sollevato al
  * parent, il SidePanel non gestisce questi campi tramite i suoi `config.fields`).
@@ -56,9 +56,9 @@ export function CharacterFinancesContent({ isLoading, error, formData, onChange 
   return (
     <div className={styles.editFormStack}>
       <div className={styles.editFormSection}>
-        <h3 className={styles.editFormSectionTitle}>Patrimonio</h3>
+        <h3 className={styles.editFormSectionTitle}>Liquidità</h3>
         <FormField
-          label="Contanti (cash)"
+          label="Contanti (cash), in penny"
           name="cash"
           type="number"
           min={0}
@@ -66,7 +66,7 @@ export function CharacterFinancesContent({ isLoading, error, formData, onChange 
           onChange={(e) => set({ cash: Number(e.target.value) })}
         />
         <FormField
-          label="Deposito bancario"
+          label="Deposito bancario, in penny"
           name="bankDeposit"
           type="number"
           min={0}
@@ -92,7 +92,7 @@ export function CharacterFinancesContent({ isLoading, error, formData, onChange 
       <div className={styles.editFormSection}>
         <h3 className={styles.editFormSectionTitle}>Rendita settimanale</h3>
         <FormField
-          label="Rendita massima settimanale"
+          label="Rendita massima settimanale, in penny"
           name="creditLineMaxWeekly"
           type="number"
           min={0}
@@ -100,7 +100,7 @@ export function CharacterFinancesContent({ isLoading, error, formData, onChange 
           onChange={(e) => set({ creditLineMaxWeekly: Number(e.target.value) })}
         />
         <FormField
-          label="Credito attualmente disponibile"
+          label="Credito attualmente disponibile, in penny"
           name="creditLineCurrentAvailable"
           type="number"
           min={0}

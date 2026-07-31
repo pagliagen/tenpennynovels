@@ -783,8 +783,10 @@ export class CharacterApprovalController {
       characterId,
       socialClass: socialClassConfig.name,
       financeSkillValue: finanzaSkill,
-      cash: Math.floor(baseWealth * 0.3), // 30% in cash
-      bankDeposit: Math.floor(baseWealth * 0.7), // 70% in bank
+      // The initial patrimonio assigned by social class starts as bank deposit, not cash.
+      // The character only carries cash they've withdrawn via the (not yet implemented) "Banca" feature.
+      cash: 0,
+      bankDeposit: baseWealth,
       creditLine: {
         maxWeekly: socialClassConfig.weeklyCredit,
         currentAvailable: socialClassConfig.weeklyCredit,

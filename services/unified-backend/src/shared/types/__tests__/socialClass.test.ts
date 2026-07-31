@@ -219,27 +219,27 @@ describe('SocialClassHelper', () => {
 
   describe('getWeeklyCredit', () => {
     it('should return correct weekly credit amounts', () => {
-      expect(SocialClassHelper.getWeeklyCredit('destitute')).toBe(2);
-      expect(SocialClassHelper.getWeeklyCredit('poor')).toBe(5);
-      expect(SocialClassHelper.getWeeklyCredit('modest')).toBe(15);
-      expect(SocialClassHelper.getWeeklyCredit('lower_middle')).toBe(30);
-      expect(SocialClassHelper.getWeeklyCredit('middle_class')).toBe(75);
-      expect(SocialClassHelper.getWeeklyCredit('wealthy')).toBe(150);
-      expect(SocialClassHelper.getWeeklyCredit('affluent')).toBe(300);
-      expect(SocialClassHelper.getWeeklyCredit('elite')).toBe(500);
+      expect(SocialClassHelper.getWeeklyCredit('destitute')).toBe(480);
+      expect(SocialClassHelper.getWeeklyCredit('poor')).toBe(1200);
+      expect(SocialClassHelper.getWeeklyCredit('modest')).toBe(3600);
+      expect(SocialClassHelper.getWeeklyCredit('lower_middle')).toBe(7200);
+      expect(SocialClassHelper.getWeeklyCredit('middle_class')).toBe(18000);
+      expect(SocialClassHelper.getWeeklyCredit('wealthy')).toBe(36000);
+      expect(SocialClassHelper.getWeeklyCredit('affluent')).toBe(72000);
+      expect(SocialClassHelper.getWeeklyCredit('elite')).toBe(120000);
     });
   });
 
   describe('getInitialWealth', () => {
     it('should return correct initial wealth ranges', () => {
-      expect(SocialClassHelper.getInitialWealth('destitute')).toEqual({ min: 5, max: 15 });
-      expect(SocialClassHelper.getInitialWealth('poor')).toEqual({ min: 20, max: 40 });
-      expect(SocialClassHelper.getInitialWealth('modest')).toEqual({ min: 50, max: 100 });
-      expect(SocialClassHelper.getInitialWealth('lower_middle')).toEqual({ min: 150, max: 300 });
-      expect(SocialClassHelper.getInitialWealth('middle_class')).toEqual({ min: 400, max: 800 });
-      expect(SocialClassHelper.getInitialWealth('wealthy')).toEqual({ min: 1000, max: 2000 });
-      expect(SocialClassHelper.getInitialWealth('affluent')).toEqual({ min: 3000, max: 5000 });
-      expect(SocialClassHelper.getInitialWealth('elite')).toEqual({ min: 8000, max: 15000 });
+      expect(SocialClassHelper.getInitialWealth('destitute')).toEqual({ min: 1200, max: 3600 });
+      expect(SocialClassHelper.getInitialWealth('poor')).toEqual({ min: 4800, max: 9600 });
+      expect(SocialClassHelper.getInitialWealth('modest')).toEqual({ min: 12000, max: 24000 });
+      expect(SocialClassHelper.getInitialWealth('lower_middle')).toEqual({ min: 36000, max: 72000 });
+      expect(SocialClassHelper.getInitialWealth('middle_class')).toEqual({ min: 96000, max: 192000 });
+      expect(SocialClassHelper.getInitialWealth('wealthy')).toEqual({ min: 240000, max: 480000 });
+      expect(SocialClassHelper.getInitialWealth('affluent')).toEqual({ min: 720000, max: 1200000 });
+      expect(SocialClassHelper.getInitialWealth('elite')).toEqual({ min: 1920000, max: 3600000 });
     });
   });
 

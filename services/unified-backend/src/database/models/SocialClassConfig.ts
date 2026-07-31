@@ -7,10 +7,10 @@ export interface ISocialClassConfig extends Document, SoftDeleteMethods {
   label: string; // Italian label for UI display: "Indigente", "Povero", etc.
   minFinanceSkill: number; // Minimum FINANZA skill value
   maxFinanceSkill: number; // Maximum FINANZA skill value
-  weeklyCredit: number; // Weekly credit line in pounds
+  weeklyCredit: number; // Weekly credit line, in pence
   initialWealth: {
-    minCash: number; // Minimum starting cash
-    maxCash: number; // Maximum starting cash
+    minCash: number; // Minimum starting cash, in pence
+    maxCash: number; // Maximum starting cash, in pence
     hasPrivateApartment: boolean; // Whether they get a private apartment
     apartmentType?: string; // Type of apartment if any
     bonusItems: string[]; // Array of item IDs for bonus starting items

@@ -7,9 +7,9 @@ export interface ICharacterFinances extends Document {
   socialClass: SocialClass; // Current social class (granular 8-value system)
   financeSkillValue: number; // Current FINANZA skill value
   
-  // Wealth tracking
-  cash: number; // Current cash on hand in pounds
-  bankDeposit: number; // Money in the bank
+  // Wealth tracking (all currency fields in pence — the only monetary unit in this game)
+  cash: number; // Current cash on hand, in pence
+  bankDeposit: number; // Money in the bank, in pence
   
   // Weekly credit line system
   creditLine: {

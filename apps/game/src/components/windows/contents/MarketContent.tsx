@@ -36,11 +36,10 @@ export function MarketContent(): React.ReactElement {
 
         {finances && (
           <div className={styles.walletBar}>
-            <span>Contanti: {finances.cash}£</span>
-            <span>Deposito: {finances.bankDeposit}£</span>
-            <span>Patrimonio: {finances.totalWealth}£</span>
+            <span>Contanti: {finances.cash} penny</span>
+            <span>Deposito: {finances.bankDeposit} penny</span>
             <span>Classe sociale: {finances.socialClass}</span>
-            <span>Rendita settimanale: {finances.creditLine.currentAvailable}/{finances.creditLine.maxWeekly}£</span>
+            <span>Rendita settimanale: {finances.creditLine.currentAvailable}/{finances.creditLine.maxWeekly} penny</span>
             {services.data && <span>Valore di Credito: {services.data.available}/{services.data.capacity}</span>}
           </div>
         )}
