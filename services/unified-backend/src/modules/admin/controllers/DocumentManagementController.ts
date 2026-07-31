@@ -22,6 +22,14 @@ function isValidObjectId(id: unknown): boolean {
 }
 
 /**
+ * Validate document type against a literal whitelist — rejects query objects
+ * (e.g. type[$ne]=x parsed as { $ne: 'x' }) before the value reaches a query.
+ */
+function isValidDocumentType(value: unknown): value is 'ambientazione' | 'regolamento' {
+  return value === 'ambientazione' || value === 'regolamento';
+}
+
+/**
  * Document Management Controller
  *
  * Uses Document model (single source of truth) + DocumentSubtype for grouping.
@@ -36,7 +44,8 @@ export class DocumentManagementController {
     try {
       const { type, search } = req.query;
 
-      if (!type || !['ambientazione', 'regolamento'].includes(type as string)) {
+      // Reject non-string values (e.g. type[$ne]=x parsed as an object) before any query use
+      if (!isValidDocumentType(type)) {
         res.status(400).json(errorResponse(
           'type is required (ambientazione or regolamento)',
           'VALIDATION_ERROR', undefined, 400, getRequestId(req)
@@ -45,7 +54,7 @@ export class DocumentManagementController {
       }
 
       const allDocuments = await Document.find({
-        type: type as 'ambientazione' | 'regolamento',
+        type: { $eq: type },
         deleted: { $ne: true }
       }).populate('subtypeId', 'slug title order').lean();
 

@@ -1973,6 +1973,19 @@ export class ChatController {
         return;
       }
 
+      // messageId must be a plain ObjectId string — reject query objects (e.g. { $ne: null })
+      // before it's used as a filter value anywhere below (NoSQL injection guard)
+      if (typeof messageId !== 'string' || !Types.ObjectId.isValid(messageId)) {
+        res.status(400).json(errorResponse(
+          'messageId non valido',
+          'INVALID_MESSAGE_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       // Find reaction request message
       const message: any = await Chat.findById(messageId);
       if (!message || message.actionType !== 'confrontation_reaction_request') {
@@ -2676,6 +2689,19 @@ export class ChatController {
         res.status(400).json(errorResponse(
           'messageId and forcedOutcome are required',
           'MISSING_REQUIRED_FIELDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // messageId must be a plain ObjectId string — reject query objects (e.g. { $ne: null })
+      // before it's used as a filter value anywhere below (NoSQL injection guard)
+      if (typeof messageId !== 'string' || !Types.ObjectId.isValid(messageId)) {
+        res.status(400).json(errorResponse(
+          'messageId non valido',
+          'INVALID_MESSAGE_ID',
           undefined,
           400,
           getRequestId(req)
