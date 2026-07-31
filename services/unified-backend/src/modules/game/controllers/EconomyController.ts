@@ -693,14 +693,35 @@ export class EconomyController {
     return EconomyController.meetsRequirements(item, character);
   }
 
+  /**
+   * Read a character's skill value, handling both Map (Mongoose document)
+   * and plain-object (post-.lean()) shapes, plus granular SkillBreakdown
+   * objects ({ total, base, ... }) vs plain numbers.
+   */
+  private static getCharacterSkillValue(character: any, skillKey: string): number {
+    const skills = character.skills;
+    if (!skills) return 0;
+    const raw = skills instanceof Map ? skills.get(skillKey) : skills[skillKey];
+    if (typeof raw === 'object' && raw !== null && 'total' in raw) {
+      return raw.total || 0;
+    }
+    return typeof raw === 'number' ? raw : 0;
+  }
+
   private static meetsRequirements(item: any, character: any): boolean {
     if (!item.requirements) return true;
 
-    // Check skill requirements
+    // Check skill requirements — item.requirements.skills is keyed by skillId
+    // (Item.prerequisites.minimumSkills, a Map<string, number> in the schema —
+    // a plain object after .lean(), a real Map otherwise), not an array.
     if (item.requirements.skills) {
-      for (const skillReq of item.requirements.skills) {
-        const characterSkill = character.skills[skillReq.skill] || 0;
-        if (characterSkill < skillReq.minimum) {
+      const skillEntries: [string, number][] = item.requirements.skills instanceof Map
+        ? Array.from(item.requirements.skills.entries())
+        : Object.entries(item.requirements.skills);
+
+      for (const [skillKey, minimum] of skillEntries) {
+        const characterSkill = EconomyController.getCharacterSkillValue(character, skillKey);
+        if (characterSkill < minimum) {
           return false;
         }
       }
