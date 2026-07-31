@@ -28,11 +28,13 @@ export const AdminPermissions = {
   DOCUMENTS_UPDATE: 'documents.update',
   DOCUMENTS_PUBLISH: 'documents.publish',
 
-  // Characters (4)
+  // Characters (6)
   CHARACTERS_DETAIL_READ: 'characters.detail.read',
   CHARACTERS_DETAIL_APPROVE: 'characters.detail.approve',
   CHARACTERS_DETAIL_EDIT: 'characters.detail.edit',
   CHARACTERS_DETAIL_DELETE: 'characters.detail.delete',
+  CHARACTERS_FINANCES_ACCESS: 'characters.finances.access',
+  CHARACTERS_FINANCES_MANAGE: 'characters.finances.manage',
 
   // Users (3)
   USERS_READ: 'users.read',
@@ -149,6 +151,8 @@ export const AdminRolePermissions: Record<string, AdminPermission[]> = {
     AdminPermissions.CHARACTERS_DETAIL_READ,
     AdminPermissions.CHARACTERS_DETAIL_APPROVE,
     AdminPermissions.CHARACTERS_DETAIL_EDIT,
+    AdminPermissions.CHARACTERS_FINANCES_ACCESS,
+    AdminPermissions.CHARACTERS_FINANCES_MANAGE,
     AdminPermissions.DOCUMENTS_READ,
     AdminPermissions.DOCUMENTS_CREATE,
     AdminPermissions.DOCUMENTS_UPDATE,
@@ -184,6 +188,8 @@ export const AdminRolePermissions: Record<string, AdminPermission[]> = {
     AdminPermissions.CHARACTERS_DETAIL_APPROVE,
     AdminPermissions.CHARACTERS_DETAIL_EDIT,
     AdminPermissions.CHARACTERS_DETAIL_DELETE,
+    AdminPermissions.CHARACTERS_FINANCES_ACCESS,
+    AdminPermissions.CHARACTERS_FINANCES_MANAGE,
     AdminPermissions.DOCUMENTS_READ,
     AdminPermissions.DOCUMENTS_CREATE,
     AdminPermissions.DOCUMENTS_UPDATE,

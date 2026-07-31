@@ -122,6 +122,8 @@ export const GamePermissions = {
   ECONOMY_WALLET_READ: 'game:economy:wallet:read',
   ECONOMY_TRANSFER: 'game:economy:transfer',
   ECONOMY_TRANSACTIONS_READ: 'game:economy:transactions:read',
+  ECONOMY_SERVICES_READ: 'game:economy:services:read',
+  ECONOMY_SERVICES_SUBSCRIBE: 'game:economy:services:subscribe',
 
   // Shops
   SHOPS_LIST: 'game:shops:list',
@@ -211,6 +213,7 @@ export const GamePermissions = {
   ADMIN_ECONOMY_GRANT: 'game:admin:economy:grant', // master
   ADMIN_ECONOMY_RESET_CREDIT: 'game:admin:economy:reset-credit', // master
   ADMIN_ECONOMY_STATUS: 'game:admin:economy:status', // master
+  ADMIN_ECONOMY_SERVICES_RENEW: 'game:admin:economy:services:renew', // master
   ADMIN_EXPERIENCE_GRANT: 'game:admin:experience:grant', // master
   ADMIN_TIME_ADVANCE: 'game:admin:time:advance', // master
 } as const;
@@ -293,6 +296,8 @@ export const GameRolePermissions: Record<string, GamePermission[]> = {
     GamePermissions.ECONOMY_WALLET_READ,
     GamePermissions.ECONOMY_TRANSFER,
     GamePermissions.ECONOMY_TRANSACTIONS_READ,
+    GamePermissions.ECONOMY_SERVICES_READ,
+    GamePermissions.ECONOMY_SERVICES_SUBSCRIBE,
     GamePermissions.SHOPS_LIST,
     GamePermissions.SHOPS_READ,
     GamePermissions.SHOPS_PURCHASE,
@@ -368,6 +373,7 @@ export const GameRolePermissions: Record<string, GamePermission[]> = {
     GamePermissions.ADMIN_ECONOMY_GRANT,
     GamePermissions.ADMIN_ECONOMY_RESET_CREDIT,
     GamePermissions.ADMIN_ECONOMY_STATUS,
+    GamePermissions.ADMIN_ECONOMY_SERVICES_RENEW,
     GamePermissions.ADMIN_EXPERIENCE_GRANT,
     GamePermissions.ADMIN_TIME_ADVANCE,
   ],

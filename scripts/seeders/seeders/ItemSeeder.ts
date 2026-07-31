@@ -31,6 +31,17 @@ interface ItemRow {
   filename: string;
   // "prompt" esiste in items.csv (prompt AI per local-tools/imagegen) ma NON va a DB:
   // volutamente non incluso in questa interfaccia/mapping.
+  weaponType: string;
+  weaponSkill: string;
+  damageFormula: string;
+  range: string;
+  requiresExtraction: string;
+  applyBonusDamage: string;
+  halfBonusDamage: string;
+  ammoCapacity: string;
+  rangeMeters: string;
+  blastRadiusMeters: string;
+  isAdminOnly: string;
 }
 
 async function seedItems() {
@@ -83,6 +94,20 @@ async function seedItems() {
       const consumesItems = row.consumesItems ? row.consumesItems.split(',').map(s => s.trim()) : [];
       const providesSkillBonus = row.providesSkillBonus ? row.providesSkillBonus.split(',').map(s => s.trim()) : [];
 
+      // Parse weapon stats (only present for category=weapons rows)
+      const weaponStats = row.weaponType ? {
+        weaponType: row.weaponType,
+        skill: row.weaponSkill,
+        damageFormula: row.damageFormula,
+        range: row.range || 'melee',
+        requiresExtraction: row.requiresExtraction === 'true',
+        applyBonusDamage: row.applyBonusDamage === 'true',
+        halfBonusDamage: row.halfBonusDamage === 'true',
+        ammoCapacity: row.ammoCapacity ? parseInt(row.ammoCapacity, 10) : undefined,
+        rangeMeters: row.rangeMeters ? parseInt(row.rangeMeters, 10) : undefined,
+        blastRadiusMeters: row.blastRadiusMeters ? parseInt(row.blastRadiusMeters, 10) : undefined,
+      } : undefined;
+
       await itemsCol.insertOne({
         name: row.name,
         description: row.description,
@@ -92,8 +117,9 @@ async function seedItems() {
         basePrice: parseFloat(row.basePrice),
         prerequisites: Object.keys(prerequisites).length > 0 ? prerequisites : undefined,
         isPublic: true,
-        isAdminOnly: false,
+        isAdminOnly: row.isAdminOnly === 'true',
         availableLocations: [],
+        weaponStats,
         properties: {
           isStackable: false,
           isConsumable,

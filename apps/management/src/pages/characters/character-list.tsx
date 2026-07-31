@@ -26,10 +26,12 @@ import {
   useBulkRejectCharacters,
   useBulkDeleteCharacters
 } from '@/hooks/api/useCharacters';
+import { useCharacterFinances, useUpdateCharacterFinances } from '@/hooks/api/useCharacterFinances';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useURLFilter } from '@/hooks/useURLFilter';
 import { clearFilterHash } from '@/lib/utils/urlFilters';
 import { FormField } from '@/components/shared/FormField';
+import { CharacterFinancesContent, type CharacterFinancesFormData } from '@/components/characters/CharacterFinancesContent';
 import type { Character, CharacterListParams } from '@/types/api/Character';
 import styles from '@/styles/pages/CharacterList.module.scss';
 
@@ -87,13 +89,14 @@ export default function CharacterList() {
     sortOrder: 'desc'
   });
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
-  const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | 'reject' | 'bulk-reject' | null>(null);
+  const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | 'reject' | 'bulk-reject' | 'finances' | null>(null);
   const [currentCharacter, setCurrentCharacter] = useState<Character | null>(null);
   const [characterToReject, setCharacterToReject] = useState<Character | null>(null);
   const [rejectReason, setRejectReason] = useState<string>('');
   const [bulkRejectCharacters, setBulkRejectCharacters] = useState<Character[]>([]);
   const [bulkRejectReason, setBulkRejectReason] = useState<string>('');
   const [editFormData, setEditFormData] = useState({ avatar: '' });
+  const [financesFormData, setFinancesFormData] = useState<CharacterFinancesFormData | null>(null);
 
   // Hooks
   const router = useRouter();
@@ -119,6 +122,10 @@ export default function CharacterList() {
   const { confirm, ConfirmDialogComponent } = useConfirm();
   const addNotification = useNotificationStore(state => state.addNotification);
 
+  const financesCharacterId = activeSidePanel === 'finances' ? currentCharacter?._id ?? '' : '';
+  const financesQuery = useCharacterFinances(financesCharacterId);
+  const updateFinances = useUpdateCharacterFinances();
+
   // Filter characters by active tab
   const filteredData = useMemo(() => {
     if (!data?.list) return [];
@@ -143,6 +150,24 @@ export default function CharacterList() {
     }
   }, [activeSidePanel, currentCharacter]);
 
+  // Initialize finances form data once loaded (only once per opening — do not
+  // overwrite in-progress edits on background refetch)
+  useEffect(() => {
+    if (activeSidePanel === 'finances' && financesQuery.data && !financesFormData) {
+      const f = financesQuery.data;
+      setFinancesFormData({
+        cash: f.cash,
+        bankDeposit: f.bankDeposit,
+        financeSkillValue: f.financeSkillValue,
+        creditLineMaxWeekly: f.creditLine.maxWeekly,
+        creditLineCurrentAvailable: f.creditLine.currentAvailable
+      });
+    }
+    if (activeSidePanel !== 'finances' && financesFormData) {
+      setFinancesFormData(null);
+    }
+  }, [activeSidePanel, financesQuery.data, financesFormData]);
+
   /**
    * Handler azioni row
    */
@@ -157,6 +182,11 @@ export default function CharacterList() {
         case 'view-details':
           setCurrentCharacter(character);
           setActiveSidePanel('view');
+          break;
+
+        case 'finances':
+          setCurrentCharacter(character);
+          setActiveSidePanel('finances');
           break;
 
         case 'approve': {
@@ -208,7 +238,35 @@ export default function CharacterList() {
    * Handler SidePanel save
    */
   const handleSidePanelAction = async (action: string, formData: Record<string, unknown>) => {
-    if (action === 'save' && currentCharacter) {
+    if (action === 'save' && activeSidePanel === 'finances' && currentCharacter && financesFormData) {
+      if (financesFormData.creditLineCurrentAvailable > financesFormData.creditLineMaxWeekly) {
+        addNotification({ type: 'error', message: 'Il credito disponibile non può superare la rendita settimanale massima' });
+        return;
+      }
+      try {
+        await updateFinances.mutateAsync({
+          characterId: currentCharacter._id,
+          data: {
+            cash: financesFormData.cash,
+            bankDeposit: financesFormData.bankDeposit,
+            financeSkillValue: financesFormData.financeSkillValue,
+            creditLine: {
+              maxWeekly: financesFormData.creditLineMaxWeekly,
+              currentAvailable: financesFormData.creditLineCurrentAvailable
+            }
+          }
+        });
+
+        addNotification({ type: 'success', message: 'Finanze aggiornate con successo' });
+        setActiveSidePanel(null);
+        setCurrentCharacter(null);
+      } catch (error) {
+        addNotification({
+          type: 'error',
+          message: error instanceof Error ? error.message : 'Errore nell\'aggiornamento delle finanze'
+        });
+      }
+    } else if (action === 'save' && currentCharacter) {
       try {
         await updateCharacter.mutateAsync({
           id: currentCharacter._id,
@@ -530,6 +588,43 @@ export default function CharacterList() {
             onClose={() => {
               setActiveSidePanel(null);
               setCurrentCharacter(null);
+            }}
+          />
+        )}
+
+        {/* Side Panel: Character Finances (patrimonio, Valore di Credito, rendita settimanale) */}
+        {activeSidePanel === 'finances' && currentCharacter && (
+          <SidePanel
+            isOpen={true}
+            config={{
+              title: `Finanze — ${currentCharacter.fullName}`,
+              width: 'medium',
+              fields: [],
+              actions: [
+                { key: 'save', label: 'Salva', type: 'primary', loading: updateFinances.isPending },
+                { key: 'cancel', label: 'Annulla', type: 'secondary', loading: false }
+              ]
+            }}
+            data={{}}
+            customContent={
+              <CharacterFinancesContent
+                isLoading={financesQuery.isLoading || !financesFormData}
+                error={financesQuery.error instanceof Error ? financesQuery.error.message : null}
+                formData={financesFormData ?? {
+                  cash: 0,
+                  bankDeposit: 0,
+                  financeSkillValue: 1,
+                  creditLineMaxWeekly: 0,
+                  creditLineCurrentAvailable: 0
+                }}
+                onChange={setFinancesFormData}
+              />
+            }
+            onAction={handleSidePanelAction}
+            onClose={() => {
+              setActiveSidePanel(null);
+              setCurrentCharacter(null);
+              setFinancesFormData(null);
             }}
           />
         )}

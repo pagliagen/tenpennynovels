@@ -125,6 +125,10 @@ export interface IItem extends Document, SoftDeleteMethods {
     range: 'melee' | 'ranged';
     requiresExtraction: boolean;       // Weapon must be drawn first
     applyBonusDamage: boolean;         // Apply damage bonus from STR/SIZ
+    halfBonusDamage: boolean;          // Only half of the bonus damage applies (e.g. bows)
+    ammoCapacity?: number;             // "Colpi" — rounds before reload, absent for melee weapons
+    rangeMeters?: number;              // "Gittata base" — absent for melee weapons
+    blastRadiusMeters?: number;        // "Area" — explosives only
   };
 
   // Metadata
@@ -379,7 +383,11 @@ const ItemSchema = new Schema<IItem>({
       enum: ['melee', 'ranged']
     },
     requiresExtraction: Boolean,
-    applyBonusDamage: Boolean
+    applyBonusDamage: Boolean,
+    halfBonusDamage: Boolean,
+    ammoCapacity: { type: Number, min: 0 },
+    rangeMeters: { type: Number, min: 0 },
+    blastRadiusMeters: { type: Number, min: 0 }
   },
 
   // Management

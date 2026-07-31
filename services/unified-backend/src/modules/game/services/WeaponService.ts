@@ -19,6 +19,7 @@ interface WeaponStats {
   weaponType: string;
   skill: string;
   applyBonusDamage: boolean;
+  halfBonusDamage: boolean;
 }
 
 export class WeaponService {
@@ -56,7 +57,8 @@ export class WeaponService {
               damageFormula: weapon.weaponStats.damageFormula,
               weaponType: weapon.weaponStats.weaponType,
               skill: weapon.weaponStats.skill,
-              applyBonusDamage: weapon.weaponStats.applyBonusDamage
+              applyBonusDamage: weapon.weaponStats.applyBonusDamage,
+              halfBonusDamage: weapon.weaponStats.halfBonusDamage
             };
 
             // Cache for 5 minutes
@@ -85,7 +87,8 @@ export class WeaponService {
             damageFormula: weapons[0].weaponStats.damageFormula,
             weaponType: weapons[0].weaponStats.weaponType,
             skill: weapons[0].weaponStats.skill,
-            applyBonusDamage: weapons[0].weaponStats.applyBonusDamage
+            applyBonusDamage: weapons[0].weaponStats.applyBonusDamage,
+            halfBonusDamage: weapons[0].weaponStats.halfBonusDamage
           };
 
           await redis.getClient().setEx(cacheKey, this.CACHE_TTL, JSON.stringify(stats));

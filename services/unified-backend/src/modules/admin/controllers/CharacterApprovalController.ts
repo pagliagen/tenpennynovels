@@ -730,6 +730,78 @@ export class CharacterApprovalController {
   }
 
   /**
+   * Extract the FINANZA skill value from a character's skills, handling both
+   * Map and plain-object formats and granular SkillBreakdown objects.
+   */
+  private static extractFinanzaSkill(character: any): number {
+    let finanzaSkill = 1; // Default fallback
+
+    if (character.skills instanceof Map) {
+      const finanzaValue = character.skills.get('Finanza') || character.skills.get('FINANZA') || character.skills.get('finanza');
+      if (typeof finanzaValue === 'object' && finanzaValue !== null && 'total' in finanzaValue) {
+        finanzaSkill = (finanzaValue as { total: number }).total;
+      } else if (typeof finanzaValue === 'number') {
+        finanzaSkill = finanzaValue;
+      }
+    } else if (character.skills && typeof character.skills === 'object') {
+      const finanzaValue = (character.skills as Record<string, unknown>)['Finanza'] || (character.skills as Record<string, unknown>)['FINANZA'] || (character.skills as Record<string, unknown>)['finanza'];
+      if (typeof finanzaValue === 'object' && finanzaValue !== null && 'total' in finanzaValue) {
+        finanzaSkill = (finanzaValue as { total: number }).total;
+      } else if (typeof finanzaValue === 'number') {
+        finanzaSkill = finanzaValue;
+      }
+    }
+
+    return Math.max(1, Math.min(99, finanzaSkill || 1));
+  }
+
+  /**
+   * Create (or recreate) a character's CharacterFinances record based on their
+   * FINANZA skill value. Shared by both single and bulk approval, so both paths
+   * write the same schema shape (cash/bankDeposit/creditLine — not a made-up shape).
+   */
+  private static async buildInitialFinances(characterId: any, finanzaSkill: number) {
+    const { CharacterFinances, SocialClassConfig } = await import('@database/models');
+
+    const socialClassConfig = await SocialClassConfig.findOne({
+      minFinanceSkill: { $lte: finanzaSkill },
+      maxFinanceSkill: { $gte: finanzaSkill }
+    });
+
+    if (!socialClassConfig) {
+      throw new Error(`No social class found for FINANZA skill: ${finanzaSkill}`);
+    }
+
+    const minWealth = socialClassConfig.initialWealth?.minCash || 240;
+    const maxWealth = socialClassConfig.initialWealth?.maxCash || 240;
+    const baseWealth = Math.floor(Math.random() * (maxWealth - minWealth + 1)) + minWealth;
+
+    // Always delete existing and recreate for security
+    await CharacterFinances.deleteOne({ characterId });
+
+    const characterFinances = new CharacterFinances({
+      characterId,
+      socialClass: socialClassConfig.name,
+      financeSkillValue: finanzaSkill,
+      cash: Math.floor(baseWealth * 0.3), // 30% in cash
+      bankDeposit: Math.floor(baseWealth * 0.7), // 70% in bank
+      creditLine: {
+        maxWeekly: socialClassConfig.weeklyCredit,
+        currentAvailable: socialClassConfig.weeklyCredit,
+        lastResetDate: new Date(),
+        nextResetDate: CharacterApprovalController.getNextSunday()
+      },
+      properties: [],
+      lastCalculated: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    await characterFinances.save();
+    return characterFinances;
+  }
+
+  /**
    * Submit approval decision for a character
    * POST /admin/characters/:characterId/approve
    */
@@ -808,85 +880,22 @@ export class CharacterApprovalController {
         }
 
         // Create CharacterFinances record based on FINANZA skill
-        const { CharacterFinances, SocialClassConfig } = await import('@database/models');
-        
-        // Get character's Finanza skill value from Mongoose Map
-        // Handle both Map and object formats, and granular SkillBreakdown objects
-        let finanzaSkill = 1; // Default fallback
-        
-        if (character.skills instanceof Map) {
-          const finanzaValue = character.skills.get('Finanza') || character.skills.get('FINANZA') || character.skills.get('finanza');
-          if (typeof finanzaValue === 'object' && finanzaValue !== null && 'total' in finanzaValue) {
-            finanzaSkill = (finanzaValue as { total: number }).total;
-          } else if (typeof finanzaValue === 'number') {
-            finanzaSkill = finanzaValue;
-          }
-        } else if (character.skills && typeof character.skills === 'object') {
-          const finanzaValue = (character.skills as Record<string, unknown>)['Finanza'] || (character.skills as Record<string, unknown>)['FINANZA'] || (character.skills as Record<string, unknown>)['finanza'];
-          if (typeof finanzaValue === 'object' && finanzaValue !== null && 'total' in finanzaValue) {
-            finanzaSkill = (finanzaValue as { total: number }).total;
-          } else if (typeof finanzaValue === 'number') {
-            finanzaSkill = finanzaValue;
-          }
-        }
-        
-        // Ensure finanzaSkill is a valid number
-        finanzaSkill = Math.max(1, Math.min(99, finanzaSkill || 1));
-        
+        const finanzaSkill = CharacterApprovalController.extractFinanzaSkill(character);
+
         logger.info('Character FINANZA skill value for approval', {
           characterId: character._id.toString(),
           characterName: character.name,
           finanzaSkill,
           skillsType: character.skills instanceof Map ? 'Map' : typeof character.skills
         });
-        
-        // Find social class configuration based on FINANZA skill range
-        const socialClassConfig = await SocialClassConfig.findOne({
-          minFinanceSkill: { $lte: finanzaSkill },
-          maxFinanceSkill: { $gte: finanzaSkill }
-        });
-        
-        if (!socialClassConfig) {
-          throw new Error(`No social class found for FINANZA skill: ${finanzaSkill}`);
-        }
-        
-        const socialClassName = socialClassConfig!.name;
-        
-        // Calculate initial wealth (random between min and max)
-        const minWealth = socialClassConfig!.initialWealth?.minCash || 240;
-        const maxWealth = socialClassConfig!.initialWealth?.maxCash || 240;
-        const baseWealth = Math.floor(Math.random() * (maxWealth - minWealth + 1)) + minWealth;
-        
-        // Create CharacterFinances record - Always delete existing and recreate for security
-        await CharacterFinances.deleteOne({ characterId: character._id });
-        
-        // Create new CharacterFinances record
-        const characterFinances = new CharacterFinances({
-          characterId: character._id,
-          socialClass: socialClassName,
-          financeSkillValue: finanzaSkill,
-          cash: Math.floor(baseWealth * 0.3), // 30% in cash
-          bankDeposit: Math.floor(baseWealth * 0.7), // 70% in bank
-          creditLine: {
-            maxWeekly: socialClassConfig!.weeklyCredit, // Use configured weekly credit
-            currentAvailable: socialClassConfig!.weeklyCredit,
-            lastResetDate: new Date(),
-            nextResetDate: CharacterApprovalController.getNextSunday()
-          },
-          properties: [],
-          lastCalculated: new Date(),
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-        
-        await characterFinances.save();
-        
+
+        const characterFinances = await CharacterApprovalController.buildInitialFinances(character._id, finanzaSkill);
+
         logger.info('CharacterFinances created on approval', {
           characterId: character._id.toString(),
           characterName: character.name,
-          socialClass: socialClassName,
+          socialClass: characterFinances.socialClass,
           finanzaSkill,
-          initialWealth: baseWealth,
           cash: characterFinances.cash,
           bankDeposit: characterFinances.bankDeposit,
           creditLine: characterFinances.creditLine.maxWeekly
@@ -1403,7 +1412,7 @@ export class CharacterApprovalController {
         return;
       }
 
-      const { Character, Occupation, CharacterFinances, SocialClassConfig } = await import('@database/models');
+      const { Character, Occupation } = await import('@database/models');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
         res.status(401).json(errorResponse(
@@ -1439,26 +1448,10 @@ export class CharacterApprovalController {
           }
 
           // Get Finanza skill for initial finances
-          let finanzaSkill = 1;
-          if (character.skills && character.skills.size > 0) {
-            const finanzaData = character.skills.get('FINANZA');
-            if (finanzaData && typeof finanzaData === 'object' && 'value' in finanzaData) {
-              finanzaSkill = finanzaData.value || 1;
-            }
-          }
+          const finanzaSkill = CharacterApprovalController.extractFinanzaSkill(character);
 
-          const socialClass = await SocialClassConfig.findOne({ skillValue: finanzaSkill });
-          const initialBalance = socialClass?.initialBalance || 50;
-
-          // Create finances record
-          await CharacterFinances.create({
-            characterId: character._id,
-            currentBalance: initialBalance,
-            initialBalance,
-            totalEarned: initialBalance,
-            totalSpent: 0,
-            lastUpdated: new Date()
-          });
+          // Create finances record (same shape as single approval — cash/bankDeposit/creditLine)
+          await CharacterApprovalController.buildInitialFinances(character._id, finanzaSkill);
 
           // Update character status - USE TOP-LEVEL FIELDS (not metadata)
           character.playerStatus = 'approved';
@@ -1485,8 +1478,7 @@ export class CharacterApprovalController {
             ...auditInfo,
             characterId: character._id,
             characterName: `${character.characterName} ${character.characterSurname}`,
-            finanzaSkill,
-            initialBalance
+            finanzaSkill
           });
 
           return character;
