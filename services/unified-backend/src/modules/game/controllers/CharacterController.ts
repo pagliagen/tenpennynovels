@@ -602,23 +602,43 @@ export class CharacterController {
         }
       }
 
-      // Popula gli oggetti dell'equipaggiamento con i dettagli completi
-      if (characterJson.equipment && characterJson.equipment.length > 0) {
-        const { Item } = require('../../../database/models');
-        const equipmentItems = await Item.find({ _id: { $in: characterJson.equipment } });
-        
-        // Sostituisce gli ID con gli oggetti completi
-        characterJson.equipment = equipmentItems.map((item: any) => ({
-          id: item._id.toString(),
-          itemId: item._id.toString(),
-          name: item.name,
-          description: item.description,
-          category: item.category,
-          quantity: 1 // Default quantity
-        }));
+      // Popola l'equipaggiamento unendo il kit iniziale (character.equipment, legacy)
+      // con gli oggetti comprati al mercato (CharacterInventory, fonte autoritativa —
+      // stessa precedenza usata da WeaponService per le armi equipaggiate)
+      {
+        const { Item, CharacterInventory } = require('../../../database/models');
 
-        logger.info('Equipment populated', { 
-          characterId, 
+        const startingEquipmentIds: string[] = characterJson.equipment || [];
+        const inventory = await CharacterInventory.findOne({ characterId: character._id }).lean();
+        const inventoryEntries = (inventory?.items || []).filter((entry: any) => entry.isVisible !== false);
+
+        const quantityByItemId = new Map<string, number>();
+        startingEquipmentIds.forEach((id: any) => {
+          const key = id.toString();
+          quantityByItemId.set(key, (quantityByItemId.get(key) || 0) + 1);
+        });
+        inventoryEntries.forEach((entry: any) => {
+          const key = entry.itemId.toString();
+          quantityByItemId.set(key, (quantityByItemId.get(key) || 0) + entry.quantity);
+        });
+
+        if (quantityByItemId.size > 0) {
+          const equipmentItems = await Item.find({ _id: { $in: Array.from(quantityByItemId.keys()) } });
+          characterJson.equipment = equipmentItems.map((item: any) => ({
+            _id: item._id.toString(),
+            id: item._id.toString(),
+            itemId: item._id.toString(),
+            name: item.name,
+            description: item.description,
+            category: item.category,
+            quantity: quantityByItemId.get(item._id.toString()) || 1
+          }));
+        } else {
+          characterJson.equipment = [];
+        }
+
+        logger.info('Equipment populated', {
+          characterId,
           equipmentCount: characterJson.equipment.length,
           items: characterJson.equipment.map((item: any) => item.name)
         });
