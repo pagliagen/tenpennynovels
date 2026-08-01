@@ -22,6 +22,45 @@ import { appConfig } from '@config/runtime';
  */
 export class CharacterController {
   /**
+   * Merges the legacy starting kit (character.equipment, an ObjectId array set only
+   * at approval) with items bought at the Mercato (CharacterInventory, the
+   * authoritative source — same precedence WeaponService uses for equipped weapons),
+   * populating each with its Item details. Summed by itemId if it appears in both.
+   */
+  private static async buildPopulatedEquipment(
+    characterId: unknown,
+    startingEquipmentIds: unknown[]
+  ): Promise<Array<{ _id: string; id: string; itemId: string; name: string; description: string; category: string; quantity: number }>> {
+    const { Item, CharacterInventory } = require('../../../database/models');
+
+    const inventory = await CharacterInventory.findOne({ characterId }).lean();
+    const inventoryEntries = (inventory?.items || []).filter((entry: any) => entry.isVisible !== false);
+
+    const quantityByItemId = new Map<string, number>();
+    startingEquipmentIds.forEach((id: any) => {
+      const key = id.toString();
+      quantityByItemId.set(key, (quantityByItemId.get(key) || 0) + 1);
+    });
+    inventoryEntries.forEach((entry: any) => {
+      const key = entry.itemId.toString();
+      quantityByItemId.set(key, (quantityByItemId.get(key) || 0) + entry.quantity);
+    });
+
+    if (quantityByItemId.size === 0) return [];
+
+    const equipmentItems = await Item.find({ _id: { $in: Array.from(quantityByItemId.keys()) } }).lean();
+    return equipmentItems.map((item: any) => ({
+      _id: item._id.toString(),
+      id: item._id.toString(),
+      itemId: item._id.toString(),
+      name: item.name,
+      description: item.description,
+      category: item.category,
+      quantity: quantityByItemId.get(item._id.toString()) || 1
+    }));
+  }
+
+  /**
    * POST /characters/check-name
    * Check if character name is available
    */
@@ -603,46 +642,17 @@ export class CharacterController {
       }
 
       // Popola l'equipaggiamento unendo il kit iniziale (character.equipment, legacy)
-      // con gli oggetti comprati al mercato (CharacterInventory, fonte autoritativa —
-      // stessa precedenza usata da WeaponService per le armi equipaggiate)
-      {
-        const { Item, CharacterInventory } = require('../../../database/models');
+      // con gli oggetti comprati al mercato (CharacterInventory, fonte autoritativa)
+      characterJson.equipment = await CharacterController.buildPopulatedEquipment(
+        character._id,
+        characterJson.equipment || []
+      );
 
-        const startingEquipmentIds: string[] = characterJson.equipment || [];
-        const inventory = await CharacterInventory.findOne({ characterId: character._id }).lean();
-        const inventoryEntries = (inventory?.items || []).filter((entry: any) => entry.isVisible !== false);
-
-        const quantityByItemId = new Map<string, number>();
-        startingEquipmentIds.forEach((id: any) => {
-          const key = id.toString();
-          quantityByItemId.set(key, (quantityByItemId.get(key) || 0) + 1);
-        });
-        inventoryEntries.forEach((entry: any) => {
-          const key = entry.itemId.toString();
-          quantityByItemId.set(key, (quantityByItemId.get(key) || 0) + entry.quantity);
-        });
-
-        if (quantityByItemId.size > 0) {
-          const equipmentItems = await Item.find({ _id: { $in: Array.from(quantityByItemId.keys()) } });
-          characterJson.equipment = equipmentItems.map((item: any) => ({
-            _id: item._id.toString(),
-            id: item._id.toString(),
-            itemId: item._id.toString(),
-            name: item.name,
-            description: item.description,
-            category: item.category,
-            quantity: quantityByItemId.get(item._id.toString()) || 1
-          }));
-        } else {
-          characterJson.equipment = [];
-        }
-
-        logger.info('Equipment populated', {
-          characterId,
-          equipmentCount: characterJson.equipment.length,
-          items: characterJson.equipment.map((item: any) => item.name)
-        });
-      }
+      logger.info('Equipment populated', {
+        characterId,
+        equipmentCount: characterJson.equipment.length,
+        items: characterJson.equipment.map((item: any) => item.name)
+      });
 
       // Applica le regole di visibilità
       let filteredCharacter;
@@ -858,7 +868,7 @@ export class CharacterController {
         isOwner,
         canViewPrivateBackground: isOwner || isMaster,
         canViewReviewHistory: isOwner || isMaster,
-        canViewFullInventory: isOwner,
+        canViewFullInventory: isOwner || isMaster,
         canViewSkillBreakdown: isOwner,
         canEdit: isOwner && character.playerStatus === 'draft'
       };
@@ -914,12 +924,18 @@ export class CharacterController {
             })
             .map(([skillId]) => skillId);
 
-      // Determine visible equipment (for non-owners)
-      const visibleEquipment: string[] = isOwner
+      // Popola l'equipaggiamento unendo il kit iniziale (character.equipment, legacy)
+      // con gli oggetti comprati al mercato (CharacterInventory, fonte autoritativa)
+      (character as any).equipment = await CharacterController.buildPopulatedEquipment(
+        character._id,
+        character.equipment || []
+      );
+
+      // There's no per-item visibility: it's the owner's full inventory or nothing.
+      // Masters (canViewFullInventory) can see it too; other characters see none of it.
+      const visibleEquipment: string[] = permissions.canViewFullInventory
         ? (character.equipment || []).map((e: any) => e._id.toString())
-        : (character.equipment || [])
-            .filter((e: any) => e.visible !== false)
-            .map((e: any) => e._id.toString());
+        : [];
 
       // Map background fields to frontend-expected structure
       const publicBackground = character.background?.briefHistory ||
