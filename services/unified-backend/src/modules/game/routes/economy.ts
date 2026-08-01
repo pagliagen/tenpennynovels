@@ -45,6 +45,7 @@ router.get('/economy/shops/:locationSlug',
 );
 
 router.post('/economy/shops/:shopId/restock',
+  servicesWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:admin:shops:restock'),
   EconomyController.restockShop
