@@ -37,49 +37,21 @@ function asApiErrorBody(data: unknown): ApiErrorBody | null {
 }
 
 /**
- * Set auth token in localStorage
+ * Remove persisted user data from localStorage
  *
- * Stores JWT token for subsequent authenticated requests.
- * No-op during server-side rendering.
- *
- * @param {string} token - JWT access token to store
- * @returns {void}
- * @public
- * @since 2.0.0
- *
- * @example
- * ```typescript
- * // After successful login
- * setAuthToken(response.token);
- * ```
- */
-export function setAuthToken(token: string): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, token);
-}
-
-/**
- * Remove auth token from localStorage
- *
- * Clears all authentication-related data from localStorage.
- * Called on logout or when receiving 401 responses.
- * No-op during server-side rendering.
+ * L'auth reale è via cookie HttpOnly (`auth_token`), non gestita da JS.
+ * Questa funzione ripulisce solo lo snapshot che il middleware `persist`
+ * di Zustand salva per `authStore` (vedi USER_KEY in store/authStore.ts).
+ * Chiamata su logout esplicito o quando un 401 rivela che la sessione
+ * cookie non è più valida.
+ * No-op durante il server-side rendering.
  *
  * @returns {void}
  * @public
  * @since 2.0.0
- *
- * @example
- * ```typescript
- * // On logout
- * clearAuthToken();
- * router.push(ROUTES.LOGIN);
- * ```
  */
 export function clearAuthToken(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
-  localStorage.removeItem(AUTH_CONFIG.REFRESH_TOKEN_KEY);
   localStorage.removeItem(AUTH_CONFIG.USER_KEY);
 }
 
@@ -173,10 +145,23 @@ const createApiClient = (): AxiosInstance => {
     async (error: AxiosError) => {
       const apiError = parseAxiosError(error);
 
-      // Handle 401 Unauthorized - Clear auth tokens
-      if (apiError.requiresAuth()) {
+      // Handle 401 Unauthorized
+      if (apiError.requiresAuth() && typeof window !== 'undefined') {
+        // Dynamic import per evitare dipendenza circolare (authStore importa clearAuthToken da qui)
+        const { useAuthStore } = await import('@/store/authStore');
+        const wasAuthenticated = useAuthStore.getState().isAuthenticated;
+
         clearAuthToken();
-        // Note: Redirect to login handled by useAuth hook
+
+        // Un 401 durante il check di sessione iniziale (utente non ancora
+        // autenticato) è gestito da useAuth/AuthError con una schermata
+        // dedicata: qui reagiamo solo se la sessione è scaduta a metà
+        // dell'uso dell'app, quando finora si credeva autenticati.
+        if (wasAuthenticated) {
+          useAuthStore.getState().logout();
+          const landingUrl = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:4000';
+          window.location.href = `${landingUrl}/auth/login`;
+        }
       }
 
       // Handle 403 Forbidden - Show permission denied toast

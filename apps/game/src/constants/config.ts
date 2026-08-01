@@ -51,19 +51,17 @@ export const WS_CONFIG = {
 /**
  * Authentication Configuration
  *
- * Configures authentication storage keys and session timeouts.
+ * Configures authentication storage keys and session timeout.
+ * L'auth reale è via cookie HttpOnly, non localStorage: USER_KEY è solo
+ * la chiave usata dal middleware `persist` di Zustand per authStore.
  *
- * @property {string} TOKEN_KEY - LocalStorage key for JWT access token
- * @property {string} REFRESH_TOKEN_KEY - LocalStorage key for refresh token
- * @property {string} USER_KEY - LocalStorage key for user data
+ * @property {string} USER_KEY - LocalStorage key per lo snapshot persistito di authStore
  * @property {number} SESSION_TIMEOUT - Session timeout duration in milliseconds (1 hour)
  *
  * @constant
  * @since 2.0.0
  */
 export const AUTH_CONFIG = {
-  TOKEN_KEY: 'tpn_auth_token',
-  REFRESH_TOKEN_KEY: 'tpn_refresh_token',
   USER_KEY: 'tpn_user',
   SESSION_TIMEOUT: 3600000,
 } as const;

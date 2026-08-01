@@ -17,6 +17,7 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import { forumApi } from '@/lib/api/forum';
+import { useAuthStore } from '@/store/authStore';
 import type { ForumPreferences, ForumReplyOrder, ForumUnreadSummary } from '@/types/forum';
 
 export const forumPreferenceKeys = {
@@ -68,12 +69,21 @@ export function useUpdateForumPreferences(): UseMutationResult<
  * Fetches the aggregate "bacheche con contenuti nuovi" summary, used to
  * render the unread badge on the forum button in the global navbar.
  *
+ * Il polling è attivo solo con sessione utente + personaggio validi
+ * (endpoint richiede entrambi): altrimenti genererebbe 401 in background
+ * ogni 2 minuti anche a sessione scaduta o prima che un personaggio sia
+ * selezionato.
+ *
  * @returns {UseQueryResult<ForumUnreadSummary>} Query result
  */
 export function useForumUnreadSummary(): UseQueryResult<ForumUnreadSummary, Error> {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasSelectedCharacter = useAuthStore((state) => !!state.selectedCharacter);
+
   return useQuery({
     queryKey: forumPreferenceKeys.unreadSummary(),
     queryFn: () => forumApi.getUnreadSummary(),
+    enabled: isAuthenticated && hasSelectedCharacter,
     staleTime: 60 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchInterval: 2 * 60 * 1000,
