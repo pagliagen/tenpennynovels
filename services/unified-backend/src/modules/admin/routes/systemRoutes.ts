@@ -10,23 +10,6 @@ const router = Router();
 // All system routes require admin access
 router.use(AdminAuthMiddleware.requireAdminAccess);
 
-// System configuration routes - require canConfigureSystem permission
-router.get(
-  '/config',
-  requireViewPermission('system.broadcast_messages'),
-  AdminAuthMiddleware.logAdminAction('view_system_config', 'system_configuration'),
-  SystemConfigController.getSystemConfig
-);
-
-router.patch(
-  '/config',
-  requireViewPermission('system.broadcast_messages'),
-  AdminAuthMiddleware.logAdminAction('system.config.update', 'system_configuration'),
-  autoLogOutcome,
-  AdminAuthMiddleware.sensitiveOperationLimit(),
-  SystemConfigController.updateSystemConfig
-);
-
 // Maintenance mode management
 router.post(
   '/maintenance',

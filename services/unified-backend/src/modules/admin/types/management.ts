@@ -307,29 +307,6 @@ export interface LocationAccessRules {
   allowedCorporations?: string[];
 }
 
-// System Configuration Types
-export interface SystemConfig {
-  gameSettings: GameSettings;
-  moderationSettings: ModerationSettings;
-  messageSettings: MessageSettings;
-  maintenanceMode: MaintenanceMode;
-}
-
-export interface GameSettings {
-}
-
-export interface ModerationSettings {
-  reportSystemEnabled: boolean;
-}
-
-export interface MessageSettings {
-  maxMessageLength: number;
-  messageEditTimeLimit: number;
-  messageHistoryRetention: number;
-  postalDeliveryEnabled: boolean;
-  postalDelaySimulation: boolean;
-}
-
 export interface MaintenanceMode {
   enabled: boolean;
   message: string;

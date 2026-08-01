@@ -610,8 +610,9 @@ export const useWizardStore = create<WizardStore>()(
        * @param bonusSkillId - Single bonus skill ID
        */
       applyOccupationBonuses: (requiredSkills, bonusSkill) => {
-        const { skills } = get();
+        const { skills, creationConfig } = get();
         const updatedSkills = { ...skills };
+        const bonusSkillPoints = creationConfig?.occupation?.bonusSkillPoints ?? 30;
 
         // Required skills: boost to 40 if < 40
         for (const skillName of requiredSkills) {
@@ -628,9 +629,9 @@ export const useWizardStore = create<WizardStore>()(
           }
         }
 
-        // Bonus skill: +30 points
+        // Bonus skill: configurable points (default 30)
         if (updatedSkills[bonusSkill]) {
-          updatedSkills[bonusSkill].occupationBonus = 30;
+          updatedSkills[bonusSkill].occupationBonus = bonusSkillPoints;
           updatedSkills[bonusSkill].total =
             updatedSkills[bonusSkill].base +
             updatedSkills[bonusSkill].requiredBonus +
@@ -670,8 +671,9 @@ export const useWizardStore = create<WizardStore>()(
           return;
         }
 
-        const { skills, stats } = get();
+        const { skills, stats, creationConfig } = get();
         const updatedSkills = { ...skills };
+        const defaultBonusSkillPoints = creationConfig?.occupation?.bonusSkillPoints ?? 30;
         let changesMade = false;
 
         const requiredPlaceholderSkills: string[] = [];
@@ -801,7 +803,7 @@ export const useWizardStore = create<WizardStore>()(
               currentSkill.base = resolvedBonusBase;
             }
 
-            const bonusValue = bonusSkill.bonusValue || 30;
+            const bonusValue = bonusSkill.bonusValue || defaultBonusSkillPoints;
             currentSkill.occupationBonus = bonusValue;
 
             // Recalculate total

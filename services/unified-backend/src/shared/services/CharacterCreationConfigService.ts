@@ -81,6 +81,7 @@ export interface CharacterCreationConfig {
     requiredSkillMinimum: number;
     requiredSkillCount: { min: number; max: number };
     bonusSkillCount: { min: number; max: number };
+    bonusSkillPoints: number;
     description: string;
   };
   limits: {
@@ -179,6 +180,7 @@ export class CharacterCreationConfigService {
         requiredSkillMinimum: configs['character_creation_occupation_required_skill_minimum'] || 40,
         requiredSkillCount: configs['character_creation_occupation_required_skill_count'] || { min: 6, max: 6 },
         bonusSkillCount: configs['character_creation_occupation_bonus_skill_count'] || { min: 1, max: 1 },
+        bonusSkillPoints: configs['character_creation_occupation_bonus_skill_points'] || 30,
         description: configs['character_creation_occupation_description'] || '',
       },
       limits: {
@@ -257,6 +259,7 @@ export class CharacterCreationConfigService {
       { key: 'character_creation_occupation_required_skill_minimum', value: config.occupation.requiredSkillMinimum },
       { key: 'character_creation_occupation_required_skill_count', value: config.occupation.requiredSkillCount },
       { key: 'character_creation_occupation_bonus_skill_count', value: config.occupation.bonusSkillCount },
+      { key: 'character_creation_occupation_bonus_skill_points', value: config.occupation.bonusSkillPoints },
       { key: 'character_creation_occupation_description', value: config.occupation.description },
       { key: 'character_creation_limits_age', value: config.limits.age },
       { key: 'character_creation_limits_weight', value: config.limits.weight },
@@ -670,6 +673,7 @@ export class CharacterCreationConfigService {
         requiredSkillMinimum: 40,
         requiredSkillCount: { min: 6, max: 6 },
         bonusSkillCount: { min: 1, max: 1 },
+        bonusSkillPoints: 30,
         description: 'Default occupation system'
       },
       limits: {

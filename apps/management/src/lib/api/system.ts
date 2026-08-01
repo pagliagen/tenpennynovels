@@ -28,14 +28,6 @@ export interface SystemConfigRecord {
   updatedAt: string;
 }
 
-export interface SystemConfig {
-  gameSettings: {
-  };
-  moderationSettings: {
-    reportSystemEnabled: boolean;
-  };
-}
-
 export interface AuditLog {
   id: string;
   timestamp: string;
@@ -106,24 +98,6 @@ export interface AuditLogResponse {
  * System API methods
  */
 export const systemAPI = {
-  /**
-   * Get system configuration
-   * GET /admin/system/config
-   */
-  getConfig: async (): Promise<SystemConfig> => {
-    const response = await api.get('/admin/system/config');
-    return response.data as SystemConfig;
-  },
-
-  /**
-   * Update system configuration
-   * PATCH /admin/system/config
-   */
-  updateConfig: async (updates: Partial<SystemConfig>): Promise<SystemConfig> => {
-    const response = await api.patch('/admin/system/config', updates);
-    return response.data as SystemConfig;
-  },
-
   /**
    * Get audit logs with pagination and filtering
    * GET /admin/system/audit-logs
