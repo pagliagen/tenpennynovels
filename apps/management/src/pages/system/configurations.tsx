@@ -13,6 +13,7 @@ const SECTION_LABELS: Record<string, string> = {
   moderation: 'Moderazione',
   postal_system: 'Posta',
   combat_system: 'Combattimento',
+  skill_check_system: 'Tiri (Abilità/Caratteristiche)',
   email_templates: 'Email',
   experience_system: 'Esperienza',
   housing_system: 'Abitazioni',

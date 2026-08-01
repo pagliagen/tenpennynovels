@@ -10,6 +10,7 @@
 
 import type { DiceService } from '../services/DiceService';
 import type { CharacterSkillService } from '../services/CharacterSkillService';
+import type { SuccessDegree } from '../utils/successDegrees';
 
 /**
  * Action types supported by the chat system
@@ -185,7 +186,7 @@ export interface ActionContext {
 
   // Utilities
   calculateSuccessDegree: any;
-  getSuccessDegreeLabel: any;
+  getSuccessDegreeLabel: (degree: SuccessDegree) => Promise<string>;
   calculateSocialConflict: any;
   getDefensiveSkill?: any;
 

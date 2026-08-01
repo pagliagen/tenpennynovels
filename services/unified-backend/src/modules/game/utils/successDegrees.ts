@@ -113,18 +113,25 @@ export function compareSuccessDegrees(
   return result1 < result2 ? 1 : result1 > result2 ? -1 : 0;
 }
 
+export const DEFAULT_SUCCESS_DEGREE_LABELS: Record<SuccessDegree, string> = {
+  critical: 'Successo Critico',
+  extreme: 'Successo Estremo',
+  hard: 'Successo Difficile',
+  normal: 'Successo',
+  failure: 'Fallimento',
+  fumble: 'Fallimento Critico'
+};
+
 /**
- * Get display text for success degree
+ * Get display text for success degree.
+ * Etichette configurabili da admin (system_configurations: skill_check_success_level_labels),
+ * valgono per qualsiasi tiro basato su abilità/caratteristica (skill check, stat check, combattimento).
+ * `customLabels` va recuperato a monte via ConfigurationService: questa funzione resta sincrona.
  */
-export function getSuccessDegreeLabel(degree: SuccessDegree): string {
-  const labels: Record<SuccessDegree, string> = {
-    critical: 'Successo Critico',
-    extreme: 'Successo Estremo',
-    hard: 'Successo Difficile',
-    normal: 'Successo',
-    failure: 'Fallimento',
-    fumble: 'Fallimento Critico'
-  };
-  return labels[degree];
+export function getSuccessDegreeLabel(
+  degree: SuccessDegree,
+  customLabels?: Partial<Record<SuccessDegree, string>> | null
+): string {
+  return customLabels?.[degree] ?? DEFAULT_SUCCESS_DEGREE_LABELS[degree];
 }
 

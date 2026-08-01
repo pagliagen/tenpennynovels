@@ -3008,6 +3008,23 @@ export class ChatController {
    */
   private static actionRouter: ActionRouter | null = null;
 
+  /**
+   * Etichette di successo configurabili da admin (skill_check_success_level_labels,
+   * sezione skill_check_system): valgono per qualsiasi tiro basato su abilità/caratteristica.
+   * Fallback silenzioso ai default se Redis/DB non rispondono: un tiro non deve fallire
+   * per un problema sulla configurazione delle etichette.
+   */
+  private static async getConfiguredSuccessDegreeLabel(degree: Parameters<typeof getSuccessDegreeLabel>[0]): Promise<string> {
+    try {
+      const configService = new ConfigurationService(redis.getClient(), logger);
+      const customLabels = await configService.getConfig('skill_check_success_level_labels');
+      return getSuccessDegreeLabel(degree, customLabels);
+    } catch (error) {
+      logger.warn('[ChatController] Failed to load skill_check_success_level_labels, using defaults', { error });
+      return getSuccessDegreeLabel(degree);
+    }
+  }
+
   private static getActionRouter(): ActionRouter {
     if (!ChatController.actionRouter) {
       const context: ActionContext = {
@@ -3022,7 +3039,7 @@ export class ChatController {
         CombatEncounter,
         GamingSession,
         calculateSuccessDegree,
-        getSuccessDegreeLabel,
+        getSuccessDegreeLabel: ChatController.getConfiguredSuccessDegreeLabel,
         calculateSocialConflict,
         getDefensiveSkill,
         requestId: '', // Will be set per-request if needed

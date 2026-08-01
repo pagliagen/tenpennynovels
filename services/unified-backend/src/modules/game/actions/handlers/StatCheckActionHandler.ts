@@ -76,7 +76,7 @@ export class StatCheckActionHandler extends BaseActionHandler {
 
     // Calculate success degree (BRP system)
     const successDegree = context.calculateSuccessDegree(rollResult.result, statValue);
-    const successLabel = context.getSuccessDegreeLabel(successDegree.degree);
+    const successLabel = await context.getSuccessDegreeLabel(successDegree.degree);
 
     // Build action data
     const actionData = this.buildBaseActionData(input);

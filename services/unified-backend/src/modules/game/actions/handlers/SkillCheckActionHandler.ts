@@ -80,7 +80,7 @@ export class SkillCheckActionHandler extends BaseActionHandler {
 
     // Calculate success degree (BRP system: critical, extreme, hard, normal, failure, fumble)
     const successDegree = context.calculateSuccessDegree(rollResult.result, skillValue);
-    const successLabel = context.getSuccessDegreeLabel(successDegree.degree);
+    const successLabel = await context.getSuccessDegreeLabel(successDegree.degree);
 
     // Build action data
     const actionData = this.buildBaseActionData(input);
