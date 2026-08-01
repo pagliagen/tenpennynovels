@@ -82,6 +82,9 @@ Motivo: un solo canale di deploy elimina il rischio di pubblicare per errore (pu
 
 **Sitemap lastmod**: `git log -1 --format=%cs > apps/landing/public/landing-sitemap-lastmod.txt` prima del rsync.
 
+**Sitemap generation**: step dedicato dopo "Build backend services" (serve `dist/scripts/generate-sitemap.js` già compilato) e prima del `prune --production`: `NODE_ENV=production node dist/scripts/generate-sitemap.js` in `services/unified-backend`. Fallimento non blocca il deploy (rete di sicurezza: cron 03:00). `apps/landing/public/sitemap.xml` e `apps/documents/public/sitemap.xml` sono esclusi da `--delete` in `.github/rsync-exclude.txt`: non stanno nel repo (generati a runtime da `SitemapService`), e senza l'esclusione rsync li cancellerebbe ad ogni deploy lasciando un 404 fino al cron successivo.
+**Incidente 2026-08-01** — proprio questo: mancava sia lo step pipeline sia l'esclusione rsync, `sitemap.xml` assente su entrambi i domini per ~9h dopo un deploy delle 12:29 fino al cron delle 03:00 del giorno dopo.
+
 **Secret richiesti**: `SSH_HOST`, `SSH_PORT`, `SSH_USERNAME`, `SSH_PRIVATE_KEY`, `HUGGINGFACE_TOKEN`, `DOCUMENTS_BUILD_BYPASS_SECRET`.
 
 ---

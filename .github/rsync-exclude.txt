@@ -108,5 +108,11 @@ Dockerfile
 .deps-hash
 .deploy-state
 
+# Runtime-generated sitemaps (written by SitemapService: deploy pipeline step
+# + daily 03:00 cron). Not in the repo — with --delete rsync would wipe them
+# on every deploy, causing a 404 until the next successful generation.
+apps/landing/public/sitemap.xml
+apps/documents/public/sitemap.xml
+
 # Local AI Folder
 local-ai/

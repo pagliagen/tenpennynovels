@@ -186,6 +186,30 @@ jobs:
             npm run build:backend:all
             echo "✅ Backend services built successfully"
 
+      - name: Generate sitemaps
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 2m
+          script: |
+            cd ~/tenpennynovels
+
+            # Load nvm and use correct Node version
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use
+
+            echo "🗺️  Generating sitemaps (landing + documents)..."
+            cd services/unified-backend
+            if NODE_ENV=production node dist/scripts/generate-sitemap.js; then
+              echo "✅ Sitemaps generated"
+            else
+              echo "⚠️  Sitemap generation failed — existing sitemap.xml (if any) left in place, daily 03:00 cron will retry"
+            fi
+
       - name: Cleanup development dependencies
         uses: appleboy/ssh-action@v1.0.3
         with:

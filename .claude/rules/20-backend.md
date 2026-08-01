@@ -81,7 +81,7 @@ Il cookie `character_context` è **deprecato**: usare `X-Session-Id`. Flusso com
 
 **Redis pub/sub** per la comunicazione cross-service (es. `embeddings:document:new` verso embeddings-worker).
 
-**CRON**: generazione sitemap (giornaliera 03:00 + all'avvio), cleanup presenze (ogni 5 min, dietro feature flag).
+**CRON**: generazione sitemap (giornaliera 03:00, `node-cron`, **nessun run all'avvio** del processo — non fidarsi di versioni precedenti di questa rule). Rigenerata anche ad ogni deploy dalla pipeline, vedi `40-workflow.md`. Cleanup presenze: ogni 5 min, dietro feature flag.
 
 **Debito tecnico**: `ChatController.ts` è ~2900 righe e accorpa invio messaggi, editing, allegati, notifiche, broadcast e pub/sub. Modificarlo con cautela e testare a fondo: alto accoppiamento. Da splittare.
 
