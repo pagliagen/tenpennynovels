@@ -2,7 +2,6 @@ import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 import { logger } from '../utils/logger';
-import { FTPSyncService } from './FTPSyncService';
 import { appConfig } from '@config/runtime';
 
 export type CDNEntityType = 'locations' | 'items' | 'characters' | 'occupations';
@@ -42,12 +41,10 @@ const MIME_TO_EXT: Record<string, string> = {
 class CDNServiceImpl {
   private storagePath: string;
   private baseUrl: string;
-  private ftpSync: FTPSyncService;
 
   constructor() {
     this.storagePath = appConfig.cdn.storagePath;
     this.baseUrl = appConfig.cdn.baseUrl;
-    this.ftpSync = new FTPSyncService();
   }
 
   async processAndUpload(
@@ -79,9 +76,6 @@ class CDNServiceImpl {
 
     logger.info(`CDN: uploaded ${type}/${entityId}/${filename} (${file.buffer.length} bytes)`);
 
-    const remoteDirPath = `${type}/${entityId}`;
-    await this.ftpSync.uploadFile(`${remoteDirPath}/${filename}`, filePath);
-
     return {
       url: `${this.baseUrl}/${type}/${entityId}/${filename}`,
       hash,
@@ -103,8 +97,6 @@ class CDNServiceImpl {
       if (err.code !== 'ENOENT') throw err;
       logger.warn(`CDN: file not found locally ${type}/${entityId}/${filename}`);
     }
-
-    await this.ftpSync.deleteFile(`${type}/${entityId}/${filename}`);
   }
 
   async listImages(type: CDNEntityType, entityId: string): Promise<CDNFileInfo[]> {

@@ -23,9 +23,6 @@ export function validateEnvironment(): EnvValidationResult {
     if (!appConfig.services.aiGateway.apiKey) missing.push('AI_GATEWAY_API_KEY');
     if (!appConfig.services.aiGateway.hmacSecret) missing.push('AI_GATEWAY_HMAC_SECRET');
     if (!appConfig.services.aiGateway.webhookSecret) missing.push('AI_GATEWAY_WEBHOOK_SECRET');
-    if (!appConfig.cdn.ftp.host) missing.push('CDN_FTP_HOST');
-    if (!appConfig.cdn.ftp.user) missing.push('CDN_FTP_USER');
-    if (!appConfig.cdn.ftp.password) missing.push('CDN_FTP_PASSWORD');
     if (!appConfig.systemBotUserId) missing.push('SYSTEM_BOT_USER_ID');
   } else {
     if (appConfig.db.redisUrl === 'redis://localhost:6379') {
@@ -49,7 +46,6 @@ export function validateEnvironment(): EnvValidationResult {
     bindHost: appConfig.bindHost,
     cookieDomain: appConfig.cookie.domain,
     emailMock: appConfig.features.emailMock,
-    ftpEnabled: appConfig.cdn.ftp.enabled,
   });
 
   return { isValid, missing, warnings };

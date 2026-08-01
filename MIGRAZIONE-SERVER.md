@@ -12,7 +12,7 @@ L'hosting Serverplan scade il **18 agosto 2026** — è il trigger per chiudere 
 >
 > **Downtime del sito accettabile** (non ancora aperto al pubblico) — ma attenzione: downtime e perdita del dominio sono due rischi diversi. Anche con DNS su Cloudflare, se la registrazione scade a Serverplan il dominio smette di essere vostro e il DNS altrove diventa irrilevante. Il limite del 18 agosto resta comunque.
 >
-> **Deciso**: andare dritti al trasferimento del registrar verso Cloudflare invece di rinnovare a Serverplan — un trasferimento riuscito estende la registrazione di un anno (regola ICANN), quindi se completato in tempo si evita anche il costo del rinnovo Serverplan. Codice di autorizzazione/EPP **già in mano** — nessuna attesa su Serverplan per quello, si parte direttamente dal passo 1 sotto.
+> **Deciso il 01/08/2026 — ribaltato**: niente transfer-in del registrar verso Cloudflare. Serverplan ha offerto un pacchetto di rinnovo conveniente per `tenpennynovels.com`, si rinnova lì. Il DNS **resta** su Cloudflare (già fatto, nessuna azione), cambia solo che il registrar non si sposta. Codice EPP non serve più.
 
 ---
 
@@ -293,8 +293,8 @@ Tabella riverificata via `whois` + `dig` il **28/07/2026** — due voci erano in
 - [ ] Esportare/fotografare la zona DNS attuale di tenpennynovels.com su Serverplan (record A, MX, TXT) come backup
 - [x] ~~Confermare se il 18 agosto è la scadenza solo dell'hosting o anche della registrazione del dominio~~ — **confermato: sono bundle, viaggiano insieme**
 - [x] ~~Aggiungere tenpennynovels.com a Cloudflare, cambiare nameserver~~ — **fatto**, verificato via `dig` il 28/07: i NS sono `elma`/`rayden.ns.cloudflare.com`
-- [ ] Avviare transfer-in della registrazione su Cloudflare Registrar (codice EPP già disponibile) — **l'unica cosa ancora aperta sul dominio**, il registrar è ancora Server Plan Srl
-- [ ] Checkpoint 8-10 agosto: se il transfer non è concluso, rinnovo/declassamento di sicurezza a Serverplan
+- [x] ~~Avviare transfer-in della registrazione su Cloudflare Registrar~~ — **deciso il 01/08: non si fa**, si rinnova il pacchetto Serverplan
+- [ ] Confermare/pagare il rinnovo del pacchetto Serverplan **prima del 18/08/2026** (registrar + hosting bundle, anche se l'hosting resta inutilizzato)
 - [ ] Declassare a "solo registrazione" su Serverplan **il solo `misteryinvestigation.it`** — è l'unico altro dominio rimasto lì (thekeeperarchive.it è passato a Register, i due `.me` sono già su Register)
 
 ### Deadline dimenticata: 15-16 ottobre 2026
@@ -306,9 +306,11 @@ Tabella riverificata via `whois` + `dig` il **28/07/2026** — due voci erano in
 - [ ] Cutover di MysteryInvestigation su Server 2 **entro inizio ottobre**, non a ridosso
 - [ ] Decidere se tenere i vecchi domini un ciclo in più *solo* per fare 301 verso i nuovi (costo di un rinnovo contro la perdita di link e indicizzazione) — se sì, il rinnovo va fatto **prima** del 15 ottobre, non dopo
 
-### La domanda di oggi: spostare la registrazione su Cloudflare Registrar?
+### Spostare la registrazione su Cloudflare Registrar? — **No, deciso il 01/08/2026**
 
-Verificato ora contro la lista ufficiale dei TLD supportati (cloudflare.com/tld-policies):
+Serverplan ha offerto un pacchetto di rinnovo conveniente per `tenpennynovels.com`: si rinnova lì invece di trasferire il registrar. Sezione sotto lasciata come riferimento storico (perché si era arrivati a considerarlo), ma la sequenza descritta **non si esegue più**.
+
+Verificato allora contro la lista ufficiale dei TLD supportati (cloudflare.com/tld-policies):
 
 | TLD | Supportato da Cloudflare Registrar? |
 |---|---|
@@ -330,13 +332,13 @@ Verificato ora contro la lista ufficiale dei TLD supportati (cloudflare.com/tld-
 - Tempi tipici di trasferimento: 5-7 giorni lavorativi, a volte di più se il registrar cedente rallenta o serve recuperare il codice EPP/auth
 - Se il dominio è stato trasferito o rinnovato negli ultimi 60 giorni, ICANN blocca un nuovo trasferimento — da controllare caso per caso
 
-**Sequenza decisa** (codice EPP/auth già disponibile, quindi si salta l'attesa su Serverplan):
+**Sequenza precedente (superata il 01/08, lasciata come storico)**:
 
-1. **Ora**: aggiungere tenpennynovels.com a Cloudflare, cambiare i nameserver lì (stesso passo già necessario per il CDN — vedi runbook)
-2. **Appena il DNS risulta attivo su Cloudflare** (in genere ore): avviare il transfer-in della registrazione con il codice EPP già in mano
-3. **Checkpoint di sicurezza all'8-10 agosto**: se il trasferimento non si è ancora concluso, rinnovo/declassamento veloce a Serverplan come rete di sicurezza — resta comunque una settimana di margine prima della scadenza reale
+1. ~~Aggiungere tenpennynovels.com a Cloudflare, cambiare i nameserver lì~~ — fatto, resta valido (il DNS resta su Cloudflare a prescindere dal registrar)
+2. ~~Avviare il transfer-in della registrazione con il codice EPP~~ — **non si fa più**
+3. ~~Checkpoint di sicurezza all'8-10 agosto: rinnovo/declassamento a Serverplan~~ — **diventato il piano definitivo**, non più solo rete di sicurezza
 
-**Stato (26/07)**: dominio aggiunto a Cloudflare, record DNS verificati e completati (aggiunti `documenti` e `gestione`, mancanti dallo scan automatico), tenuto tutto "DNS only" di proposito. Cambio nameserver richiesto via ticket Serverplan (non self-service per domini con hosting bundle) — in attesa di conferma.
+**Stato (01/08)**: dominio già su Cloudflare DNS (nameserver `elma`/`rayden.ns.cloudflare.com`), record DNS verificati e completati (aggiunti `documenti` e `gestione`, mancanti dallo scan automatico), tenuto tutto "DNS only" di proposito. Registrar resta Serverplan: pacchetto di rinnovo conveniente accettato, nessun transfer-in in corso.
 
 `gennaropaglia.me` e i due `.it` restano fuori dal runbook CDN (girano/gireranno su "server 2", non hanno bisogno del trattamento riservato a tenpennynovels.com).
 
@@ -344,7 +346,7 @@ Verificato ora contro la lista ufficiale dei TLD supportati (cloudflare.com/tld-
 
 ## Riepilogo decisioni aperte
 
-1. **Urgente**: ~~conferma cambio nameserver da Serverplan (ticket aperto)~~ — **fatto, verificato il 28/07: i NS di tenpennynovels.com sono su Cloudflare**. Resta il transfer-in del registrar (EPP già in mano, registrar ancora Server Plan Srl, dominio in scadenza 18/08/2026) → checkpoint 8-10 agosto con rinnovo Serverplan come rete di sicurezza se serve
+1. **Urgente**: ~~conferma cambio nameserver da Serverplan (ticket aperto)~~ — **fatto, verificato il 28/07: i NS di tenpennynovels.com sono su Cloudflare**. ~~Transfer-in del registrar~~ — **deciso il 01/08: non si fa**, si rinnova il pacchetto Serverplan (registrar + hosting bundle) prima del 18/08/2026
 2. Verificare mailbox `@tenpennynovels.com` su Serverplan prima di lasciare andare l'hosting lì (confermato attivo: MX, SPF, DKIM, CalDAV/CardDAV)
 3. Verificare email/dipendenze su misteryinvestigation.it, thekeeperarchive.it, gennaropaglia.me prima di lasciarli scadere — **ora c'è una data: 15/10/2026 (mystery) e 16/10/2026 (gennaropaglia)**, vedi "Deadline dimenticata" nella sezione Domini. `thekeeperarchive.it` invece è al sicuro fino al 17/07/2027
 4. thekeeperarchive.it: se il bot è ancora in uso, aggiornare webhook/callback prima del cambio dominio
@@ -356,4 +358,8 @@ Verificato ora contro la lista ufficiale dei TLD supportati (cloudflare.com/tld-
 10. ~~MongoDB senza autenticazione~~ — **deciso: auth obbligatoria su entrambi i database/server nuovi**, non rimandabile
 11. **Ancora aperto**: rinominare il processo PM2 `keeper-bot` per farlo coincidere con la cartella sorgente `poc/discord-bot` (non è un duplicato, solo un nome disallineato — chiarito il 26/07)
 12. **Ancora aperto**: cosa serve `poc.thekeeperarchive.it` — non ancora ispezionato, verificare prima di decidere se migrarlo
-13. **In sospeso, non dimenticare**: attivare il proxy Cloudflare (orange cloud) su `tenpennynovels.com` e sui nuovi domini di Server 2 — oggi tutto "DNS only", IP origine pubblicamente scopribile via DNS. Rimandato di proposito a **dopo** il transfer-in del registrar (previsto la settimana del 03/08) e dopo la verifica finale del cutover — un rischio alla volta. Richiede due prerequisiti prima dello switch, non opzionali: (a) `ngx_http_realip_module` configurato su nginx, altrimenti fail2ban/rate-limit per IP/allowlist su `gestione.` si rompono silenziosamente vedendo solo gli IP edge di Cloudflare; (b) verifica reale (non assunta) che il rinnovo certbot HTTP-01 funzioni ancora col proxy attivo. Dettagli tecnici già pronti, discussi ma non ancora scritti nei runbook — vedi conversazione del 27/07.
+13. **In sospeso, non dimenticare**: attivare il proxy Cloudflare (orange cloud) su `tenpennynovels.com` e sui nuovi domini di Server 2 — oggi tutto "DNS only", IP origine pubblicamente scopribile via DNS (confermato via `dig`/`curl` il 01/08: nessun header Cloudflare, risolve diretto a `51.83.47.109`). Il motivo per cui era rimandato (attesa del transfer-in del registrar) **non c'è più** — deciso il 01/08 di non fare il transfer-in — ma restano due prerequisiti tecnici non opzionali prima dello switch: (a) `ngx_http_realip_module` configurato su nginx, altrimenti fail2ban/rate-limit per IP/allowlist su `gestione.` si rompono silenziosamente vedendo solo gli IP edge di Cloudflare; (b) verifica reale (non assunta) che il rinnovo certbot HTTP-01 funzioni ancora col proxy attivo. Dettagli tecnici già discussi ma non ancora scritti nei runbook — vedi conversazione del 27/07. Da fare anche: impostare SSL/TLS mode su "Full (strict)" contestualmente all'attivazione del proxy.
+
+**Aggiornamento 01/08/2026 — CDN spostato da Serverplan a OVH.** Deciso: `cdn.tenpennynovels.com` non resta più su Serverplan via FTP sync. `unified-backend` scrive già le immagini localmente su OVH (`/var/www/cdn-cache/`) prima di qualunque sync — si è eliminata la sync stessa (codice: rimossi `FTPSyncService`, dipendenza `basic-ftp`, variabili `CDN_FTP_*`) e si serve `cdn.*` direttamente da nginx sulla VPS OVH, con Cloudflare (orange cloud) davanti per l'edge caching (contenuto content-addressed/immutabile, candidato ideale). Dettagli e nginx config target: `deploy/docs/07-cdn-setup.md`.
+
+**Nota temporale**: il server OVH attuale è in corso di sostituzione (OVH sta migrando a un nuovo host, in attesa di risposta) — verrà "brutalizzato" e riconfigurato da zero. La configurazione nginx per `cdn.*` va quindi applicata **sul nuovo server**, non su quello attuale: il codice è già pulito (nessuna dipendenza da FTP/Serverplan), ma il pezzo infrastrutturale (nginx + DNS A record `cdn` -> nuovo IP + eventuale proxy Cloudflare) resta da fare al momento del provisioning.

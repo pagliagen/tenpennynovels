@@ -1,8 +1,10 @@
 # CDN Service - Setup & Deployment
 
+> **Aggiornato 01/08/2026**: rimossa la sync FTP verso Serverplan (`FTPSyncService`, dipendenza `basic-ftp`, `CDN_FTP_*`). Le immagini vengono servite direttamente dalla VPS OVH — vedi "Architettura" e "Setup produzione" sotto. Il server OVH attuale è in corso di migrazione verso un nuovo host (in attesa di risposta OVH): la sezione "Setup produzione" descrive la configurazione **target**, da applicare quando il nuovo server viene provisionato/riconfigurato, non lo stato del vecchio server condiviso.
+
 ## Architettura
 
-L'upload delle immagini e gestito dall'**unified-backend** tramite il modulo CDN integrato (`CDNService`, `FTPSyncService`, `CDNController`).
+L'upload delle immagini e gestito dall'**unified-backend** tramite il modulo CDN integrato (`CDNService`, `CDNController`).
 
 Le immagini vengono salvate nel formato originale (JPEG, PNG, WebP, GIF) senza alcun processing server-side.
 Il naming usa un hash SHA256 del contenuto (12 caratteri) per content-addressable storage.
@@ -33,7 +35,7 @@ GET http://localhost:8000/cdn/locations/{id}/{hash}.png
 - `CDN_FTP_ENABLED=false` - nessun FTP in locale
 - Le immagini sono servite da api-gateway su `/cdn/*`
 
-### Produzione (OVH VPS + Serverplan)
+### Produzione (OVH VPS, serving diretto)
 
 ```
 Management UI (gestione.tenpennynovels.com)
@@ -42,21 +44,23 @@ Management UI (gestione.tenpennynovels.com)
     v
 unified-backend (OVH VPS :3001)
     |
-    | Salvataggio locale + FTP sync
+    | Salvataggio locale
     v
-/var/www/cdn-cache/ (cache locale OVH)
+/var/www/cdn-cache/ (storage reale, non piu' "cache")
     |
-    | FTP sync (basic-ftp con retry)
-    v
-Serverplan (hosting condiviso)
-    |
-    | Apache serve i file
+    | nginx serve /var/www/cdn-cache/ come document root
     v
 https://cdn.tenpennynovels.com/locations/{id}/{hash}.png
+    |
+    | proxy Cloudflare (orange cloud) davanti a cdn.*
+    v
+edge cache Cloudflare (contenuto immutabile/content-addressed: candidato ideale per "cache everything")
 ```
 
-- OVH salva i file localmente come cache e li sincronizza via FTP su Serverplan
-- `cdn.tenpennynovels.com` e servito da Serverplan (Apache)
+- OVH salva i file localmente in `/var/www/cdn-cache/` ed e' l'unica copia (nessuna sync verso Serverplan)
+- `cdn.tenpennynovels.com` e' servito direttamente da nginx sulla stessa VPS OVH dell'app
+- Consigliato: `cdn.tenpennynovels.com` dietro proxy Cloudflare (orange cloud), a differenza degli altri sottodomini che restano DNS-only finche' non si completa il rollout (vedi `MIGRAZIONE-SERVER.md`) — riduce il traffico verso l'origin quasi a zero dopo il warm-up
+- Backup: coperto dal backup automatico della VPS OVH, stesso meccanismo usato per MongoDB — nessuna copia ridondante dedicata
 
 ## Struttura cartelle
 
@@ -111,110 +115,70 @@ curl -X POST https://api.tenpennynovels.com/admin/cdn/upload \
 Il setup locale funziona automaticamente con `docker compose up`. Il `docker-compose.yml` configura:
 
 - Volume `cdn_storage` condiviso
-- Variabili `CDN_STORAGE_PATH=/cdn-storage`, `CDN_BASE_URL=http://localhost:8000/cdn`, `CDN_FTP_ENABLED=false`
+- Variabili `CDN_STORAGE_PATH=/cdn-storage`, `CDN_BASE_URL=http://localhost:8000/cdn`
 - api-gateway serve `/cdn/*` tramite `express.static`
 - CORS CDN limitato a `GAME_URL` e `MANAGEMENT_URL`
 
-## Setup produzione
+## Setup produzione (target — da applicare sul nuovo server OVH quando provisionato)
 
-### 1. Configurazione Serverplan
+> Il server OVH attuale sta per essere sostituito da OVH con uno nuovo (migrazione in corso, in attesa di conferma). Questi passi vanno eseguiti da zero sul server nuovo, non sono ancora applicati oggi.
 
-1. **Crea sottodominio `cdn.tenpennynovels.com`**:
-   - Pannello Serverplan -> Domini -> Sottodomini
-   - Punta a una directory dedicata (es. `/httpdocs/cdn/` o `/subdomains/cdn/`)
-   - Annota il path root (serve per `CDN_FTP_BASE_PATH`)
+### 1. Directory di storage
 
-2. **Abilita SSL**:
-   - Pannello Serverplan -> SSL -> Let's Encrypt
-   - Attiva per `cdn.tenpennynovels.com`
-
-3. **Configura `.htaccess`** nella root del sottodominio:
-
-```apache
-<IfModule mod_headers.c>
-    # CORS: solo game e gestionale possono caricare le immagini
-    SetEnvIf Origin "https://game\.tenpennynovels\.com$" CORS_ORIGIN=$0
-    SetEnvIf Origin "https://gestione\.tenpennynovels\.com$" CORS_ORIGIN=$0
-
-    Header set Access-Control-Allow-Origin "%{CORS_ORIGIN}e" env=CORS_ORIGIN
-    Header set Access-Control-Allow-Methods "GET, HEAD, OPTIONS" env=CORS_ORIGIN
-    Header set Vary "Origin"
-
-    Header set X-Content-Type-Options "nosniff"
-
-    <FilesMatch "\.(webp|jpg|jpeg|png|gif)$">
-        Header set Cache-Control "public, immutable, max-age=31536000"
-    </FilesMatch>
-</IfModule>
-
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule /\. - [F,L]
-</IfModule>
-
-Options -Indexes
-AddType image/webp .webp
+```bash
+sudo mkdir -p /var/www/cdn-cache/{locations,items,characters,occupations}
+sudo chown -R ubuntu:ubuntu /var/www/cdn-cache
 ```
 
-4. **Crea credenziali FTP dedicate**:
-   - Pannello Serverplan -> FTP -> Crea utente FTP
-   - Utente: `cdn_upload`, path root: directory del sottodominio cdn
-   - Password sicura (minimo 24 caratteri)
-
-5. **Crea struttura cartelle iniziale** (via FTP o pannello):
-
-```
-mkdir locations
-mkdir items
-mkdir characters
-```
-
-### 2. Configurazione OVH VPS
-
-1. **Variabili d'ambiente** (file `.env` unified-backend):
+### 2. Variabili d'ambiente (file `.env` unified-backend)
 
 ```bash
 CDN_STORAGE_PATH=/var/www/cdn-cache
 CDN_BASE_URL=https://cdn.tenpennynovels.com
-CDN_FTP_ENABLED=true
-CDN_FTP_HOST=ftp.tenpennynovels.com
-CDN_FTP_PORT=21
-CDN_FTP_USER=cdn_upload
-CDN_FTP_PASSWORD=xxx
-CDN_FTP_BASE_PATH=/
-CDN_FTP_SECURE=true
 ```
 
-2. **Crea directory cache locale**:
+Nessuna variabile `CDN_FTP_*`: rimossa insieme al codice il 01/08/2026 (era la sync verso Serverplan, non più in uso).
 
-```bash
-sudo mkdir -p /var/www/cdn-cache
-sudo chown -R ubuntu:ubuntu /var/www/cdn-cache
+### 3. Configurazione nginx — nuovo `server{}` block per `cdn.tenpennynovels.com`
+
+Equivalente delle regole che erano nell'`.htaccess` Serverplan (CORS scoped a game/gestione, cache immutabile, niente directory listing):
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name cdn.tenpennynovels.com;
+
+    root /var/www/cdn-cache;
+    autoindex off;
+
+    # SSL gestito da certbot (vedi 40-workflow.md per il rinnovo dietro proxy Cloudflare)
+
+    location ~ \.(webp|jpg|jpeg|png|gif)$ {
+        add_header Cache-Control "public, immutable, max-age=31536000" always;
+        add_header X-Content-Type-Options "nosniff" always;
+
+        set $cors_origin "";
+        if ($http_origin ~* ^https://(game|gestione)\.tenpennynovels\.com$) {
+            set $cors_origin $http_origin;
+        }
+        add_header Access-Control-Allow-Origin $cors_origin always;
+        add_header Access-Control-Allow-Methods "GET, HEAD, OPTIONS" always;
+        add_header Vary "Origin" always;
+
+        try_files $uri =404;
+    }
+
+    location / {
+        return 404;
+    }
+}
 ```
 
-3. **Variabili api-gateway** (file `.env` api-gateway):
+### 4. DNS
 
-```bash
-# Percorso locale per servire file CDN come fallback
-CDN_STORAGE_PATH=/var/www/cdn-cache
-```
+A record `cdn` -> IP del nuovo server OVH (sostituisce il vecchio puntamento a Serverplan). Consigliato attivare da subito il proxy Cloudflare (orange cloud) solo su questo sottodominio — contenuto content-addressed/immutabile, candidato ideale per l'edge cache (vedi `MIGRAZIONE-SERVER.md`, punto 13 del riepilogo).
 
-4. **Script di re-sync** (cron su OVH, ogni ora):
-
-```bash
-# /opt/scripts/cdn-resync.sh
-lftp -u cdn_upload,PASSWORD ftp://ftp.tenpennynovels.com -e "
-  mirror --reverse --only-newer /var/www/cdn-cache /
-  exit
-"
-```
-
-```bash
-# Crontab
-0 * * * * /opt/scripts/cdn-resync.sh >> /var/log/cdn-resync.log 2>&1
-```
-
-### 3. Test end-to-end
+### 5. Test end-to-end
 
 ```bash
 # Upload
@@ -224,10 +188,10 @@ curl -X POST https://api.tenpennynovels.com/admin/cdn/upload \
   -F "type=locations" \
   -F "entityId=507f1f77bcf86cd799439011"
 
-# Verifica su Serverplan
+# Verifica servita da nginx sulla stessa VPS
 curl -I https://cdn.tenpennynovels.com/locations/507f.../HASH.jpg
 
-# Verifica cache locale OVH
+# Verifica file locale
 ls -la /var/www/cdn-cache/locations/507f.../
 ```
 
@@ -236,7 +200,6 @@ ls -la /var/www/cdn-cache/locations/507f.../
 | File | Descrizione |
 |------|-------------|
 | `services/unified-backend/src/modules/admin/services/CDNService.ts` | Storage locale, hash naming, validazione MIME |
-| `services/unified-backend/src/modules/admin/services/FTPSyncService.ts` | Sync FTP condizionale verso Serverplan |
 | `services/unified-backend/src/modules/admin/controllers/CDNController.ts` | Endpoint REST upload/delete/list |
 | `services/unified-backend/src/modules/admin/routes/cdnRoutes.ts` | Route con permessi admin |
 | `apps/management/src/components/shared/ImageUploader.tsx` | Componente drag-and-drop upload |
@@ -248,20 +211,11 @@ ls -la /var/www/cdn-cache/locations/507f.../
 |-----------|------|-----|------|
 | `CDN_STORAGE_PATH` | unified-backend, api-gateway | `/cdn-storage` | `/var/www/cdn-cache` |
 | `CDN_BASE_URL` | unified-backend | `http://localhost:8000/cdn` | `https://cdn.tenpennynovels.com` |
-| `CDN_FTP_ENABLED` | unified-backend | `false` | `true` |
-| `CDN_FTP_HOST` | unified-backend | - | `ftp.tenpennynovels.com` |
-| `CDN_FTP_PORT` | unified-backend | - | `21` |
-| `CDN_FTP_USER` | unified-backend | - | `cdn_upload` |
-| `CDN_FTP_PASSWORD` | unified-backend | - | `xxx` |
-| `CDN_FTP_BASE_PATH` | unified-backend | - | `/` |
-| `CDN_FTP_SECURE` | unified-backend | - | `true` |
 
 ## Troubleshooting
 
 **Upload fallisce con "File too large"**: aumentare `MAX_FILE_SIZE` in `CDNController.ts` e `client_max_body_size` in Nginx (prod).
 
-**FTP fallisce**: i file restano nella cache locale OVH. Lo script di re-sync (cron) ritenta automaticamente. Controllare i log: `tail -f /var/log/cdn-resync.log`.
-
-**Immagine non visibile**: verificare che il volume `cdn_storage` sia montato correttamente su api-gateway (locale) o che l'FTP abbia caricato il file su Serverplan (prod).
+**Immagine non visibile**: verificare che il volume `cdn_storage` sia montato correttamente su api-gateway (locale) o che nginx punti alla root corretta e abbia i permessi su `/var/www/cdn-cache` (prod).
 
 **CORS errore in dev**: verificare che `GAME_URL` e `MANAGEMENT_URL` siano configurati correttamente in `docker-compose.yml` per l'api-gateway. Le origin CDN sono prese da queste variabili.

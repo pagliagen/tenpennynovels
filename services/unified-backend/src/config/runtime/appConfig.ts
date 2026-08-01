@@ -85,15 +85,6 @@ export const appConfig = {
   cdn: {
     storagePath: process.env.CDN_STORAGE_PATH || '/cdn-storage',
     baseUrl: isProduction ? 'https://cdn.tenpennynovels.com' : 'http://localhost:8000/cdn',
-    ftp: {
-      enabled: isProduction,
-      host: process.env.CDN_FTP_HOST,
-      port: 21,
-      user: process.env.CDN_FTP_USER,
-      password: process.env.CDN_FTP_PASSWORD,
-      secure: isProduction,
-      basePath: '/',
-    },
   },
 
   smtp: {

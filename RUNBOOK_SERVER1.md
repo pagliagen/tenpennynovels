@@ -348,10 +348,10 @@ Per ciascun `.env.production` creato (`apps/{landing,game,documents,management}`
 chmod 600 apps/*/.env.production services/*/.env.production
 ```
 
-**CDN**: `unified-backend.env` include `CDN_FTP_HOST=ftp.tenpennynovels.com` con credenziali verso **Serverplan** — è una dipendenza reale e voluta (architettura documentata in `deploy/docs/07-cdn-setup.md`: OVH fa da cache locale + sync FTP, Serverplan/Apache serve `cdn.tenpennynovels.com` pubblicamente). Finché non si decide di spostare anche questo pezzo, il nuovo Server 1 deve avere le stesse credenziali FTP funzionanti verso Serverplan, altrimenti l'upload immagini smette di sincronizzarsi (resta in cache locale, vedi troubleshooting in quel doc).
+**CDN — aggiornato 01/08/2026, cambia rispetto al vecchio server**: niente più sync FTP verso Serverplan (`FTPSyncService`/`basic-ftp`/`CDN_FTP_*` rimossi dal codice). `unified-backend.env` ha solo `CDN_STORAGE_PATH`/`CDN_BASE_URL`. Le immagini vanno servite direttamente da questo server via nginx — aggiungi il `server{}` block per `cdn.tenpennynovels.com` documentato in `deploy/docs/07-cdn-setup.md` (nuova sezione "Setup produzione") e punta il DNS `cdn` al nuovo IP invece che a Serverplan.
 
 ```bash
-sudo mkdir -p /var/www/cdn-cache
+sudo mkdir -p /var/www/cdn-cache/{locations,items,characters,occupations}
 sudo chown -R ubuntu:ubuntu /var/www/cdn-cache
 ```
 
