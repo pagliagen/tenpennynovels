@@ -33,12 +33,14 @@ const servicesWriteLimiter = rateLimit({
 
 // Economy routes (require character auth)
 router.get('/economy/general-store',
+  servicesReadLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:shops:list'),
   EconomyController.getGeneralStore
 );
 
 router.get('/economy/shops/:locationSlug',
+  servicesReadLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:shops:read'),
   EconomyController.getShopItems
