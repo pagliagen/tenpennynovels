@@ -344,6 +344,7 @@ export class LocationController {
 
       // Update character location
       character.currentLocation = locationId;
+      character.lastActive = new Date();
       await character.save();
 
       // Add to location occupants

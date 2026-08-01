@@ -9,10 +9,10 @@ import { getConnection } from '../utils/connection.js';
 import * as bcrypt from 'bcryptjs';
 
 const ADMIN_ACCOUNTS = [
-  { username: 'admin', email: 'gennaro.paglia@gmail.com', password: 'admin123', displayName: 'System Administrator' },
-  { username: 'tibbi', email: 'gdrplayer89@gmail.com', password: 'tibbi', displayName: 'Tibbi' },
-  { username: 'susi', email: 'tenpennynovels@gmail.com', password: 'susi', displayName: 'Susanna' },
-  { username: 'linda', email: 'sonolindanegrini@gmail.com', password: 'linda', displayName: 'Linda' }
+  { username: 'admin', email: 'gennaro.paglia@gmail.com', password: 'admin123', displayName: 'System Administrator', isGestore: true },
+  { username: 'tibbi', email: 'gdrplayer89@gmail.com', password: 'tibbi', displayName: 'Tibbi', isGestore: false },
+  { username: 'susi', email: 'tenpennynovels@gmail.com', password: 'susi', displayName: 'Susanna', isGestore: false },
+  { username: 'linda', email: 'sonolindanegrini@gmail.com', password: 'linda', displayName: 'Linda', isGestore: false }
 ];
 
 async function seedUsers() {
@@ -66,7 +66,7 @@ async function seedUsers() {
         passwordHash: await bcrypt.hash(admin.password, 12),
         displayName: admin.displayName,
         isEmailVerified: true,
-        canAccessAdminPanel: true,
+        canAccessAdminPanel: admin.isGestore,
         isActive: true,
         isBanned: false,
         multipleCharactersAllowed: false,
@@ -97,8 +97,8 @@ async function seedUsers() {
         userId: userResult.insertedId,
         name: admin.displayName || admin.username,
         playerStatus: 'approved',
-        canAccessAdminPanel: true,
-        isGestore: true,
+        canAccessAdminPanel: admin.isGestore,
+        isGestore: admin.isGestore,
         gameplayRoles: ['master'],
         characterPermissions: [],
         adminPermissions: [],
@@ -141,7 +141,7 @@ async function seedUsers() {
         approvedBy: userResult.insertedId,
         approvedByName: 'System'
       });
-      console.log(`   ✓ Created admin character: ${admin.displayName || admin.username} (isGestore=true)`);
+      console.log(`   ✓ Created admin character: ${admin.displayName || admin.username} (isGestore=${admin.isGestore})`);
     }
 
     // Test user
