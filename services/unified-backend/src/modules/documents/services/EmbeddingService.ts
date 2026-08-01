@@ -162,6 +162,25 @@ export class EmbeddingService {
   }
 
   /**
+   * Risposta AI del Bibliotecario legata al servizio AI, non gestito dal
+   * server al momento. Config keeper_qa_enabled (sezione ai_features),
+   * default OFF: la ricerca documenti resta sempre attiva, solo questa
+   * generazione di risposte si disattiva.
+   */
+  static async isKeeperQaEnabled(): Promise<boolean> {
+    try {
+      const { ConfigurationService } = await import('@shared/services/ConfigurationService');
+      const { redis } = await import('@config/runtime/redis');
+      const configService = new ConfigurationService(redis.getClient(), logger);
+      const enabled = await configService.getConfig('keeper_qa_enabled');
+      return !!enabled;
+    } catch (error: unknown) {
+      logger.warn('[EmbeddingService] Failed to check keeper_qa_enabled, defaulting to disabled', { error });
+      return false;
+    }
+  }
+
+  /**
    * AI-powered Q&A answer generation ("Bibliotecario") via embeddings-worker /ask
    */
   static async askQuestion(payload: {

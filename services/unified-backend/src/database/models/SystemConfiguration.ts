@@ -18,7 +18,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ISystemConfiguration extends Document {
   configKey: string; // Unique identifier (e.g., 'email_template_verification', 'character_stat_total_points')
-  configSection: 'email_templates' | 'character_creation' | 'experience_system' | 'housing_system' | 'economy' | 'moderation' | 'postal_system' | 'combat_system' | 'skill_check_system' | 'ticket_system' | 'system';
+  configSection: 'email_templates' | 'character_creation' | 'experience_system' | 'housing_system' | 'economy' | 'moderation' | 'postal_system' | 'combat_system' | 'skill_check_system' | 'ticket_system' | 'ai_features' | 'system';
   configType: 'template' | 'number' | 'string' | 'boolean' | 'json';
   value: any; // For templates: {subject: string, html: string, text: string}, for numbers: number, etc.
   defaultValue: any; // Fallback if value is not set or config is deactivated
@@ -58,6 +58,7 @@ const SystemConfigurationSchema = new Schema<ISystemConfiguration>(
         'combat_system',
         'skill_check_system',
         'ticket_system',
+        'ai_features',
         'system',
       ],
       index: true,

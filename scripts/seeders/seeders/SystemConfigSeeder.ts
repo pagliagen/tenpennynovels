@@ -813,6 +813,28 @@ const ALL_CONFIGS: ConfigRecord[] = [
     metadata: { version: 1 },
   },
 
+  // ── ai_features ─────────────────────────────────────────────────
+  {
+    configKey: 'bot_management_enabled',
+    configSection: 'ai_features',
+    configType: 'boolean',
+    value: false,
+    defaultValue: false,
+    description: 'Abilita la sezione Gestione Bot nel pannello di amministrazione (generazione personaggi AI). Il servizio AI non è gestito dal server al momento: di default disattivato.',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+  {
+    configKey: 'keeper_qa_enabled',
+    configSection: 'ai_features',
+    configType: 'boolean',
+    value: false,
+    defaultValue: false,
+    description: 'Abilita la risposta AI del Bibliotecario nella ricerca documenti (RAG). La ricerca testuale/semantica resta sempre attiva; disattiva solo la generazione di risposte AI. Il servizio AI non è gestito dal server al momento: di default disattivato.',
+    isActive: true,
+    metadata: { version: 1 },
+  },
+
   // ── system ──────────────────────────────────────────────────────
   {
     configKey: 'system_maintenance_mode',

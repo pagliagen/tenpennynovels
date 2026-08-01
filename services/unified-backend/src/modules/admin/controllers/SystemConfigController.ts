@@ -11,6 +11,43 @@ import { successResponse, errorResponse, listResponse, createResponse, updateRes
 
 export class SystemConfigController {
   /**
+   * Feature flags per la UI (voci di menu condizionali).
+   * Nessun permesso granulare richiesto: qualunque utente che raggiunge il
+   * pannello admin può leggere questi booleani non sensibili.
+   * GET /admin/system/feature-flags
+   */
+  static async getFeatureFlags(req: Request, res: Response): Promise<void> {
+    try {
+      const { ConfigurationService } = await import('@shared/services/ConfigurationService');
+      const configService = new ConfigurationService(redis.getClient(), logger);
+
+      const [botManagementEnabled, keeperQaEnabled] = await Promise.all([
+        configService.getConfig('bot_management_enabled'),
+        configService.getConfig('keeper_qa_enabled'),
+      ]);
+
+      res.json(successResponse(
+        {
+          botManagementEnabled: botManagementEnabled ?? false,
+          keeperQaEnabled: keeperQaEnabled ?? false,
+        },
+        undefined,
+        getRequestId(req)
+      ));
+    } catch (error: unknown) {
+      logger.error('Error fetching feature flags:', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+      // Fail-closed: se qualcosa va storto, le feature restano nascoste
+      res.json(successResponse(
+        { botManagementEnabled: false, keeperQaEnabled: false },
+        undefined,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
    * Enable/disable maintenance mode
    * POST /admin/system/maintenance
    */

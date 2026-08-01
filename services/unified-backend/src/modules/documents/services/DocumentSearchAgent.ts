@@ -142,6 +142,13 @@ export class DocumentSearchAgent {
     try {
       if (signal.aborted) return;
 
+      const keeperEnabled = await EmbeddingService.isKeeperQaEnabled();
+      if (!keeperEnabled) {
+        sendSSE(res, 'complete', {});
+        res.end();
+        return;
+      }
+
       const healthy = await EmbeddingService.isAiAvailable();
       if (!healthy) {
         logger.warn('[SearchAgent] AI gateway not healthy, skipping');

@@ -13,6 +13,7 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 import { useUIStore } from '@/store/uiStore';
 import { usePermissionsStore } from '@/store/permissionsStore';
+import { useFeatureFlagsStore } from '@/store/featureFlagsStore';
 import styles from '@/styles/components/Sidebar.module.scss';
 
 interface NavItem {
@@ -21,6 +22,8 @@ interface NavItem {
   icon?: string;
   href?: string;
   permission?: string;
+  /** Voce nascosta se il flag corrispondente (featureFlagsStore) è false — feature legate a servizi AI non gestiti dal server */
+  featureFlag?: 'botManagementEnabled' | 'keeperQaEnabled';
   children?: NavItem[];
 }
 
@@ -44,7 +47,7 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'characters-pending', label: 'In Attesa Approvazione', href: '/characters/character-pending', permission: 'characters.approve' },
       { key: 'characters-faceclaims', label: 'Prestavolti', href: '/characters/character-faceclaims', permission: 'characters.approve' },
       { key: 'characters-permissions', label: 'Permessi', href: '/characters/permissions', permission: 'characters.manage_permissions' },
-      { key: 'characters-bots', label: 'Gestione Bot', href: '/characters/manage-bot', permission: 'characters.list' }
+      { key: 'characters-bots', label: 'Gestione Bot', href: '/characters/manage-bot', permission: 'characters.list', featureFlag: 'botManagementEnabled' }
     ]
   },
   {
@@ -126,17 +129,21 @@ export function Sidebar(): React.ReactElement {
   const router = useRouter();
   const { sidebarCollapsed, toggleSidebar, expandedCategories, toggleCategory } = useUIStore();
   const { hasPermission } = usePermissionsStore();
+  const { botManagementEnabled, keeperQaEnabled } = useFeatureFlagsStore();
+
+  const featureFlags = { botManagementEnabled, keeperQaEnabled };
+
+  const isNavItemVisible = (item: NavItem): boolean => {
+    if (item.permission && !hasPermission(item.permission)) return false;
+    if (item.featureFlag && !featureFlags[item.featureFlag]) return false;
+    return true;
+  };
 
   const renderNavItem = (item: NavItem, level: number = 0) => {
     // Category with children
     if (item.children) {
-      // Filter visible children based on permissions
-      const visibleChildren = item.children.filter(child => {
-        // No permission required = always visible
-        if (!child.permission) return true;
-        // Check permission
-        return hasPermission(child.permission);
-      });
+      // Filter visible children based on permissions and feature flags
+      const visibleChildren = item.children.filter(isNavItemVisible);
 
       // Hide category if all children are hidden
       if (visibleChildren.length === 0) {
@@ -177,8 +184,8 @@ export function Sidebar(): React.ReactElement {
 
     // Leaf item with href
     if (item.href) {
-      // Hide if no permission
-      if (item.permission && !hasPermission(item.permission)) {
+      // Hide if no permission or feature flag disabled
+      if (!isNavItemVisible(item)) {
         return null;
       }
 

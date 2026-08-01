@@ -14,6 +14,7 @@ const SECTION_LABELS: Record<string, string> = {
   postal_system: 'Posta',
   combat_system: 'Combattimento',
   skill_check_system: 'Tiri (Abilità/Caratteristiche)',
+  ai_features: 'Funzionalità AI',
   email_templates: 'Email',
   experience_system: 'Esperienza',
   housing_system: 'Abitazioni',

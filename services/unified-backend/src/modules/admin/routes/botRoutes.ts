@@ -1,11 +1,50 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { BotController } from '../controllers/BotController';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
+import { ConfigurationService } from '@shared/services/ConfigurationService';
+import { redis } from '@config/runtime/redis';
+import { logger } from '../utils/logger';
+import { errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
 const router = Router();
 
 // Tutte le route richiedono auth admin
 router.use(AdminAuthMiddleware.requireAdminAccess);
+
+/**
+ * Gate: la Gestione Bot è legata al servizio AI, non gestito dal server al momento.
+ * Config bot_management_enabled (sezione ai_features), default OFF.
+ */
+async function requireBotManagementEnabled(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const configService = new ConfigurationService(redis.getClient(), logger);
+    const enabled = await configService.getConfig('bot_management_enabled');
+
+    if (!enabled) {
+      res.status(403).json(errorResponse(
+        'Gestione Bot non disponibile: funzionalità disattivata',
+        'BOT_MANAGEMENT_DISABLED',
+        undefined,
+        403,
+        getRequestId(req)
+      ));
+      return;
+    }
+
+    next();
+  } catch (error: unknown) {
+    logger.error('[botRoutes] Failed to check bot_management_enabled', { error });
+    res.status(403).json(errorResponse(
+      'Gestione Bot non disponibile: funzionalità disattivata',
+      'BOT_MANAGEMENT_DISABLED',
+      undefined,
+      403,
+      getRequestId(req)
+    ));
+  }
+}
+
+router.use(requireBotManagementEnabled);
 
 // Lista e dettaglio bot
 router.get('/list', BotController.list);

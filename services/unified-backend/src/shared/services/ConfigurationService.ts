@@ -127,7 +127,7 @@ export class ConfigurationService {
    * ```
    */
   async getConfigsBySection(
-    section: 'email_templates' | 'character_creation' | 'experience_system' | 'housing_system' | 'economy' | 'moderation' | 'postal_system' | 'combat_system' | 'skill_check_system' | 'ticket_system' | 'system'
+    section: 'email_templates' | 'character_creation' | 'experience_system' | 'housing_system' | 'economy' | 'moderation' | 'postal_system' | 'combat_system' | 'skill_check_system' | 'ticket_system' | 'ai_features' | 'system'
   ): Promise<Record<string, any>> {
     try {
       this.logger.info(`Fetching configurations for section: ${section}`);

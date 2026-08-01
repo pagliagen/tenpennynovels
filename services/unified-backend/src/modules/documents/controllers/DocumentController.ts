@@ -644,10 +644,13 @@ export class DocumentController {
   /**
    * GET /documents/ai-status
    * Returns whether the AI gateway is healthy and available for Q&A.
+   * aiAvailable è false se keeper_qa_enabled è spento, a prescindere dalla
+   * salute reale del gateway AI (feature disattivata di proposito).
    */
   static async aiStatus(_req: Request, res: Response): Promise<void> {
     try {
-      const aiAvailable = await EmbeddingService.isAiAvailable();
+      const keeperEnabled = await EmbeddingService.isKeeperQaEnabled();
+      const aiAvailable = keeperEnabled && await EmbeddingService.isAiAvailable();
       res.json({ result: true, data: { aiAvailable } });
     } catch {
       res.json({ result: true, data: { aiAvailable: false } });
@@ -698,7 +701,8 @@ export class DocumentController {
 
       // Try AI-powered answer via embeddings-worker
       try {
-        const healthy = await EmbeddingService.isAiAvailable();
+        const keeperEnabled = await EmbeddingService.isKeeperQaEnabled();
+        const healthy = keeperEnabled && await EmbeddingService.isAiAvailable();
         if (healthy && contextChunks.length > 0) {
           const qaResponse = await EmbeddingService.askQuestion({
             question,

@@ -10,6 +10,12 @@ const router = Router();
 // All system routes require admin access
 router.use(AdminAuthMiddleware.requireAdminAccess);
 
+// Feature flags per la UI (nessun permesso granulare: solo requireAdminAccess)
+router.get(
+  '/feature-flags',
+  SystemConfigController.getFeatureFlags
+);
+
 // Maintenance mode management
 router.post(
   '/maintenance',

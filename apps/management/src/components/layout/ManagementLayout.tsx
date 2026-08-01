@@ -14,6 +14,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuthStore } from '@/store/authStore';
 import { usePermissionsStore } from '@/store/permissionsStore';
+import { useFeatureFlagsStore } from '@/store/featureFlagsStore';
 import { Sidebar } from './Sidebar';
 import { NotificationBell } from '@/components/shared/NotificationBell';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -29,6 +30,7 @@ export function ManagementLayout({ children }: ManagementLayoutProps): React.Rea
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const { loadPermissions, clearPermissions } = usePermissionsStore();
+  const { loadFeatureFlags, clearFeatureFlags } = useFeatureFlagsStore();
 
   useAdminNotifications();
 
@@ -53,10 +55,12 @@ export function ManagementLayout({ children }: ManagementLayoutProps): React.Rea
   useEffect(() => {
     if (isAuthenticated && user?.canAccessAdminPanel) {
       loadPermissions();
+      loadFeatureFlags();
     } else {
       clearPermissions();
+      clearFeatureFlags();
     }
-  }, [isAuthenticated, user?.canAccessAdminPanel, loadPermissions, clearPermissions]);
+  }, [isAuthenticated, user?.canAccessAdminPanel, loadPermissions, clearPermissions, loadFeatureFlags, clearFeatureFlags]);
 
   // Loading state
   if (isLoading) {
