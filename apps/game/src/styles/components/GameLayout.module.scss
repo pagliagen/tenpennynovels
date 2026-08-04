@@ -216,7 +216,7 @@
   margin-left: auto;
   width: 100%;
   max-width: 1024px; 
-  background-color: black;
+  z-index: 100;
 
   // Custom scrollbar styling
   &::-webkit-scrollbar {

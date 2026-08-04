@@ -73,8 +73,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  padding: 32px;
+  position: relative; 
 }
 
 .mapWrapper {
@@ -134,7 +133,6 @@
   object-fit: contain;
   filter: sepia(20%) contrast(1.1) brightness(0.8) saturate(0.9);
   border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 .svgOverlay {

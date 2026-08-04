@@ -77,9 +77,10 @@
     content: '';
     position: absolute;
     width: 10px;
-    height: 130px;
+    height: 180px;
     top: 0;
     background: black;
+    z-index: 0;
   }
 
   &::after {

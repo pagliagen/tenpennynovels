@@ -185,10 +185,12 @@ export function TopBar({
 
   // DEBUG: Log props received
   useEffect(() => {
-    logger.info('[TopBar] 🎨 Rendered with props:', { value: {
-      locationName,
-      isInLondon
-    } });
+    logger.info('[TopBar] 🎨 Rendered with props:', {
+      value: {
+        locationName,
+        isInLondon
+      }
+    });
   }, [locationName, isInLondon]);
 
   // Scala il nome location per stare sempre su una riga dentro la larghezza fissa del semicerchio
@@ -345,11 +347,11 @@ export function TopBar({
               onKeyDown={
                 onLocationDisplayClick
                   ? (e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        onLocationDisplayClick();
-                      }
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onLocationDisplayClick();
                     }
+                  }
                   : undefined
               }
               title={onLocationDisplayClick ? 'Info sulla location' : undefined}
@@ -406,22 +408,19 @@ export function TopBar({
           {/* Right Icons - 3 elements */}
           <div className={styles.iconsContainerRight}>
             {/* Utility - Feature hub popup */}
-            <div className={styles.featureHubAnchor} ref={featureHubRef}>
-              <button
-                type="button"
-                onClick={handleToggleFeatureHub}
-                className={styles.iconButton}
-                title="Utilità"
-                aria-label="Apri hub funzionalità"
-                aria-expanded={isFeatureHubOpen}
-                aria-haspopup="true"
-              >
-                <img
-                  src="/images/topbar/button-utility.png"
-                  alt="Utilità"
-                  className={styles.iconImage}
-                />
-              </button>
+            <div className={styles.featureHubAnchor}
+              ref={featureHubRef}
+              onClick={handleToggleFeatureHub}
+              title="Apri menu utilità"
+              aria-label="Apri menu utilità"
+              aria-expanded={isFeatureHubOpen}
+              aria-haspopup="true"
+            >
+              <img
+                src="/images/topbar/button-utility.png"
+                alt="Utilità"
+                className={styles.iconImage}
+              />
 
               {isFeatureHubOpen && (
                 <div className={styles.featureHubDropdown} role="menu">

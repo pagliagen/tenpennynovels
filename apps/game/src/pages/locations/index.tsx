@@ -137,8 +137,9 @@ export default function LocationsPage(): JSX.Element {
       <GameLayout>
         <LocationsErrorBoundary>
           <div className={styles.locationsPage}>
-            {/* View Mode Selector (Floating Top-Left) */}
+            {/* View Mode Selector (Floating Top-Left) 
             <ViewModeSelector mode={viewMode} onChange={handleViewModeChange} />
+            */}
 
             {/* Map View */}
             {viewMode === 'mappa' && (
