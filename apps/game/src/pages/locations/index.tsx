@@ -15,20 +15,20 @@
 
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
 
 import { GameLayout } from '@/components/layout/GameLayout';
 import { LocationsErrorBoundary } from '@/components/locations/LocationsErrorBoundary';
 import { LocationsList } from '@/components/locations/LocationsList';
 import { LocationsMap } from '@/components/locations/LocationsMap';
-import { ViewModeSelector, ViewMode } from '@/components/locations/ViewModeSelector';
 import { useLocations } from '@/hooks/useLocations';
 import styles from '@/styles/pages/locations.module.scss';
+
+type ViewMode = 'mappa' | 'testuale';
 
 /**
  * Locations Page Component
  *
- * Renders the main locations page with view mode selector and content.
+ * Renders the main locations page (map or list view based on the `view` query param).
  *
  * @component
  * @returns {JSX.Element} Locations page
@@ -38,24 +38,7 @@ export default function LocationsPage(): JSX.Element {
   const { locations, locationTree, isLoading, error } = useLocations();
 
   // View mode from URL query param, default to 'mappa'
-  const initialViewMode = (router.query.view as ViewMode) || 'mappa';
-  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode);
-
-  /**
-   * Handle view mode change
-   * Updates URL query param for shareable links
-   */
-  const handleViewModeChange = (mode: ViewMode) => {
-    setViewMode(mode);
-    router.push(
-      {
-        pathname: '/locations',
-        query: { view: mode },
-      },
-      undefined,
-      { shallow: true }
-    );
-  };
+  const viewMode = (router.query.view as ViewMode) || 'mappa';
 
   /**
    * Handle district click
@@ -137,10 +120,6 @@ export default function LocationsPage(): JSX.Element {
       <GameLayout>
         <LocationsErrorBoundary>
           <div className={styles.locationsPage}>
-            {/* View Mode Selector (Floating Top-Left) 
-            <ViewModeSelector mode={viewMode} onChange={handleViewModeChange} />
-            */}
-
             {/* Map View */}
             {viewMode === 'mappa' && (
               <LocationsMap

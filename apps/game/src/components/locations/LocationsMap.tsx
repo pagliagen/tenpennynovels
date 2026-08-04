@@ -5,7 +5,8 @@
  *
  * Features:
  * - SVG polygon overlays for districts
- * - CSS-only tooltips on hover
+ * - District name always visible at polygon center
+ * - Native tooltip on hover (occupant count)
  * - Clickable london_label.png (return to London)
  * - Occupant indicators (red dots)
  * - Victorian theme styling
@@ -147,8 +148,21 @@ export function LocationsMap({
                     onMouseLeave={() => setHoveredDistrict(null)}
                     onClick={() => onDistrictClick(location.slug)}
                     className={styles.districtPolygon}
-                    data-tooltip={`${location.name}${hasOccupants ? ` (${location.occupantCount} presenti)` : ''}`}
-                  />
+                  >
+                    <title>{`${location.name}${hasOccupants ? ` (${location.occupantCount} presenti)` : ''}`}</title>
+                  </polygon>
+
+                  {/* District name (always visible, centered) */}
+                  <text
+                    x={coords.center.x}
+                    y={coords.center.y}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className={styles.districtLabel}
+                    pointerEvents="none"
+                  >
+                    {location.name}
+                  </text>
 
                   {/* Hover glow effect */}
                   {isHovered && (
@@ -181,7 +195,7 @@ export function LocationsMap({
                   {hasOccupants && (
                     <circle
                       cx={coords.center.x}
-                      cy={coords.center.y}
+                      cy={coords.center.y - 5}
                       r="2"
                       fill="#ff6b35"
                       stroke="#ffffff"
@@ -195,32 +209,6 @@ export function LocationsMap({
               );
             })}
           </svg>
-        </div>
-      </div>
-
-      {/* Legend - District list */}
-      <div className={styles.legend}>
-        <div className={styles.legendTitle}>Quartieri di Londra</div>
-        <div className={styles.legendItems}>
-          {districtsWithCoords.map((location) => (
-            <div
-              key={location._id}
-              className={`${styles.legendItem} ${
-                hoveredDistrict === location._id ? styles.legendHighlighted : ''
-              }`}
-              onMouseEnter={() => setHoveredDistrict(location._id)}
-              onMouseLeave={() => setHoveredDistrict(null)}
-              onClick={() => onDistrictClick(location.slug)}
-            >
-              <div className={styles.legendDot}></div>
-              <span className={styles.legendLabel}>{location.name}</span>
-              {(location.occupantCount || 0) > 0 && (
-                <span className={styles.legendOccupants}>
-                  ({location.occupantCount})
-                </span>
-              )}
-            </div>
-          ))}
         </div>
       </div>
     </div>

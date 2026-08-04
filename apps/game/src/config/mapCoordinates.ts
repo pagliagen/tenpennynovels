@@ -19,6 +19,12 @@ import { DistrictCoordinates } from '@/types/location';
  * Maps location slug to SVG polygon coordinates.
  * Slugs are stable and deterministic (generated from location names).
  *
+ * Layout: 4 horizontal bands, north to south.
+ * - Band 1 (y 22-44): West End | Central London | East End, side by side
+ * - Band 2 (y 45-62): River Wards, full width (follows the Thames)
+ * - Band 3 (y 63-79): Suburbs, full width
+ * - Band 4 (y 80-97): Country Side, full width
+ *
  * **ADVANTAGES**:
  * - Stable across database seeds/migrations
  * - Human-readable (easy debugging)
@@ -26,23 +32,23 @@ import { DistrictCoordinates } from '@/types/location';
  * - Deterministic (always same for same name)
  */
 export const DISTRICT_POLYGONS: Record<string, string> = {
-  // Westminster - Central district, government area
-  'westminster': '25,35 45,32 48,45 45,48 40,50 25,48',
+  // West End - Wealthy, shopping and theatre district (band 1, left)
+  'west-end': '4,22 34,22 34,44 4,44',
 
-  // Oldtown - Historic district, financial center
-  'oldtown': '48,32 68,30 72,42 68,46 62,48 48,45',
+  // Central London - Government, financial and legal core (band 1, center)
+  'central-london': '35,22 65,22 65,44 35,44',
 
-  // Mayfair-Marylebone - Wealthy residential area
-  'mayfair-marylebone': '8,25 25,23 25,35 25,48 18,50 8,45',
+  // East End - Working class, industrial district (band 1, right)
+  'east-end': '66,22 96,22 96,44 66,44',
 
-  // East-End - Working class district
-  'east-end': '72,30 92,28 95,40 90,45 85,47 72,42',
+  // River Wards - Docks and riverside wards along the Thames (band 2, full width)
+  'river-wards': '4,45 96,45 96,62 4,62',
 
-  // Southwark - South of Thames, theaters and markets
-  'southwark': '20,52 80,50 85,62 78,68 70,70 20,68 15,60',
+  // Suburbs - Residential districts just outside the center (band 3, full width)
+  'suburbs': '4,63 96,63 96,79 4,79',
 
-  // Boroughs - Diverse districts (Kensington, Chelsea, Bloomsbury, etc.)
-  'boroughs': '10,60 20,68 30,75 40,75 50,70 40,65 30,60 20,58',
+  // Country Side - Rural outskirts of London (band 4, full width)
+  'country-side': '4,80 96,80 96,97 4,97',
 };
 
 /**
@@ -52,12 +58,12 @@ export const DISTRICT_POLYGONS: Record<string, string> = {
  * Tooltips and occupant indicators appear at these coordinates.
  */
 export const DISTRICT_CENTERS: Record<string, { x: number; y: number }> = {
-  'westminster': { x: 36, y: 42 },
-  'oldtown': { x: 58, y: 39 },
-  'mayfair-marylebone': { x: 17, y: 37 },
-  'east-end': { x: 82, y: 38 },
-  'southwark': { x: 50, y: 60 },
-  'boroughs': { x: 25, y: 67 },
+  'west-end': { x: 19, y: 33 },
+  'central-london': { x: 50, y: 33 },
+  'east-end': { x: 81, y: 33 },
+  'river-wards': { x: 50, y: 53 },
+  'suburbs': { x: 50, y: 71 },
+  'country-side': { x: 50, y: 88 },
 };
 
 /**

@@ -62,8 +62,7 @@ function shouldHaveShop(name: string): boolean {
 function isPrivateLocation(name: string): boolean {
   return [
     "Gentleman's Club", 'Kensington Palace', 'Bank of England',
-    'Guildhall', 'Royal Courts of Justice', 'Scotland Yard',
-    'Scotland Yard Archives', 'Parliament Square Courtyard'
+    'Guildhall', 'Royal Courts of Justice', 'Scotland Yard'
   ].includes(name);
 }
 
