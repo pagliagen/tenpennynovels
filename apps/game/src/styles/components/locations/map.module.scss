@@ -4,7 +4,8 @@
  * Locations Map Styles
  *
  * Victorian-themed styling for the London map component.
- * Includes SVG overlays and district labels.
+ * Districts and sottoquartieri are small transparent buttons positioned
+ * over the map image (no SVG overlay).
  *
  * @module styles/components/locations/map
  * @since 2.0.0
@@ -20,7 +21,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative; 
+  position: relative;
 }
 
 .mapWrapper {
@@ -60,7 +61,7 @@
 }
 
 /* ========================================
-   MAP IMAGE & SVG OVERLAY
+   MAP IMAGE
    ======================================== */
 
 .mapImageWrapper {
@@ -77,83 +78,91 @@
   max-height: 100%;
   width: auto;
   height: auto;
-  object-fit: contain; 
+  object-fit: contain;
   border-radius: 8px;
 }
 
-.svgOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
 /* ========================================
-   DISTRICT POLYGONS
+   DISTRICT BUTTONS
    ======================================== */
 
-.districtPolygon {
-  fill: transparent;
-  stroke: rgba(184, 134, 11, 0.3);
-  stroke-width: 0;
-  pointer-events: all;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    fill: rgba(184, 134, 11, 0.15);
-    stroke: rgba(184, 134, 11, 0.6);
-    stroke-width: 1;
-  }
-}
-
-.glowBorder {
-  animation: pulseGlow 2s ease-in-out infinite;
-}
-
-.rotatingLight {
-  animation: rotateDash 4s linear infinite;
-}
-
-@keyframes pulseGlow {
-  0%,
-  100% {
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 0.35;
-  }
-}
-
-@keyframes rotateDash {
-  0% {
-    stroke-dashoffset: 0;
-  }
-  100% {
-    stroke-dashoffset: 40;
-  }
-}
-
-.districtLabel {
-  fill: #e8d4a0;
+.districtButton {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(10, 8, 6, 0.45); 
+  border-radius: 999px;
+  color: #e8d4a0;
   font-family: 'Playfair Display', serif;
-  font-size: 2.6px;
+  font-size: 0.75rem;
   font-weight: 600;
-  paint-order: stroke fill;
-  stroke: rgba(0, 0, 0, 0.75);
-  stroke-width: 0.35px;
-  stroke-linejoin: round;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(184, 134, 11, 0.25); 
+  }
+}
+
+.districtButtonGroup {
+  display: contents;
+}
+
+.collapseButton {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 4px 12px;
+  background: rgba(184, 134, 11, 0.3); 
+  border-radius: 999px;
+  color: #f4e4a6;
+  font-family: 'Playfair Display', serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(184, 134, 11, 0.45);
+  }
+}
+
+.subDistrictButton {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 3px 9px;
+  background: rgba(10, 8, 6, 0.5); 
+  border-radius: 999px;
+  color: #e8d4a0;
+  font-family: 'Playfair Display', serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(184, 134, 11, 0.3); 
+  }
 }
 
 /* ========================================
-   OCCUPANT INDICATORS (Red Dots)
+   OCCUPANT INDICATOR (Red Dot)
    ======================================== */
 
 .occupantsIndicator {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff6b35;
+  border: 1px solid #ffffff;
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -190,8 +199,15 @@
 }
 
 @media (max-width: 768px) {
-  .districtLabel {
-    font-size: 3.2px;
+  .districtButton,
+  .collapseButton {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+
+  .subDistrictButton {
+    font-size: 0.55rem;
+    padding: 2px 6px;
   }
 }
 
@@ -199,19 +215,21 @@
    ACCESSIBILITY
    ======================================== */
 
-.londonLabel:focus-visible {
+.londonLabel:focus-visible,
+.districtButton:focus-visible,
+.collapseButton:focus-visible,
+.subDistrictButton:focus-visible {
   outline: 2px solid #b8860b;
-  outline-offset: 4px;
-  border-radius: 4px;
+  outline-offset: 2px;
 }
 
 /* Disable animations for users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .glowBorder,
-  .rotatingLight,
   .occupantsIndicator,
   .londonLabel,
-  .districtPolygon {
+  .districtButton,
+  .collapseButton,
+  .subDistrictButton {
     animation: none !important;
     transition: none !important;
   }

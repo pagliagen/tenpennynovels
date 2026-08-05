@@ -40,15 +40,6 @@ export default function LocationsPage(): JSX.Element {
   // View mode from URL query param, default to 'mappa'
   const viewMode = (router.query.view as ViewMode) || 'mappa';
 
-  /**
-   * Handle district click
-   * Navigates to district detail page with split-panel
-   * Uses slug for SEO-friendly URLs
-   */
-  const handleDistrictClick = (slug: string) => {
-    router.push(`/locations/${slug}`);
-  }; 
-
   // Loading state
   if (isLoading && locations.length === 0) {
     return (
@@ -122,10 +113,7 @@ export default function LocationsPage(): JSX.Element {
           <div className={styles.locationsPage}>
             {/* Map View */}
             {viewMode === 'mappa' && (
-              <LocationsMap
-                locations={locations}
-                onDistrictClick={handleDistrictClick} 
-              />
+              <LocationsMap locations={locations} />
             )}
 
             {/* Textual/List View */}

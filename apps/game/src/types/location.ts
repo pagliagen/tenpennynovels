@@ -64,8 +64,12 @@ export interface AccessibleLocation {
   settings?: LocationSettings;
 
   // Hierarchy
-  locationLevel: 'root' | 'district' | 'location';
+  locationLevel: 'root' | 'district' | 'quartiere' | 'location';
   sortOrder: number;
+
+  // Marker position on the London map (percentage-based 0-100), set via the
+  // management "Posiziona Mappa" tool. Undefined = not positioned, not shown on the map.
+  mapPosition?: { x: number; y: number };
 
   // Real-time data
   occupants: LocationOccupant[];
@@ -102,14 +106,6 @@ export interface LocationTreeNode extends AccessibleLocation {
   isExpanded?: boolean;
   isSelected?: boolean;
   hasChildren: boolean;
-}
-
-/**
- * Map Coordinates for Districts
- */
-export interface DistrictCoordinates {
-  polygon: string; // SVG polygon points (percentage-based)
-  center: { x: number; y: number }; // Tooltip position
 }
 
 /**

@@ -1,13 +1,17 @@
 /**
  * Locations Map Component
  *
- * Interactive London map with clickable district polygons.
+ * Interactive London map with small, transparent district buttons.
  *
  * Features:
- * - SVG polygon overlays for districts
- * - District name always visible at polygon center
+ * - One small button per district, positioned via Location.mapPosition (set
+ *   from the management "Posiziona Mappa" page, not hardcoded on frontend)
+ * - Click a district with a quartiere tier (River Wards, Central London, East
+ *   End, West End) to expand it in place and reveal its quartiere buttons
+ * - Click a quartiere button — or, for Suburbs/Country Side (no quartiere
+ *   tier), the district button itself — to open a popup with its name,
+ *   description and Location children (image, description, Entra In Chat)
  * - Native tooltip on hover (occupant count)
- * - Clickable london_label.png (return to London)
  * - Occupant indicators (red dots)
  * - Victorian theme styling
  *
@@ -19,12 +23,10 @@
 
 import { useState } from 'react';
 
-import {
-  getDistrictCoordinates,
-  hasMapCoordinates,
-} from '@/config/mapCoordinates';
 import styles from '@/styles/components/locations/map.module.scss';
 import type { AccessibleLocation } from '@/types/location';
+
+import { QuartierePopup } from './QuartierePopup';
 
 /**
  * Locations Map Props
@@ -32,8 +34,6 @@ import type { AccessibleLocation } from '@/types/location';
 interface LocationsMapProps {
   /** Array of accessible locations */
   locations: AccessibleLocation[];
-  /** Callback when district is clicked (receives slug) */
-  onDistrictClick: (slug: string) => void;
   /** Optional callback when London label is clicked */
   onLondonClick?: () => void;
 }
@@ -41,7 +41,7 @@ interface LocationsMapProps {
 /**
  * Locations Map Component
  *
- * Renders interactive London map with clickable districts.
+ * Renders interactive London map with clickable district buttons.
  *
  * @component
  * @param {LocationsMapProps} props - Component props
@@ -49,22 +49,46 @@ interface LocationsMapProps {
  *
  * @example
  * ```tsx
- * <LocationsMap
- *   locations={locations}
- *   onDistrictClick={(id) => router.push(`/locations/${id}`)}
- * />
+ * <LocationsMap locations={locations} />
  * ```
  */
 export function LocationsMap({
-  locations,
-  onDistrictClick 
+  locations
 }: LocationsMapProps): JSX.Element {
-  const [hoveredDistrict, setHoveredDistrict] = useState<string | null>(null);
+  const [expandedDistrictId, setExpandedDistrictId] = useState<string | null>(null);
+  const [popupEntityId, setPopupEntityId] = useState<string | null>(null);
 
-  // Filter locations that have map coordinates (districts only)
-  const districtsWithCoords = locations.filter((loc) =>
-    hasMapCoordinates(loc.slug)
+  // Top-level districts with a marker position set (via management "Posiziona Mappa")
+  const districtsWithPosition = locations.filter(
+    (loc) => loc.locationLevel === 'district' && loc.mapPosition != null
   );
+
+  const popupEntity = popupEntityId ? locations.find((loc) => loc._id === popupEntityId) ?? null : null;
+  const popupChildren = popupEntity
+    ? locations
+        .filter((loc) => loc.parentLocation === popupEntity._id)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+    : [];
+
+  const handleDistrictToggle = (districtId: string) => {
+    setExpandedDistrictId((current) => (current === districtId ? null : districtId));
+  };
+
+  /**
+   * Click on a top-level district button.
+   * - Has a quartiere tier (its children are 'quartiere'): expand in place.
+   * - No quartiere tier (Suburbs/Country Side, children are already 'location'): open the popup directly.
+   */
+  const handleDistrictClick = (district: AccessibleLocation) => {
+    const children = locations.filter((loc) => loc.parentLocation === district._id);
+    const hasQuartiereTier = children.some((child) => child.locationLevel === 'quartiere');
+
+    if (hasQuartiereTier) {
+      handleDistrictToggle(district._id);
+    } else {
+      setPopupEntityId(district._id);
+    }
+  };
 
   return (
     <div className={styles.mapContainer}>
@@ -79,138 +103,76 @@ export function LocationsMap({
             className={styles.mapImage}
           />
 
-          {/* SVG Overlay with Clickable Polygons */}
-          <svg
-            className={styles.svgOverlay}
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-          >
-            {/* Subtle glow filters */}
-            <defs>
-              <filter
-                id="subtleGlow"
-                x="-20%"
-                y="-20%"
-                width="140%"
-                height="140%"
-              >
-                <feGaussianBlur stdDeviation="0.8" result="softBlur" />
-                <feColorMatrix
-                  in="softBlur"
-                  type="matrix"
-                  values="1 0 0 0 0.85  0 1 0 0 0.7  0 0 1 0 0.25  0 0 0 0.4 0"
-                  result="subtleGold"
-                />
-                <feMerge>
-                  <feMergeNode in="subtleGold" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
+          {/* District & quartiere buttons */}
+          {districtsWithPosition.map((location) => {
+            const position = location.mapPosition;
+            if (!position) return null;
 
-              <filter
-                id="whisperLight"
-                x="-30%"
-                y="-30%"
-                width="160%"
-                height="160%"
-              >
-                <feGaussianBlur stdDeviation="0.5" result="whisperBlur" />
-                <feColorMatrix
-                  in="whisperBlur"
-                  type="matrix"
-                  values="1 0 0 0 0.9  0 1 0 0 0.8  0 0 1 0 0.4  0 0 0 0.25 0"
-                  result="whisperGold"
-                />
-                <feMerge>
-                  <feMergeNode in="whisperGold" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
+            const hasOccupants = (location.occupantCount || 0) > 0;
+            const isExpanded = expandedDistrictId === location._id;
+            const isDimmed = expandedDistrictId !== null && !isExpanded;
 
-            {/* Render district polygons */}
-            {districtsWithCoords.map((location) => {
-              const coords = getDistrictCoordinates(location.slug);
-              if (!coords) return null;
+            // Quartieri: direct children of this district, positioned on the map
+            const quartieri = locations
+              .filter((loc) => loc.parentLocation === location._id && loc.mapPosition != null)
+              .sort((a, b) => a.sortOrder - b.sortOrder);
 
-              const isHovered = hoveredDistrict === location._id;
-              const hasOccupants = (location.occupantCount || 0) > 0;
-
+            if (isExpanded) {
               return (
-                <g key={location._id}>
-                  {/* Clickable polygon area */}
-                  <polygon
-                    points={coords.polygon}
-                    fill="transparent"
-                    stroke={isHovered ? '#d4af37' : 'transparent'}
-                    strokeWidth={isHovered ? '0.3' : '0'}
-                    onMouseEnter={() => setHoveredDistrict(location._id)}
-                    onMouseLeave={() => setHoveredDistrict(null)}
-                    onClick={() => onDistrictClick(location.slug)}
-                    className={styles.districtPolygon}
+                <div key={location._id} className={styles.districtButtonGroup}>
+                  <button
+                    type="button"
+                    className={styles.collapseButton}
+                    style={{ left: `${position.x}%`, top: `${position.y}%` }}
+                    onClick={() => handleDistrictToggle(location._id)}
                   >
-                    <title>{`${location.name}${hasOccupants ? ` (${location.occupantCount} presenti)` : ''}`}</title>
-                  </polygon>
+                    {`✕ ${location.name}`}
+                  </button>
 
-                  {/* District name (always visible, centered) */}
-                  <text
-                    x={coords.center.x}
-                    y={coords.center.y}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    className={styles.districtLabel}
-                    pointerEvents="none"
-                  >
-                    {location.name}
-                  </text>
-
-                  {/* Hover glow effect */}
-                  {isHovered && (
-                    <>
-                      <polygon
-                        points={coords.polygon}
-                        fill="none"
-                        stroke="#d4af37"
-                        strokeWidth="0.6"
-                        opacity="0.2"
-                        filter="url(#subtleGlow)"
-                        className={styles.glowBorder}
-                        pointerEvents="none"
-                      />
-                      <polygon
-                        points={coords.polygon}
-                        fill="none"
-                        stroke="#f4e4a6"
-                        strokeWidth="0.4"
-                        strokeDasharray="4 6"
-                        opacity="0.15"
-                        filter="url(#whisperLight)"
-                        className={styles.rotatingLight}
-                        pointerEvents="none"
-                      />
-                    </>
-                  )}
-
-                  {/* Occupant indicator (red dot) */}
-                  {hasOccupants && (
-                    <circle
-                      cx={coords.center.x}
-                      cy={coords.center.y - 5}
-                      r="2"
-                      fill="#ff6b35"
-                      stroke="#ffffff"
-                      strokeWidth="0.5"
-                      opacity="0.9"
-                      className={styles.occupantsIndicator}
-                      pointerEvents="none"
-                    />
-                  )}
-                </g>
+                  {quartieri.map((quartiere) => (
+                    <button
+                      key={quartiere._id}
+                      type="button"
+                      className={styles.subDistrictButton}
+                      style={{ left: `${quartiere.mapPosition!.x}%`, top: `${quartiere.mapPosition!.y}%` }}
+                      title={quartiere.name}
+                      onClick={() => setPopupEntityId(quartiere._id)}
+                    >
+                      {quartiere.name}
+                    </button>
+                  ))}
+                </div>
               );
-            })}
-          </svg>
+            }
+
+            return (
+              <button
+                key={location._id}
+                type="button"
+                className={styles.districtButton}
+                style={{
+                  left: `${position.x}%`,
+                  top: `${position.y}%`,
+                  opacity: isDimmed ? 0.3 : 1,
+                }}
+                title={`${location.name}${hasOccupants ? ` (${location.occupantCount} presenti)` : ''}`}
+                onClick={() => handleDistrictClick(location)}
+              >
+                {location.name}
+                {hasOccupants && <span className={styles.occupantsIndicator} />}
+              </button>
+            );
+          })}
         </div>
       </div>
+
+      {popupEntity && (
+        <QuartierePopup
+          entity={popupEntity}
+          locations={popupChildren}
+          onClose={() => setPopupEntityId(null)}
+        />
+      )}
     </div>
   );
 }

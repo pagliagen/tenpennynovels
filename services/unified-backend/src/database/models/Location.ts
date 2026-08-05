@@ -28,9 +28,15 @@ export interface ILocation extends Document, SoftDeleteMethods {
   };
   
   // Hierarchy and positioning
-  locationLevel: 'root' | 'district' | 'location';
+  locationLevel: 'root' | 'district' | 'quartiere' | 'location';
   sortOrder: number;
-  
+
+  // Marker position on the London map (percentage-based 0-100), set via the
+  // management "Posiziona Mappa" tool. Only meaningful for district-level
+  // locations and their direct sottoquartiere children; undefined = not
+  // positioned yet (not shown on the map).
+  mapPosition?: { x: number; y: number };
+
   // Private location access control
   access?: {
     ownerId?: Schema.Types.ObjectId;  // Character who owns this location
@@ -202,13 +208,25 @@ const LocationSchema = new Schema<ILocation>({
   locationLevel: {
     type: String,
     required: true,
-    enum: ['root', 'district', 'location']
+    enum: ['root', 'district', 'quartiere', 'location']
   },
   sortOrder: {
     type: Number,
     default: 0
   },
-  
+
+  // Marker position on the London map (percentage-based 0-100)
+  mapPosition: {
+    type: new Schema(
+      {
+        x: { type: Number, required: true, min: 0, max: 100 },
+        y: { type: Number, required: true, min: 0, max: 100 }
+      },
+      { _id: false }
+    ),
+    required: false
+  },
+
   // Access control
   access: {
     ownerId: {

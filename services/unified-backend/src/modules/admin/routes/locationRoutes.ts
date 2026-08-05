@@ -72,6 +72,15 @@ router.patch(
   LocationManagementController.updateLocationSettings
 );
 
+// No sensitiveOperationLimit here: dragging markers on the map editor fires
+// one request per drop, easily more than the 10/hour sensitive-op budget.
+router.patch(
+  '/:locationId/map-position',
+  requireViewPermission('locations.update'),
+  AdminAuthMiddleware.logAdminAction('update_location_map_position', 'location_management'),
+  LocationManagementController.updateLocationMapPosition
+);
+
 router.delete(
   '/:locationId',
   requireViewPermission('locations.delete'),

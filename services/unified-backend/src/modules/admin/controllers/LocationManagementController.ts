@@ -364,6 +364,83 @@ export class LocationManagementController {
   }
 
   /**
+   * Update a location's marker position on the London map (percentage-based 0-100).
+   * Pass mapPosition: null to unset it (marker won't be shown on the map).
+   */
+  static async updateLocationMapPosition(req: Request<{ locationId: string }>, res: Response): Promise<void> {
+    try {
+      const locationId = req.params.locationId;
+      const { mapPosition } = req.body as { mapPosition: { x: number; y: number } | null };
+
+      const location = await Location.findById(locationId);
+      if (!location) {
+        res.status(404).json(errorResponse(
+          'Location non trovata',
+          'LOCATION_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      if (
+        mapPosition !== null &&
+        (typeof mapPosition?.x !== 'number' || typeof mapPosition?.y !== 'number' ||
+          mapPosition.x < 0 || mapPosition.x > 100 || mapPosition.y < 0 || mapPosition.y > 100)
+      ) {
+        res.status(400).json(errorResponse(
+          'mapPosition deve avere x e y numerici tra 0 e 100, oppure essere null',
+          'INVALID_MAP_POSITION',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      const setFields: any = {};
+      if (auditInfo?.adminId) {
+        setFields.lastModifiedBy = auditInfo.adminId;
+      }
+
+      if (mapPosition === null) {
+        await Location.findByIdAndUpdate(locationId, { $set: setFields, $unset: { mapPosition: 1 } });
+      } else {
+        setFields.mapPosition = mapPosition;
+        await Location.findByIdAndUpdate(locationId, { $set: setFields });
+      }
+
+      logger.info('Location map position updated by admin', {
+        ...auditInfo,
+        locationId,
+        mapPosition,
+        category: 'location_management'
+      });
+
+      res.json(updateResponse(
+        { locationId, action: 'map_position_updated', mapPosition },
+        undefined,
+        getRequestId(req)
+      ));
+    } catch (error: any) {
+      logger.error('Error updating location map position:', {
+        error: error instanceof Error ? error.message : String(error),
+        locationId: req.params.locationId
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare la posizione sulla mappa',
+        'UPDATE_LOCATION_MAP_POSITION_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
+
+  /**
    * Create a new location
    * POST /admin/locations
    */
@@ -396,9 +473,9 @@ export class LocationManagementController {
         return;
       }
 
-      if (!locationLevel || !['root', 'district', 'location'].includes(locationLevel)) {
+      if (!locationLevel || !['root', 'district', 'quartiere', 'location'].includes(locationLevel)) {
         res.status(400).json(errorResponse(
-          'Il livello della location è richiesto (root, district, location)',
+          'Il livello della location è richiesto (root, district, quartiere, location)',
           'LOCATION_LEVEL_REQUIRED',
           undefined,
           400,
@@ -702,7 +779,7 @@ export class LocationManagementController {
     try {
       const locations = await Location.find({})
         .sort({ locationLevel: 1, sortOrder: 1, name: 1 })
-        .select('name slug district locationLevel parentLocation sortOrder settings.visible settings.private imageUrl occupants')
+        .select('name slug district locationLevel parentLocation sortOrder settings.visible settings.private imageUrl occupants mapPosition')
         .lean();
 
       interface TreeNode {
@@ -711,11 +788,13 @@ export class LocationManagementController {
         slug: string;
         district: string;
         locationLevel: string;
+        parentId: string | null;
         sortOrder: number;
         visible: boolean;
         private: boolean;
         imageUrl: string | null;
         currentOccupants: number;
+        mapPosition: { x: number; y: number } | null;
         children: TreeNode[];
       }
 
@@ -729,11 +808,13 @@ export class LocationManagementController {
           slug: loc.slug,
           district: loc.district,
           locationLevel: loc.locationLevel,
+          parentId: loc.parentLocation?.toString() || null,
           sortOrder: loc.sortOrder || 0,
           visible: loc.settings?.visible ?? true,
           private: loc.settings?.private ?? false,
           imageUrl: loc.imageUrl || null,
           currentOccupants: loc.occupants?.filter((o: any) => o.isActive)?.length || 0,
+          mapPosition: loc.mapPosition || null,
           children: []
         };
         nodeMap.set(node.id, node);

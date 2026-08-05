@@ -105,33 +105,17 @@ async function seedLocations() {
     const districtLocations = records.filter(r =>
       r.parentLocationName && rootLocations.some(root => root.name === r.parentLocationName)
     );
-    const subLocations = records.filter(r =>
-      r.parentLocationName &&
-      !rootLocations.some(root => root.name === r.parentLocationName) &&
-      !districtLocations.some(d => d.name === r.parentLocationName)
-    );
-    const deepLocations = records.filter(r =>
-      r.parentLocationName &&
-      !rootLocations.some(root => root.name === r.parentLocationName) &&
-      !districtLocations.some(d => d.name === r.parentLocationName) &&
-      subLocations.some(s => s.name === r.parentLocationName)
-    );
 
-    const subLocationsFiltered = records.filter(r =>
-      r.parentLocationName &&
-      !rootLocations.some(root => root.name === r.parentLocationName) &&
-      districtLocations.some(d => d.name === r.parentLocationName)
-    );
+    // A row is 'quartiere' if something else in the CSV has it as parent (it groups sub-locations),
+    // 'location' if it's a leaf (chattable, no children). Depth-agnostic on purpose: River
+    // Wards/Central London/East End/West End have a quartiere tier between district and location;
+    // Suburbs/Country Side don't — their district's direct children are already leaves, and this
+    // rule tags them 'location' automatically without hardcoding district names.
+    const namesWithChildren = new Set(records.map(r => r.parentLocationName).filter(Boolean));
 
-    const deeperLocations = records.filter(r =>
-      r.parentLocationName &&
-      !rootLocations.some(root => root.name === r.parentLocationName) &&
-      !districtLocations.some(d => d.name === r.parentLocationName) &&
-      !subLocationsFiltered.some(s => s.name === r.parentLocationName) &&
-      subLocationsFiltered.some(s => s.name !== r.name)
-    );
+    type LocationLevel = 'root' | 'district' | 'quartiere' | 'location';
 
-    async function createBatch(batch: LocationRow[], level: 'root' | 'district' | 'location', label: string) {
+    async function createBatch(batch: LocationRow[], level: LocationLevel | 'auto', label: string) {
       console.log(`   🏗️  Creating ${batch.length} ${label}...`);
       let sortOrder = 0;
 
@@ -143,14 +127,17 @@ async function seedLocations() {
           continue;
         }
 
+        const resolvedLevel: LocationLevel =
+          level === 'auto' ? (namesWithChildren.has(row.name) ? 'quartiere' : 'location') : level;
+
         const doc = {
           name: row.name,
           slug: slugify(row.name),
           description: row.description,
           image: row.filename || null,
-          district: level === 'root' ? row.name : (parentDoc?.district || parentDoc?.name || ''),
+          district: resolvedLevel === 'root' ? row.name : (parentDoc?.district || parentDoc?.name || ''),
           parentLocation: parentDoc?._id || undefined,
-          locationLevel: level,
+          locationLevel: resolvedLevel,
           positions: DEFAULT_POSITIONS,
           sortOrder: sortOrder++,
           settings: {
@@ -204,7 +191,7 @@ async function seedLocations() {
         break;
       }
 
-      await createBatch(canCreate, 'location', `locations (pass ${pass})`);
+      await createBatch(canCreate, 'auto', `locations (pass ${pass})`);
       remaining = cannotCreate;
     }
 

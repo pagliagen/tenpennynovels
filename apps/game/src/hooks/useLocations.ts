@@ -136,50 +136,6 @@ export function useLocationBySlug(slug: string | undefined) {
 }
 
 /**
- * useLocationTreeNodeBySlug Hook
- *
- * Retrieves a location node from the hierarchical tree by slug.
- * Returns the node WITH children populated (unlike useLocationBySlug).
- *
- * **Use this when you need to display a location and its sub-tree**.
- *
- * @param slug - Location.slug (e.g., 'westminster', 'southwark')
- * @returns Location node with children or undefined if not found
- *
- * @example
- * ```tsx
- * const location = useLocationTreeNodeBySlug('westminster');
- * // Returns: { _id, name, slug, children: [ParliamentSquare, WestminsterAbbey, ...] }
- * ```
- */
-export function useLocationTreeNodeBySlug(slug: string | undefined) {
-  const { locationTree, isLoading } = useLocations();
-
-  if (!slug) {
-    return { location: undefined, isLoading };
-  }
-
-  // Recursively search tree by slug
-  const findBySlug = (
-    nodes: typeof locationTree,
-    targetSlug: string
-  ): typeof locationTree[0] | undefined => {
-    for (const node of nodes) {
-      if (node.slug === targetSlug) return node;
-      if (node.children) {
-        const found = findBySlug(node.children, targetSlug);
-        if (found) return found;
-      }
-    }
-    return undefined;
-  };
-
-  const location = findBySlug(locationTree, slug);
-
-  return { location, isLoading };
-}
-
-/**
  * useLocationSubtree Hook
  *
  * Retrieves the complete subtree of a location (all descendants).

@@ -13,7 +13,8 @@ import type {
   LocationHierarchyResponse,
   LocationStatsResponse,
   CreateLocationData,
-  UpdateLocationData
+  UpdateLocationData,
+  MapPosition
 } from '@/types/api/Location';
 import type { ApiResponse } from '@/types/api/common';
 
@@ -88,6 +89,19 @@ export async function updateLocation(id: string, data: UpdateLocationData): Prom
   );
   if (!response.data.success) {
     throw new Error(response.data.error || 'Errore nell\'aggiornamento location');
+  }
+}
+
+/**
+ * Aggiorna la posizione del marker sulla mappa (x/y percentuali 0-100).
+ * Passare null per rimuovere il posizionamento (il marker sparisce dalla mappa).
+ */
+export async function updateLocationMapPosition(id: string, mapPosition: MapPosition | null): Promise<void> {
+  const response = await withRetry(() =>
+    apiClient.patch<ApiResponse<any>>(`/admin/locations/${id}/map-position`, { mapPosition })
+  );
+  if (!response.data.success) {
+    throw new Error(response.data.error || 'Errore nell\'aggiornamento della posizione sulla mappa');
   }
 }
 

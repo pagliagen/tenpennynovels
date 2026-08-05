@@ -55,7 +55,8 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Location',
     icon: '🗺️',
     children: [
-      { key: 'locations-list', label: 'Gestione Location', href: '/locations/location-list', permission: 'locations.list' }
+      { key: 'locations-list', label: 'Gestione Location', href: '/locations/location-list', permission: 'locations.list' },
+      { key: 'locations-position-map', label: 'Posiziona Mappa', href: '/locations/position-map', permission: 'locations.update' }
     ]
   },
   {

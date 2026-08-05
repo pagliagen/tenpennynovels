@@ -21,8 +21,12 @@ export interface AccessibleLocation {
     private: boolean;
   };
 
-  locationLevel: 'root' | 'district' | 'location';
+  locationLevel: 'root' | 'district' | 'quartiere' | 'location';
   sortOrder: number;
+
+  // Marker position on the London map (percentage-based 0-100), set via the
+  // management "Posiziona Mappa" tool. Undefined = not positioned, not shown on the map.
+  mapPosition?: { x: number; y: number };
 
   // Physical positions within location (for chat tags + location info popup)
   positions?: Array<{ name: string; description?: string; image?: string }>;
@@ -145,6 +149,7 @@ export class LocationService {
 
             locationLevel: location.locationLevel,
             sortOrder: location.sortOrder,
+            mapPosition: location.mapPosition,
 
             // Physical positions within location (for chat tags + location info popup)
             positions: (location.positions || []).map((p: ILocationPosition) => ({

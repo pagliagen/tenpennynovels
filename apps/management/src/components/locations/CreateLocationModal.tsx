@@ -23,8 +23,9 @@ interface CreateLocationModalProps {
 
 const LEVEL_OPTIONS = [
   { value: 'root', label: 'Root (Mondo/Regione)' },
-  { value: 'district', label: 'Distretto (Quartiere/Zona)' },
-  { value: 'location', label: 'Location (Luogo specifico)' },
+  { value: 'district', label: 'Distretto' },
+  { value: 'quartiere', label: 'Quartiere' },
+  { value: 'location', label: 'Location (Luogo specifico, con chat)' },
 ];
 
 export function CreateLocationModal({

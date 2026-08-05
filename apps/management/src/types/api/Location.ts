@@ -5,7 +5,12 @@
  * Struttura gerarchica: root → district → location
  */
 
-export type LocationLevel = 'root' | 'district' | 'location';
+export type LocationLevel = 'root' | 'district' | 'quartiere' | 'location';
+
+export interface MapPosition {
+  x: number;
+  y: number;
+}
 
 export interface LocationPosition {
   name: string;
@@ -64,11 +69,13 @@ export interface LocationTreeNode {
   slug: string;
   district: string;
   locationLevel: LocationLevel;
+  parentId: string | null;
   sortOrder: number;
   visible: boolean;
   private: boolean;
   imageUrl: string | null;
   currentOccupants: number;
+  mapPosition: MapPosition | null;
   children: LocationTreeNode[];
 }
 

@@ -12,7 +12,10 @@ import * as locationAPI from '@/lib/api/locations';
 import type {
   LocationListParams,
   CreateLocationData,
-  UpdateLocationData
+  UpdateLocationData,
+  LocationHierarchyResponse,
+  LocationTreeNode,
+  MapPosition
 } from '@/types/api/Location';
 
 export const locationKeys = {
@@ -94,6 +97,54 @@ export function useDeleteLocation() {
       locationAPI.deleteLocation(id, reason, forceDelete),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: locationKeys.all });
+    }
+  });
+}
+
+function updateNodeMapPosition(
+  nodes: LocationTreeNode[],
+  id: string,
+  mapPosition: MapPosition | null
+): LocationTreeNode[] {
+  return nodes.map((node) => {
+    if (node.id === id) {
+      return { ...node, mapPosition };
+    }
+    if (node.children.length > 0) {
+      return { ...node, children: updateNodeMapPosition(node.children, id, mapPosition) };
+    }
+    return node;
+  });
+}
+
+/**
+ * Aggiorna la posizione di un marker sulla mappa con update ottimistico
+ * sulla cache della gerarchia (niente invalidate in onSuccess/onSettled,
+ * vedi regola 5 di 00-critical.md: eviterebbe flicker durante il drag).
+ */
+export function useUpdateLocationMapPosition() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, mapPosition }: { id: string; mapPosition: MapPosition | null }) =>
+      locationAPI.updateLocationMapPosition(id, mapPosition),
+    onMutate: async ({ id, mapPosition }) => {
+      await queryClient.cancelQueries({ queryKey: locationKeys.hierarchy() });
+      const previous = queryClient.getQueryData<LocationHierarchyResponse>(locationKeys.hierarchy());
+
+      if (previous) {
+        queryClient.setQueryData<LocationHierarchyResponse>(locationKeys.hierarchy(), {
+          ...previous,
+          tree: updateNodeMapPosition(previous.tree, id, mapPosition)
+        });
+      }
+
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(locationKeys.hierarchy(), context.previous);
+      }
     }
   });
 }
