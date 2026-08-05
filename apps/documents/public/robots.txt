@@ -3,11 +3,10 @@
 
 User-agent: *
 Allow: /
+Allow: /llms.txt
 
-# Block Next.js internals
-Disallow: /_next/
+# Block API routes only
 Disallow: /api/
 
 # Sitemap
 Sitemap: https://documenti.tenpennynovels.com/sitemap.xml
- 
