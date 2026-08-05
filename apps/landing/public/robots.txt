@@ -17,6 +17,4 @@ Disallow: /api/
 
 # Sitemap
 Sitemap: https://tenpennynovels.com/sitemap.xml
-
-# Crawl rate (conservative)
-Crawl-delay: 2
+ 
