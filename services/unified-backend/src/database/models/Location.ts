@@ -31,10 +31,11 @@ export interface ILocation extends Document, SoftDeleteMethods {
   locationLevel: 'root' | 'district' | 'quartiere' | 'location';
   sortOrder: number;
 
-  // Marker position on the London map (percentage-based 0-100), set via the
-  // management "Posiziona Mappa" tool. Only meaningful for district-level
-  // locations and their direct sottoquartiere children; undefined = not
-  // positioned yet (not shown on the map).
+  // Marker position on the London map (percentage-based 0-100). Nuove location create
+  // da gestionale partono da { x: 0, y: 0 } (LocationManagementController.createLocation)
+  // così compaiono subito in "Posiziona Mappa" da trascinare, invece di richiedere un
+  // intervento manuale sul DB. Solo district-level e i loro sottoquartiere diretti sono
+  // effettivamente renderizzati sulla mappa di gioco; undefined/null = marker non mostrato.
   mapPosition?: { x: number; y: number };
 
   // Private location access control

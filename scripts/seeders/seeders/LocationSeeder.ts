@@ -38,6 +38,43 @@ const DEFAULT_POSITIONS = [
   }
 ];
 
+// Marker sulla mappa di Londra (percentuale 0-100), impostati manualmente in passato
+// via il tool management "Posiziona Mappa". mapPosition NON è in CSV: vive solo nel
+// documento Location, quindi un --force (deleteMany + reinsert) lo perdeva silenziosamente.
+// Persistiamo qui i valori noti così un reseed non li cancella più.
+const MAP_POSITIONS: Record<string, { x: number; y: number }> = {
+  'River Wards': { x: 74.67, y: 63.77 },
+  'Central London': { x: 51.59, y: 39.59 },
+  'East End': { x: 82.91, y: 39.41 },
+  'West End': { x: 21.52, y: 49.1 },
+  'Suburbs': { x: 85.5, y: 81.25 },
+  'Country Side': { x: 85.34, y: 88.49 },
+  'Southwark': { x: 64, y: 65 },
+  'Wapping': { x: 73.01, y: 58.21 },
+  'Bermondsey': { x: 69.16, y: 69.94 },
+  'Rotherhithe': { x: 81.12, y: 68.97 },
+  'Westminster': { x: 46, y: 35 },
+  'The City': { x: 58, y: 35 },
+  'Covent Garden': { x: 46, y: 45 },
+  'Bloomsbury': { x: 58, y: 45 },
+  'Whitechapel': { x: 77, y: 45 },
+  'Spitalfields': { x: 89, y: 45 },
+  'Bethnal Green': { x: 81.38, y: 51.19 },
+  'Stepney': { x: 90.34, y: 51.02 },
+  'Mayfair': { x: 28.87, y: 44.73 },
+  'Marylebone': { x: 28.81, y: 53.88 },
+  'Paddington': { x: 13.61, y: 54.89 },
+  'Hyde Park': { x: 16.27, y: 44.26 },
+  'Kensington': { x: 41.14, y: 79.97 },
+  'Chelsea': { x: 49.32, y: 86.85 },
+  'Hammersmith': { x: 49.6, y: 80.03 },
+  'Islington': { x: 61.09, y: 83.03 },
+  'Hampstead': { x: 41.14, y: 83.61 },
+  'Richmond': { x: 59.01, y: 87.91 },
+  'Greenwich': { x: 52.09, y: 84.15 },
+  'Epping Forest': { x: 46.63, y: 87.14 }
+};
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -139,6 +176,7 @@ async function seedLocations() {
           parentLocation: parentDoc?._id || undefined,
           locationLevel: resolvedLevel,
           positions: DEFAULT_POSITIONS,
+          mapPosition: MAP_POSITIONS[row.name],
           sortOrder: sortOrder++,
           settings: {
             visible: true,

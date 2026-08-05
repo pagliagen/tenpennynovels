@@ -516,6 +516,7 @@ export class LocationManagementController {
         imageUrl: imageUrl || undefined,
         descriptionImages: descriptionImages || [],
         positions: positions || [],
+        mapPosition: { x: 0, y: 0 },
         maxOccupants: maxOccupants || undefined,
         sortOrder: siblingCount,
         settings: {
