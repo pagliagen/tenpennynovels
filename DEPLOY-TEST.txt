@@ -1,2 +1,0 @@
-File di test per verificare che la pipeline CI/CD (push -> deploy su Server 1) funzioni correttamente dopo il reinstall del 06/08/2026.
-Da rimuovere appena verificato.
