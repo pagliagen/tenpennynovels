@@ -22,11 +22,14 @@ import { appConfig } from '@config/runtime';
 const httpServer = http.createServer(app);
 
 // Create Socket.IO server
-// NOTE: Backend is INTERNAL - WebSocket CORS is permissive since API Gateway validates
+// ws.tenpennynovels.com (nginx) proxya DIRETTAMENTE qui, bypassando l'API
+// Gateway — l'assunzione "CORS lo valida il gateway" non vale per questo
+// sottodominio. Riusa la stessa whitelist di appConfig.cors, non "false"
+// (bloccava ogni connessione dal browser) né "true" (troppo permissivo).
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: appConfig.isProduction ? false : true,
-    credentials: appConfig.isProduction ? false : true,
+    origin: appConfig.isProduction ? appConfig.cors.allowedOrigins : true,
+    credentials: true,
     methods: ['GET', 'POST']
   },
   transports: ['websocket', 'polling']
