@@ -10,6 +10,7 @@ import { maintenanceModeMiddleware } from '@shared/middleware/maintenanceMode';
 import { responseMiddleware } from '@shared/middleware/responseMiddleware';
 import { errorHandler, notFoundHandler } from '@shared/middleware/errorHandler';
 import { httpLoggerStream, logger } from '@shared/utils/logger';
+import { appConfig } from '@config/runtime';
 
 // Import module routes
 import authRoutes from '@modules/auth/routes/auth';
@@ -22,6 +23,14 @@ import { webhookRoutes } from '@modules/admin/routes/webhookRoutes';
 import inboundWebhookRoutes from './routes/webhooks';
 
 const app: Application = express();
+
+// Nginx -> api-gateway -> qui: un solo hop di proxy fidato. Senza questo,
+// express-rate-limit non sa a chi appartiene l'header X-Forwarded-For (già
+// presente perché nginx lo imposta) e lo segnala come ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+// invece di usarlo per identificare il client reale.
+if (appConfig.trustProxy) {
+  app.set('trust proxy', 1);
+}
 
 // ===== Security & Performance Middleware =====
 // ✅ SECURITY: Helmet with proper security headers configuration
