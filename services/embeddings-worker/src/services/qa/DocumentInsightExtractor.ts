@@ -30,7 +30,14 @@ Regole:
 - hasNewInfo=true SOLO se il documento aggiunge qualcosa di SIGNIFICATIVO e NON ridondante rispetto alla risposta già data
 - L'insight deve essere UNA SOLA FRASE, massimo 20 parole, in italiano
 - NON ripetere informazioni già nella risposta esistente
-- Se il documento non è pertinente alla domanda, hasNewInfo=false`;
+- Se il documento non è pertinente alla domanda, hasNewInfo=false
+- L'insight deve CONTENERE l'informazione stessa, non descriverla o riassumerla genericamente
+
+SBAGLIATO (descrive il contenuto invece di riportarlo):
+"insight": "Informazioni nuove sulla gestione domestica vittoriana"
+
+CORRETTO (riporta l'informazione stessa):
+"insight": "Le donne sposate perdevano l'autonomia giuridica sui propri beni fino al Married Women's Property Act del 1882"`;
 
   const truncatedContent = documentContent.substring(0, 1200);
 

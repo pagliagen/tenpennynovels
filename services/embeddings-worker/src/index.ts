@@ -9,7 +9,9 @@
  */
 
 // CRITICAL: Load .env BEFORE any imports
-require('dotenv').config();
+require('dotenv').config({
+  path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env'
+});
 
 import { createClient } from 'redis';
 import mongoose from 'mongoose';

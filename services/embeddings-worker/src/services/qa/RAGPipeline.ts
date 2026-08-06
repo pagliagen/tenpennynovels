@@ -84,9 +84,9 @@ export async function askWithContext(
 
 Rispondi alla domanda del giocatore usando SOLO le informazioni nel contesto.
 Scrivi una risposta fluida e naturale come se fosse conoscenza tua: MAI dire "il documento", "nel contesto", "secondo le fonti" o simili.
-Motiva sempre brevemente la risposta.
+Sii esauriente: usa i dettagli rilevanti presenti nel contesto invece di riassumerli via, così il giocatore non deve andare a leggere le fonti per capire il quadro.
 Se il contesto non contiene abbastanza informazioni, dillo.
-Rispondi in ${lang}, in 2-4 frasi sintetiche ma complete.`
+Rispondi in ${lang}, in un paragrafo completo (indicativamente 5-8 frasi).`
     : `ISTRUZIONE CRITICA: Non hai alcuna documentazione di contesto fornita.
 DEVI RISPONDERE OBBLIGATORIAMENTE CON: "Non dispongo di informazioni nel contesto fornito per rispondere a questa domanda. Ti prego di fornire la documentazione rilevante."
 NON PUOI usare conoscenza generale o storica.

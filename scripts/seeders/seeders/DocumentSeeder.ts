@@ -56,9 +56,8 @@ class DocumentSeeder {
   private redis: Redis;
 
   constructor() {
-    const redisHost = process.env.REDIS_HOST || 'localhost';
-    const redisPort = parseInt(process.env.REDIS_PORT || '6379', 10);
-    this.redis = new Redis({ host: redisHost, port: redisPort, maxRetriesPerRequest: null });
+    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    this.redis = new Redis(redisUrl, { maxRetriesPerRequest: null });
   }
 
   async seed() {
