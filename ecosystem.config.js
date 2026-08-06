@@ -114,22 +114,10 @@ module.exports = {
     },
 
     {
-      name: 'tenpennynovels-embeddings-service',
-      cwd: './services/embeddings-worker/python',
-      script: 'venv/bin/python3',
-      args: '-u embedding_server.py',
-      interpreter: 'none',
-      instances: 1,
-      exec_mode: 'fork',
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '2G',
-      env_production: {
-        PORT: 5001,
-      },
-    },
-
-    {
+      // Il subprocess Python non gira come app PM2 separata: embeddings-worker
+      // lo spawna e ci parla via stdin/stdout (vedi PythonEmbeddingService.ts).
+      // Un blocco PM2 qui duplicava il processo, sprecando ~1.5GB di RAM
+      // (rimosso il 2026-08-06, vedi RUNBOOK_SERVER1.md).
       name: 'tenpennynovels-embeddings-worker',
       cwd: './services/embeddings-worker',
       script: 'dist/index.js',
