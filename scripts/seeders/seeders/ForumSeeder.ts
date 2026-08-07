@@ -25,6 +25,50 @@ const CHAR_IDS = {
   profWhitmore: new ObjectId('100000000000000000000012')
 };
 
+// Macrocategorie che raggruppano gli argomenti del forum
+const forumCategorySeedData = [
+  {
+    slug: 'comunita',
+    title: 'Comunità',
+    description: 'Benvenuti, presentazioni e creazione dei personaggi',
+    sortOrder: 0,
+    color: '#8B4513',
+    icon: '🎭'
+  },
+  {
+    slug: 'regole-e-meccaniche',
+    title: 'Regole e Meccaniche',
+    description: 'Call of Cthulhu, regole della casa e modifiche Vittoriane',
+    sortOrder: 1,
+    color: '#2E8B57',
+    icon: '🎲'
+  },
+  {
+    slug: 'ambientazione',
+    title: 'Ambientazione Vittoriana',
+    description: 'Londra, vita quotidiana, corporazioni e società del 1890',
+    sortOrder: 2,
+    color: '#DAA520',
+    icon: '🏰'
+  },
+  {
+    slug: 'misteri-e-occulto',
+    title: 'Misteri e Occulto',
+    description: 'Investigazioni, casi irrisolti e i Miti di Cthulhu',
+    sortOrder: 3,
+    color: '#800080',
+    icon: '🔍'
+  },
+  {
+    slug: 'sessioni-riservate',
+    title: 'Sessioni Riservate',
+    description: 'Discussioni private per personaggi approvati',
+    sortOrder: 4,
+    color: '#8B0000',
+    icon: '🔒'
+  }
+];
+
 // Italian Forum seed data - Comprehensive Victorian London RPG content
 const forumSeedData = {
   topics: [
@@ -32,6 +76,7 @@ const forumSeedData = {
       slug: 'benvenuti-a-tenpennynovels',
       title: 'Benvenuti a Ten Penny Novels',
       description: 'Discussioni generali sulla London Vittoriana e il nostro GDR',
+      categorySlug: 'comunita',
       isPublic: true,
       isVisible: true,
       isLocked: false,
@@ -44,6 +89,7 @@ const forumSeedData = {
       slug: 'creazione-personaggi',
       title: 'Creazione Personaggi',
       description: 'Condividi le tue storie, background e lo sviluppo dei personaggi',
+      categorySlug: 'comunita',
       isPublic: true,
       isVisible: true,
       isLocked: false,
@@ -56,6 +102,7 @@ const forumSeedData = {
       slug: 'meccaniche-di-gioco',
       title: 'Meccaniche di Gioco',
       description: 'Discussioni su Call of Cthulhu, regole della casa e modifiche Vittoriane',
+      categorySlug: 'regole-e-meccaniche',
       isPublic: true,
       isVisible: true,
       isLocked: false,
@@ -68,6 +115,7 @@ const forumSeedData = {
       slug: 'londra-vittoriana',
       title: 'Londra Vittoriana',
       description: 'Storia, cultura e ambientazione della London del 1890',
+      categorySlug: 'ambientazione',
       isPublic: true,
       isVisible: true,
       isLocked: false,
@@ -80,6 +128,7 @@ const forumSeedData = {
       slug: 'investigazioni',
       title: 'Investigazioni e Misteri',
       description: 'Casi, indagini e misteri da risolvere nella nebbia londinese',
+      categorySlug: 'misteri-e-occulto',
       isPublic: true,
       isVisible: true,
       isLocked: false,
@@ -92,6 +141,7 @@ const forumSeedData = {
       slug: 'occultismo-cthulhu',
       title: 'Occultismo e Miti di Cthulhu',
       description: 'Discussioni sui Grandi Antichi e l\'occulto nell\'era Vittoriana',
+      categorySlug: 'misteri-e-occulto',
       isPublic: true,
       isVisible: true,
       isLocked: false,
@@ -104,6 +154,7 @@ const forumSeedData = {
       slug: 'vita-quotidiana',
       title: 'Vita Quotidiana Vittoriana',
       description: 'Costumi, tradizioni e la vita di tutti i giorni nel 1890',
+      categorySlug: 'ambientazione',
       isPublic: true,
       isVisible: true,
       isLocked: false,
@@ -116,6 +167,7 @@ const forumSeedData = {
       slug: 'corporazioni-e-societa',
       title: 'Corporazioni e Società',
       description: 'Discussioni sulle corporazioni, gilde e società segrete',
+      categorySlug: 'ambientazione',
       isPublic: true,
       isVisible: true,
       isLocked: false,
@@ -128,6 +180,7 @@ const forumSeedData = {
       slug: 'sessioni-private',
       title: 'Sessioni Private',
       description: 'Discussioni private per personaggi approvati',
+      categorySlug: 'sessioni-riservate',
       isPublic: false,
       isVisible: true,
       isLocked: false,
@@ -544,13 +597,37 @@ async function seedForum() {
     await db.collection('forum_posts').deleteMany({});
     await db.collection('forum_discussions').deleteMany({});
     await db.collection('forum_topics').deleteMany({});
+    await db.collection('forum_categories').deleteMany({});
+
+    // Insert categories
+    console.log('🗂️ Creazione categorie del forum...');
+    const categoriesToInsert = forumCategorySeedData.map((category) => ({
+      ...category,
+      _id: new ObjectId(),
+      isVisible: true,
+      defaultAccessRules: [{ type: 'public' }],
+      createdAt: now,
+      createdBy: getAuthor('narrator')
+    }));
+
+    await db.collection('forum_categories').insertMany(categoriesToInsert);
+    console.log(`✅ Create ${categoriesToInsert.length} categorie`);
+
+    const categorySlugToId = new Map<string, ObjectId>();
+    for (const c of categoriesToInsert) {
+      categorySlugToId.set(c.slug, c._id);
+    }
 
     // Insert topics with new structure
     console.log('📝 Creazione argomenti del forum...');
     const topicsToInsert = forumSeedData.topics.map((topic, index) => {
-      const { isPublic, ...rest } = topic;
+      const { isPublic, categorySlug, ...rest } = topic;
+      const categoryId = categorySlugToId.get(categorySlug);
+      if (!categoryId) throw new Error(`Category not found: ${categorySlug}`);
       return {
         ...rest,
+        categoryId,
+        categorySlug,
         _id: new ObjectId(),
         sortOrder: index,
         accessRules: isPublic ? [{ type: 'public' }] : [{ type: 'authenticated' }],

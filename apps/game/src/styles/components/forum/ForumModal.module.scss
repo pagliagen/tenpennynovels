@@ -39,7 +39,47 @@
   overflow-y: auto;
   scrollbar-gutter: auto;
   @include victorian-scrollbar;
-  padding: $spacing-xl;
+  padding: $spacing-xl; 
+}
+
+.collapsedStrip {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  width: 50px;
+  background: $dark-surface;
+  border: none;
+  border-left: 1px solid $dark-border;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-md;
+  padding-top: $spacing-lg;
+  cursor: pointer;
+  color: $text-secondary;
+  transition: $transition-normal;
+
+  &:hover {
+    color: $gold;
+    background: $dark-elevated;
+  }
+}
+
+.collapsedIcon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.collapsedLabel {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-family: $font-serif;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  height: 100%;
 }
 
 @keyframes fadeIn {

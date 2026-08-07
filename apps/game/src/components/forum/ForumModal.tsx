@@ -19,7 +19,7 @@ import { TopicListView } from './views/TopicListView';
 const ANIMATION_DURATION = 300; // ms
 
 export function ForumModal(): JSX.Element | null {
-  const { isOpen, view, closeForum, syncWithUrl } = useForumStore();
+  const { isOpen, isCollapsed, view, closeForum, expandForum, syncWithUrl } = useForumStore();
   const [isClosing, setIsClosing] = useState(false);
 
   const handleClose = useCallback(() => {
@@ -66,6 +66,21 @@ export function ForumModal(): JSX.Element | null {
   }, [isOpen, handleKeyDown]);
 
   if (!isOpen) return null;
+
+  if (isCollapsed) {
+    return (
+      <button
+        type="button"
+        className={styles.collapsedStrip}
+        onClick={expandForum}
+        title="Espandi la bacheca"
+        aria-label="Espandi la bacheca"
+      >
+        <span className={styles.collapsedIcon}>◀</span>
+        <span className={styles.collapsedLabel}>Bacheca</span>
+      </button>
+    );
+  }
 
   const renderView = () => {
     switch (view) {

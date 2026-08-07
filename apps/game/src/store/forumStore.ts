@@ -26,6 +26,7 @@ import type { ForumView } from '@/types/forum';
 
 interface ForumStore {
   isOpen: boolean;
+  isCollapsed: boolean;
   view: ForumView;
   categorySlug: string | null;
   topicSlug: string | null;
@@ -35,6 +36,8 @@ interface ForumStore {
 
   openForum: () => void;
   closeForum: () => void;
+  collapseForum: () => void;
+  expandForum: () => void;
   navigateToCategories: () => void;
   navigateToTopics: () => void;
   navigateToTopicsInCategory: (categorySlug: string) => void;
@@ -157,6 +160,7 @@ export const useForumStore = create<ForumStore>()(
   devtools(
     (set, get) => ({
       isOpen: false,
+      isCollapsed: false,
       view: 'categories',
       categorySlug: null,
       topicSlug: null,
@@ -165,13 +169,14 @@ export const useForumStore = create<ForumStore>()(
       searchQuery: '',
 
       openForum: () => {
-        set({ isOpen: true });
+        set({ isOpen: true, isCollapsed: false });
         get().syncWithUrl();
       },
 
       closeForum: () => {
         set({
           isOpen: false,
+          isCollapsed: false,
           view: 'categories',
           categorySlug: null,
           topicSlug: null,
@@ -179,6 +184,14 @@ export const useForumStore = create<ForumStore>()(
           postId: null,
           searchQuery: '',
         });
+      },
+
+      collapseForum: () => {
+        set({ isCollapsed: true });
+      },
+
+      expandForum: () => {
+        set({ isCollapsed: false });
       },
 
       navigateToCategories: () => {
@@ -295,6 +308,7 @@ if (typeof window !== 'undefined') {
  */
 export const useForumView = () => useForumStore((s) => s.view);
 export const useForumIsOpen = () => useForumStore((s) => s.isOpen);
+export const useForumIsCollapsed = () => useForumStore((s) => s.isCollapsed);
 export const useForumCategorySlug = () => useForumStore((s) => s.categorySlug);
 export const useForumTopicSlug = () => useForumStore((s) => s.topicSlug);
 export const useForumDiscussionSlug = () => useForumStore((s) => s.discussionSlug);

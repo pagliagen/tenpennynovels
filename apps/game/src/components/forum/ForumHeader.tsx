@@ -25,6 +25,7 @@ export function ForumHeader({ onClose }: ForumHeaderProps): JSX.Element {
     navigateToBookmarks,
     navigateToNotifications,
     navigateToCreateDiscussion,
+    collapseForum,
   } = useForumStore();
 
   const [searchInput, setSearchInput] = useState(searchQuery);
@@ -51,6 +52,16 @@ export function ForumHeader({ onClose }: ForumHeaderProps): JSX.Element {
 
   return (
     <header className={styles.header}>
+      <button
+        type="button"
+        className={styles.iconButton}
+        onClick={collapseForum}
+        title="Riduci a icona"
+        aria-label="Riduci la bacheca a icona"
+      >
+        ▶
+      </button>
+
       <nav className={styles.breadcrumb} aria-label="Navigazione">
         <button
           type="button"
