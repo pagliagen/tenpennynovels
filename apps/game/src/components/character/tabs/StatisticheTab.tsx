@@ -26,6 +26,9 @@ interface StatisticheTabProps {
 
 export function StatisticheTab({ character }: StatisticheTabProps): JSX.Element {
   const stats = character.stats || {};
+  // Le derivate sono un oggetto separato sul backend (Character.ts: stats vs derived),
+  // non annidate dentro stats — leggerle da lì restituiva sempre 0/undefined.
+  const derived = character.derived || {};
 
   return (
     <div className={styles.root}>
@@ -53,16 +56,16 @@ export function StatisticheTab({ character }: StatisticheTabProps): JSX.Element 
         🎲 Caratteristiche Derivate
       </h3>
       <div className={styles.gridAuto150}>
-        <StatCard label="HP" value={stats.hp || 0} icon="❤️" highlight="#4ade80" />
-        <StatCard label="Sanity" value={stats.sanity || 0} icon="🧘" highlight="#fbbf24" />
-        <StatCard label="MP" value={stats.mp || 0} icon="✨" highlight="#60a5fa" />
-        <StatCard label="Luck" value={stats.luck || 0} icon="🍀" />
-        <StatCard label="Idea" value={stats.idea || 0} icon="💡" />
-        <StatCard label="Knowledge" value={stats.knowledge || 0} icon="📖" />
-        <StatCard label="Build" value={stats.build || 0} icon="🏋️" />
+        <StatCard label="HP" value={derived.hitPoints || 0} icon="❤️" highlight="#4ade80" />
+        <StatCard label="Sanity" value={derived.sanity || 0} icon="🧘" highlight="#fbbf24" />
+        <StatCard label="MP" value={derived.magicPoints || 0} icon="✨" highlight="#60a5fa" />
+        <StatCard label="Luck" value={derived.luckRoll || 0} icon="🍀" />
+        <StatCard label="Idea" value={derived.ideaRoll || 0} icon="💡" />
+        <StatCard label="Knowledge" value={derived.knowledge || 0} icon="📖" />
+        <StatCard label="Build" value={derived.build || 0} icon="🏋️" />
         <StatCard
           label="Damage Bonus"
-          value={stats.bonusDamage || 'N/A'}
+          value={derived.bonusDamage || 'N/A'}
           icon="💥"
           isString
         />

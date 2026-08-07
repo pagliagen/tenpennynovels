@@ -902,6 +902,16 @@ export class CharacterController {
         delete (character as any).hiddenMarks;
         delete (character as any).currentHP;
         delete (character as any).maxHP;
+        // Campi anagrafici "visibile solo ai master" per commento in Character.ts,
+        // finora inviati comunque a qualunque viewer (solo il frontend li nascondeva).
+        delete (character as any).age;
+        delete (character as any).birthDate;
+        delete (character as any).birthPlace;
+        delete (character as any).maritalStatus;
+        delete (character as any).educationTitle;
+        delete (character as any).criminalRecord;
+        delete (character as any).pathologies;
+        delete (character as any).privateDescription;
       }
 
       // Serialize skills Map to object

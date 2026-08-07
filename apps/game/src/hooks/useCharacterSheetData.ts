@@ -64,30 +64,48 @@ export interface CharacterSheetData {
   character: {
     _id: string;
     name: string;
+    /** Cognome — opzionale, visibile a tutti (Character.ts) */
+    surname?: string;
     characterType: 'pg_principale' | 'pg_master' | 'png';
     avatar?: string;
     profileImage?: string;
     /** Link musica del personaggio: riprodotto quando la sua scheda è la finestra attiva */
     audioTheme?: string;
-    age?: number;
+    /** Età apparente — pubblica. L'età reale (privata, master-only) è in privateInfo.age */
+    apparentAge?: number;
     gender?: string;
     occupation?: {
       _id: string;
       name: string;
       description?: string;
     };
+    /** Occupazione attuale, campo libero distinto dal riferimento a Occupation (Character.ts) */
+    currentOccupation?: string;
     status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
     playerStatus?: 'draft' | 'pending' | 'approved'; // Backend returns this field
 
-    // Public fields
+    // Anagrafica pubblica (Character.ts: "visibile a tutti")
     publicBackground?: string;
     physicalDescription?: string;
     visibleMarks?: string;
+    height?: string;
+    weight?: string;
+    eyeColor?: string;
+    hairColor?: string;
 
     // Present only when the viewer is the owner or a master (stripped server-side otherwise)
     hiddenMarks?: string;
     currentHP?: number;
     maxHP?: number;
+    /** Età reale — privata, master-only (Character.ts) */
+    age?: number;
+    birthDate?: string;
+    birthPlace?: string;
+    maritalStatus?: string;
+    educationTitle?: string;
+    criminalRecord?: string;
+    pathologies?: string;
+    privateDescription?: string;
 
     // Private fields (visible only to owner/game masters)
     privateBackground?: string;
@@ -98,7 +116,7 @@ export interface CharacterSheetData {
     bonds?: string;
     secrets?: string;
 
-    // Stats
+    // Statistiche base CoC (Character.ts: stats)
     stats?: {
       appearance?: number;
       constitution?: number;
@@ -108,15 +126,21 @@ export interface CharacterSheetData {
       power?: number;
       size?: number;
       strength?: number;
-      // Derived stats
+    };
+
+    // Statistiche derivate, calcolate automaticamente (Character.ts: derived — oggetto
+    // separato da stats, non annidato dentro: leggere da qui, non da stats.hp/sanity/...)
+    derived?: {
+      ideaRoll?: number;
+      luckRoll?: number;
+      knowledge?: number;
+      hitPoints?: number;
+      sanity?: number;
+      maxSanity?: number;
+      magicPoints?: number;
+      movementRate?: number;
       bonusDamage?: string;
       build?: number;
-      luck?: number;
-      idea?: number;
-      knowledge?: number;
-      mp?: number;
-      sanity?: number;
-      hp?: number;
     };
 
     // Skills (Map serialized as object)
