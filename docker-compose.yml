@@ -189,6 +189,10 @@ services:
       # Character Generation Service Token
       CHARACTER_GEN_SECRET: ${CHARACTER_GEN_SECRET:-default-chargen-secret-key-change-me}
 
+      # Utente proprietario dei personaggi bot (isBot: true). ID fisso seedato da
+      # UserSeeder — non è un segreto, può stare in chiaro col default qui.
+      SYSTEM_BOT_USER_ID: ${SYSTEM_BOT_USER_ID:-000000000000000000000001}
+
       # Frontend URLs
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4000}
       LANDING_URL: ${LANDING_URL:-http://localhost:4000}
