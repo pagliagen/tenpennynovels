@@ -1,16 +1,23 @@
 @use './_variables' as *;
 
 .card {
-  background: $dark-surface;
-  border: 1px solid $dark-border;
-  border-radius: $radius-md;
-  padding: $spacing-md;
+  position: relative;
+  background: $teal-panel;
+  border: none;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
   cursor: pointer;
   transition: $transition-normal;
 
-  &:hover:not(.locked) {
-    border-color: $gold-30;
-    background: $dark-elevated;
+  &:hover:not(.locked),
+  &:focus-visible:not(.locked) {
+    background: $highlight;
+    outline: none;
+
+    .title,
+    .meta {
+      color: $text-primary;
+    }
   }
 
   &.locked {
@@ -22,22 +29,36 @@
 .header {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: $spacing-md;
 }
 
 .title {
   font-family: $font-serif;
-  color: $text-primary;
-  font-size: 15px;
-  font-weight: 600;
+  color: $gold-bright;
+  font-size: 16px;
+  font-weight: 700;
+  transition: $transition-normal;
+  margin: 0;
+  padding: 0;
   flex: 1;
   min-width: 0;
+  border-left: 4px solid $gold;
+  padding-left: $spacing-md;
+}
+
+.cardPinned .title {
+  border-left-color: $danger;
+}
+
+.pinMarker {
+  margin-right: $spacing-xs;
 }
 
 .badges {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: $spacing-xs;
   flex-shrink: 0;
 }
@@ -51,25 +72,12 @@
   border: 1px solid $gold-20;
 }
 
-.cardPinned {
-  border-left: 3px solid $gold;
-}
-
-.pinnedBadge {
-  font-size: 13px;
-  padding: 2px 6px;
-  border-radius: $radius-sm;
-  background: $gold-20;
-  color: $gold;
-  border: 1px solid $gold-30;
-  font-weight: 600;
-}
-
 .tags {
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-xs;
   margin-top: $spacing-sm;
+  margin-left: $spacing-md;
 }
 
 .tag {
@@ -82,46 +90,43 @@
 }
 
 .meta {
-  color: $text-muted;
-  font-size: 13px;
-  margin-top: $spacing-xs;
-}
-
-.stats {
   display: flex;
   flex-direction: row;
-  gap: $spacing-lg;
+  flex-wrap: wrap;
+  gap: $spacing-xs $spacing-lg;
   color: $text-muted;
   font-size: 13px;
-  margin-top: $spacing-sm;
+  margin-top: $spacing-md;
+  margin-left: $spacing-md;
+  transition: $transition-normal;
 }
 
-.stat {
+.actions {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: $spacing-xs;
+  flex-shrink: 0;
 }
 
-.lastPost {
-  color: $text-muted;
-  font-size: 13px;
-  margin-top: $spacing-sm;
-}
-
-.favoriteBtn {
+.iconBtn {
   background: none;
   border: none;
   cursor: pointer;
-  color: $text-muted;
+  color: rgba(0, 0, 0, 0.5);
   font-size: 15px;
   padding: $spacing-xs;
-  flex-shrink: 0;
 
-  &:hover {
+  &:hover:not(:disabled) {
     color: $gold;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 }
 
-.favoriteActive {
+.iconBtnActive {
   color: $gold;
 }

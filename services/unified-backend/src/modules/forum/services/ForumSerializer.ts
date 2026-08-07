@@ -16,12 +16,14 @@ export interface AnonymizablePost {
   author: {
     characterId: unknown;
     characterName: string;
+    characterAvatar?: unknown;
   };
 }
 
 const ANONYMOUS_AUTHOR = {
   characterId: null,
-  characterName: 'Anonimo'
+  characterName: 'Anonimo',
+  characterAvatar: null
 };
 
 /**

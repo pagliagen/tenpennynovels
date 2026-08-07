@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+import { Corporation } from '@database/models/Corporation';
 import { ForumCategory } from '@database/models/ForumCategory';
 import type { IForumTopic, TopicAccessRule } from '@database/models/ForumTopic';
 import type { IForumDiscussion } from '@database/models/ForumDiscussion';
@@ -75,7 +76,6 @@ export async function canAccessTopic(
         break;
       case 'corporation':
         if (character && rule.corporationId) {
-          const Corporation = mongoose.model('Corporation');
           const isMember = await Corporation.exists({
             _id: rule.corporationId,
             'members.characterId': new mongoose.Types.ObjectId(character.characterId)
@@ -116,7 +116,6 @@ export async function matchesDiscussionVisibility(
       return isStaff;
     case 'corporation': {
       if (!character || !visibility.corporationId) return false;
-      const Corporation = mongoose.model('Corporation');
       const isMember = await Corporation.exists({
         _id: visibility.corporationId,
         'members.characterId': new mongoose.Types.ObjectId(character.characterId)
@@ -166,7 +165,6 @@ export async function buildDiscussionVisibilityFilter(
 
   let corporationIds: mongoose.Types.ObjectId[] = [];
   if (charObjectId) {
-    const Corporation = mongoose.model('Corporation');
     corporationIds = await Corporation.find({ 'members.characterId': charObjectId }).distinct('_id');
   }
 

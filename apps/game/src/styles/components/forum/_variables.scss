@@ -32,9 +32,23 @@ $text-primary: #e8d4a0;
 $text-secondary: #b8a07a;
 $text-muted: #8a7a5a;
 
+/* Teal panel tones (bacheca cards / active tab, mirrors apps/documents accent) */
+$teal-panel: #123a35;
+$teal-panel-hover: #184843;
+
+/* Post card "paper" tones - thread posts render as parchment, not dark panels */
+$paper-bg: $parchment;
+$paper-bg-alt: $parchment-dark;
+$ink: #2c2114;
+$ink-muted: #6b5d42;
+
+/* Brighter amber for large decorative headings/badges */
+$gold-bright: #dba53a;
+
 /* Semantic */
 $danger: #c0392b;
 $success: #27ae60;
+$highlight: #b5502c;
 
 /* Typography */
 $font-serif: 'Playfair Display', serif;
@@ -62,6 +76,43 @@ $transition-slow: 0.3s ease;
 $forum-header-height: 56px;
 $forum-sidebar-width: 280px;
 $forum-max-width: 900px;
+
+/* Search input border teal, matches apps/documents $color-primary-hover */
+$search-border: #025951;
+
+/* Victorian search input, mirrors apps/documents .searchInput */
+@mixin victorian-search-input {
+  background-color: #050505;
+  border: 2px solid $search-border;
+  border-top-width: 3px;
+  border-radius: 5px 5px 0 0;
+  color: $text-primary;
+  font-family: 'Thrifted Attire', $font-serif;
+  font-style: italic;
+  transition: $transition-normal;
+
+  &::placeholder {
+    color: $text-muted;
+    font-style: italic;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $gold-bright;
+  }
+}
+
+/* Hand-drawn amber underline flourish beneath a search input, mirrors apps/documents stripe-border */
+@mixin victorian-search-stripe($bottom: -9px) {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: $bottom;
+  height: 12px;
+  background: url('/images/forum/stripe.png') repeat-x center / auto 100%;
+  pointer-events: none;
+}
 
 /* Victorian Scrollbar Mixin */
 @mixin victorian-scrollbar {

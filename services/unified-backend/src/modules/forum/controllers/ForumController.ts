@@ -40,18 +40,23 @@ const createSlug = (title: string): string => {
 /**
  * Checks moderation/admin access for the forum ('forum.manage' by default).
  * Uses hasAdminPermission (role-derived + explicit grant/deny), NOT a raw
- * string lookup in req.user.adminPermissions: the previous implementation
- * only matched explicit grants and silently ignored role-derived permissions
- * (e.g. a 'master' whose FORUM_MANAGE comes from AdminRolePermissions, not an
- * explicit per-user grant, would incorrectly fail this check).
+ * string lookup, so role-derived grants aren't silently ignored (e.g. a
+ * 'master' whose FORUM_MANAGE comes from AdminRolePermissions, not an
+ * explicit per-character grant).
+ *
+ * Reads from req.character, NOT req.user: forum routes only run
+ * AuthMiddleware.authenticateUser()/authenticateCharacter(), which never
+ * populate gameplayRoles/isGestore/adminPermissions on req.user (those are
+ * only backfilled by the separate admin-panel middleware). req.character is
+ * the one populated fresh from the DB on every request by authenticateCharacter().
  */
 const hasPermission = (req: Request, permission: AdminPermission = AdminPermissions.FORUM_MANAGE): boolean => {
-  const user = req.user;
-  if (!user) return false;
+  const character = req.character;
+  if (!character) return false;
   return hasAdminPermission(
-    user.gameplayRoles ?? [],
-    user.adminPermissions ?? [],
-    user.isGestore ?? false,
+    character.gameplayRoles ?? [],
+    character.adminPermissions ?? [],
+    character.isGestore ?? false,
     permission
   );
 };
@@ -123,7 +128,8 @@ function characterRef(req: Request) {
   if (!c) return null;
   return {
     characterId: new mongoose.Types.ObjectId(c.characterId),
-    characterName: c.characterName
+    characterName: c.characterName,
+    characterAvatar: c.avatar
   };
 }
 
@@ -156,16 +162,21 @@ export async function recalculateDiscussionLastPost(discussionId: mongoose.Types
 export async function recalculateTopicLastPost(topicId: mongoose.Types.ObjectId): Promise<void> {
   const latest = await ForumDiscussion.findOne({ topicId, isDeleted: false, isVisible: true })
     .sort({ lastPostAt: -1 })
-    .select('lastPostAt lastPostBy')
+    .select('slug title lastPostAt lastPostBy')
     .lean();
 
   if (latest) {
     await ForumTopic.updateOne({ _id: topicId }, {
-      $set: { lastPostAt: latest.lastPostAt, lastPostBy: latest.lastPostBy }
+      $set: {
+        lastPostAt: latest.lastPostAt,
+        lastPostBy: latest.lastPostBy,
+        lastDiscussionSlug: latest.slug,
+        lastDiscussionTitle: latest.title
+      }
     });
   } else {
     await ForumTopic.updateOne({ _id: topicId }, {
-      $unset: { lastPostAt: '', lastPostBy: '' }
+      $unset: { lastPostAt: '', lastPostBy: '', lastDiscussionSlug: '', lastDiscussionTitle: '' }
     });
   }
 }
@@ -207,8 +218,7 @@ export class ForumController {
         title: c.title,
         description: c.description,
         sortOrder: c.sortOrder,
-        color: c.color,
-        icon: c.icon
+        color: c.color
       })), undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare le categorie', code: 'GET_CATEGORIES_ERROR' });
@@ -231,6 +241,15 @@ export class ForumController {
         }
       }
 
+      const favoriteTopicIds = character
+        ? new Set(
+            (await ForumTopicFavorite.find({
+              characterId: new mongoose.Types.ObjectId(character.characterId),
+              topicId: { $in: accessible.map((t) => t._id) }
+            }).select('topicId').lean()).map((f) => f.topicId.toString())
+          )
+        : new Set<string>();
+
       res.json(successResponse(accessible.map(t => ({
         id: t._id,
         slug: t.slug,
@@ -245,13 +264,15 @@ export class ForumController {
         postCount: t.postCount,
         lastPostAt: t.lastPostAt,
         lastPostBy: t.lastPostBy,
+        lastDiscussionSlug: t.lastDiscussionSlug,
+        lastDiscussionTitle: t.lastDiscussionTitle,
         createdAt: t.createdAt,
         createdBy: t.createdBy,
         color: t.color,
-        icon: t.icon,
         categoryId: t.categoryId,
         categorySlug: t.categorySlug,
-        mode: t.mode
+        mode: t.mode,
+        isFavorite: favoriteTopicIds.has(t._id.toString())
       })), undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare i topic', code: 'GET_TOPICS_ERROR' });
@@ -271,16 +292,25 @@ export class ForumController {
         return res.status(403).json({ success: false, error: 'Accesso negato', code: 'ACCESS_DENIED' });
       }
 
+      const isFavorite = character
+        ? !!(await ForumTopicFavorite.exists({
+            characterId: new mongoose.Types.ObjectId(character.characterId),
+            topicId: topic._id
+          }))
+        : false;
+
       res.json(successResponse({
         id: topic._id, slug: topic.slug, title: topic.title, description: topic.description,
         sortOrder: topic.sortOrder, accessRules: topic.accessRules,
         isVisible: topic.isVisible, isLocked: topic.isLocked, isPinned: topic.isPinned,
         discussionCount: topic.discussionCount, postCount: topic.postCount,
         lastPostAt: topic.lastPostAt, lastPostBy: topic.lastPostBy,
+        lastDiscussionSlug: topic.lastDiscussionSlug, lastDiscussionTitle: topic.lastDiscussionTitle,
         createdAt: topic.createdAt, createdBy: topic.createdBy,
-        color: topic.color, icon: topic.icon, moderatorIds: topic.moderatorIds,
+        color: topic.color, moderatorIds: topic.moderatorIds,
         categoryId: topic.categoryId, categorySlug: topic.categorySlug,
-        mode: topic.mode
+        mode: topic.mode,
+        isFavorite
       }, undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare il topic', code: 'GET_TOPIC_ERROR' });
@@ -315,15 +345,27 @@ export class ForumController {
       ]);
 
       const totalPages = Math.ceil(total / limit);
+
+      const favoriteDiscussionIds = character
+        ? new Set(
+            (await ForumDiscussionFavorite.find({
+              characterId: new mongoose.Types.ObjectId(character.characterId),
+              discussionId: { $in: discussions.map((d) => d._id) }
+            }).select('discussionId').lean()).map((f) => f.discussionId.toString())
+          )
+        : new Set<string>();
+
       res.json(listResponse(discussions.map(d => ({
         id: d._id, slug: d.slug, topicSlug: d.topicSlug, title: d.title,
         isPinned: d.isPinned, isLocked: d.isLocked, postCount: d.postCount,
         viewCount: d.viewCount, subscriberCount: d.subscriberCount,
         lastPostAt: d.lastPostAt, lastPostBy: d.lastPostBy,
         createdAt: d.createdAt, createdBy: d.createdBy, tags: d.tags || [],
-        visibility: d.visibility, excludedCharacterIds: d.excludedCharacterIds
+        visibility: d.visibility, excludedCharacterIds: d.excludedCharacterIds,
+        isFavorite: favoriteDiscussionIds.has(d._id.toString())
       })), { currentPage: page, pageSize: limit, totalItems: total, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 }, undefined, getRequestId(req)));
     } catch (error) {
+      logger.error('[ForumController] getDiscussions error:', error);
       res.status(500).json({ success: false, error: 'Impossibile recuperare le discussioni', code: 'GET_DISCUSSIONS_ERROR' });
     }
   }
@@ -354,6 +396,13 @@ export class ForumController {
 
       await ForumDiscussion.updateOne({ _id: discussion._id }, { $inc: { viewCount: 1 } });
 
+      const isFavorite = character
+        ? !!(await ForumDiscussionFavorite.exists({
+            characterId: new mongoose.Types.ObjectId(character.characterId),
+            discussionId: discussion._id
+          }))
+        : false;
+
       res.json(successResponse({
         id: discussion._id, slug: discussion.slug, topicSlug: discussion.topicSlug,
         topicId: discussion.topicId, title: discussion.title,
@@ -363,7 +412,8 @@ export class ForumController {
         lastPostAt: discussion.lastPostAt, lastPostBy: discussion.lastPostBy,
         createdAt: discussion.createdAt, createdBy: discussion.createdBy,
         tags: discussion.tags || [],
-        visibility: discussion.visibility, excludedCharacterIds: discussion.excludedCharacterIds
+        visibility: discussion.visibility, excludedCharacterIds: discussion.excludedCharacterIds,
+        isFavorite
       }, undefined, getRequestId(req)));
     } catch (error) {
       res.status(500).json({ success: false, error: 'Impossibile recuperare la discussione', code: 'GET_DISCUSSION_ERROR' });
@@ -432,7 +482,10 @@ export class ForumController {
 
       await ForumTopic.updateOne({ _id: topic._id }, {
         $inc: { discussionCount: 1, postCount: 1 },
-        $set: { lastPostAt: now, lastPostBy: author }
+        $set: {
+          lastPostAt: now, lastPostBy: author,
+          lastDiscussionSlug: discussion.slug, lastDiscussionTitle: discussion.title
+        }
       });
 
       res.status(201).json(createResponse({ id: discussion._id, slug: discussion.slug }, undefined, getRequestId(req)));
@@ -905,7 +958,10 @@ export class ForumController {
 
       await ForumTopic.updateOne({ _id: topic._id }, {
         $inc: { postCount: 1 },
-        $set: { lastPostAt: now, lastPostBy: author }
+        $set: {
+          lastPostAt: now, lastPostBy: author,
+          lastDiscussionSlug: discussion.slug, lastDiscussionTitle: discussion.title
+        }
       });
 
       res.status(201).json({ success: true, data: { id: post._id } });
@@ -1188,7 +1244,8 @@ export class ForumController {
       res.json(successResponse(accessible.map(t => ({
         id: t._id, slug: t.slug, title: t.title, description: t.description,
         postCount: t.postCount, discussionCount: t.discussionCount,
-        lastPostAt: t.lastPostAt, color: t.color, icon: t.icon,
+        lastPostAt: t.lastPostAt, lastPostBy: t.lastPostBy, color: t.color,
+        lastDiscussionSlug: t.lastDiscussionSlug, lastDiscussionTitle: t.lastDiscussionTitle,
         isFavorite: true
       })), undefined, getRequestId(req)));
     } catch (error) {

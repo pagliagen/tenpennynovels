@@ -19,6 +19,7 @@ export interface IForumPost extends Document {
   author: {
     characterId: mongoose.Types.ObjectId;
     characterName: string;
+    characterAvatar?: string;
   };
   createdAt: Date;
   updatedAt?: Date;
@@ -57,7 +58,8 @@ export interface IForumPost extends Document {
 
 const CharacterRefSchema = new Schema({
   characterId: { type: Schema.Types.ObjectId, ref: 'Character', required: true },
-  characterName: { type: String, required: true }
+  characterName: { type: String, required: true },
+  characterAvatar: String
 }, { _id: false });
 
 const ForumPostSchema = new Schema<IForumPost>({

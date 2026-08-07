@@ -23,7 +23,6 @@ export interface ForumTopic {
   postCount: number;
   lastPostAt?: string;
   color?: string;
-  icon?: string;
   createdAt: string;
   categoryId?: string;
   categorySlug?: string;
@@ -46,7 +45,6 @@ export interface CreateForumTopicData {
   sortOrder?: number;
   accessRules?: TopicAccessRule[];
   color?: string;
-  icon?: string;
   mode?: ForumTopicMode;
 }
 

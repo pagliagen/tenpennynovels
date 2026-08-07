@@ -79,7 +79,6 @@ export class ForumTopicManagementController {
           createdAt: t.createdAt,
           createdBy: t.createdBy,
           color: t.color,
-          icon: t.icon,
           moderatorIds: t.moderatorIds,
           categoryId: t.categoryId,
           categorySlug: t.categorySlug,
@@ -154,7 +153,7 @@ export class ForumTopicManagementController {
    */
   static async createTopic(req: Request, res: Response): Promise<void> {
     try {
-      const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, icon, moderatorIds, categoryId, accessRulesOverride, mode } = req.body;
+      const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, moderatorIds, categoryId, accessRulesOverride, mode } = req.body;
 
       if (!title || title.trim().length < 3) {
         res.status(400).json({ success: false, error: 'Il titolo deve avere almeno 3 caratteri', code: 'VALIDATION_ERROR' });
@@ -180,7 +179,6 @@ export class ForumTopicManagementController {
         isLocked: isLocked ?? false,
         isPinned: isPinned ?? false,
         color,
-        icon,
         moderatorIds: Array.isArray(moderatorIds) ? moderatorIds.filter((id: string) => mongoose.Types.ObjectId.isValid(id)) : [],
         categoryId: categoryId && mongoose.Types.ObjectId.isValid(categoryId) ? new mongoose.Types.ObjectId(categoryId) : undefined,
         accessRulesOverride: accessRulesOverride ?? false,
@@ -232,7 +230,7 @@ export class ForumTopicManagementController {
   static async updateTopic(req: Request, res: Response): Promise<void> {
     try {
       const topicId = Array.isArray(req.params.topicId) ? req.params.topicId[0] : req.params.topicId;
-      const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, icon, moderatorIds, categoryId, accessRulesOverride, mode } = req.body;
+      const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, moderatorIds, categoryId, accessRulesOverride, mode } = req.body;
 
       if (!topicId || !mongoose.Types.ObjectId.isValid(topicId)) {
         res.status(400).json({ success: false, error: 'ID argomento non valido', code: 'INVALID_TOPIC_ID' });
@@ -270,7 +268,6 @@ export class ForumTopicManagementController {
       if (isLocked !== undefined) update.isLocked = isLocked;
       if (isPinned !== undefined) update.isPinned = isPinned;
       if (color !== undefined) update.color = color;
-      if (icon !== undefined) update.icon = icon;
       if (moderatorIds !== undefined) {
         update.moderatorIds = Array.isArray(moderatorIds)
           ? moderatorIds.filter((id: string) => mongoose.Types.ObjectId.isValid(id))

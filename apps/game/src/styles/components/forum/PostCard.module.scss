@@ -1,26 +1,57 @@
 @use './_variables' as *;
 
 .card {
-  background: $dark-surface;
-  border: 1px solid $dark-border;
+  background: $paper-bg;
   border-radius: $radius-md;
   padding: $spacing-lg;
   margin-bottom: $spacing-md;
   transition: $transition-normal;
 
+  &:nth-child(even) {
+    background: $paper-bg-alt;
+  }
+
   &:hover {
-    border-color: $gold-20;
+    box-shadow: 0 0 0 1px $gold-30;
   }
 
   &.deleted {
     opacity: 0.7;
-    background: $dark-bg;
   }
 
   &.pinned {
-    border-color: $gold-30;
-    background: $dark-elevated;
+    box-shadow: 0 0 0 2px $gold-50;
   }
+}
+
+.layout {
+  display: flex;
+  flex-direction: row;
+  gap: $spacing-lg;
+}
+
+.avatarCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  width: 84px;
+  text-align: center;
+  gap: 2px;
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid $highlight;
+  margin-bottom: $spacing-xs;
+  object-fit: cover;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
 }
 
 .header {
@@ -32,23 +63,24 @@
 
 .author {
   font-family: $font-serif;
-  font-weight: 600;
-  color: $gold;
+  font-weight: 700;
+  color: $highlight;
+  font-size: 14px;
 }
 
 .date {
-  font-size: 13px;
-  color: $text-muted;
+  font-size: 12px;
+  color: $ink-muted;
 }
 
 .edited {
   font-size: 13px;
-  color: $text-muted;
+  color: $ink-muted;
   font-style: italic;
 }
 
 .content {
-  color: $text-primary;
+  color: $ink;
   font-size: 15px;
   line-height: 1.5;
   word-break: break-word;
@@ -62,10 +94,10 @@
   }
 
   blockquote {
-    border-left: 3px solid $gold-30;
+    border-left: 3px solid $highlight;
     padding-left: $spacing-md;
     margin: $spacing-sm 0;
-    color: $text-secondary;
+    color: $ink-muted;
   }
 
   img {
@@ -75,10 +107,10 @@
 }
 
 .quotedContent {
-  border-left: 3px solid $dark-border;
+  border-left: 3px solid $ink-muted;
   padding-left: $spacing-md;
   margin-bottom: $spacing-sm;
-  color: $text-muted;
+  color: $ink-muted;
   font-size: 13px;
 
   p {
@@ -93,28 +125,41 @@
 }
 
 .deleted .content {
-  color: $text-muted;
+  color: $ink-muted;
   font-style: italic;
 }
 
 .actions {
   display: flex;
+  align-items: center;
   gap: $spacing-md;
   margin-top: $spacing-sm;
   flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.primaryActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-right: auto;
+}
+
+.actionSep {
+  color: $ink-muted;
 }
 
 .actionBtn {
   background: none;
   border: none;
-  color: $text-secondary;
+  color: $ink-muted;
   font-size: 13px;
   cursor: pointer;
   padding: 0;
   transition: $transition-fast;
 
   &:hover {
-    color: $gold;
+    color: $highlight;
   }
 }
 

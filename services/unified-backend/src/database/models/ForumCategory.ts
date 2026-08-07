@@ -17,7 +17,6 @@ export interface IForumCategory extends Document {
   sortOrder: number;
   isVisible: boolean;
   color?: string;
-  icon?: string;
   defaultAccessRules: TopicAccessRule[];
   createdAt: Date;
   createdBy: {
@@ -58,7 +57,6 @@ const ForumCategorySchema = new Schema<IForumCategory>({
     type: String,
     match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex code']
   },
-  icon: String,
   defaultAccessRules: {
     type: [AccessRuleSchema],
     default: [{ type: 'public' }]

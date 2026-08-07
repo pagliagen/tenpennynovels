@@ -6,13 +6,6 @@
   margin: 0 auto;
 }
 
-.title {
-  font-family: $font-serif;
-  color: $text-primary;
-  font-size: 20px;
-  margin-bottom: $spacing-xl;
-}
-
 .grid {
   display: flex;
   flex-direction: column;
@@ -30,10 +23,10 @@
   gap: $spacing-md;
   background: none;
   border: none;
-  padding: 0;
-  margin-bottom: $spacing-md;
+  padding: 0 0 $spacing-sm; 
   cursor: pointer;
   text-align: left;
+  width: 100%;
 
   &:hover .categoryTitle {
     color: $gold;
@@ -41,22 +34,12 @@
 }
 
 .categoryTitle {
-  font-family: $font-serif;
-  color: $text-primary;
-  font-size: 17px;
-  font-weight: 600;
+  font-family: var(--font-heading-primary, #{$font-serif});
+  color: $gold-bright;
+  font-size: 26px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   transition: $transition-normal;
-}
-
-.icon {
-  font-size: 18px;
-}
-
-.colorBar {
-  width: 4px;
-  height: 18px;
-  border-radius: 2px;
-  background-color: var(--category-color, transparent);
 }
 
 .loading,

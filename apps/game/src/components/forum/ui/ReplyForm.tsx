@@ -95,7 +95,7 @@ export function ReplyForm({
           className={styles.submitBtn}
           disabled={createPost.isPending || isEmpty(content)}
         >
-          {createPost.isPending ? 'Invio...' : 'Invia'}
+          {createPost.isPending ? 'Invio...' : 'Invia »'}
         </button>
       </div>
     </form>

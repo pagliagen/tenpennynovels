@@ -10,28 +10,33 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   margin-bottom: $spacing-lg;
+  gap: $spacing-md;
 }
 
 .title {
-  font-family: $font-serif;
-  color: $text-primary;
-  font-size: 15px;
+  font-family: var(--font-heading-primary, #{$font-serif});
+  color: $gold-bright;
+  font-size: 26px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .newBtn {
-  background: $gold-20;
-  border: 1px solid $gold;
+  background: none;
+  border: none;
   color: $gold;
-  border-radius: $radius-md;
-  padding: $spacing-sm $spacing-lg;
   cursor: pointer;
   font-family: $font-serif;
-  transition: $transition-normal;
+  font-style: italic;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: $transition-fast;
 
   &:hover {
-    background: $gold-30;
+    color: $gold-bright;
+    text-decoration: underline;
   }
 }
 

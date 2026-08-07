@@ -59,6 +59,8 @@ export interface CharacterContextToken {
   playerStatus?: string; // draft, pending, approved
   isGestore?: boolean;
   characterPermissions?: string[];
+  /** Explicit AdminPermissions grants (e.g. 'forum.manage') on this character, distinct from characterPermissions. */
+  adminPermissions?: string[];
   sessionId?: string;
   iat: number;
   exp: number;

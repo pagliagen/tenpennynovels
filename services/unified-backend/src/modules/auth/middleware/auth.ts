@@ -200,11 +200,13 @@ export class AuthMiddleware {
               characterId: character.id,
               characterName: fullCharacterName,
               userId: session.userId,
+              avatar: character.avatar,
               gameplayRoles: character.gameplayRoles || [],
               isApproved: character.playerStatus === 'approved',
               isGestore: character.isGestore || false,
               playerStatus: character.playerStatus || 'draft',
               characterPermissions: character.characterPermissions || [],
+              adminPermissions: character.adminPermissions || [],
               iat: Math.floor(Date.now() / 1000),
               exp: Math.floor(Date.now() / 1000) + 86400 // 24h
             };

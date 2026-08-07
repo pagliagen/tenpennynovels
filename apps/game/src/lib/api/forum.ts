@@ -111,7 +111,7 @@ export const forumApi = {
   async updateDiscussion(
     topicSlug: string,
     discussionSlug: string,
-    data: { title?: string; tags?: string[] }
+    data: { title?: string; tags?: string[]; isLocked?: boolean; isPinned?: boolean }
   ): Promise<void> {
     await api.put(`/forum/topics/${topicSlug}/discussions/${discussionSlug}`, data);
   },

@@ -84,7 +84,7 @@ export function DiscussionListView() {
             className={styles.newBtn}
             onClick={() => navigateToCreateDiscussion(topicSlug)}
           >
-            Nuova Discussione
+            crea nuovo thread
           </button>
         </div>
         <div className={styles.empty}>Nessun contenuto</div>

@@ -7,28 +7,19 @@
 }
 
 .searchBar {
-  margin-bottom: $spacing-lg;
+  position: relative;
+  margin-bottom: $spacing-xl;
+
+  &::after {
+    @include victorian-search-stripe;
+  }
 }
 
 .searchInput {
+  @include victorian-search-input;
   width: 100%;
   padding: $spacing-md $spacing-lg;
-  background: $dark-surface;
-  border: 1px solid $dark-border;
-  border-radius: $radius-md;
-  color: $text-primary;
-  font-family: $font-sans;
   font-size: 15px;
-  transition: $transition-normal;
-
-  &::placeholder {
-    color: $text-muted;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: $gold;
-  }
 }
 
 .filters {

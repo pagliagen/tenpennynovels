@@ -26,23 +26,45 @@ const ALLOWED_COLORS = [
 
 const ALLOWED_FONT_SIZES = ['12px', '14px', '16px', '18px', '24px'];
 
-const colorPattern = new RegExp(`^(${ALLOWED_COLORS.join('|')})$`, 'i');
-const fontSizePattern = new RegExp(`^(${ALLOWED_FONT_SIZES.join('|')})$`);
+// Must match ALLOWED_FONT_FAMILIES in apps/game's ForumRichTextEditor.tsx exactly.
+const ALLOWED_FONT_FAMILIES = ['Georgia, serif', 'Arial, sans-serif', "'Courier New', monospace"];
+
+const ALLOWED_ALIGNMENTS = ['left', 'center', 'right'];
+
+function toValuePattern(values: string[]): RegExp {
+  return new RegExp(`^(${values.map((v) => v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})$`, 'i');
+}
+
+const colorPattern = toValuePattern(ALLOWED_COLORS);
+const fontSizePattern = toValuePattern(ALLOWED_FONT_SIZES);
+const fontFamilyPattern = toValuePattern(ALLOWED_FONT_FAMILIES);
+const alignPattern = toValuePattern(ALLOWED_ALIGNMENTS);
 
 const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-  allowedTags: ['b', 'strong', 'i', 'em', 'u', 'blockquote', 'p', 'br', 'span', 'img'],
+  allowedTags: ['b', 'strong', 'i', 'em', 'u', 'blockquote', 'p', 'br', 'span', 'img', 'a'],
   allowedAttributes: {
     span: ['style'],
+    p: ['style'],
     img: ['src', 'alt'],
+    a: ['href', 'target', 'rel'],
   },
   allowedStyles: {
     span: {
       color: [colorPattern],
       'font-size': [fontSizePattern],
+      'font-family': [fontFamilyPattern],
+    },
+    p: {
+      'text-align': [alignPattern],
     },
   },
   allowedSchemesByTag: {
     img: ['https'],
+    a: ['https'],
+  },
+  // Forces every surviving <a> to open safely, regardless of what the client sent.
+  transformTags: {
+    a: sanitizeHtml.simpleTransform('a', { target: '_blank', rel: 'noopener noreferrer' }),
   },
   // Strip anything not explicitly allowed rather than escaping it into visible text
   disallowedTagsMode: 'discard',

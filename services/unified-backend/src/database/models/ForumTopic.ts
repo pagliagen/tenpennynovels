@@ -32,13 +32,15 @@ export interface IForumTopic extends Document {
     characterId: mongoose.Types.ObjectId;
     characterName: string;
   };
+  /** Denormalized snapshot of the discussion that produced lastPostAt/lastPostBy, for "Ultimo: X in Y" display. */
+  lastDiscussionSlug?: string;
+  lastDiscussionTitle?: string;
   createdAt: Date;
   createdBy: {
     characterId: mongoose.Types.ObjectId;
     characterName: string;
   };
   color?: string;
-  icon?: string;
   moderatorIds?: mongoose.Types.ObjectId[];
   categoryId?: mongoose.Types.ObjectId;
   categorySlug?: string;
@@ -98,13 +100,14 @@ const ForumTopicSchema = new Schema<IForumTopic>({
   discussionCount: { type: Number, default: 0, min: 0 },
   lastPostAt: Date,
   lastPostBy: CharacterRefSchema,
+  lastDiscussionSlug: String,
+  lastDiscussionTitle: String,
   createdAt: { type: Date, default: Date.now },
   createdBy: { type: CharacterRefSchema, required: true },
   color: {
     type: String,
     match: [/^#[0-9A-Fa-f]{6}$/, 'Color must be a valid hex code']
   },
-  icon: String,
   moderatorIds: [{ type: Schema.Types.ObjectId, ref: 'Character' }],
   categoryId: { type: Schema.Types.ObjectId, ref: 'ForumCategory' },
   categorySlug: { type: String, lowercase: true },

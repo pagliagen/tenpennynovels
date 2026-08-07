@@ -8,7 +8,6 @@ export interface ForumCategory {
   sortOrder: number;
   isVisible: boolean;
   color?: string;
-  icon?: string;
   defaultAccessRules: TopicAccessRule[];
   createdAt: string;
 }
@@ -27,7 +26,6 @@ export interface CreateForumCategoryData {
   description?: string;
   sortOrder?: number;
   color?: string;
-  icon?: string;
   defaultAccessRules?: TopicAccessRule[];
 }
 

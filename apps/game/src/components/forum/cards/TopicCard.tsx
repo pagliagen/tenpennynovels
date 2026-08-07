@@ -1,7 +1,5 @@
 'use client';
 
-import type { CSSProperties } from 'react';
-
 import { useToggleFavorite } from '@/hooks/useForumTopics';
 import { useForumStore } from '@/store/forumStore';
 import styles from '@/styles/components/forum/TopicCard.module.scss';
@@ -10,6 +8,7 @@ import type { ForumTopic, TopicAccessRule } from '@/types/forum';
 interface TopicCardProps {
   topic: ForumTopic;
   onFavoriteToggle?: (slug: string) => void;
+  hasUnread?: boolean;
 }
 
 function formatDate(dateStr?: string): string {
@@ -30,7 +29,7 @@ function getAccessBadges(accessRules: TopicAccessRule[]): string[] {
   return accessRules.map((r) => r.label || r.type).filter(Boolean);
 }
 
-export function TopicCard({ topic, onFavoriteToggle }: TopicCardProps) {
+export function TopicCard({ topic, onFavoriteToggle, hasUnread }: TopicCardProps) {
   const navigateToDiscussions = useForumStore((s) => s.navigateToDiscussions);
   const toggleFavorite = useToggleFavorite();
 
@@ -58,17 +57,11 @@ export function TopicCard({ topic, onFavoriteToggle }: TopicCardProps) {
       onKeyDown={(e) => e.key === 'Enter' && handleClick()}
     >
       <div className={styles.header}>
-        {topic.color && (
-          <div
-            className={styles.colorBar}
-            style={{ '--topic-color': topic.color } as CSSProperties}
-          />
-        )}
-        {topic.icon && <span className={styles.icon}>{topic.icon}</span>}
         <div className={styles.headerContent}>
           <h2 className={styles.title}>{topic.title}</h2>
-          {(badges.length > 0 || topic.mode) && (
+          {(hasUnread || badges.length > 0 || topic.mode) && (
             <div className={styles.badges}>
+              {hasUnread && <span className={styles.unreadBadge}>Nuove risposte</span>}
               {topic.mode && (
                 <span className={styles.badge} title={topic.mode === 'ON' ? 'In gioco' : 'Fuori gioco'}>
                   {topic.mode}
@@ -94,20 +87,18 @@ export function TopicCard({ topic, onFavoriteToggle }: TopicCardProps) {
       {topic.description && (
         <p className={styles.description}>{topic.description}</p>
       )}
-      <div className={styles.stats}>
-        <span className={styles.stat}>
-          {topic.discussionCount} discussion{topic.discussionCount !== 1 ? 'i' : 'e'}
+      <div className={styles.meta}>
+        <span>
+          {topic.discussionCount} discussion{topic.discussionCount !== 1 ? 'i' : 'e'} · {topic.postCount} messagg{topic.postCount !== 1 ? 'i' : 'io'}
         </span>
-        <span className={styles.stat}>
-          {topic.postCount} messagg{topic.postCount !== 1 ? 'i' : 'io'}
-        </span>
+        {(topic.lastPostBy || topic.lastPostAt) && (
+          <span>
+            Ultimo: {topic.lastPostBy?.characterName || '—'}
+            {topic.lastDiscussionTitle && <> in {topic.lastDiscussionTitle}</>}
+            {' · '}{formatDate(topic.lastPostAt)}
+          </span>
+        )}
       </div>
-      {(topic.lastPostBy || topic.lastPostAt) && (
-        <div className={styles.lastPost}>
-          Ultimo: {topic.lastPostBy?.characterName || '—'} ·{' '}
-          {formatDate(topic.lastPostAt)}
-        </div>
-      )}
     </article>
   );
 }

@@ -20,6 +20,7 @@ export interface TopicAccessRule {
 export interface ForumAuthor {
   characterId: string;
   characterName: string;
+  characterAvatar?: string | null;
 }
 
 export interface ForumCategory {
@@ -29,7 +30,6 @@ export interface ForumCategory {
   description?: string;
   sortOrder: number;
   color?: string;
-  icon?: string;
 }
 
 export interface ForumTopic {
@@ -46,10 +46,11 @@ export interface ForumTopic {
   postCount: number;
   lastPostAt?: string;
   lastPostBy?: ForumAuthor;
+  lastDiscussionSlug?: string;
+  lastDiscussionTitle?: string;
   createdAt: string;
   createdBy: ForumAuthor;
   color?: string;
-  icon?: string;
   isFavorite?: boolean;
   categoryId?: string;
   categorySlug?: string;
@@ -176,7 +177,7 @@ export interface ForumInitData {
   };
 }
 
-export type ForumView = 'categories' | 'topics' | 'discussions' | 'thread' | 'search' | 'bookmarks' | 'notifications' | 'createDiscussion';
+export type ForumView = 'categories' | 'topics' | 'discussions' | 'thread' | 'search' | 'bookmarks' | 'createDiscussion';
 
 export type ForumReplyOrder = 'asc' | 'desc';
 

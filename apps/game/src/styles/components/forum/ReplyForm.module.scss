@@ -5,9 +5,9 @@
   flex-direction: column;
   gap: $spacing-md;
   padding: $spacing-md;
-  background: $dark-surface;
-  border: 1px solid $dark-border;
-  border-radius: $radius-md;
+  background: $teal-panel;
+  border: 1px solid $gold-20;
+  border-radius: $radius-lg;
 }
 
 .textarea {
@@ -55,22 +55,22 @@
 }
 
 .submitBtn {
-  padding: $spacing-sm $spacing-lg;
-  background: $gold-20;
-  border: 1px solid $gold-30;
-  border-radius: $radius-md;
-  color: $gold;
-  font-weight: 600;
+  padding: $spacing-sm $spacing-md;
+  background: none;
+  border: none;
+  color: $gold-bright;
+  font-family: 'Thrifted Attire', $font-serif;
+  font-size: 16px;
+  letter-spacing: 0.03em;
   cursor: pointer;
   transition: $transition-fast;
 
   &:hover:not(:disabled) {
-    background: $gold-30;
-    border-color: $gold;
+    color: $parchment;
   }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 }

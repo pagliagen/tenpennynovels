@@ -1,19 +1,20 @@
 @use './_variables' as *;
 
 .wrapper {
-  border: 1px solid $dark-border;
+  border: 1px solid $gold-20;
   border-radius: $radius-md;
-  background: $dark-bg;
+  background: $teal-panel;
   overflow: hidden;
 }
 
 .toolbar {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 4px;
   padding: $spacing-sm;
-  background: $dark-surface;
-  border-bottom: 1px solid $dark-border;
+  background: $teal-panel-hover;
+  border-bottom: 1px solid $gold-10;
 
   button {
     min-width: 28px;
@@ -25,25 +26,59 @@
     color: $text-secondary;
     cursor: pointer;
     font-size: 13px;
+    font-family: $font-serif;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: $dark-elevated;
-      color: $text-primary;
+      color: $gold-bright;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
   }
+}
+
+.toolbarDivider {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px $spacing-xs;
+  background: $gold-10;
 }
 
 .active {
   background: $gold-20 !important;
   border-color: $gold-30 !important;
-  color: $gold !important;
+  color: $gold-bright !important;
+}
+
+.modeToggle {
+  display: flex;
+  margin-left: auto;
+  border: 1px solid $gold-20;
+  border-radius: $radius-sm;
+  overflow: hidden;
+
+  button {
+    min-width: unset;
+    border-radius: 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.modeActive {
+  background: $gold-20;
+  color: $gold-bright;
 }
 
 .select {
   height: 28px;
   padding: 0 $spacing-xs;
   background: $dark-bg;
-  border: 1px solid $dark-border;
+  border: 1px solid $gold-20;
   border-radius: $radius-sm;
   color: $text-secondary;
   font-size: 12px;
@@ -75,6 +110,30 @@
   img {
     max-width: 100%;
     border-radius: $radius-sm;
+  }
+
+  a {
+    color: $gold-bright;
+    text-decoration: underline;
+  }
+}
+
+.bbcodeTextarea {
+  display: block;
+  width: 100%;
+  min-height: 100px;
+  padding: $spacing-md;
+  background: $dark-bg;
+  border: none;
+  color: $text-primary;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+
+  &::placeholder {
+    color: $text-muted;
   }
 }
 

@@ -43,7 +43,6 @@ const EMPTY_FORM: CreateForumTopicData = {
   sortOrder: 0,
   accessRules: [],
   color: '',
-  icon: '',
   mode: 'OFF',
 };
 
@@ -54,7 +53,6 @@ function topicToFormData(topic: ForumTopic): CreateForumTopicData {
     sortOrder: topic.sortOrder,
     accessRules: topic.accessRules || [],
     color: topic.color || '',
-    icon: topic.icon || '',
     mode: topic.mode || 'OFF',
   };
 }
@@ -285,7 +283,7 @@ export default function ForumTopicsPage() {
               onChange={(e: any) => handleChange('description', e.target.value)}
               placeholder="Descrizione dell'argomento..." />
 
-            <div className={styles.formRow3}>
+            <div className={styles.formRow}>
               <FormField label="Ordine" name="sortOrder" type="number"
                 value={formData.sortOrder ?? 0}
                 onChange={(e: any) => handleChange('sortOrder', parseInt(e.target.value) || 0)} />
@@ -293,10 +291,6 @@ export default function ForumTopicsPage() {
                 value={formData.color || ''}
                 onChange={(e: any) => handleChange('color', e.target.value)}
                 placeholder="es. #3B82F6" />
-              <FormField label="Icona" name="icon"
-                value={formData.icon || ''}
-                onChange={(e: any) => handleChange('icon', e.target.value)}
-                placeholder="es. 💬" />
             </div>
 
             <div className={styles.formRow}>

@@ -65,7 +65,6 @@ export class ForumCategoryManagementController {
           sortOrder: c.sortOrder,
           isVisible: c.isVisible,
           color: c.color,
-          icon: c.icon,
           defaultAccessRules: c.defaultAccessRules,
           createdAt: c.createdAt,
           createdBy: c.createdBy,
@@ -138,7 +137,7 @@ export class ForumCategoryManagementController {
    */
   static async createCategory(req: Request, res: Response): Promise<void> {
     try {
-      const { title, description, sortOrder, isVisible, color, icon, defaultAccessRules } = req.body;
+      const { title, description, sortOrder, isVisible, color, defaultAccessRules } = req.body;
 
       if (!title || title.trim().length < 3) {
         res.status(400).json({ success: false, error: 'Il titolo deve avere almeno 3 caratteri', code: 'VALIDATION_ERROR' });
@@ -161,7 +160,6 @@ export class ForumCategoryManagementController {
         sortOrder: sortOrder ?? 0,
         isVisible: isVisible ?? true,
         color,
-        icon,
         defaultAccessRules: Array.isArray(defaultAccessRules) && defaultAccessRules.length > 0 ? defaultAccessRules : [{ type: 'public' }],
         createdAt: new Date(),
         createdBy: {
@@ -201,7 +199,7 @@ export class ForumCategoryManagementController {
   static async updateCategory(req: Request, res: Response): Promise<void> {
     try {
       const categoryId = Array.isArray(req.params.categoryId) ? req.params.categoryId[0] : req.params.categoryId;
-      const { title, description, sortOrder, isVisible, color, icon, defaultAccessRules } = req.body;
+      const { title, description, sortOrder, isVisible, color, defaultAccessRules } = req.body;
 
       if (!categoryId || !mongoose.Types.ObjectId.isValid(categoryId)) {
         res.status(400).json({ success: false, error: 'ID categoria non valido', code: 'INVALID_CATEGORY_ID' });
@@ -236,7 +234,6 @@ export class ForumCategoryManagementController {
       if (sortOrder !== undefined) update.sortOrder = sortOrder;
       if (isVisible !== undefined) update.isVisible = isVisible;
       if (color !== undefined) update.color = color;
-      if (icon !== undefined) update.icon = icon;
       if (defaultAccessRules !== undefined) update.defaultAccessRules = defaultAccessRules;
 
       const updated = await ForumCategory.findByIdAndUpdate(categoryId, { $set: update }, { new: true }).lean();

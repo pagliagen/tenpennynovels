@@ -32,40 +32,35 @@ const forumCategorySeedData = [
     title: 'Comunità',
     description: 'Benvenuti, presentazioni e creazione dei personaggi',
     sortOrder: 0,
-    color: '#8B4513',
-    icon: '🎭'
+    color: '#8B4513'
   },
   {
     slug: 'regole-e-meccaniche',
     title: 'Regole e Meccaniche',
     description: 'Call of Cthulhu, regole della casa e modifiche Vittoriane',
     sortOrder: 1,
-    color: '#2E8B57',
-    icon: '🎲'
+    color: '#2E8B57'
   },
   {
     slug: 'ambientazione',
     title: 'Ambientazione Vittoriana',
     description: 'Londra, vita quotidiana, corporazioni e società del 1890',
     sortOrder: 2,
-    color: '#DAA520',
-    icon: '🏰'
+    color: '#DAA520'
   },
   {
     slug: 'misteri-e-occulto',
     title: 'Misteri e Occulto',
     description: 'Investigazioni, casi irrisolti e i Miti di Cthulhu',
     sortOrder: 3,
-    color: '#800080',
-    icon: '🔍'
+    color: '#800080'
   },
   {
     slug: 'sessioni-riservate',
     title: 'Sessioni Riservate',
     description: 'Discussioni private per personaggi approvati',
     sortOrder: 4,
-    color: '#8B0000',
-    icon: '🔒'
+    color: '#8B0000'
   }
 ];
 
@@ -82,8 +77,7 @@ const forumSeedData = {
       isLocked: false,
       isPinned: true,
       postCount: 8,
-      color: '#8B4513',
-      icon: '🎭'
+      color: '#8B4513'
     },
     {
       slug: 'creazione-personaggi',
@@ -95,8 +89,7 @@ const forumSeedData = {
       isLocked: false,
       isPinned: false,
       postCount: 15,
-      color: '#4B0082',
-      icon: '👤'
+      color: '#4B0082'
     },
     {
       slug: 'meccaniche-di-gioco',
@@ -108,8 +101,7 @@ const forumSeedData = {
       isLocked: false,
       isPinned: false,
       postCount: 12,
-      color: '#2E8B57',
-      icon: '🎲'
+      color: '#2E8B57'
     },
     {
       slug: 'londra-vittoriana',
@@ -121,8 +113,7 @@ const forumSeedData = {
       isLocked: false,
       isPinned: false,
       postCount: 20,
-      color: '#DAA520',
-      icon: '🏰'
+      color: '#DAA520'
     },
     {
       slug: 'investigazioni',
@@ -134,8 +125,7 @@ const forumSeedData = {
       isLocked: false,
       isPinned: false,
       postCount: 18,
-      color: '#8B4513',
-      icon: '🔍'
+      color: '#8B4513'
     },
     {
       slug: 'occultismo-cthulhu',
@@ -147,8 +137,7 @@ const forumSeedData = {
       isLocked: false,
       isPinned: false,
       postCount: 22,
-      color: '#800080',
-      icon: '👁️'
+      color: '#800080'
     },
     {
       slug: 'vita-quotidiana',
@@ -160,8 +149,7 @@ const forumSeedData = {
       isLocked: false,
       isPinned: false,
       postCount: 16,
-      color: '#A0522D',
-      icon: '☕'
+      color: '#A0522D'
     },
     {
       slug: 'corporazioni-e-societa',
@@ -173,8 +161,7 @@ const forumSeedData = {
       isLocked: false,
       isPinned: false,
       postCount: 14,
-      color: '#B8860B',
-      icon: '🏛️'
+      color: '#B8860B'
     },
     {
       slug: 'sessioni-private',
@@ -186,8 +173,7 @@ const forumSeedData = {
       isLocked: false,
       isPinned: false,
       postCount: 9,
-      color: '#8B0000',
-      icon: '🔒'
+      color: '#8B0000'
     }
   ],
   discussions: [

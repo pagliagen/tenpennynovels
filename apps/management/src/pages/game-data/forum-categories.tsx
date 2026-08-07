@@ -41,7 +41,6 @@ const EMPTY_FORM: CreateForumCategoryData = {
   sortOrder: 0,
   defaultAccessRules: [],
   color: '',
-  icon: '',
 };
 
 function categoryToFormData(category: ForumCategory): CreateForumCategoryData {
@@ -51,7 +50,6 @@ function categoryToFormData(category: ForumCategory): CreateForumCategoryData {
     sortOrder: category.sortOrder,
     defaultAccessRules: category.defaultAccessRules || [],
     color: category.color || '',
-    icon: category.icon || '',
   };
 }
 
@@ -281,7 +279,7 @@ export default function ForumCategoriesPage() {
               onChange={(e: any) => handleChange('description', e.target.value)}
               placeholder="Descrizione della categoria..." />
 
-            <div className={styles.formRow3}>
+            <div className={styles.formRow}>
               <FormField label="Ordine" name="sortOrder" type="number"
                 value={formData.sortOrder ?? 0}
                 onChange={(e: any) => handleChange('sortOrder', parseInt(e.target.value) || 0)} />
@@ -289,10 +287,6 @@ export default function ForumCategoriesPage() {
                 value={formData.color || ''}
                 onChange={(e: any) => handleChange('color', e.target.value)}
                 placeholder="es. #3B82F6" />
-              <FormField label="Icona" name="icon"
-                value={formData.icon || ''}
-                onChange={(e: any) => handleChange('icon', e.target.value)}
-                placeholder="es. 🏙️" />
             </div>
 
             <p className={styles.sectionTitle}>Regole di Accesso Predefinite</p>

@@ -10,13 +10,12 @@ import { BookmarksView } from './views/BookmarksView';
 import { CategoryListView } from './views/CategoryListView';
 import { CreateDiscussionView } from './views/CreateDiscussionView';
 import { DiscussionListView } from './views/DiscussionListView';
-import { NotificationsView } from './views/NotificationsView';
 import { SearchResultsView } from './views/SearchResultsView';
 import { ThreadView } from './views/ThreadView';
 import { TopicListView } from './views/TopicListView';
 
 
-const ANIMATION_DURATION = 300; // ms
+const ANIMATION_DURATION = 400; // ms, must match .closing animation duration in ForumModal.module.scss
 
 export function ForumModal(): JSX.Element | null {
   const { isOpen, isCollapsed, view, closeForum, expandForum, syncWithUrl } = useForumStore();
@@ -98,8 +97,6 @@ export function ForumModal(): JSX.Element | null {
         return <SearchResultsView />;
       case 'bookmarks':
         return <BookmarksView />;
-      case 'notifications':
-        return <NotificationsView />;
       default:
         return <CategoryListView />;
     }

@@ -10,6 +10,65 @@
   padding: 0 $spacing-lg;
   gap: $spacing-md;
   flex-shrink: 0;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 60px;
+    width: calc(100% - 160px);
+    border-bottom: 1px solid $gold;
+  }
+}
+
+.tabNav {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-xs;
+  flex-shrink: 0;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 108px;
+  padding: $spacing-sm $spacing-lg;
+  background: none;
+  border: none;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.tabBg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  z-index: 0;
+}
+
+.tabLabel {
+  position: relative;
+  z-index: 1;
+  font-family: 'Thrifted Attire', $font-serif;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $gold;
+  transition: $transition-fast;
+}
+
+.tab:hover .tabLabel {
+  color: $gold-bright;
+}
+
+.tabActive .tabLabel {
+  color: $text-primary;
 }
 
 .breadcrumb {
@@ -19,6 +78,7 @@
   align-items: center;
   font-family: $font-serif;
   color: $text-secondary;
+  font-size: 13px;
   flex-wrap: wrap;
   flex: 0 1 auto;
   min-width: 0;
@@ -52,29 +112,22 @@
 }
 
 .searchForm {
+  position: relative;
   display: flex;
   flex-direction: row;
   margin-left: auto;
   flex: 0 0 auto;
+
+  &::after {
+    @include victorian-search-stripe(-5px);
+  }
 }
 
 .searchInput {
-  background: $dark-elevated;
-  border: 1px solid $dark-border;
-  color: $text-primary;
-  border-radius: $radius-md;
-  padding: $spacing-sm $spacing-md;
-  font-family: $font-sans;
+  @include victorian-search-input;
+  padding: $spacing-sm $spacing-lg;
   min-width: 180px;
-
-  &::placeholder {
-    color: $text-muted;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: $gold;
-  }
+  height: 30px;
 }
 
 .actions {
@@ -110,16 +163,3 @@
   }
 }
 
-.newDiscussionBtn {
-  background: $gold-20;
-  border: 1px solid $gold;
-  color: $gold;
-  border-radius: $radius-md;
-  padding: $spacing-sm $spacing-lg;
-  font-family: $font-serif;
-  cursor: pointer;
-
-  &:hover {
-    background: $gold-30;
-  }
-}

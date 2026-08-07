@@ -12,7 +12,6 @@
  * - /#bacheca/{topicSlug}/{discussionSlug}/{postId} → thread + scroll to post
  * - /#bacheca/search?q=term → search results
  * - /#bacheca/bookmarks → user bookmarks
- * - /#bacheca/notifications → user notifications
  * - /#bacheca/{topicSlug}/nuova-discussione → create discussion
  *
  * @module store/forumStore
@@ -46,7 +45,6 @@ interface ForumStore {
   navigateToPost: (topicSlug: string, discussionSlug: string, postId: string) => void;
   navigateToSearch: (query?: string) => void;
   navigateToBookmarks: () => void;
-  navigateToNotifications: () => void;
   navigateToCreateDiscussion: (topicSlug: string) => void;
   setSearchQuery: (query: string) => void;
   syncWithUrl: () => void;
@@ -78,8 +76,6 @@ function buildHash(state: HashState): string {
         : `${HASH_PREFIX}/search`;
     case 'bookmarks':
       return `${HASH_PREFIX}/bookmarks`;
-    case 'notifications':
-      return `${HASH_PREFIX}/notifications`;
     case 'createDiscussion':
       return `${HASH_PREFIX}/${state.topicSlug}/nuova-discussione`;
     default:
@@ -115,10 +111,6 @@ function parseHash(hash: string): Partial<HashState> {
 
   if (withoutLeadingSlash === 'bookmarks') {
     return { view: 'bookmarks', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
-  }
-
-  if (withoutLeadingSlash === 'notifications') {
-    return { view: 'notifications', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null, searchQuery: '' };
   }
 
   if (withoutLeadingSlash === 'tutti') {
@@ -231,11 +223,6 @@ export const useForumStore = create<ForumStore>()(
 
       navigateToBookmarks: () => {
         set({ view: 'bookmarks', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null });
-        get().updateUrl();
-      },
-
-      navigateToNotifications: () => {
-        set({ view: 'notifications', categorySlug: null, topicSlug: null, discussionSlug: null, postId: null });
         get().updateUrl();
       },
 

@@ -16,7 +16,10 @@ interface PostCardProps {
   isOwn?: boolean;
   /** Parent topic's mode: 'ON' caps editing to 15 minutes after posting, 'OFF'/undefined leaves it unlimited. */
   topicMode?: 'ON' | 'OFF';
-  onReply?: (postId: string) => void;
+  /** Scrolls to the reply box without quoting this post. */
+  onReply?: () => void;
+  /** Scrolls to the reply box and seeds it with a quote of this post. */
+  onQuote?: (postId: string) => void;
 }
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
@@ -32,7 +35,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export function PostCard({ post, isOwn: isOwnProp, topicMode, onReply }: PostCardProps): JSX.Element {
+export function PostCard({ post, isOwn: isOwnProp, topicMode, onReply, onQuote }: PostCardProps): JSX.Element {
   const topicSlug = useForumStore((s) => s.topicSlug);
   const discussionSlug = useForumStore((s) => s.discussionSlug);
   const selectedCharacter = useAuthStore((s) => s.selectedCharacter);
@@ -105,66 +108,90 @@ export function PostCard({ post, isOwn: isOwnProp, topicMode, onReply }: PostCar
 
   return (
     <article id={`post-${post.id}`} className={`${styles.card} ${post.isPinned ? styles.pinned : ''}`}>
-      <div className={styles.header}>
-        {post.isPinned && <span className={styles.edited}>📌 fissato</span>}
-        <span className={styles.author}>{post.author.characterName}</span>
-        {post.isAnonymous && (
-          <span className={styles.edited} title={isOwn ? 'Visibile solo a te e allo staff' : undefined}>
-            anonimo
-          </span>
-        )}
-        <span className={styles.date}>{formatDate(post.createdAt)}</span>
-        {post.isEdited && <span className={styles.edited}>modificato</span>}
-      </div>
-      {isEditing ? (
-        <div className={styles.editArea}>
-          <ForumRichTextEditor content={editContent} onChange={setEditContent} disabled={updatePost.isPending} />
-          <div className={styles.editActions}>
-            <button type="button" className={styles.cancelEditBtn} onClick={() => setIsEditing(false)}>
-              Annulla
-            </button>
-            <button type="button" className={styles.saveEditBtn} onClick={handleSaveEdit} disabled={updatePost.isPending}>
-              Salva
-            </button>
-          </div>
+      <div className={styles.layout}>
+        <div className={styles.avatarCol}>
+          <img
+            src={post.author.characterAvatar || '/images/sidebar/miniavatar_default.png'}
+            alt=""
+            className={styles.avatar}
+          />
+          <span className={styles.author}>{post.author.characterName}</span>
+          <span className={styles.date}>{formatDate(post.createdAt)}</span>
         </div>
-      ) : (
-        <>
-          {post.quotedContent && (
-            <div className={styles.quotedContent}>
-              <span className={styles.quotedAuthor}>{post.quotedContent.authorCharacterName} ha scritto:</span>
-              <div dangerouslySetInnerHTML={{ __html: post.quotedContent.excerptHtml }} />
+
+        <div className={styles.body}>
+          {(post.isPinned || post.isAnonymous || post.isEdited) && (
+            <div className={styles.header}>
+              {post.isPinned && <span className={styles.edited}>📌 fissato</span>}
+              {post.isAnonymous && (
+                <span className={styles.edited} title={isOwn ? 'Visibile solo a te e allo staff' : undefined}>
+                  anonimo
+                </span>
+              )}
+              {post.isEdited && <span className={styles.edited}>modificato</span>}
             </div>
           )}
-          <div className={styles.content} dangerouslySetInnerHTML={{ __html: post.content }} />
-        </>
-      )}
-      <div className={styles.actions}>
-        {onReply && (
-          <button type="button" className={styles.actionBtn} onClick={() => onReply(post.id)}>
-            Cita
-          </button>
-        )}
-        <button type="button" className={styles.actionBtn} onClick={handleCopyLink}>
-          Copia link
-        </button>
-        {canModerate && (
-          <button type="button" className={styles.actionBtn} onClick={handleTogglePin} disabled={togglePin.isPending}>
-            {post.isPinned ? 'Rimuovi pin' : 'Fissa'}
-          </button>
-        )}
-        {isOwn && !isEditing && (
-          <>
-            {canEdit && (
-              <button type="button" className={styles.actionBtn} onClick={() => setIsEditing(true)}>
-                Modifica
+          {isEditing ? (
+            <div className={styles.editArea}>
+              <ForumRichTextEditor content={editContent} onChange={setEditContent} disabled={updatePost.isPending} />
+              <div className={styles.editActions}>
+                <button type="button" className={styles.cancelEditBtn} onClick={() => setIsEditing(false)}>
+                  Annulla
+                </button>
+                <button type="button" className={styles.saveEditBtn} onClick={handleSaveEdit} disabled={updatePost.isPending}>
+                  Salva
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {post.quotedContent && (
+                <div className={styles.quotedContent}>
+                  <span className={styles.quotedAuthor}>{post.quotedContent.authorCharacterName} ha scritto:</span>
+                  <div dangerouslySetInnerHTML={{ __html: post.quotedContent.excerptHtml }} />
+                </div>
+              )}
+              <div className={styles.content} dangerouslySetInnerHTML={{ __html: post.content }} />
+            </>
+          )}
+          <div className={styles.actions}>
+            <div className={styles.primaryActions}>
+              {onReply && (
+                <button type="button" className={styles.actionBtn} onClick={onReply}>
+                  Rispondi
+                </button>
+              )}
+              {onQuote && (
+                <>
+                  <span className={styles.actionSep}>|</span>
+                  <button type="button" className={styles.actionBtn} onClick={() => onQuote(post.id)}>
+                    Quota
+                  </button>
+                </>
+              )}
+            </div>
+            <button type="button" className={styles.actionBtn} onClick={handleCopyLink}>
+              Copia link
+            </button>
+            {canModerate && (
+              <button type="button" className={styles.actionBtn} onClick={handleTogglePin} disabled={togglePin.isPending}>
+                {post.isPinned ? 'Rimuovi pin' : 'Fissa'}
               </button>
             )}
-            <button type="button" className={styles.actionBtn} onClick={handleDelete} disabled={deletePost.isPending}>
-              Elimina
-            </button>
-          </>
-        )}
+            {isOwn && !isEditing && (
+              <>
+                {canEdit && (
+                  <button type="button" className={styles.actionBtn} onClick={() => setIsEditing(true)}>
+                    Modifica
+                  </button>
+                )}
+                <button type="button" className={styles.actionBtn} onClick={handleDelete} disabled={deletePost.isPending}>
+                  Elimina
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </article>
   );

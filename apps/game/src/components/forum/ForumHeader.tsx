@@ -23,8 +23,6 @@ export function ForumHeader({ onClose }: ForumHeaderProps): JSX.Element {
     navigateToDiscussions,
     navigateToSearch,
     navigateToBookmarks,
-    navigateToNotifications,
-    navigateToCreateDiscussion,
     collapseForum,
   } = useForumStore();
 
@@ -48,7 +46,9 @@ export function ForumHeader({ onClose }: ForumHeaderProps): JSX.Element {
     navigateToSearch(q || undefined);
   };
 
-  const showNewDiscussionBtn = view === 'discussions' && topicSlug;
+  const isHomeTab = view === 'categories';
+  const isBookmarksTab = view === 'bookmarks';
+  const showBreadcrumb = !isHomeTab && !isBookmarksTab;
 
   return (
     <header className={styles.header}>
@@ -62,6 +62,36 @@ export function ForumHeader({ onClose }: ForumHeaderProps): JSX.Element {
         ▶
       </button>
 
+      <nav className={styles.tabNav} aria-label="Sezioni bacheca">
+        <button
+          type="button"
+          className={`${styles.tab} ${isHomeTab ? styles.tabActive : ''}`}
+          onClick={navigateToCategories}
+          aria-current={isHomeTab ? 'page' : undefined}
+        >
+          <img
+            src={isHomeTab ? '/images/forum/tab_on.png' : '/images/forum/tab_off.png'}
+            alt=""
+            className={styles.tabBg}
+          />
+          <span className={styles.tabLabel}>Home</span>
+        </button>
+        <button
+          type="button"
+          className={`${styles.tab} ${isBookmarksTab ? styles.tabActive : ''}`}
+          onClick={navigateToBookmarks}
+          aria-current={isBookmarksTab ? 'page' : undefined}
+        >
+          <img
+            src={isBookmarksTab ? '/images/forum/tab_on.png' : '/images/forum/tab_off.png'}
+            alt=""
+            className={styles.tabBg}
+          />
+          <span className={styles.tabLabel}>Segnalibri</span>
+        </button>
+      </nav>
+
+      {showBreadcrumb && (
       <nav className={styles.breadcrumb} aria-label="Navigazione">
         <button
           type="button"
@@ -108,20 +138,6 @@ export function ForumHeader({ onClose }: ForumHeaderProps): JSX.Element {
           </>
         )}
 
-        {view === 'bookmarks' && (
-          <>
-            <span className={styles.breadcrumbSeparator}>›</span>
-            <span className={styles.breadcrumbCurrent}>Segnalibri</span>
-          </>
-        )}
-
-        {view === 'notifications' && (
-          <>
-            <span className={styles.breadcrumbSeparator}>›</span>
-            <span className={styles.breadcrumbCurrent}>Notifiche</span>
-          </>
-        )}
-
         {view === 'createDiscussion' && (
           <>
             <span className={styles.breadcrumbSeparator}>›</span>
@@ -129,6 +145,7 @@ export function ForumHeader({ onClose }: ForumHeaderProps): JSX.Element {
           </>
         )}
       </nav>
+      )}
 
       <form className={styles.searchForm} onSubmit={handleSearchSubmit} role="search">
         <input
@@ -142,35 +159,6 @@ export function ForumHeader({ onClose }: ForumHeaderProps): JSX.Element {
       </form>
 
       <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.iconButton}
-          onClick={navigateToBookmarks}
-          title="Segnalibri"
-          aria-label="Vai ai segnalibri"
-        >
-          📑
-        </button>
-        <button
-          type="button"
-          className={styles.iconButton}
-          onClick={navigateToNotifications}
-          title="Notifiche"
-          aria-label="Vai alle notifiche"
-        >
-          🔔
-        </button>
-
-        {showNewDiscussionBtn && (
-          <button
-            type="button"
-            className={styles.newDiscussionBtn}
-            onClick={() => topicSlug && navigateToCreateDiscussion(topicSlug)}
-          >
-            Nuova Discussione
-          </button>
-        )}
-
         <button
           type="button"
           className={styles.closeButton}

@@ -121,7 +121,7 @@ export function useCreateDiscussion(): UseMutationResult<
 export function useUpdateDiscussion(): UseMutationResult<
   void,
   Error,
-  { topicSlug: string; discussionSlug: string; data: { title?: string; tags?: string[] } }
+  { topicSlug: string; discussionSlug: string; data: { title?: string; tags?: string[]; isLocked?: boolean; isPinned?: boolean } }
 > {
   const queryClient = useQueryClient();
 

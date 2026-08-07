@@ -6,46 +6,97 @@
   padding: $spacing-lg;
 }
 
-.header {
-  margin-bottom: $spacing-xl;
-  padding-bottom: $spacing-lg;
-  border-bottom: 1px solid $dark-border;
+.topicHeading {
+  font-family: var(--font-heading-primary, #{$font-serif});
+  color: $gold-bright;
+  font-size: 28px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: $spacing-lg;
 }
 
-.backBtn {
-  background: none;
-  border: none;
-  color: $text-secondary;
-  font-size: 15px;
-  cursor: pointer;
+.discussionBar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+  background: $teal-panel;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
   margin-bottom: $spacing-md;
-  transition: $transition-fast;
+}
 
-  &:hover {
-    color: $gold;
-  }
+.discussionBarInfo {
+  min-width: 0;
 }
 
 .title {
-  font-family: $font-serif;
-  color: $text-primary;
+  font-family: 'Thrifted Attire', $font-serif;
+  color: $gold-bright;
   font-size: 20px;
-  margin-bottom: $spacing-sm;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-md;
-  color: $text-muted;
+.subtitle {
+  color: $text-secondary;
   font-size: 13px;
+  margin-top: 2px;
+}
+
+.discussionBarActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  background: none;
+  border: 1px solid $gold-20;
+  border-radius: $radius-md;
+  color: $text-secondary;
+  cursor: pointer;
+  padding: $spacing-xs $spacing-sm;
+  font-size: 15px;
+  transition: $transition-fast;
+
+  &:hover:not(:disabled) {
+    color: $gold-bright;
+    border-color: $gold-30;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.iconBtnActive {
+  color: $gold-bright;
+  border-color: $gold;
+}
+
+.lockBtn {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.lockedNotice {
+  color: $danger;
+  font-size: 13px;
+  font-style: italic;
+  margin-bottom: $spacing-lg;
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-xs;
-  margin-top: $spacing-sm;
+  margin-bottom: $spacing-lg;
 }
 
 .tag {
@@ -63,8 +114,6 @@
 
 .replySection {
   margin-top: $spacing-xl;
-  padding-top: $spacing-lg;
-  border-top: 1px solid $dark-border;
 }
 
 .loading {
