@@ -12,7 +12,10 @@
 
 'use client';
 
+import { useEffect } from 'react';
+
 import { useCharacterSheetData } from '@/hooks/useCharacterSheetData';
+import { useAudioManagerStore } from '@/store/audioManagerStore';
 import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 
 import { CharacterSheetBot } from './CharacterSheetBot';
@@ -46,6 +49,17 @@ export function CharacterSheetContent({ characterId }: CharacterSheetContentProp
   // Fetch character data (includes characterType for routing)
   const { data, isLoading, isError, error, refetch } = useCharacterSheetData(characterId);
 
+  // Registra il brano di questo personaggio: se questa scheda diventa quella in
+  // primo piano, AudioManagerController lo riprodurrà (vedi audioManagerStore).
+  // Va prima di ogni return anticipato (Rules of Hooks): usa i dati non appena disponibili.
+  const character = data?.character;
+  useEffect(() => {
+    if (!character) return;
+    const { register, unregister } = useAudioManagerStore.getState();
+    register(character._id, character.audioTheme, character.name);
+    return () => unregister(character._id);
+  }, [character?._id, character?.audioTheme, character?.name]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -75,8 +89,9 @@ export function CharacterSheetContent({ characterId }: CharacterSheetContentProp
     );
   }
 
-  // No data
-  if (!data) {
+  // No data (il narrowing su `character`, già letto sopra da data?.character, serve perché
+  // è usato dagli hook prima di questo guard: da qui in poi TS lo sa non-undefined)
+  if (!data || !character) {
     return (
       <div className={styles.characterSheetContent}>
         <div className={styles.errorState}>
@@ -87,7 +102,7 @@ export function CharacterSheetContent({ characterId }: CharacterSheetContentProp
     );
   }
 
-  const { character, permissions, visibleSkills, visibleEquipment } = data;
+  const { permissions, visibleSkills, visibleEquipment } = data;
 
   // Bot characters get their own dedicated sheet (takes priority over characterType)
   if (character.isBot) {

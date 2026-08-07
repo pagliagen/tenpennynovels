@@ -44,6 +44,7 @@ import { DateDisplay } from '../sidebar/DateDisplay';
 import { MoonPhase } from '../sidebar/MoonPhase';
 import { WeatherDisplay } from '../sidebar/WeatherDisplay';
 import { MinimizedWindowsBar } from '../windows/MinimizedWindowsBar';
+import { AudioManagerController } from '../windows/AudioManagerController';
 import { WindowRenderer } from '../windows/WindowRenderer';
 
 import { LocationInfoModal } from './LocationInfoModal';
@@ -477,6 +478,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
           ======================================== */}
         {/* Window Manager - Renders all open windows */}
         <WindowRenderer />
+        <AudioManagerController />
 
         {/* Minimized Windows Bar - Bottom bar for minimized windows */}
         <MinimizedWindowsBar />

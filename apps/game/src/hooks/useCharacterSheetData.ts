@@ -67,6 +67,8 @@ export interface CharacterSheetData {
     characterType: 'pg_principale' | 'pg_master' | 'png';
     avatar?: string;
     profileImage?: string;
+    /** Link musica del personaggio: riprodotto quando la sua scheda è la finestra attiva */
+    audioTheme?: string;
     age?: number;
     gender?: string;
     occupation?: {
