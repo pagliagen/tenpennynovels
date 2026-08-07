@@ -2,6 +2,7 @@ import { Router } from 'express';
 import characterRoutes from './characters';
 import characterDiaryRoutes from './characterDiary';
 import characterMasterNotesRoutes from './characterMasterNotes';
+import characterInventoryActionsRoutes from './characterInventoryActions';
 import locationRoutes from './locations';
 import gameRoutes from './game';
 import economyRoutes from './economy';
@@ -42,6 +43,7 @@ router.get('/health', (req, res) => {
 router.use('/', characterRoutes);
 router.use('/', characterDiaryRoutes);
 router.use('/', characterMasterNotesRoutes);
+router.use('/', characterInventoryActionsRoutes);
 router.use('/', locationRoutes);
 router.use('/', gameRoutes);
 router.use('/', economyRoutes);
