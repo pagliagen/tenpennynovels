@@ -7,6 +7,13 @@
 
 import { getConnection } from '../utils/connection.js';
 import * as bcrypt from 'bcryptjs';
+import { ObjectId } from 'mongodb';
+import { randomBytes } from 'crypto';
+
+// ID fisso e riconoscibile (non un ObjectId "casuale" generato al momento): permette di
+// impostare SYSTEM_BOT_USER_ID una volta sola nell'env, uguale su ogni ambiente seedato
+// con questo script, invece di doverlo rileggere dal DB ogni volta.
+export const SYSTEM_BOT_USER_ID = '000000000000000000000001';
 
 const ADMIN_ACCOUNTS = [
   { username: 'admin', email: 'gennaro.paglia@gmail.com', password: 'admin123', displayName: 'System Administrator', isGestore: true },
@@ -181,6 +188,45 @@ async function seedUsers() {
       console.log('   ✓ Created test user: testuser/test123');
     } else {
       console.log('   ⏭️  testuser already exists, skipping');
+    }
+
+    // System bot user — proprietario di tutti i personaggi isBot:true.
+    // ID fisso (non generato) così SYSTEM_BOT_USER_ID va impostato una volta sola.
+    console.log('\n   🤖 Creating system bot user...');
+    const botUserId = ObjectId.createFromHexString(SYSTEM_BOT_USER_ID);
+    const existingBotUser = await usersCol.findOne({ _id: botUserId });
+
+    if (!existingBotUser) {
+      await usersCol.insertOne({
+        _id: botUserId,
+        username: 'system-bot',
+        email: 'system-bot@tenpennynovels.internal',
+        // Password casuale: questo account non fa mai login interattivo, serve solo
+        // come userId proprietario per i personaggi bot (vedi SYSTEM_BOT_USER_ID).
+        passwordHash: await bcrypt.hash(randomBytes(32).toString('hex'), 12),
+        displayName: 'System Bot',
+        isEmailVerified: true,
+        canAccessAdminPanel: false,
+        isActive: true,
+        isBanned: false,
+        multipleCharactersAllowed: true,
+        userRoles: ['user'],
+        characterRoles: [],
+        characterPermissions: [],
+        preferences: {
+          emailNotifications: false,
+          marketingEmails: false,
+          theme: 'victorian_dark',
+          language: 'it',
+          timezone: 'Europe/Rome'
+        },
+        loginCount: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      console.log(`   ✓ Created system bot user: ${SYSTEM_BOT_USER_ID}`);
+    } else {
+      console.log('   ⏭️  system-bot already exists, skipping');
     }
 
     // Stats
