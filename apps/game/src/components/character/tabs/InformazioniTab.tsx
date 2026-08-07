@@ -49,10 +49,10 @@ export function InformazioniTab({ character, permissions }: InformazioniTabProps
         <InfoField label="Altezza" value={character.height || 'N/A'} />
         <InfoField label="Peso" value={character.weight || 'N/A'} />
         <InfoField
-          label="Occupazione"
+          label="Occupazione Pregressa"
           value={character.occupation?.name || 'Nessuna'}
         />
-        <InfoField label="Occupazione attuale" value={character.currentOccupation || 'N/A'} />
+        <InfoField label="Occupazione Attuale" value={character.currentOccupation || 'N/A'} />
       </div>
 
       {/* Physical Description */}
