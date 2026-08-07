@@ -57,6 +57,17 @@ export interface CharacterGamingSession {
   summary?: string;
 }
 
+export interface CharacterChatScene {
+  _id: string;
+  locationId: string;
+  locationName?: string;
+  participantCharacterIds: string[];
+  startedAt: string;
+  lastActivityAt: string;
+  status: 'open' | 'closed';
+  closedAt?: string;
+}
+
 // --- Diario classico ---
 
 export function useDiaryEntries(characterId: string | undefined) {
@@ -135,11 +146,36 @@ export async function downloadSessionTranscript(characterId: string, sessionId: 
     `/game/characters/${characterId}/sessions/${sessionId}/transcript`
   ));
 
-  const blob = new Blob([result.transcript || '(nessun messaggio)'], { type: 'text/plain;charset=utf-8' });
+  downloadTranscriptFile(result.transcript, `giocata-${result.sessionTitle}`);
+}
+
+// --- Chat Scenes ("role" auto-segmentate dalla chat standard) ---
+
+export function useCharacterChatScenes(characterId: string | undefined) {
+  return useQuery({
+    queryKey: ['character', characterId, 'chat-scenes'],
+    queryFn: () => unwrap(api.get<{ data: { scenes: CharacterChatScene[] } }>(`/game/characters/${characterId}/chat-scenes`)),
+    enabled: !!characterId
+  });
+}
+
+export async function downloadSceneTranscript(characterId: string, sceneId: string) {
+  const result = await unwrap(api.get<{ data: { locationName?: string; startedAt: string; messageCount: number; transcript: string } }>(
+    `/game/characters/${characterId}/chat-scenes/${sceneId}/transcript`
+  ));
+
+  const label = result.locationName
+    ? `giocata a ${result.locationName}`
+    : `giocata-${sceneId}`;
+  downloadTranscriptFile(result.transcript, label);
+}
+
+function downloadTranscriptFile(transcript: string, label: string) {
+  const blob = new Blob([transcript || '(nessun messaggio)'], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `giocata-${result.sessionTitle.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.txt`;
+  link.download = `${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.txt`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

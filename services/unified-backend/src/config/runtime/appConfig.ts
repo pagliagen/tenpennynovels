@@ -67,6 +67,7 @@ export const appConfig = {
 
   features: {
     presenceCleanup: true,
+    sceneClosing: true,
     geolocation: isProduction,
     emailMock: !isProduction,
   },

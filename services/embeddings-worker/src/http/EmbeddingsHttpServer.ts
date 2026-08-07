@@ -14,6 +14,7 @@ import { checkOllamaHealth } from '../services/qa/OllamaChat';
 import { askWithContext } from '../services/qa/RAGPipeline';
 import { extractKeywords } from '../services/qa/AnswerEvaluator';
 import { extractInsight } from '../services/qa/DocumentInsightExtractor';
+import { classifySceneContinuation } from '../services/qa/SceneClassifier';
 
 export class EmbeddingsHttpServer {
   private app: express.Application;
@@ -257,6 +258,33 @@ export class EmbeddingsHttpServer {
         res.json({ success: true, ...result });
       } catch (error: any) {
         logger.error('Error in /extract-insight endpoint', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+      }
+    });
+
+    /**
+     * Scene segmentation (unified-backend "chat scenes"): decide if a new
+     * message continues one of the currently open scenes in a location, or
+     * is narratively independent. Riusa lo stesso OllamaChat/modello del
+     * Bibliotecario, nessuna infrastruttura separata.
+     * POST /classify/scene-continuation
+     * Body: { newMessage: {characterName, content}, candidateScenes: [{sceneId, recentMessages}] }
+     */
+    this.app.post('/classify/scene-continuation', async (req: Request, res: Response) => {
+      try {
+        const { newMessage, candidateScenes } = req.body;
+
+        if (!newMessage?.content || typeof newMessage.content !== 'string') {
+          return res.status(400).json({ success: false, error: 'Missing or invalid newMessage parameter' });
+        }
+        if (!Array.isArray(candidateScenes) || candidateScenes.length === 0) {
+          return res.status(400).json({ success: false, error: 'Missing or invalid candidateScenes parameter' });
+        }
+
+        const result = await classifySceneContinuation({ newMessage, candidateScenes });
+        res.json({ success: true, result });
+      } catch (error: any) {
+        logger.error('Error in /classify/scene-continuation endpoint', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
       }
     });

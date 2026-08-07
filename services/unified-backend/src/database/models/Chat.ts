@@ -19,6 +19,7 @@ export interface IChat extends Document {
   locationId: string;
   locationName?: string;
   sessionId?: string;
+  chatSceneId?: string;
   timestamp: Date;
   visibility: 'public' | 'whisper' | 'master_only';
   diceResult?: {
@@ -202,6 +203,10 @@ export const ChatSchema = new Schema<IChat>({
     type: String,
     required: false,
     index: true
+  },
+  chatSceneId: {
+    type: String,
+    required: false
   },
   timestamp: {
     type: Date,
@@ -410,6 +415,7 @@ ChatSchema.index({ locationId: 1, timestamp: -1 });
 ChatSchema.index({ characterId: 1, timestamp: -1 });
 ChatSchema.index({ locationId: 1, visibility: 1, timestamp: -1 });
 ChatSchema.index({ sessionId: 1, timestamp: -1 });
+ChatSchema.index({ chatSceneId: 1, characterId: 1 });
 ChatSchema.index({ isMasked: 1, locationId: 1 });  // Admin queries
 
 ChatSchema.statics.getLocationHistory = async function(

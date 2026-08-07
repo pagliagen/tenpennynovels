@@ -23,6 +23,9 @@ import { WeaponService } from '../services/WeaponService';
 // Message Transformer (Phase 2 refactoring)
 import { ChatMessageService } from '../services/ChatMessageService';
 
+// Chat Scene Service (segmentazione chat in scene narrative per personaggio)
+import { ChatSceneService } from '../services/ChatSceneService';
+
 // WebSocket Service (Centralized emissions)
 import { ChatWebSocketService } from '../services/ChatWebSocketService';
 
@@ -347,6 +350,22 @@ export class ChatController {
       // Save to database
       // Note: Empty subdocuments are automatically removed by ChatSchema pre-save middleware
       const savedAction = await Chat.createAction(actionData);
+
+      // Fire-and-forget: segmentazione in "scene" narrative per il download
+      // personale del personaggio. Non deve mai ritardare risposta/broadcast.
+      if (actionData.actionType === 'standard') {
+        ChatSceneService.handleStandardMessage({
+          chatMessageId: savedAction._id.toString(),
+          locationId,
+          locationName: location?.name,
+          characterId: freshCharacter._id.toString(),
+          characterName: displayName,
+          content: content.trim(),
+          timestamp: savedAction.timestamp
+        }).catch((error) => {
+          logger.error('[ChatScene] handleStandardMessage failed', { error, locationId });
+        });
+      }
 
       // Update occupant position tag if position was provided
       if (position) {

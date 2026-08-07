@@ -102,6 +102,12 @@ async function startServer(): Promise<void> {
       logger.info('✅ Presence cleanup CRON job started');
     }
 
+    // Start Scene Closing CRON Job (every 5 minutes, feature flag controlled)
+    if (appConfig.features.sceneClosing) {
+      await import('./cron/sceneClosing');
+      logger.info('✅ Scene closing CRON job started');
+    }
+
     // Start Message Delivery CRON Job (every 5 minutes)
     await import('@modules/game/jobs/messageDelivery');
     logger.info('✅ Message delivery CRON job started');

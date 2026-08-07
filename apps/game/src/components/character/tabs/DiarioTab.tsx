@@ -17,6 +17,7 @@ import { useState, type CSSProperties, type FormEvent } from 'react';
 import { CharacterSheetData, CharacterSheetPermissions } from '@/hooks/useCharacterSheetData';
 import {
   useCharacterSessions,
+  useCharacterChatScenes,
   useCreateDiaryEntry,
   useCreateEncounter,
   useDeleteDiaryEntry,
@@ -24,7 +25,8 @@ import {
   useDiaryEntries,
   useEncounters,
   useUpdateDiaryEntry,
-  downloadSessionTranscript
+  downloadSessionTranscript,
+  downloadSceneTranscript
 } from '@/hooks/useCharacterDiary';
 import { CreateTicketModal } from '@/components/tickets/CreateTicketModal';
 import styles from '@/styles/components/character/CharacterSheetTab.module.scss';
@@ -276,15 +278,46 @@ function PersonaggiIncontrati({ character, permissions }: { character: Character
 // Role
 // -------------------------------------------------------------------------
 
+interface RoleEntry {
+  kind: 'session' | 'scene';
+  id: string;
+  title: string;
+  date: string;
+  summary?: string;
+}
+
 function RoleLog({ character }: { character: CharacterSheetData['character'] }) {
-  const { data, isLoading } = useCharacterSessions(character._id);
+  const { data: sessionsData, isLoading: sessionsLoading } = useCharacterSessions(character._id);
+  const { data: scenesData, isLoading: scenesLoading } = useCharacterChatScenes(character._id);
   const [reportSessionTitle, setReportSessionTitle] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
-  const handleDownload = async (sessionId: string) => {
-    setDownloadingId(sessionId);
+  const isLoading = sessionsLoading || scenesLoading;
+
+  const entries: RoleEntry[] = [
+    ...(sessionsData?.sessions.map((session): RoleEntry => ({
+      kind: 'session',
+      id: session._id,
+      title: session.title,
+      date: session.sessionDate,
+      summary: session.summary
+    })) ?? []),
+    ...(scenesData?.scenes.map((scene): RoleEntry => ({
+      kind: 'scene',
+      id: scene._id,
+      title: `Giocata a ${scene.locationName || 'location sconosciuta'}`,
+      date: scene.startedAt
+    })) ?? [])
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const handleDownload = async (entry: RoleEntry) => {
+    setDownloadingId(entry.id);
     try {
-      await downloadSessionTranscript(character._id, sessionId);
+      if (entry.kind === 'session') {
+        await downloadSessionTranscript(character._id, entry.id);
+      } else {
+        await downloadSceneTranscript(character._id, entry.id);
+      }
     } finally {
       setDownloadingId(null);
     }
@@ -294,7 +327,7 @@ function RoleLog({ character }: { character: CharacterSheetData['character'] }) 
     <div>
       {isLoading && <p className={styles.lockTextPlain}>Caricamento…</p>}
 
-      {!isLoading && (data?.sessions.length ?? 0) === 0 && (
+      {!isLoading && entries.length === 0 && (
         <div className={styles.emptyStatePadded}>
           <div className={styles.emptyIcon}>🎭</div>
           <p>Nessuna role registrata finora.</p>
@@ -302,23 +335,23 @@ function RoleLog({ character }: { character: CharacterSheetData['character'] }) 
       )}
 
       <div className={styles.reviewList}>
-        {data?.sessions.map((session) => (
-          <div key={session._id} className={styles.reviewCard}>
+        {entries.map((entry) => (
+          <div key={`${entry.kind}-${entry.id}`} className={styles.reviewCard}>
             <div className={styles.cardHeaderRow}>
-              <strong>{session.title}</strong>
-              <span className={styles.reviewMeta}>{new Date(session.sessionDate).toLocaleDateString('it-IT')}</span>
+              <strong>{entry.title}</strong>
+              <span className={styles.reviewMeta}>{new Date(entry.date).toLocaleDateString('it-IT')}</span>
             </div>
-            {session.summary && <p className={styles.reviewNotes}>{session.summary}</p>}
+            {entry.summary && <p className={styles.reviewNotes}>{entry.summary}</p>}
             <div className={styles.actionButtonRow} style={{ marginTop: '0.75rem' }}>
               <button
                 type="button"
                 className={styles.actionButton}
-                onClick={() => handleDownload(session._id)}
-                disabled={downloadingId === session._id}
+                onClick={() => handleDownload(entry)}
+                disabled={downloadingId === entry.id}
               >
-                {downloadingId === session._id ? 'Preparazione…' : '⬇️ Scarica giocata'}
+                {downloadingId === entry.id ? 'Preparazione…' : '⬇️ Scarica giocata'}
               </button>
-              <button type="button" className={styles.actionButton} onClick={() => setReportSessionTitle(session.title)}>
+              <button type="button" className={styles.actionButton} onClick={() => setReportSessionTitle(entry.title)}>
                 🚩 Segnala al master
               </button>
             </div>

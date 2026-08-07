@@ -35,6 +35,21 @@ interface QAExtractInsightResponse {
   insight: string;
 }
 
+interface SceneClassificationMessage {
+  characterName: string;
+  content: string;
+}
+
+interface SceneClassificationCandidate {
+  sceneId: string;
+  recentMessages: SceneClassificationMessage[];
+}
+
+interface SceneClassificationResponse {
+  success: boolean;
+  result: { matchedSceneId: string | null; confidence: number };
+}
+
 export class EmbeddingService {
   // Ollama availability is cached briefly: /ask, extractKeywords and extractInsight
   // are all called within a single search request and would otherwise each trigger
@@ -257,6 +272,35 @@ export class EmbeddingService {
       return await response.json() as QAExtractInsightResponse;
     } catch (error: any) {
       logger.error(`Error in extractInsight: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Segmentazione chat in "scene" (ChatSceneService): usa lo stesso Ollama/
+   * modello del Bibliotecario via embeddings-worker /classify/scene-continuation.
+   * Timeout basso: numPredict piccolo lato embeddings-worker, risposta rapida.
+   */
+  static async classifySceneContinuation(
+    newMessage: SceneClassificationMessage,
+    candidateScenes: SceneClassificationCandidate[]
+  ): Promise<SceneClassificationResponse | null> {
+    try {
+      const response = await fetch(`${EMBEDDINGS_SERVICE_URL}/classify/scene-continuation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newMessage, candidateScenes }),
+        signal: AbortSignal.timeout(20000)
+      });
+
+      if (!response.ok) {
+        logger.error(`[EmbeddingService] /classify/scene-continuation error: ${response.status}`);
+        return null;
+      }
+
+      return await response.json() as SceneClassificationResponse;
+    } catch (error: any) {
+      logger.error(`Error in classifySceneContinuation: ${error.message}`);
       return null;
     }
   }
