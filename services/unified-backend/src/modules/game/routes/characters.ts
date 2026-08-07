@@ -8,6 +8,7 @@ import { CharacterGameplayController } from '../controllers/CharacterGameplayCon
 import { CharacterSocialController } from '../controllers/CharacterSocialController';
 import { SkillController } from '../controllers/SkillController';
 import { CharacterProgressionController } from '../controllers/CharacterProgressionController';
+import { CharacterAvatarController, uploadAvatar } from '../controllers/CharacterAvatarController';
 
 const router = Router();
 
@@ -86,6 +87,17 @@ router.put('/characters/:characterId',
 router.put('/characters/:characterId/prestavolto',
   AuthMiddleware.requireUserAuth,
   CharacterController.updatePrestavolto
+);
+
+/**
+ * @route POST /characters/:characterId/avatar
+ * @desc Upload ritratto (avatar + profileImage) via CDN, owner o master
+ * @access Private (owner o master)
+ */
+router.post('/characters/:characterId/avatar',
+  AuthMiddleware.requireCharacterAuth,
+  uploadAvatar.single('file'),
+  CharacterAvatarController.uploadAvatar
 );
 
 /**

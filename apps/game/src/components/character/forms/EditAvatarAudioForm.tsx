@@ -3,8 +3,13 @@
  *
  * Modifica scheda accessibile dall'header della finestra (owner/master),
  * per ora limitata ai due soli campi editabili anche a personaggio approvato:
- * avatar (ritratto) e audioTheme (link YouTube riprodotto quando la scheda
- * è in primo piano). Gli altri campi restano bloccati per il momento.
+ * avatar (ritratto, upload su CDN) e audioTheme (link YouTube riprodotto
+ * quando la scheda è in primo piano). Gli altri campi restano bloccati.
+ *
+ * L'avatar si salva subito al momento dell'upload (l'endpoint dedicato
+ * POST /game/characters/:id/avatar scrive avatar+profileImage lato server):
+ * non serve passare dal bottone "Salva Modifiche", a differenza del link
+ * musica che resta un campo testo esplicito.
  *
  * @module components/character/forms/EditAvatarAudioForm
  * @since 2.0.0
@@ -15,6 +20,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { ImageUploader } from '@/components/shared/ImageUploader';
 import type { CharacterSheetData } from '@/hooks/useCharacterSheetData';
 import { characterApi } from '@/lib/api/character';
 import styles from '@/styles/components/character/CharacterEditForm.module.scss';
@@ -35,13 +41,19 @@ export function EditAvatarAudioForm({
 }: EditAvatarAudioFormProps): JSX.Element {
   const queryClient = useQueryClient();
 
-  const [formData, setFormData] = useState({
-    avatar: character.avatar || '',
-    audioTheme: character.audioTheme || ''
-  });
+  const [avatar, setAvatar] = useState(character.avatar || '');
+  const [audioTheme, setAudioTheme] = useState(character.audioTheme || '');
+
+  const handleAvatarChange = (url: string) => {
+    setAvatar(url);
+    // L'upload ha già salvato avatar+profileImage lato server: qui aggiorniamo
+    // solo la cache locale così il resto della scheda (ritratto a sinistra) si
+    // allinea subito, senza aspettare "Salva Modifiche".
+    queryClient.invalidateQueries({ queryKey: ['character-sheet', characterId] });
+  };
 
   const updateMutation = useMutation({
-    mutationFn: (data: typeof formData) => characterApi.update(characterId, data),
+    mutationFn: (data: { audioTheme: string }) => characterApi.update(characterId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['character-sheet', characterId] });
       onSuccess();
@@ -54,23 +66,22 @@ export function EditAvatarAudioForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateMutation.mutate(formData);
+    updateMutation.mutate({ audioTheme });
   };
 
   return (
     <form onSubmit={handleSubmit} className={styles.editForm}>
       <div className={styles.formGroup}>
-        <label htmlFor="avatar" className={styles.label}>
-          Avatar (link immagine)
+        <label className={styles.label}>
+          Avatar
         </label>
-        <input
-          type="url"
-          id="avatar"
-          value={formData.avatar}
-          onChange={(e) => setFormData((prev) => ({ ...prev, avatar: e.target.value }))}
-          className={styles.input}
-          placeholder="https://…"
-          maxLength={500}
+        <ImageUploader
+          value={avatar}
+          onChange={handleAvatarChange}
+          entityType="characters"
+          entityId={characterId}
+          placeholder="Trascina un'immagine qui oppure clicca per selezionare"
+          helpText="Aggiorna subito il ritratto della scheda e l'avatar in chat/location."
         />
       </div>
 
@@ -81,8 +92,8 @@ export function EditAvatarAudioForm({
         <input
           type="url"
           id="audioTheme"
-          value={formData.audioTheme}
-          onChange={(e) => setFormData((prev) => ({ ...prev, audioTheme: e.target.value }))}
+          value={audioTheme}
+          onChange={(e) => setAudioTheme(e.target.value)}
           className={styles.input}
           placeholder="https://www.youtube.com/watch?v=…"
           maxLength={500}
@@ -96,14 +107,14 @@ export function EditAvatarAudioForm({
           className={styles.cancelButton}
           disabled={updateMutation.isPending}
         >
-          Annulla
+          Chiudi
         </button>
         <button
           type="submit"
           className={styles.submitButton}
           disabled={updateMutation.isPending}
         >
-          {updateMutation.isPending ? 'Salvataggio...' : 'Salva Modifiche'}
+          {updateMutation.isPending ? 'Salvataggio...' : 'Salva Link Musica'}
         </button>
       </div>
     </form>
