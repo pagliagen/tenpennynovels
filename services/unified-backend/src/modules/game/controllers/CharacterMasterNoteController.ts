@@ -18,7 +18,7 @@ export class CharacterMasterNoteController {
 
       // characterId must be a plain ObjectId string — reject query objects (e.g. { $ne: null })
       // before it's used as a filter value anywhere below (NoSQL injection guard)
-      if (!isValidObjectId(characterId)) {
+      if (typeof characterId !== 'string' || !isValidObjectId(characterId)) {
         res.status(400).json(errorResponse('ID personaggio non valido', 'INVALID_CHARACTER_ID', undefined, 400, getRequestId(req)));
         return;
       }
