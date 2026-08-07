@@ -329,8 +329,16 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
       // Register socket in singleton for use in stores
       wsClient.setSocket(socket);
 
-      // Trigger presence refetch after reconnect (catch up on missed events)
-      socket.emit('request_presence_sync');
+      // Ping immediately instead of waiting for the first interval tick
+      // (PING_INTERVAL, 25s): the ping handler is what refreshes
+      // Character.lastActive/currentLocation server-side (see
+      // gameHandlers.ts), so without this a character can sit outside the
+      // presence query's activity window for up to 25s right after
+      // connecting — the exact "my character doesn't show up until I wait
+      // a bit" symptom this fixes.
+      if (socket.connected) {
+        socket.emit('ping');
+      }
 
       // Dispatch to connection event subscribers (single reception point)
       const eventType = hasConnectedOnce ? 'reconnected' : 'connected';

@@ -173,13 +173,18 @@ export function usePresence(): UsePresenceReturn {
     return unsubscribe;
   }, [onGlobalEvent, handleGlobalPresenceUpdate]);
 
-  // Refetch presence after WebSocket reconnect (catch up on missed events)
+  // Refetch presence on WebSocket connect/reconnect. The initial fetch above
+  // fires as soon as this hook mounts, which can race ahead of the rest of
+  // the login bootstrap (session check, character selection) — by the time
+  // the socket reports 'connected' that bootstrap is guaranteed settled, so
+  // this is a reliable second chance to pick up the player's own presence
+  // row without needing to enter a location first.
   useEffect(() => {
     if (!selectedCharacter) return;
 
     const unsubscribe = onConnectionEvent((event) => {
-      if (event.type === 'reconnected') {
-        logger.info('🔄 usePresence: WebSocket reconnected - refetching presence');
+      if (event.type === 'connected' || event.type === 'reconnected') {
+        logger.info(`🔄 usePresence: WebSocket ${event.type} - refetching presence`);
         initialize(selectedCharacter._id);
       }
     });

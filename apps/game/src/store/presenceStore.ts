@@ -366,8 +366,10 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
       return;
     }
 
-    // Add new character with minimal data
-    // Full data (avatar, location) will be enriched by periodic refetch (30s)
+    // Add new character with minimal data from the WS event. There's no
+    // periodic refetch to enrich it later — the next full refresh comes from
+    // initialize() on WS connect/reconnect or on entering a location
+    // (see usePresence.ts), not from a timer.
     logger.info('📥 Adding character to presence:', { characterId: event.characterId });
     set({
       globalPresence: [
