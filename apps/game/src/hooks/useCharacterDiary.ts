@@ -12,6 +12,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/lib/api/client';
 
+/**
+ * `api.get/post/...` spogliano solo l'involucro di trasporto axios, restituendo
+ * il body JSON del backend così com'è. I controller di questo modulo usano
+ * `successResponse(payload)` → `{ success, data: payload, timestamp }`: va
+ * quindi letto `.data`, non il payload direttamente (a differenza di
+ * `listResponse`, che mette i campi al livello radice — vedi useTickets.ts).
+ */
+async function unwrap<T>(promise: Promise<{ data: T }>): Promise<T> {
+  const result = await promise;
+  return result.data;
+}
+
 export interface DiaryEntry {
   _id: string;
   characterId: string;
@@ -50,7 +62,7 @@ export interface CharacterGamingSession {
 export function useDiaryEntries(characterId: string | undefined) {
   return useQuery({
     queryKey: ['character', characterId, 'diary-entries'],
-    queryFn: async () => api.get<{ entries: DiaryEntry[] }>(`/game/characters/${characterId}/diary-entries`),
+    queryFn: () => unwrap(api.get<{ data: { entries: DiaryEntry[] } }>(`/game/characters/${characterId}/diary-entries`)),
     enabled: !!characterId
   });
 }
@@ -58,8 +70,8 @@ export function useDiaryEntries(characterId: string | undefined) {
 export function useCreateDiaryEntry(characterId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { title: string; content: string; entryDate?: string }) =>
-      api.post<{ entry: DiaryEntry }>(`/game/characters/${characterId}/diary-entries`, data),
+    mutationFn: (data: { title: string; content: string; entryDate?: string }) =>
+      unwrap(api.post<{ data: { entry: DiaryEntry } }>(`/game/characters/${characterId}/diary-entries`, data)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['character', characterId, 'diary-entries'] })
   });
 }
@@ -67,8 +79,8 @@ export function useCreateDiaryEntry(characterId: string | undefined) {
 export function useUpdateDiaryEntry(characterId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ entryId, ...data }: { entryId: string; title?: string; content?: string; isVisible?: boolean }) =>
-      api.put<{ entry: DiaryEntry }>(`/game/characters/${characterId}/diary-entries/${entryId}`, data),
+    mutationFn: ({ entryId, ...data }: { entryId: string; title?: string; content?: string; isVisible?: boolean }) =>
+      unwrap(api.put<{ data: { entry: DiaryEntry } }>(`/game/characters/${characterId}/diary-entries/${entryId}`, data)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['character', characterId, 'diary-entries'] })
   });
 }
@@ -86,7 +98,7 @@ export function useDeleteDiaryEntry(characterId: string | undefined) {
 export function useEncounters(characterId: string | undefined) {
   return useQuery({
     queryKey: ['character', characterId, 'encounters'],
-    queryFn: async () => api.get<{ encounters: EncounterNote[] }>(`/game/characters/${characterId}/encounters`),
+    queryFn: () => unwrap(api.get<{ data: { encounters: EncounterNote[] } }>(`/game/characters/${characterId}/encounters`)),
     enabled: !!characterId
   });
 }
@@ -94,8 +106,8 @@ export function useEncounters(characterId: string | undefined) {
 export function useCreateEncounter(characterId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { targetName: string; notes: string; targetCharacterId?: string }) =>
-      api.post<{ encounter: EncounterNote }>(`/game/characters/${characterId}/encounters`, data),
+    mutationFn: (data: { targetName: string; notes: string; targetCharacterId?: string }) =>
+      unwrap(api.post<{ data: { encounter: EncounterNote } }>(`/game/characters/${characterId}/encounters`, data)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['character', characterId, 'encounters'] })
   });
 }
@@ -113,15 +125,15 @@ export function useDeleteEncounter(characterId: string | undefined) {
 export function useCharacterSessions(characterId: string | undefined) {
   return useQuery({
     queryKey: ['character', characterId, 'sessions'],
-    queryFn: async () => api.get<{ sessions: CharacterGamingSession[] }>(`/game/characters/${characterId}/sessions`),
+    queryFn: () => unwrap(api.get<{ data: { sessions: CharacterGamingSession[] } }>(`/game/characters/${characterId}/sessions`)),
     enabled: !!characterId
   });
 }
 
 export async function downloadSessionTranscript(characterId: string, sessionId: string) {
-  const result = await api.get<{ sessionTitle: string; sessionDate: string; messageCount: number; transcript: string }>(
+  const result = await unwrap(api.get<{ data: { sessionTitle: string; sessionDate: string; messageCount: number; transcript: string } }>(
     `/game/characters/${characterId}/sessions/${sessionId}/transcript`
-  );
+  ));
 
   const blob = new Blob([result.transcript || '(nessun messaggio)'], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);

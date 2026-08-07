@@ -14,6 +14,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/lib/api/client';
 
+/**
+ * `api.get/post` spogliano solo l'involucro axios: il body resta quello del
+ * backend, `successResponse(payload)` → `{ success, data: payload, timestamp }`.
+ * Va quindi letto `.data`, non il payload direttamente.
+ */
+async function unwrap<T>(promise: Promise<{ data: T }>): Promise<T> {
+  const result = await promise;
+  return result.data;
+}
+
 export interface InventoryItemView {
   inventoryItemId: string;
   itemId: string;
@@ -29,9 +39,9 @@ export interface InventoryItemView {
 export function useCharacterInventory(characterId: string | undefined) {
   return useQuery({
     queryKey: ['character', characterId, 'inventory'],
-    queryFn: async () => api.get<{ equipped: InventoryItemView[]; unequipped: InventoryItemView[] }>(
+    queryFn: () => unwrap(api.get<{ data: { equipped: InventoryItemView[]; unequipped: InventoryItemView[] } }>(
       `/game/characters/${characterId}/inventory`
-    ),
+    )),
     enabled: !!characterId
   });
 }
@@ -85,7 +95,7 @@ export interface PublicCharacterOption {
 export function usePublicCharacterList() {
   return useQuery({
     queryKey: ['characters', 'public-list'],
-    queryFn: async () => api.get<{ characters: PublicCharacterOption[] }>('/game/characters/public-list'),
+    queryFn: () => unwrap(api.get<{ data: { characters: PublicCharacterOption[] } }>('/game/characters/public-list')),
     staleTime: 60000
   });
 }

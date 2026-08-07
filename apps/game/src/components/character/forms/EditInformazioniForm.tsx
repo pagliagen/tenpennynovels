@@ -206,7 +206,7 @@ export function EditInformazioniForm({
       {/* Musica scheda */}
       <div className={styles.formGroup}>
         <label htmlFor="audioTheme" className={styles.label}>
-          Link musica del personaggio
+          Link YouTube musica del personaggio
         </label>
         <input
           type="url"
@@ -214,7 +214,7 @@ export function EditInformazioniForm({
           value={formData.audioTheme}
           onChange={(e) => handleChange('audioTheme', e.target.value)}
           className={styles.input}
-          placeholder="https://…"
+          placeholder="https://www.youtube.com/watch?v=…"
           maxLength={500}
         />
       </div>
