@@ -36,9 +36,11 @@ export class CharacterMasterNoteController {
         return;
       }
 
-      const filter: Record<string, unknown> = { characterId };
+      // Wrap in $eq per CodeQL's own guidance: guarantees a query-operator
+      // object can never be interpreted as anything but a literal value to match.
+      const filter: Record<string, unknown> = { characterId: { $eq: characterId } };
       if (category === 'general' || category === 'damage') {
-        filter.category = category;
+        filter.category = { $eq: category };
       }
 
       const notes = await CharacterMasterNote.find(filter).sort({ createdAt: -1 }).lean();
