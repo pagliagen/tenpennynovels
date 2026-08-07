@@ -154,7 +154,11 @@ server {
     # SSL gestito da certbot (vedi 40-workflow.md per il rinnovo dietro proxy Cloudflare)
 
     location ~ \.(webp|jpg|jpeg|png|gif)$ {
-        add_header Cache-Control "public, immutable, max-age=31536000" always;
+        # NIENTE "always" su Cache-Control: marchierebbe immutabile-1-anno
+        # anche un 404 (file non ancora esistente/cancellato), e Cloudflare
+        # lo terrebbe in cache per un anno — bug reale trovato il 07/08/2026
+        # nel vhost live, vedi RUNBOOK_SERVER1.md Fase 13.
+        add_header Cache-Control "public, immutable, max-age=31536000";
         add_header X-Content-Type-Options "nosniff" always;
 
         set $cors_origin "";
