@@ -16,6 +16,7 @@ import { useEffect, useRef, useState, ReactNode } from 'react';
 import classNames from 'classnames';
 
 import { useAudioManagerStore } from '@/store/audioManagerStore';
+import { useCharacterSheetHeaderStore } from '@/store/characterSheetHeaderStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/windows/Window.module.scss';
 import { WindowState } from '@/types/window-manager';
@@ -65,6 +66,11 @@ export function Window({ windowState, children }: WindowProps): JSX.Element {
   const togglePause = useAudioManagerStore((s) => s.togglePause);
   const hasTrack = !!audioRegistration?.audioUrl;
   const isPlayingHere = isActiveAudioWindow && !manuallyPaused;
+
+  // Tasto "Modifica Scheda": la scheda si registra da sola (CharacterSheetPGPrincipale)
+  // con se il viewer può modificare e il callback che apre il suo modale di edit.
+  const headerRegistration = useCharacterSheetHeaderStore((s) => (sheetCharacterId ? s.registrations[sheetCharacterId] : undefined));
+  const canEditSheet = !!headerRegistration?.canEdit;
 
   const [isDragging, setIsDragging] = useState(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
@@ -200,6 +206,20 @@ export function Window({ windowState, children }: WindowProps): JSX.Element {
         <span className={styles.title}>{getWindowTitle()}</span>
 
         <div className={styles.actions}>
+          {canEditSheet && (
+            <button
+              className={styles.minimizeBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                headerRegistration?.openEdit();
+              }}
+              aria-label="Modifica scheda"
+              title="Modifica scheda"
+            >
+              <span>✏️</span>
+            </button>
+          )}
+
           {hasTrack && (
             <button
               className={styles.minimizeBtn}

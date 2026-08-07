@@ -45,9 +45,6 @@ interface CharacterSheetRightPanelProps {
 
   /** Active tab */
   activeTab: CharacterSheetTab;
-
-  /** Edit handler (contextual to active tab) */
-  onEdit?: () => void;
 }
 
 /**
@@ -66,7 +63,6 @@ export function CharacterSheetRightPanel({
   visibleSkills,
   visibleEquipment,
   activeTab,
-  onEdit,
 }: CharacterSheetRightPanelProps): JSX.Element {
   // Shared props for all tabs
   const tabProps = {
@@ -78,29 +74,9 @@ export function CharacterSheetRightPanel({
 
   return (
     <div className={styles.rightPanel}>
-      {/* Edit Button — visibile solo se la sezione attiva è editabile per questo viewer */}
-      {activeTab === 'informazioni' && permissions.editPermissions.informazioni && onEdit && (
-        <div className={styles.editButtonContainer}>
-          <button
-            onClick={onEdit}
-            className={styles.editButton}
-            title="Modifica Informazioni (solo campi modificabili)"
-          >
-            ✏️ Modifica Informazioni
-          </button>
-        </div>
-      )}
-      {activeTab === 'background' && permissions.editPermissions.background && onEdit && (
-        <div className={styles.editButtonContainer}>
-          <button
-            onClick={onEdit}
-            className={styles.editButton}
-            title={permissions.masterOverride ? 'Modifica Background (accesso master)' : 'Modifica Background (solo in bozza)'}
-          >
-            ✏️ Modifica Background
-          </button>
-        </div>
-      )}
+      {/* L'editing di informazioni/background per ora non è esposto qui: l'unico
+          punto di modifica attivo è "Modifica Scheda" nell'header (avatar + musica),
+          vedi CharacterSheetPGPrincipale e characterSheetHeaderStore. */}
 
       {/* Content Area (Scrollable) - Tabs are now a separate sibling component */}
       <div className={styles.tabContent}>

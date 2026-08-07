@@ -13,15 +13,15 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { CharacterSheetLeftPanel } from '@/components/character/CharacterSheetLeftPanel';
 import { CharacterSheetRightPanel } from '@/components/character/CharacterSheetRightPanel';
-import { EditBackgroundForm } from '@/components/character/forms/EditBackgroundForm';
-import { EditInformazioniForm } from '@/components/character/forms/EditInformazioniForm';
+import { EditAvatarAudioForm } from '@/components/character/forms/EditAvatarAudioForm';
 import { CharacterEditModal } from '@/components/character/modals/CharacterEditModal';
 import { Tabs } from '@/components/character/Tabs';
 import type { CharacterSheetData } from '@/hooks/useCharacterSheetData';
+import { useCharacterSheetHeaderStore } from '@/store/characterSheetHeaderStore';
 import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 
 /**
@@ -76,21 +76,19 @@ export function CharacterSheetBot({
 }: CharacterSheetBotProps): JSX.Element {
   const [activeTab, setActiveTab] = useState<CharacterSheetBotTab>('informazioni');
 
-  const [showEditInfoModal, setShowEditInfoModal] = useState(false);
-  const [showEditBackgroundModal, setShowEditBackgroundModal] = useState(false);
+  // Modal "Modifica Scheda" (header): per ora limitato ad avatar + link musica,
+  // vedi lo stesso pattern in CharacterSheetPGPrincipale.
+  const [showHeaderEditModal, setShowHeaderEditModal] = useState(false);
+  const canEditHeader = permissions.isOwner || permissions.masterOverride;
 
-  const handleEdit = () => {
-    switch (activeTab) {
-      case 'informazioni':
-        setShowEditInfoModal(true);
-        break;
-      case 'background':
-        setShowEditBackgroundModal(true);
-        break;
-      default:
-        break;
-    }
-  };
+  useEffect(() => {
+    const { register, unregister } = useCharacterSheetHeaderStore.getState();
+    register(character._id, {
+      canEdit: canEditHeader,
+      openEdit: () => setShowHeaderEditModal(true)
+    });
+    return () => unregister(character._id);
+  }, [character._id, canEditHeader]);
 
   return (
     <>
@@ -106,35 +104,21 @@ export function CharacterSheetBot({
           visibleSkills={visibleSkills}
           visibleEquipment={visibleEquipment}
           activeTab={activeTab}
-          onEdit={handleEdit}
         />
       </div>
 
       <Tabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       <CharacterEditModal
-        title="✏️ Modifica Informazioni"
-        isOpen={showEditInfoModal}
-        onClose={() => setShowEditInfoModal(false)}
+        title="✏️ Modifica Scheda"
+        isOpen={showHeaderEditModal}
+        onClose={() => setShowHeaderEditModal(false)}
       >
-        <EditInformazioniForm
+        <EditAvatarAudioForm
           characterId={character._id}
           character={character}
-          onSuccess={() => setShowEditInfoModal(false)}
-          onCancel={() => setShowEditInfoModal(false)}
-        />
-      </CharacterEditModal>
-
-      <CharacterEditModal
-        title="🔒 Modifica Background Privato"
-        isOpen={showEditBackgroundModal}
-        onClose={() => setShowEditBackgroundModal(false)}
-      >
-        <EditBackgroundForm
-          characterId={character._id}
-          character={character}
-          onSuccess={() => setShowEditBackgroundModal(false)}
-          onCancel={() => setShowEditBackgroundModal(false)}
+          onSuccess={() => setShowHeaderEditModal(false)}
+          onCancel={() => setShowHeaderEditModal(false)}
         />
       </CharacterEditModal>
     </>
