@@ -15,6 +15,10 @@ const __dirname = dirname(__filename);
 
 const CSV_PATH = join(__dirname, '../data/skills.csv');
 
+// Skill governate solo dal master al seed iniziale (es. Mythos di CoC: non si compra con px,
+// cresce solo in gioco). Modificabile in seguito dal pannello gestione skill (campo lockedForPlayer).
+const LOCKED_FOR_PLAYER_SKILLS = ['Occultismo'];
+
 interface SkillRow {
   name: string;
   baseValue: string;
@@ -95,6 +99,7 @@ async function seedSkills() {
         placeholderType: r.placeholderType || undefined,
         predefinedValues: [],
         canRollWithoutPoints: r.canRollWithoutPoints === 'true',
+        lockedForPlayer: LOCKED_FOR_PLAYER_SKILLS.includes(r.name),
         createdAt: new Date(),
         updatedAt: new Date()
       }));

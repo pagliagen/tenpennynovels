@@ -237,7 +237,8 @@ export class SkillController {
           isPlaceholder: skill.isPlaceholder || false,
           placeholderType: skill.placeholderType,
           isDefault: skill.defaultSkill || false,
-          hasRollRestriction: !skill.canRollWithoutPoints && currentValue === 0
+          hasRollRestriction: !skill.canRollWithoutPoints && currentValue === 0,
+          lockedForPlayer: skill.lockedForPlayer || false
         };
       });
 

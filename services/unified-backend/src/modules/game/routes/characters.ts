@@ -7,6 +7,7 @@ import { CharacterController } from '../controllers/CharacterController';
 import { CharacterGameplayController } from '../controllers/CharacterGameplayController';
 import { CharacterSocialController } from '../controllers/CharacterSocialController';
 import { SkillController } from '../controllers/SkillController';
+import { CharacterProgressionController } from '../controllers/CharacterProgressionController';
 
 const router = Router();
 
@@ -85,6 +86,39 @@ router.put('/characters/:characterId',
 router.put('/characters/:characterId/prestavolto',
   AuthMiddleware.requireUserAuth,
   CharacterController.updatePrestavolto
+);
+
+/**
+ * @route GET /characters/:characterId/progression
+ * @desc Punti esperienza/abilità disponibili e storico spese (tab Statistiche)
+ * @access Private (owner o master)
+ */
+router.get('/characters/:characterId/progression',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission(GamePermissions.CHARACTER_PROGRESSION_READ),
+  CharacterProgressionController.getProgression
+);
+
+/**
+ * @route POST /characters/:characterId/progression/skills/:skillId/improve
+ * @desc Spende px disponibili per aumentare una skill (bloccato per skill lockedForPlayer)
+ * @access Private (owner o master)
+ */
+router.post('/characters/:characterId/progression/skills/:skillId/improve',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission(GamePermissions.CHARACTER_PROGRESSION_MODIFY),
+  CharacterProgressionController.improveSkill
+);
+
+/**
+ * @route POST /characters/:characterId/progression/grant
+ * @desc Assegna px/punti abilità a un personaggio (solo master)
+ * @access Private (master)
+ */
+router.post('/characters/:characterId/progression/grant',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission(GamePermissions.CHARACTER_PROGRESSION_MODIFY),
+  CharacterProgressionController.grantPoints
 );
 
 router.post('/characters/:characterId/submit',

@@ -14,6 +14,8 @@ export interface ISkill extends Document, SoftDeleteMethods {
   predefinedValues?: string[]; // Lista valori predefiniti per placeholder skills (es: Francese, Tedesco...)
   // NEW: Academic skills that cannot be rolled without points
   canRollWithoutPoints: boolean; // False for academic skills with 00 base value
+  // Skill governata solo dal master (es. Occultismo/Mythos: non si acquista con px, cresce solo in gioco)
+  lockedForPlayer: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -116,6 +118,10 @@ const skillSchema = new Schema<ISkill>({
   canRollWithoutPoints: {
     type: Boolean,
     default: true
+  },
+  lockedForPlayer: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true,

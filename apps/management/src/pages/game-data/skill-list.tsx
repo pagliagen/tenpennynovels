@@ -30,6 +30,7 @@ const EMPTY_FORM: CreateSkillData = {
   name: '', baseValue: 0, category: 'general', description: '',
   visible: true, defaultSkill: false, isPlaceholder: false,
   placeholderType: '', predefinedValues: [], canRollWithoutPoints: false,
+  lockedForPlayer: false,
 };
 
 export default function SkillList() {
@@ -73,6 +74,7 @@ export default function SkillList() {
       isPlaceholder: skill.isPlaceholder,
       placeholderType: skill.placeholderType || '', predefinedValues: skill.predefinedValues || [],
       canRollWithoutPoints: skill.canRollWithoutPoints,
+      lockedForPlayer: skill.lockedForPlayer,
     });
     setModalOpen(true);
   }, []);
@@ -213,6 +215,10 @@ export default function SkillList() {
             </div>
             <FormField label="Placeholder" name="isPlaceholder" type="checkbox" checked={formData.isPlaceholder ?? false}
               onChange={(e: any) => handleChange('isPlaceholder', e.target.checked)} />
+            <FormField label="Modificabile solo dal master" name="lockedForPlayer" type="checkbox"
+              checked={formData.lockedForPlayer ?? false}
+              onChange={(e: any) => handleChange('lockedForPlayer', e.target.checked)}
+              helpText="Il giocatore non può spendere px su questa skill (es. Occultismo/Mythos): cresce solo per assegnazione del master." />
             {formData.isPlaceholder && (
               <div className={styles.formRow}>
                 <FormField label="Tipo Placeholder" name="placeholderType" value={formData.placeholderType || ''}

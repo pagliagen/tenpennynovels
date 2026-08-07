@@ -331,7 +331,8 @@ export class SkillManagementController {
         isPlaceholder = false,
         placeholderType,
         predefinedValues,
-        canRollWithoutPoints = true
+        canRollWithoutPoints = true,
+        lockedForPlayer = false
       } = req.body;
 
       // Validation
@@ -383,7 +384,8 @@ export class SkillManagementController {
         isPlaceholder,
         placeholderType: placeholderType?.trim(),
         predefinedValues: predefinedValues || [],
-        canRollWithoutPoints
+        canRollWithoutPoints,
+        lockedForPlayer
       });
 
       await newSkill.save();
@@ -448,6 +450,7 @@ export class SkillManagementController {
         placeholderType,
         predefinedValues,
         canRollWithoutPoints,
+        lockedForPlayer,
         reason
       } = req.body;
 
@@ -517,6 +520,7 @@ export class SkillManagementController {
       if (placeholderType !== undefined) skill.placeholderType = placeholderType?.trim();
       if (predefinedValues !== undefined) skill.predefinedValues = predefinedValues;
       if (canRollWithoutPoints !== undefined) skill.canRollWithoutPoints = canRollWithoutPoints;
+      if (lockedForPlayer !== undefined) skill.lockedForPlayer = lockedForPlayer;
 
       await skill.save();
 

@@ -12,7 +12,10 @@
 
 'use client';
 
+import { useState } from 'react';
+
 import { CharacterSheetData, CharacterSheetPermissions } from '@/hooks/useCharacterSheetData';
+import { CreateTicketModal } from '@/components/tickets/CreateTicketModal';
 import styles from '@/styles/components/character/CharacterSheetTab.module.scss';
 
 interface BackgroundTabProps {
@@ -23,11 +26,35 @@ interface BackgroundTabProps {
 }
 
 export function BackgroundTab({ character, permissions }: BackgroundTabProps): JSX.Element {
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  // Background privato bloccato per il proprietario dopo l'approvazione: può solo richiederne
+  // la modifica al master (ticket), non editarlo direttamente.
+  const canRequestEdit = permissions.isOwner && !permissions.editPermissions.background;
+
   return (
     <div className={styles.root}>
       <h2 className={styles.title}>
         📖 Background del Personaggio
       </h2>
+
+      {canRequestEdit && (
+        <button
+          type="button"
+          className={styles.requestEditButton}
+          onClick={() => setShowRequestModal(true)}
+          title="Il background privato è bloccato dopo l'approvazione: richiedi al master di modificarlo"
+        >
+          ✉️ Richiedi modifica background
+        </button>
+      )}
+
+      {showRequestModal && (
+        <CreateTicketModal
+          onClose={() => setShowRequestModal(false)}
+          initialTitle={`Richiesta modifica background — ${character.name}`}
+          initialContent={`Vorrei richiedere la modifica del background privato del personaggio "${character.name}".\n\nModifiche richieste:\n`}
+        />
+      )}
 
       {/* Public Background */}
       {character.publicBackground && (
