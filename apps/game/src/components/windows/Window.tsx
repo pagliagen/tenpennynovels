@@ -15,6 +15,7 @@
 import { useEffect, useRef, useState, ReactNode } from 'react';
 import classNames from 'classnames';
 
+import { useAudioManagerStore } from '@/store/audioManagerStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/windows/Window.module.scss';
 import { WindowState } from '@/types/window-manager';
@@ -52,6 +53,18 @@ interface WindowProps {
  */
 export function Window({ windowState, children }: WindowProps): JSX.Element {
   const { updatePosition, focusWindow, minimizeWindow, closeWindow } = useWindowManagerStore();
+
+  // Tasto musica: solo per le schede personaggio che hanno un audioTheme registrato
+  // (vedi CharacterSheetContent → audioManagerStore). Suona solo la scheda in primo piano.
+  const sheetCharacterId = windowState.type === 'characterSheet' && windowState.data.type === 'characterSheet'
+    ? windowState.data.characterId
+    : null;
+  const audioRegistration = useAudioManagerStore((s) => (sheetCharacterId ? s.registrations[sheetCharacterId] : undefined));
+  const isActiveAudioWindow = useAudioManagerStore((s) => !!sheetCharacterId && s.activeCharacterId === sheetCharacterId);
+  const manuallyPaused = useAudioManagerStore((s) => s.manuallyPaused);
+  const togglePause = useAudioManagerStore((s) => s.togglePause);
+  const hasTrack = !!audioRegistration?.audioUrl;
+  const isPlayingHere = isActiveAudioWindow && !manuallyPaused;
 
   const [isDragging, setIsDragging] = useState(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
@@ -187,6 +200,20 @@ export function Window({ windowState, children }: WindowProps): JSX.Element {
         <span className={styles.title}>{getWindowTitle()}</span>
 
         <div className={styles.actions}>
+          {hasTrack && (
+            <button
+              className={styles.minimizeBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePause();
+              }}
+              aria-label={isPlayingHere ? 'Pausa musica' : 'Riproduci musica'}
+              title={isPlayingHere ? 'Pausa musica' : 'Riproduci musica'}
+            >
+              <span>{isPlayingHere ? '⏸' : '♪'}</span>
+            </button>
+          )}
+
           <button
             className={styles.minimizeBtn}
             onClick={(e) => {

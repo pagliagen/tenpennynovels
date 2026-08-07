@@ -76,7 +76,8 @@ export function EditBackgroundForm({
   const updateMutation = useMutation({
     mutationFn: (data: typeof formData) => characterApi.update(characterId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['characterSheet', characterId] });
+      // era 'characterSheet': non combaciava con la queryKey reale ['character-sheet', id]
+      queryClient.invalidateQueries({ queryKey: ['character-sheet', characterId] });
       onSuccess();
     },
     onError: (error: any) => {

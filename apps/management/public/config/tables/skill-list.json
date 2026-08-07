@@ -78,6 +78,18 @@
       }
     },
     {
+      "key": "lockedForPlayer",
+      "label": "Solo Master",
+      "type": "boolean",
+      "visible": true,
+      "defaultVisible": true,
+      "sortable": false,
+      "width": "100px",
+      "render": {
+        "type": "boolean"
+      }
+    },
+    {
       "key": "isPlaceholder",
       "label": "Placeholder",
       "type": "boolean",

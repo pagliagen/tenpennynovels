@@ -78,21 +78,29 @@ export function CharacterSheetRightPanel({
 
   return (
     <div className={styles.rightPanel}>
-      {/* Edit Button (Owner Only, Approved or Draft Characters, Informazioni Tab Only) */}
-      {permissions.isOwner &&
-        (character.playerStatus === 'approved' || character.playerStatus === 'draft') &&
-        activeTab === 'informazioni' &&
-        onEdit && (
-          <div className={styles.editButtonContainer}>
-            <button
-              onClick={onEdit}
-              className={styles.editButton}
-              title="Modifica Informazioni (solo campi modificabili)"
-            >
-              ✏️ Modifica Informazioni
-            </button>
-          </div>
-        )}
+      {/* Edit Button — visibile solo se la sezione attiva è editabile per questo viewer */}
+      {activeTab === 'informazioni' && permissions.editPermissions.informazioni && onEdit && (
+        <div className={styles.editButtonContainer}>
+          <button
+            onClick={onEdit}
+            className={styles.editButton}
+            title="Modifica Informazioni (solo campi modificabili)"
+          >
+            ✏️ Modifica Informazioni
+          </button>
+        </div>
+      )}
+      {activeTab === 'background' && permissions.editPermissions.background && onEdit && (
+        <div className={styles.editButtonContainer}>
+          <button
+            onClick={onEdit}
+            className={styles.editButton}
+            title={permissions.masterOverride ? 'Modifica Background (accesso master)' : 'Modifica Background (solo in bozza)'}
+          >
+            ✏️ Modifica Background
+          </button>
+        </div>
+      )}
 
       {/* Content Area (Scrollable) - Tabs are now a separate sibling component */}
       <div className={styles.tabContent}>

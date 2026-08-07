@@ -12,6 +12,7 @@ export interface Skill {
   placeholderType?: string;
   predefinedValues?: string[];
   canRollWithoutPoints: boolean;
+  lockedForPlayer: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +56,7 @@ export interface CreateSkillData {
   placeholderType?: string;
   predefinedValues?: string[];
   canRollWithoutPoints?: boolean;
+  lockedForPlayer?: boolean;
 }
 
 export interface UpdateSkillData extends Partial<CreateSkillData> {

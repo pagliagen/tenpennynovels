@@ -18,9 +18,22 @@ import { apiClient } from '@/lib/api/client';
  * Character sheet permissions
  * Calculated backend-side based on viewer role
  */
+export interface CharacterSheetEditPermissions {
+  informazioni: boolean;
+  background: boolean;
+  statistiche: boolean;
+  abilita: boolean;
+  diario: boolean;
+  noteMaster: boolean;
+  inventario: boolean;
+}
+
 export interface CharacterSheetPermissions {
   /** Is viewer the character owner */
   isOwner: boolean;
+
+  /** Is viewer a master/gestore */
+  isMaster: boolean;
 
   /** Can view private background fields */
   canViewPrivateBackground: boolean;
@@ -34,8 +47,14 @@ export interface CharacterSheetPermissions {
   /** Can view skill breakdown (base, manual, bonuses) */
   canViewSkillBreakdown: boolean;
 
-  /** Can edit character (owner + DRAFT status) */
+  /** @deprecated usa editPermissions.informazioni — mantenuto per compatibilità */
   canEdit: boolean;
+
+  /** Permessi di modifica granulari, uno per tab della scheda */
+  editPermissions: CharacterSheetEditPermissions;
+
+  /** Il viewer è master: ha sempre accesso in scrittura alle sezioni gestibili da master */
+  masterOverride: boolean;
 }
 
 /**
@@ -48,6 +67,8 @@ export interface CharacterSheetData {
     characterType: 'pg_principale' | 'pg_master' | 'png';
     avatar?: string;
     profileImage?: string;
+    /** Link musica del personaggio: riprodotto quando la sua scheda è la finestra attiva */
+    audioTheme?: string;
     age?: number;
     gender?: string;
     occupation?: {
@@ -106,6 +127,7 @@ export interface CharacterSheetData {
       manualPoints?: number;
       occupationBonus?: number;
       interestBonus?: number;
+      lockedForPlayer?: boolean;
     }>;
 
     // Equipment
@@ -135,12 +157,12 @@ export interface CharacterSheetData {
       rentPerMonth: number;
     };
 
-    // Review history
+    // Review history (audit trail del workflow di approvazione — campi reali del backend,
+    // vedi Character.ts: NON author/authorRole/date/notes, che non esistono nello schema)
     reviewHistory?: Array<{
-      date: string;
-      author: string;
-      authorRole: string;
-      notes: string;
+      reviewedAt: string;
+      action: 'approve' | 'reject' | 'request_changes' | 'draft';
+      note?: string;
     }>;
 
     // Bot

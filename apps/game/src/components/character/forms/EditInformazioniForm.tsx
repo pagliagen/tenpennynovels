@@ -64,6 +64,7 @@ export function EditInformazioniForm({
     gender: character.gender || 'male',
     physicalDescription: character.physicalDescription || '',
     publicBackground: character.publicBackground || '',
+    audioTheme: character.audioTheme || '',
   });
 
   // Update mutation
@@ -71,7 +72,9 @@ export function EditInformazioniForm({
     mutationFn: (data: typeof formData) => characterApi.update(characterId, data),
     onSuccess: () => {
       // Invalidate character sheet query to refresh data
-      queryClient.invalidateQueries({ queryKey: ['characterSheet', characterId] });
+      // (era 'characterSheet': non combaciava con la queryKey reale ['character-sheet', id]
+      // usata da useCharacterSheetData, quindi la scheda non si aggiornava mai da sola dopo il salvataggio)
+      queryClient.invalidateQueries({ queryKey: ['character-sheet', characterId] });
       onSuccess();
     },
     onError: (error: any) => {
@@ -198,6 +201,22 @@ export function EditInformazioniForm({
         <span className={styles.charCount}>
           {formData.publicBackground.length}/2000
         </span>
+      </div>
+
+      {/* Musica scheda */}
+      <div className={styles.formGroup}>
+        <label htmlFor="audioTheme" className={styles.label}>
+          Link YouTube musica del personaggio
+        </label>
+        <input
+          type="url"
+          id="audioTheme"
+          value={formData.audioTheme}
+          onChange={(e) => handleChange('audioTheme', e.target.value)}
+          className={styles.input}
+          placeholder="https://www.youtube.com/watch?v=…"
+          maxLength={500}
+        />
       </div>
 
       {/* Actions */}

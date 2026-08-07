@@ -1,10 +1,10 @@
 /**
  * Character Sheet Content Router
  *
- * Routes to appropriate sheet component based on characterType:
- * - pg_principale: Full sheet with all tabs (CharacterSheetPGPrincipale)
- * - png: Simplified sheet with name + avatar (CharacterSheetPNG)
- * - pg_master: Simplified sheet with name + avatar (CharacterSheetMaster)
+ * Bot characters get a dedicated sheet (CharacterSheetBot). Ogni altro tipo
+ * (pg_principale, png, pg_master) usa la stessa scheda completa
+ * (CharacterSheetPGPrincipale): le differenze tra i tipi sono nei dati e nei
+ * permessi restituiti dal backend, non nella UI.
  *
  * @module components/windows/contents/CharacterSheetContent
  * @since 2.0.0
@@ -12,14 +12,14 @@
 
 'use client';
 
+import { useEffect } from 'react';
+
 import { useCharacterSheetData } from '@/hooks/useCharacterSheetData';
+import { useAudioManagerStore } from '@/store/audioManagerStore';
 import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 
 import { CharacterSheetBot } from './CharacterSheetBot';
-import { CharacterSheetMaster } from './CharacterSheetMaster';
 import { CharacterSheetPGPrincipale } from './CharacterSheetPGPrincipale';
-import { CharacterSheetPNG } from './CharacterSheetPNG';
-import { logger } from '@/lib/logger';
 
 /**
  * Character Sheet Content Props
@@ -45,6 +45,17 @@ interface CharacterSheetContentProps {
 export function CharacterSheetContent({ characterId }: CharacterSheetContentProps): JSX.Element {
   // Fetch character data (includes characterType for routing)
   const { data, isLoading, isError, error, refetch } = useCharacterSheetData(characterId);
+
+  // Registra il brano di questo personaggio: se questa scheda diventa quella in
+  // primo piano, AudioManagerController lo riprodurrà (vedi audioManagerStore).
+  // Va prima di ogni return anticipato (Rules of Hooks): usa i dati non appena disponibili.
+  const character = data?.character;
+  useEffect(() => {
+    if (!character) return;
+    const { register, unregister } = useAudioManagerStore.getState();
+    register(character._id, character.audioTheme, character.name);
+    return () => unregister(character._id);
+  }, [character?._id, character?.audioTheme, character?.name]);
 
   // Loading state
   if (isLoading) {
@@ -75,8 +86,9 @@ export function CharacterSheetContent({ characterId }: CharacterSheetContentProp
     );
   }
 
-  // No data
-  if (!data) {
+  // No data (il narrowing su `character`, già letto sopra da data?.character, serve perché
+  // è usato dagli hook prima di questo guard: da qui in poi TS lo sa non-undefined)
+  if (!data || !character) {
     return (
       <div className={styles.characterSheetContent}>
         <div className={styles.errorState}>
@@ -87,7 +99,7 @@ export function CharacterSheetContent({ characterId }: CharacterSheetContentProp
     );
   }
 
-  const { character, permissions, visibleSkills, visibleEquipment } = data;
+  const { permissions, visibleSkills, visibleEquipment } = data;
 
   // Bot characters get their own dedicated sheet (takes priority over characterType)
   if (character.isBot) {
@@ -101,34 +113,16 @@ export function CharacterSheetContent({ characterId }: CharacterSheetContentProp
     );
   }
 
-  // Route to appropriate sheet component based on characterType
-  switch (character.characterType) {
-    case 'pg_principale':
-      return (
-        <CharacterSheetPGPrincipale
-          character={character}
-          permissions={permissions}
-          visibleSkills={visibleSkills}
-          visibleEquipment={visibleEquipment}
-        />
-      );
-
-    case 'png':
-      return <CharacterSheetPNG character={character} />;
-
-    case 'pg_master':
-      return <CharacterSheetMaster character={character} />;
-
-    default:
-      // Fallback to pg_principale for unknown types (backward compatibility)
-      logger.warn('[CharacterSheetContent] Unknown characterType:', { args: [character.characterType, '- defaulting to pg_principale'] });
-      return (
-        <CharacterSheetPGPrincipale
-          character={character}
-          permissions={permissions}
-          visibleSkills={visibleSkills}
-          visibleEquipment={visibleEquipment}
-        />
-      );
-  }
+  // pg_principale, png e pg_master condividono la stessa scheda completa (tutti i tab):
+  // le differenze tra i tipi sono nei dati/permessi restituiti dal backend (es. un png
+  // difficilmente avrà punti esperienza), non nella UI, quindi non serve un componente
+  // dedicato per ciascuno — evita di mantenere 3 copie quasi identiche.
+  return (
+    <CharacterSheetPGPrincipale
+      character={character}
+      permissions={permissions}
+      visibleSkills={visibleSkills}
+      visibleEquipment={visibleEquipment}
+    />
+  );
 }

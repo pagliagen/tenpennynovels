@@ -864,13 +864,36 @@ export class CharacterController {
       const isMaster = req.character?.gameplayRoles?.includes('master') ||
                        req.character?.isGestore || false;
 
+      const isDraft = character.playerStatus === 'draft';
+      const ownerCanEditDraft = isOwner && isDraft;
+
       const permissions = {
         isOwner,
+        isMaster,
         canViewPrivateBackground: isOwner || isMaster,
         canViewReviewHistory: isOwner || isMaster,
         canViewFullInventory: isOwner || isMaster,
         canViewSkillBreakdown: isOwner,
-        canEdit: isOwner && character.playerStatus === 'draft'
+        // Deprecato: mantenuto per compatibilità, equivale a editPermissions.informazioni
+        canEdit: ownerCanEditDraft,
+        // Permessi granulari per sezione della scheda: ogni tab ha regole proprie.
+        editPermissions: {
+          informazioni: ownerCanEditDraft || isMaster,
+          // Il background privato è fissato all'approvazione: dopo, solo il master lo tocca
+          // (il proprietario deve passare da "richiedi modifica" via ticket).
+          background: ownerCanEditDraft || isMaster,
+          // Statistiche/abilità: il proprietario può sempre spendere px (le skill lockedForPlayer
+          // restano bloccate lato endpoint anche se questo flag è true), il master ha sempre accesso.
+          statistiche: isOwner || isMaster,
+          abilita: isOwner || isMaster,
+          // Il diario è privato: solo il proprietario scrive le proprie voci.
+          diario: isOwner,
+          // Note Master: mai in scrittura per il proprietario.
+          noteMaster: isMaster,
+          // Inventario: equip/disequip/butta/cedi sono azioni del proprietario; il master può correggere.
+          inventario: isOwner || isMaster
+        },
+        masterOverride: isMaster
       };
 
       // hiddenMarks and health params are private — strip before serializing
@@ -895,21 +918,24 @@ export class CharacterController {
 
       // Fetch skill names from Skill model (filter out dynamic skill name-based keys)
       const skillIds = Object.keys(serializedSkills).filter(k => k.match(/^[0-9a-f]{24}$/i));
-      const skills = await Skill.find({ _id: { $in: skillIds } }).select('_id name').lean();
+      const skills = await Skill.find({ _id: { $in: skillIds } }).select('_id name lockedForPlayer').lean();
 
-      // Create skill ID to name mapping
+      // Create skill ID to name/lock mapping
       const skillNameMap: Record<string, string> = {};
+      const skillLockMap: Record<string, boolean> = {};
       skills.forEach((skill: any) => {
         skillNameMap[skill._id.toString()] = skill.name;
+        skillLockMap[skill._id.toString()] = !!skill.lockedForPlayer;
       });
 
-      // Add skill names to serialized skills
+      // Add skill names + lock flag to serialized skills
       serializedSkills = Object.fromEntries(
         Object.entries(serializedSkills).map(([skillId, skillData]) => [
           skillId,
           {
             ...(typeof skillData === 'object' ? skillData : { total: skillData }),
-            name: skillNameMap[skillId] || skillId // Use skill name from DB or fallback to ID
+            name: skillNameMap[skillId] || skillId, // Use skill name from DB or fallback to ID
+            lockedForPlayer: skillLockMap[skillId] || false
           }
         ])
       );
@@ -1105,10 +1131,13 @@ export class CharacterController {
       const userId = req.user!.userId;
       const updates = req.body;
 
-      const character = await Character.findOne({
-        _id: characterId,
-        userId: userId
-      });
+      const isMaster = req.character?.gameplayRoles?.includes('master') ||
+                       req.character?.isGestore || false;
+
+      // Il master può correggere qualunque personaggio, non solo i propri
+      const character = await Character.findOne(
+        isMaster ? { _id: characterId } : { _id: characterId, userId: userId }
+      );
 
       if (!character) {
         res.status(404).json(errorResponse(
@@ -1124,19 +1153,33 @@ export class CharacterController {
       // Filter updates based on character status
       let filteredUpdates = updates;
       const limitedEditableFields = ['avatar', 'profileImage', 'prestavolto', 'audioTheme'];
-      
+      // Il master può sempre correggere info anagrafiche e background anche a personaggio approvato
+      // (skill/stats restano fuori: passano dal flusso dedicato di spesa px, vedi SkillController).
+      const masterEditableFields = [
+        ...limitedEditableFields,
+        'name', 'surname', 'age', 'apparentAge', 'gender', 'birthDate', 'birthPlace',
+        'physicalDescription', 'publicDescription', 'privateDescription', 'nationality',
+        'description', 'motivations', 'fears',
+        'height', 'weight', 'eyeColor', 'hairColor', 'visibleMarks', 'hiddenMarks',
+        'maritalStatus', 'illnesses', 'educationTitle', 'criminalRecord', 'pathologies', 'currentOccupation',
+        'background'
+      ];
+
       if (character.playerStatus !== 'draft') {
         // For non-DRAFT characters, only allow limited editable fields
+        // (il master ne ha di più, il proprietario resta sul set minimo)
+        const editableFields = isMaster ? masterEditableFields : limitedEditableFields;
         filteredUpdates = {};
-        limitedEditableFields.forEach(field => {
+        editableFields.forEach(field => {
           if (updates[field] !== undefined) {
             filteredUpdates[field] = updates[field];
           }
         });
-        
+
         logger.info('Filtered updates for non-DRAFT character', {
           characterId,
           characterStatus: character.playerStatus,
+          isMaster,
           originalFields: Object.keys(updates),
           filteredFields: Object.keys(filteredUpdates)
         });
@@ -1174,8 +1217,8 @@ export class CharacterController {
           'dynamicSkills'
         ];
       } else {
-        // Non-DRAFT characters can only update limited fields
-        allowedFields = limitedEditableFields;
+        // Non-DRAFT characters can only update limited fields (di più per il master)
+        allowedFields = isMaster ? masterEditableFields : limitedEditableFields;
       }
       
       // Handle skills separately (needs async/await for database query)

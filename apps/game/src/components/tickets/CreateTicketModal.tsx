@@ -15,12 +15,16 @@ import styles from '@/styles/components/tickets/CreateTicketModal.module.scss';
 
 interface CreateTicketModalProps {
   onClose: () => void;
+  /** Titolo precompilato (es. richieste generate da un punto specifico della UI) */
+  initialTitle?: string;
+  /** Descrizione precompilata */
+  initialContent?: string;
 }
 
-export function CreateTicketModal({ onClose }: CreateTicketModalProps) {
-  const [title, setTitle] = useState('');
+export function CreateTicketModal({ onClose, initialTitle = '', initialContent = '' }: CreateTicketModalProps) {
+  const [title, setTitle] = useState(initialTitle);
   const [category, setCategory] = useState('');
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(initialContent);
 
   const { data: categories = [], isLoading: loadingCategories } = useTicketCategories();
   const createTicket = useCreateTicket();
