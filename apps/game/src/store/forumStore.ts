@@ -288,6 +288,12 @@ export const useForumStore = create<ForumStore>()(
 
 // Initialize hash listener for browser back/forward
 if (typeof window !== 'undefined') {
+  // Deep link on first load: hashchange never fires for a hash that's already
+  // in the URL when the page loads (e.g. a shared #bacheca link), so open here too.
+  if (window.location.hash.startsWith('#bacheca')) {
+    useForumStore.getState().openForum();
+  }
+
   window.addEventListener('hashchange', () => {
     const store = useForumStore.getState();
 
