@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { AuthMiddleware } from '../middleware/auth';
 import { CharacterValidationMiddleware } from '../middleware/characterValidation';
 import { requireGamePermission } from '../middleware/gamePermissions';
@@ -12,20 +13,46 @@ import { CharacterAvatarController, uploadAvatar } from '../controllers/Characte
 
 const router = Router();
 
+// Rate limiters — same style as locations.ts/economy.ts (read vs write split).
+const charactersReadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: {
+    result: false,
+    error: 'Troppe richieste, riprova più tardi.',
+    code: 'CHARACTERS_RATE_LIMIT_EXCEEDED',
+    timestamp: new Date().toISOString()
+  }
+});
+
+const charactersWriteLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: {
+    result: false,
+    error: 'Troppe richieste, riprova più tardi.',
+    code: 'CHARACTERS_RATE_LIMIT_EXCEEDED',
+    timestamp: new Date().toISOString()
+  }
+});
+
 // Character creation and management
 // Check name availability (must be before /create for route matching)
 router.post('/characters/check-name',
+  charactersWriteLimiter,
   AuthMiddleware.requireUserAuth,
   CharacterController.checkNameAvailability
 );
 
 router.get('/characters/my',
+  charactersReadLimiter,
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:list:own'),
   CharacterController.getMyCharacters
 );
 
 router.get('/characters/public-list',
+  charactersReadLimiter,
   AuthMiddleware.requireUserAuth,
   requireGamePermission(GamePermissions.CHARACTER_READ_OTHERS_PUBLIC),
   CharacterController.getPublicCharactersList
@@ -34,23 +61,27 @@ router.get('/characters/public-list',
 // Character directory (Anagrafica) - Must be BEFORE :characterId route
 // Note: No character context required - accessible to all authenticated users
 router.get('/characters/directory',
+  charactersReadLimiter,
   AuthMiddleware.requireUserAuth,
   CharacterController.getCharacterDirectory
 );
 
 // Face claims search (wizard validation) - Must be BEFORE :characterId route
 router.get('/characters/face-claims/search',
+  charactersReadLimiter,
   AuthMiddleware.requireUserAuth,
   CharacterController.searchFaceClaims
 );
 
 router.get('/characters/:characterId/wizard',
+  charactersReadLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission(GamePermissions.CHARACTER_READ_OWN),
   CharacterController.getCharacterForWizard
 );
 
 router.get('/characters/:characterId',
+  charactersReadLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:read'),
   (req, res, next) => {
@@ -65,18 +96,21 @@ router.get('/characters/:characterId',
 
 // Character skills endpoint (for DiceCommandsModal)
 router.get('/characters/:characterId/skills',
+  charactersReadLimiter,
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:skills:read'),
   SkillController.getCharacterSkillsForDice
 );
 
 router.get('/characters/public/:characterId',
+  charactersReadLimiter,
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:read:others:public'),
   CharacterController.getPublicCharacter
 );
 
 router.put('/characters/:characterId',
+  charactersWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:update'),
   CharacterValidationMiddleware.validateCharacterUpdate,
@@ -85,6 +119,7 @@ router.put('/characters/:characterId',
 
 // Update prestavolto (dedicated endpoint, works for approved characters)
 router.put('/characters/:characterId/prestavolto',
+  charactersWriteLimiter,
   AuthMiddleware.requireUserAuth,
   CharacterController.updatePrestavolto
 );
@@ -95,6 +130,7 @@ router.put('/characters/:characterId/prestavolto',
  * @access Private (owner o master)
  */
 router.post('/characters/:characterId/avatar',
+  charactersWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   uploadAvatar.single('file'),
   CharacterAvatarController.uploadAvatar
@@ -106,6 +142,7 @@ router.post('/characters/:characterId/avatar',
  * @access Private (owner o master)
  */
 router.get('/characters/:characterId/progression',
+  charactersReadLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission(GamePermissions.CHARACTER_PROGRESSION_READ),
   CharacterProgressionController.getProgression
@@ -117,6 +154,7 @@ router.get('/characters/:characterId/progression',
  * @access Private (owner o master)
  */
 router.post('/characters/:characterId/progression/skills/:skillId/improve',
+  charactersWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission(GamePermissions.CHARACTER_PROGRESSION_MODIFY),
   CharacterProgressionController.improveSkill
@@ -128,12 +166,14 @@ router.post('/characters/:characterId/progression/skills/:skillId/improve',
  * @access Private (master)
  */
 router.post('/characters/:characterId/progression/grant',
+  charactersWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission(GamePermissions.CHARACTER_PROGRESSION_MODIFY),
   CharacterProgressionController.grantPoints
 );
 
 router.post('/characters/:characterId/submit',
+  charactersWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:submit'),
   CharacterValidationMiddleware.validateBackgroundCompletion,
@@ -143,11 +183,13 @@ router.post('/characters/:characterId/submit',
 // No permission check needed - this endpoint GENERATES the character_context token
 // Already protected by requireUserAuth + controller validates ownership
 router.post('/characters/:characterId/select',
+  charactersWriteLimiter,
   AuthMiddleware.requireUserAuth,
   CharacterGameplayController.selectCharacter
 );
 
 router.delete('/characters/:characterId',
+  charactersWriteLimiter,
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:delete'),
   CharacterController.deleteCharacter
@@ -155,6 +197,7 @@ router.delete('/characters/:characterId',
 
 // Character location management
 router.post('/characters/set-location',
+  charactersWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:locations:enter'),
   CharacterGameplayController.setCharacterLocation
@@ -162,6 +205,7 @@ router.post('/characters/set-location',
 
 // Character corporations
 router.get('/characters/:characterId/corporations',
+  charactersReadLimiter,
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:corporations:read'),
   CharacterSocialController.getCharacterCorporations
@@ -169,18 +213,21 @@ router.get('/characters/:characterId/corporations',
 
 // NEW CHARACTER CREATION SYSTEM: Skill points and occupation bonuses
 router.get('/characters/:characterId/skill-points',
+  charactersReadLimiter,
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:progression:read'),
   CharacterGameplayController.getSkillPoints
 );
 
 router.post('/characters/:characterId/apply-occupation-bonuses',
+  charactersWriteLimiter,
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:progression:modify'),
   CharacterGameplayController.applyOccupationBonusesEndpoint
 );
 
 router.get('/occupations/:occupationId/check-prerequisites',
+  charactersReadLimiter,
   AuthMiddleware.requireUserAuth,
   requireGamePermission('game:character:occupations:read'),
   CharacterGameplayController.checkOccupationPrerequisitesEndpoint
@@ -191,47 +238,55 @@ router.get('/occupations/:occupationId/check-prerequisites',
 
 // AI gateway callback endpoints
 router.post('/characters/bot',
+  charactersWriteLimiter,
   AuthMiddleware.requireAIGatewayAuth,
   CharacterController.createBotCharacter
 );
 
 router.post('/characters/bot/complete',
+  charactersWriteLimiter,
   AuthMiddleware.requireAIGatewayAuth,
   CharacterController.createCompleteBotCharacter
 );
 
 // Fake PNG management (PNG Light system)
 router.get('/characters/:characterId/fake-pngs',
+  charactersReadLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:read'),
   CharacterController.listFakePngs
 );
 
 router.post('/characters/:characterId/fake-pngs',
+  charactersWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:update'),
   CharacterController.createFakePng
 );
 
 router.patch('/characters/:characterId/fake-pngs/:fakeId',
+  charactersWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:update'),
   CharacterController.updateFakePng
 );
 
 router.delete('/characters/:characterId/fake-pngs/:fakeId',
+  charactersWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:update'),
   CharacterController.deleteFakePng
 );
 
 router.post('/characters/:characterId/fake-pngs/:fakeId/activate',
+  charactersWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission(GamePermissions.CHAT_USE_FAKE_PNG),
   CharacterController.activateFakePng
 );
 
 router.post('/characters/:characterId/fake-pngs/deactivate',
+  charactersWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:character:update'),
   CharacterController.deactivateFakePng

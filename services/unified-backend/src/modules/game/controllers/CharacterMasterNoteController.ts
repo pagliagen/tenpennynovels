@@ -3,6 +3,7 @@ import { Character } from '@database/models/Character';
 import { CharacterMasterNote } from '@database/models/CharacterMasterNote';
 import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
+import { isValidObjectId } from '@shared/utils/validation';
 
 export class CharacterMasterNoteController {
   /**
@@ -14,6 +15,13 @@ export class CharacterMasterNoteController {
       const { characterId } = req.params;
       const { category } = req.query;
       const userId = req.user!.userId;
+
+      // characterId must be a plain ObjectId string — reject query objects (e.g. { $ne: null })
+      // before it's used as a filter value anywhere below (NoSQL injection guard)
+      if (!isValidObjectId(characterId)) {
+        res.status(400).json(errorResponse('ID personaggio non valido', 'INVALID_CHARACTER_ID', undefined, 400, getRequestId(req)));
+        return;
+      }
 
       const character = await Character.findById(characterId);
       if (!character) {

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Character, CharacterInventory, Item } from '@database/models';
 import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
+import { isValidObjectId } from '@shared/utils/validation';
 
 async function assertOwner(characterId: string, userId: string) {
   const character = await Character.findById(characterId);
@@ -177,6 +178,12 @@ export class CharacterInventoryActionsController {
       }
       if (toCharacterId === characterId) {
         res.status(400).json(errorResponse('Non puoi cedere un oggetto a te stesso', 'INVALID_RECIPIENT', undefined, 400, getRequestId(req)));
+        return;
+      }
+      // toCharacterId must be a plain ObjectId string — reject query objects (e.g. { $ne: null })
+      // before it's used as a filter value anywhere below (NoSQL injection guard)
+      if (typeof toCharacterId !== 'string' || !isValidObjectId(toCharacterId)) {
+        res.status(400).json(errorResponse('Destinatario non valido', 'INVALID_RECIPIENT', undefined, 400, getRequestId(req)));
         return;
       }
 
