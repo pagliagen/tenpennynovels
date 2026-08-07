@@ -155,12 +155,12 @@ export interface CharacterSheetData {
       rentPerMonth: number;
     };
 
-    // Review history
+    // Review history (audit trail del workflow di approvazione — campi reali del backend,
+    // vedi Character.ts: NON author/authorRole/date/notes, che non esistono nello schema)
     reviewHistory?: Array<{
-      date: string;
-      author: string;
-      authorRole: string;
-      notes: string;
+      reviewedAt: string;
+      action: 'approve' | 'reject' | 'request_changes' | 'draft';
+      note?: string;
     }>;
 
     // Bot
