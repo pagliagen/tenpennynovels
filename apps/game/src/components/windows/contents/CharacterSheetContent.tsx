@@ -1,10 +1,10 @@
 /**
  * Character Sheet Content Router
  *
- * Routes to appropriate sheet component based on characterType:
- * - pg_principale: Full sheet with all tabs (CharacterSheetPGPrincipale)
- * - png: Simplified sheet with name + avatar (CharacterSheetPNG)
- * - pg_master: Simplified sheet with name + avatar (CharacterSheetMaster)
+ * Bot characters get a dedicated sheet (CharacterSheetBot). Ogni altro tipo
+ * (pg_principale, png, pg_master) usa la stessa scheda completa
+ * (CharacterSheetPGPrincipale): le differenze tra i tipi sono nei dati e nei
+ * permessi restituiti dal backend, non nella UI.
  *
  * @module components/windows/contents/CharacterSheetContent
  * @since 2.0.0
@@ -19,10 +19,7 @@ import { useAudioManagerStore } from '@/store/audioManagerStore';
 import styles from '@/styles/components/character/CharacterSheetContent.module.scss';
 
 import { CharacterSheetBot } from './CharacterSheetBot';
-import { CharacterSheetMaster } from './CharacterSheetMaster';
 import { CharacterSheetPGPrincipale } from './CharacterSheetPGPrincipale';
-import { CharacterSheetPNG } from './CharacterSheetPNG';
-import { logger } from '@/lib/logger';
 
 /**
  * Character Sheet Content Props
@@ -116,34 +113,16 @@ export function CharacterSheetContent({ characterId }: CharacterSheetContentProp
     );
   }
 
-  // Route to appropriate sheet component based on characterType
-  switch (character.characterType) {
-    case 'pg_principale':
-      return (
-        <CharacterSheetPGPrincipale
-          character={character}
-          permissions={permissions}
-          visibleSkills={visibleSkills}
-          visibleEquipment={visibleEquipment}
-        />
-      );
-
-    case 'png':
-      return <CharacterSheetPNG character={character} />;
-
-    case 'pg_master':
-      return <CharacterSheetMaster character={character} />;
-
-    default:
-      // Fallback to pg_principale for unknown types (backward compatibility)
-      logger.warn('[CharacterSheetContent] Unknown characterType:', { args: [character.characterType, '- defaulting to pg_principale'] });
-      return (
-        <CharacterSheetPGPrincipale
-          character={character}
-          permissions={permissions}
-          visibleSkills={visibleSkills}
-          visibleEquipment={visibleEquipment}
-        />
-      );
-  }
+  // pg_principale, png e pg_master condividono la stessa scheda completa (tutti i tab):
+  // le differenze tra i tipi sono nei dati/permessi restituiti dal backend (es. un png
+  // difficilmente avrà punti esperienza), non nella UI, quindi non serve un componente
+  // dedicato per ciascuno — evita di mantenere 3 copie quasi identiche.
+  return (
+    <CharacterSheetPGPrincipale
+      character={character}
+      permissions={permissions}
+      visibleSkills={visibleSkills}
+      visibleEquipment={visibleEquipment}
+    />
+  );
 }
