@@ -204,6 +204,10 @@
   overflow: hidden;
 }
 
+.locations {
+  position: inherit;  
+}
+
 /* Body Container - Main content area */
 .bodyContainer {
   flex: 1;

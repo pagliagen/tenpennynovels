@@ -17,7 +17,7 @@
   z-index: 200;
   margin: 0 auto;
   user-select: none;
-  -webkit-user-select: none;
+  -webkit-user-select: none; 
 }
 
 .topBar {
@@ -79,15 +79,32 @@
     content: '';
     position: absolute;
     width: 10px;
-    height: 180px;
+    height: 130px;
     top: 0;
     background: black;
     z-index: 0;
-  }
+  } 
 
   &::after {
     right: 0;
   }
+}
+
+.locations {
+  position: inherit;
+}
+
+.topBarContainer.locations .topBarContent::after {
+  height: 180px;
+}
+.topBarContainer.locations .topBarContent::before {
+  height: 155px;
+  clip-path: polygon(
+    0% 0%,     /* In alto a sinistra */
+    100% 0%,   /* In alto a destra */
+    100% 99.9%, /* In basso a destra */
+    0% 100%     /* In basso a sinistra (più in alto per creare l'inclinazione) */
+  );
 }
 
 /* ========================================

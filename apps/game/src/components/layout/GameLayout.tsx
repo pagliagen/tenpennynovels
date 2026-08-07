@@ -442,7 +442,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
         {/* ========================================
           MAIN CONTENT - Right side with top bar + content
           ======================================== */}
-        <div className={styles.mainContent}>
+        <div className={`${styles.mainContent} ${router.pathname === '/locations' ? styles.locations : ''}`.trim()}>
           {/* Top Bar - Quick actions and notifications */}
           <TopBar
             onQuickMapClick={handleQuickMapClick}

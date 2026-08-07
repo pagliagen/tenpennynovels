@@ -30,6 +30,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useGamePermission } from '@/hooks/useGamePermission';
 import styles from '@/styles/components/TopBar.module.scss';
 import { logger } from '@/lib/logger';
+import { useRouter } from 'next/router';
 
 /**
  * Top Bar Props
@@ -150,6 +151,8 @@ export function TopBar({
   isInLondon = true,
   onLocationDisplayClick,
 }: TopBarProps): JSX.Element {
+  const router = useRouter();
+
   // State per gestire apertura/chiusura dropdown utility (linguetta ☰)
   const [isUtilityMenuOpen, setIsUtilityMenuOpen] = useState(false);
   const utilityMenuRef = useRef<HTMLDivElement>(null);
@@ -265,7 +268,8 @@ export function TopBar({
   };
 
   return (
-    <div className={styles.topBarContainer}>
+
+    <div className={`${styles.topBarContainer} ${router.pathname === '/locations' ? styles.locations : ''}`.trim()}> 
       <div className={styles.topBar}>
         {/* ========================================
           LEFT DECORATION
