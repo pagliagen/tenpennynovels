@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import characterRoutes from './characters';
+import characterDiaryRoutes from './characterDiary';
 import locationRoutes from './locations';
 import gameRoutes from './game';
 import economyRoutes from './economy';
@@ -38,6 +39,7 @@ router.get('/health', (req, res) => {
 
 // Mount all route modules with correct prefixes
 router.use('/', characterRoutes);
+router.use('/', characterDiaryRoutes);
 router.use('/', locationRoutes);
 router.use('/', gameRoutes);
 router.use('/', economyRoutes);

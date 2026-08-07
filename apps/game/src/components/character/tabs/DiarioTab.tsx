@@ -1,10 +1,10 @@
 /**
  * Diario Tab Component
  *
- * Shows character diary information:
- * - Personality traits
- * - Character status
- * - Creation date, last active
+ * Tre sotto-sezioni (visibili solo a proprietario e master):
+ * - Diario classico: note libere con titolo/data/flag on-off
+ * - Personaggi incontrati: note private su chi il personaggio ha conosciuto
+ * - Role: sessioni di gioco a cui ha partecipato, con "segnala al master" e "scarica giocata"
  *
  * @module components/character/tabs/DiarioTab
  * @since 2.0.0
@@ -12,9 +12,21 @@
 
 'use client';
 
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties, type FormEvent } from 'react';
 
 import { CharacterSheetData, CharacterSheetPermissions } from '@/hooks/useCharacterSheetData';
+import {
+  useCharacterSessions,
+  useCreateDiaryEntry,
+  useCreateEncounter,
+  useDeleteDiaryEntry,
+  useDeleteEncounter,
+  useDiaryEntries,
+  useEncounters,
+  useUpdateDiaryEntry,
+  downloadSessionTranscript
+} from '@/hooks/useCharacterDiary';
+import { CreateTicketModal } from '@/components/tickets/CreateTicketModal';
 import styles from '@/styles/components/character/CharacterSheetTab.module.scss';
 
 interface DiarioTabProps {
@@ -24,42 +36,310 @@ interface DiarioTabProps {
   visibleEquipment: string[];
 }
 
-export function DiarioTab({ character }: DiarioTabProps): JSX.Element {
+type SubTab = 'classico' | 'incontrati' | 'role';
+
+export function DiarioTab({ character, permissions }: DiarioTabProps): JSX.Element {
+  const [subTab, setSubTab] = useState<SubTab>('classico');
+  const canView = permissions.isOwner || permissions.masterOverride;
+
+  if (!canView) {
+    return (
+      <div className={styles.root}>
+        <div className={styles.lockPanel}>
+          <div className={styles.emptyIconSm}>🔒</div>
+          <h3 className={styles.lockTitle}>Diario Privato</h3>
+          <p className={styles.lockText}>Il diario è visibile solo al proprietario del personaggio e ai master.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.root}>
-      <h2 className={styles.title}>
-        📔 Diario del Personaggio
-      </h2>
+      <h2 className={styles.title}>📔 Diario del Personaggio</h2>
 
-      {/* Personality Traits */}
-      {character.personalityTraits && character.personalityTraits.length > 0 && (
-        <div className={styles.section}>
-          <h3 className={styles.sectionTitle}>
-            ✨ Tratti della Personalità
-          </h3>
-          <div className={styles.traitRow}>
-            {character.personalityTraits.map((trait, index) => (
-              <span key={index} className={styles.traitPill}>
-                {trait}
-              </span>
-            ))}
-          </div>
+      <div className={styles.subTabsRow}>
+        <button
+          type="button"
+          className={subTab === 'classico' ? styles.subTabButtonActive : styles.subTabButton}
+          onClick={() => setSubTab('classico')}
+        >
+          📓 Diario
+        </button>
+        <button
+          type="button"
+          className={subTab === 'incontrati' ? styles.subTabButtonActive : styles.subTabButton}
+          onClick={() => setSubTab('incontrati')}
+        >
+          🤝 Personaggi Incontrati
+        </button>
+        <button
+          type="button"
+          className={subTab === 'role' ? styles.subTabButtonActive : styles.subTabButton}
+          onClick={() => setSubTab('role')}
+        >
+          🎭 Role
+        </button>
+      </div>
+
+      {subTab === 'classico' && <DiarioClassico character={character} permissions={permissions} />}
+      {subTab === 'incontrati' && <PersonaggiIncontrati character={character} permissions={permissions} />}
+      {subTab === 'role' && <RoleLog character={character} />}
+
+      {/* Metadata di base, sempre visibili in fondo */}
+      <div className={styles.mtSection}>
+        <div className={styles.gridAuto200}>
+          <InfoCard title="📊 Stato" value={getStatusDisplay(character.playerStatus)} color={getStatusColor(character.playerStatus)} />
+          {character.createdAt && (
+            <InfoCard title="📅 Creato il" value={new Date(character.createdAt).toLocaleDateString('it-IT')} />
+          )}
+          {character.lastActive && (
+            <InfoCard title="⏰ Ultima Attività" value={new Date(character.lastActive).toLocaleDateString('it-IT')} />
+          )}
         </div>
-      )}
-
-      {/* Metadata Grid */}
-      <div className={styles.gridAuto200}>
-        <InfoCard title="📊 Stato" value={getStatusDisplay(character.playerStatus)} color={getStatusColor(character.playerStatus)} />
-        {character.createdAt && (
-          <InfoCard title="📅 Creato il" value={new Date(character.createdAt).toLocaleDateString('it-IT')} />
-        )}
-        {character.lastActive && (
-          <InfoCard title="⏰ Ultima Attività" value={new Date(character.lastActive).toLocaleDateString('it-IT')} />
-        )}
       </div>
     </div>
   );
 }
+
+// -------------------------------------------------------------------------
+// Diario classico
+// -------------------------------------------------------------------------
+
+function DiarioClassico({ character, permissions }: { character: CharacterSheetData['character']; permissions: CharacterSheetPermissions }) {
+  const { data, isLoading } = useDiaryEntries(character._id);
+  const createEntry = useCreateDiaryEntry(character._id);
+  const updateEntry = useUpdateDiaryEntry(character._id);
+  const deleteEntry = useDeleteDiaryEntry(character._id);
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const canWrite = permissions.editPermissions.diario;
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !content.trim()) return;
+    await createEntry.mutateAsync({ title: title.trim(), content: content.trim() });
+    setTitle('');
+    setContent('');
+    setShowForm(false);
+  };
+
+  return (
+    <div>
+      {canWrite && (
+        <div className={styles.actionButtonRow} style={{ marginBottom: '1rem' }}>
+          <button type="button" className={styles.actionButton} onClick={() => setShowForm((v) => !v)}>
+            {showForm ? '✕ Annulla' : '+ Nuova voce'}
+          </button>
+        </div>
+      )}
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className={styles.bodyBox} style={{ marginBottom: '1.5rem' }}>
+          <div className={styles.formField}>
+            <label className={styles.formLabel}>Titolo</label>
+            <input className={styles.formInput} value={title} onChange={(e) => setTitle(e.target.value)} maxLength={150} required />
+          </div>
+          <div className={styles.formField}>
+            <label className={styles.formLabel}>Testo</label>
+            <textarea className={styles.formTextarea} value={content} onChange={(e) => setContent(e.target.value)} maxLength={10000} required />
+          </div>
+          <button type="submit" className={styles.actionButton} disabled={createEntry.isPending}>
+            {createEntry.isPending ? 'Salvataggio…' : 'Salva voce'}
+          </button>
+        </form>
+      )}
+
+      {isLoading && <p className={styles.lockTextPlain}>Caricamento…</p>}
+
+      {!isLoading && (data?.entries.length ?? 0) === 0 && (
+        <div className={styles.emptyStatePadded}>
+          <div className={styles.emptyIcon}>📓</div>
+          <p>Nessuna voce di diario.</p>
+        </div>
+      )}
+
+      <div className={styles.reviewList}>
+        {data?.entries.map((entry) => (
+          <div key={entry._id} className={styles.reviewCard}>
+            <div className={styles.cardHeaderRow}>
+              <strong>{entry.title}</strong>
+              <span className={styles.reviewMeta}>{new Date(entry.entryDate).toLocaleDateString('it-IT')}</span>
+            </div>
+            <p className={styles.reviewNotes}>{entry.content}</p>
+            {canWrite && (
+              <div className={styles.actionButtonRow} style={{ marginTop: '0.75rem' }}>
+                <button
+                  type="button"
+                  className={styles.actionButton}
+                  onClick={() => updateEntry.mutate({ entryId: entry._id, isVisible: !entry.isVisible })}
+                >
+                  {entry.isVisible ? '👁️ Attiva' : '🚫 Disattivata'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.actionButtonDanger}
+                  onClick={() => deleteEntry.mutate(entry._id)}
+                >
+                  🗑️ Elimina
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------------------
+// Personaggi incontrati
+// -------------------------------------------------------------------------
+
+function PersonaggiIncontrati({ character, permissions }: { character: CharacterSheetData['character']; permissions: CharacterSheetPermissions }) {
+  const { data, isLoading } = useEncounters(character._id);
+  const createEncounter = useCreateEncounter(character._id);
+  const deleteEncounter = useDeleteEncounter(character._id);
+  const [showForm, setShowForm] = useState(false);
+  const [targetName, setTargetName] = useState('');
+  const [notes, setNotes] = useState('');
+  const canWrite = permissions.editPermissions.diario;
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!targetName.trim() || !notes.trim()) return;
+    await createEncounter.mutateAsync({ targetName: targetName.trim(), notes: notes.trim() });
+    setTargetName('');
+    setNotes('');
+    setShowForm(false);
+  };
+
+  return (
+    <div>
+      {canWrite && (
+        <div className={styles.actionButtonRow} style={{ marginBottom: '1rem' }}>
+          <button type="button" className={styles.actionButton} onClick={() => setShowForm((v) => !v)}>
+            {showForm ? '✕ Annulla' : '+ Nuovo personaggio'}
+          </button>
+        </div>
+      )}
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className={styles.bodyBox} style={{ marginBottom: '1.5rem' }}>
+          <div className={styles.formField}>
+            <label className={styles.formLabel}>Nome del personaggio</label>
+            <input className={styles.formInput} value={targetName} onChange={(e) => setTargetName(e.target.value)} maxLength={150} required />
+          </div>
+          <div className={styles.formField}>
+            <label className={styles.formLabel}>Cosa sa/pensa il tuo personaggio</label>
+            <textarea className={styles.formTextarea} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={10000} required />
+          </div>
+          <button type="submit" className={styles.actionButton} disabled={createEncounter.isPending}>
+            {createEncounter.isPending ? 'Salvataggio…' : 'Salva'}
+          </button>
+        </form>
+      )}
+
+      {isLoading && <p className={styles.lockTextPlain}>Caricamento…</p>}
+
+      {!isLoading && (data?.encounters.length ?? 0) === 0 && (
+        <div className={styles.emptyStatePadded}>
+          <div className={styles.emptyIcon}>🤝</div>
+          <p>Nessun personaggio annotato finora.</p>
+        </div>
+      )}
+
+      <div className={styles.reviewList}>
+        {data?.encounters.map((enc) => (
+          <div key={enc._id} className={styles.reviewCard}>
+            <div className={styles.cardHeaderRow}>
+              <strong>{enc.targetName}</strong>
+              <span className={styles.reviewMeta}>{new Date(enc.updatedAt).toLocaleDateString('it-IT')}</span>
+            </div>
+            <p className={styles.reviewNotes}>{enc.notes}</p>
+            {canWrite && (
+              <div className={styles.actionButtonRow} style={{ marginTop: '0.75rem' }}>
+                <button type="button" className={styles.actionButtonDanger} onClick={() => deleteEncounter.mutate(enc._id)}>
+                  🗑️ Elimina
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// -------------------------------------------------------------------------
+// Role
+// -------------------------------------------------------------------------
+
+function RoleLog({ character }: { character: CharacterSheetData['character'] }) {
+  const { data, isLoading } = useCharacterSessions(character._id);
+  const [reportSessionTitle, setReportSessionTitle] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownload = async (sessionId: string) => {
+    setDownloadingId(sessionId);
+    try {
+      await downloadSessionTranscript(character._id, sessionId);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  return (
+    <div>
+      {isLoading && <p className={styles.lockTextPlain}>Caricamento…</p>}
+
+      {!isLoading && (data?.sessions.length ?? 0) === 0 && (
+        <div className={styles.emptyStatePadded}>
+          <div className={styles.emptyIcon}>🎭</div>
+          <p>Nessuna role registrata finora.</p>
+        </div>
+      )}
+
+      <div className={styles.reviewList}>
+        {data?.sessions.map((session) => (
+          <div key={session._id} className={styles.reviewCard}>
+            <div className={styles.cardHeaderRow}>
+              <strong>{session.title}</strong>
+              <span className={styles.reviewMeta}>{new Date(session.sessionDate).toLocaleDateString('it-IT')}</span>
+            </div>
+            {session.summary && <p className={styles.reviewNotes}>{session.summary}</p>}
+            <div className={styles.actionButtonRow} style={{ marginTop: '0.75rem' }}>
+              <button
+                type="button"
+                className={styles.actionButton}
+                onClick={() => handleDownload(session._id)}
+                disabled={downloadingId === session._id}
+              >
+                {downloadingId === session._id ? 'Preparazione…' : '⬇️ Scarica giocata'}
+              </button>
+              <button type="button" className={styles.actionButton} onClick={() => setReportSessionTitle(session.title)}>
+                🚩 Segnala al master
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {reportSessionTitle && (
+        <CreateTicketModal
+          onClose={() => setReportSessionTitle(null)}
+          initialTitle={`Segnalazione role — ${reportSessionTitle}`}
+          initialContent={`Segnalo al master la role "${reportSessionTitle}" del personaggio "${character.name}".\n\nNota aggiuntiva:\n`}
+        />
+      )}
+    </div>
+  );
+}
+
+// -------------------------------------------------------------------------
+// Helpers
+// -------------------------------------------------------------------------
 
 function InfoCard({ title, value, color }: { title: string; value: string; color?: string }) {
   return (
