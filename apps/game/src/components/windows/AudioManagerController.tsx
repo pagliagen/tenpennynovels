@@ -23,7 +23,14 @@ import { useWindowManagerStore } from '@/store/windowManagerStore';
 import { logger } from '@/lib/logger';
 
 export function AudioManagerController(): JSX.Element {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  // Wrapper "stabile" gestito da React: non viene mai toccato dopo il mount.
+  // L'API YouTube sostituisce l'elemento che le passiamo con un <iframe> proprio,
+  // manipolando il DOM fuori dal controllo di React — se le passassimo direttamente
+  // questo nodo React perderebbe traccia del DOM reale e al primo re-render
+  // lancerebbe "Failed to execute 'insertBefore'/'removeChild' on 'Node'".
+  // Soluzione: dentro il wrapper creiamo a mano (non via JSX) un div "usa e getta"
+  // che l'API può sostituire liberamente, mai referenziato dal fiber di React.
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<any>(null);
   const playerReadyRef = useRef(false);
   const currentVideoIdRef = useRef<string | null>(null);
@@ -48,9 +55,15 @@ export function AudioManagerController(): JSX.Element {
     let cancelled = false;
 
     loadYouTubeIframeApi().then(() => {
-      if (cancelled || !containerRef.current || playerRef.current) return;
+      if (cancelled || !wrapperRef.current || playerRef.current) return;
+
+      // Nodo creato a mano, mai visto da React: sicuro da lasciare sostituire
+      // all'API YouTube senza che il fiber di React se ne accorga o interferisca.
+      const mountNode = document.createElement('div');
+      wrapperRef.current.appendChild(mountNode);
+
       const YT = (window as any).YT;
-      playerRef.current = new YT.Player(containerRef.current, {
+      playerRef.current = new YT.Player(mountNode, {
         height: '0',
         width: '0',
         playerVars: { autoplay: 0, controls: 0 },
@@ -70,6 +83,9 @@ export function AudioManagerController(): JSX.Element {
       playerRef.current?.destroy?.();
       playerRef.current = null;
       playerReadyRef.current = false;
+      // Il player.destroy() rimuove già il proprio iframe; svuotiamo comunque il
+      // wrapper per sicurezza, senza toccare wrapperRef.current stesso (quello resta a React).
+      if (wrapperRef.current) wrapperRef.current.innerHTML = '';
     };
   }, []);
 
@@ -107,5 +123,5 @@ export function AudioManagerController(): JSX.Element {
 
   // Nascosto: serve solo per l'audio, non per la UI (niente display:none: alcuni
   // browser sospendono/limitano gli iframe nascosti così, meglio 0x0 fuori schermo)
-  return <div ref={containerRef} style={{ position: 'fixed', width: 0, height: 0, overflow: 'hidden', left: -9999 }} />;
+  return <div ref={wrapperRef} style={{ position: 'fixed', width: 0, height: 0, overflow: 'hidden', left: -9999 }} />;
 }
