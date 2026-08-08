@@ -20,6 +20,22 @@
     width: calc(100% - 160px);
     border-bottom: 1px solid $gold;
   }
+
+  // Sotto MOBILE_SHELL_BREAKPOINT (useIsCompactLayout.ts) la riga singola non
+  // ci sta più: HOME/SEGNALIBRI (min-width 108px l'una) + una ricerca che si
+  // rifiutava di restringersi (flex:0 0 auto, min-width 180px) tagliavano il
+  // bordo destro. La ricerca passa su una riga propria a piena larghezza.
+  @media (max-width: 1023px) {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: $forum-header-height;
+    padding: $spacing-sm $spacing-md;
+    row-gap: $spacing-sm;
+
+    &::before {
+      display: none;
+    }
+  }
 }
 
 .tabNav {
@@ -121,6 +137,12 @@
   &::after {
     @include victorian-search-stripe(-5px);
   }
+
+  @media (max-width: 1023px) {
+    flex: 1 1 100%;
+    margin-left: 0;
+    order: 3; // dopo riduci/tab/breadcrumb/chiudi, sulla riga successiva
+  }
 }
 
 .searchInput {
@@ -128,6 +150,11 @@
   padding: $spacing-sm $spacing-lg;
   min-width: 180px;
   height: 30px;
+
+  @media (max-width: 1023px) {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .actions {
