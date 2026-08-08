@@ -77,7 +77,7 @@ export interface ICharacter extends Document, SoftDeleteMethods {
     knowledge: number;      // Conoscenze = EDU
     hitPoints: number;      // Punti Ferita = (TAG + COS) / 10 arrotondato per difetto
     sanity: number;         // Punti Sanità = POT iniziali
-    maxSanity: number;      // Sanità massima = 99 - Occulto
+    maxSanity: number;      // Sanità massima = 99
     magicPoints: number;    // Punti Magia = POT / 5 arrotondato per difetto
     movementRate: number;   // Tasso di Movimento = dipendente da DES e FOR (default 8)
     bonusDamage: string;    // Bonus al Danno da tabella FOR + TAG
@@ -451,7 +451,7 @@ const CharacterSchema = new Schema<ICharacter>({
     knowledge: { type: Number, default: 50 },     // Conoscenze = EDU
     hitPoints: { type: Number, default: 10 },     // PF = (TAG + COS) / 10
     sanity: { type: Number, default: 50 },        // SAN = POT iniziali
-    maxSanity: { type: Number, default: 99 },     // SAN max = 99 - Occulto
+    maxSanity: { type: Number, default: 99 },     // SAN max = 99
     magicPoints: { type: Number, default: 10 },   // PM = POT / 5
     movementRate: { type: Number, default: 8 },   // Tasso di Movimento (default 8)
     bonusDamage: { type: String, default: "0" },  // Bonus Danno da tabella

@@ -253,7 +253,7 @@ const initialState = (): Omit<
   derivedStats: {
     hitPoints: 4,       // PV = FLOOR((COS + TAG) / 10) = FLOOR((20 + 20) / 10) = 4
     sanity: 20,         // SAN = POT
-    maxSanity: 99,      // 99 - Cthulhu Mythos (0 initially)
+    maxSanity: 99,
     bonusDamage: '-2',  // BD = lookup(FOR + TAG) = lookup(40) = -2
     ideaRoll: 20,       // Tiro Idea = INT
   },
@@ -433,8 +433,9 @@ export const useWizardStore = create<WizardStore>()(
        * @param value - New value (1-100)
        */
       updateStat: (statName, value) => {
-        // Clamp value to valid range
-        const clampedValue = Math.max(1, Math.min(100, value));
+        // Clamp value to valid range (config-driven min - see character_creation_stats_base_points)
+        const minValue = get().creationConfig?.stats.minValue ?? 20;
+        const clampedValue = Math.max(minValue, Math.min(100, value));
 
         set({
           stats: {
@@ -475,7 +476,7 @@ export const useWizardStore = create<WizardStore>()(
        * **Formulas**:
        * - PV (Punti Vita) = FLOOR((COS + TAG) / 10)
        * - SAN (Sanita Mentale) = POT
-       * - Max Sanity = 99 (minus Cthulhu Mythos skill)
+       * - Max Sanity = 99
        * - BD (Bonus Danno) = lookup(FOR + TAG)
        * - Tiro Idea = INT
        */

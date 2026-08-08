@@ -109,7 +109,7 @@ export interface WizardStats {
 export interface DerivedStats {
   hitPoints: number;    // PV = FLOOR((COS + TAG) / 10)
   sanity: number;       // SAN = POT
-  maxSanity: number;    // 99 - Cthulhu Mythos skill
+  maxSanity: number;    // 99
   bonusDamage: string;  // BD = lookup(FOR + TAG) -> es. "-2", "0", "+1d4"
   ideaRoll: number;     // Tiro Idea = INT
 }

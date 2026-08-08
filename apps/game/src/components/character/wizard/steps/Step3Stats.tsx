@@ -44,6 +44,8 @@ export function Step3Stats(): JSX.Element {
   // Get config values (fallback to defaults if not loaded yet)
   const TOTAL_STAT_POINTS = creationConfig?.stats.totalPoints ?? 450;
   const MAX_STATS_ABOVE_80 = creationConfig?.stats.maxStatsAbove80 ?? 2;
+  const MIN_STAT_VALUE = creationConfig?.stats.minValue ?? 20;
+  const MAX_STAT_VALUE = creationConfig?.stats.creationCap ?? 85;
 
   // Type assertion safe: WizardStats declared properties are all number (index signature allows undefined for dynamic access only)
   const total = (Object.values(stats) as number[]).reduce((sum, val) => sum + val, 0);
@@ -98,6 +100,8 @@ export function Step3Stats(): JSX.Element {
                 description={stat.description}
                 value={stats[stat.key]}
                 onChange={(v) => updateStat(stat.key, v)}
+                min={MIN_STAT_VALUE}
+                max={MAX_STAT_VALUE}
                 isHigh={stats[stat.key] > 80}
               />
             ))}
