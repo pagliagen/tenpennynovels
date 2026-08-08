@@ -73,34 +73,40 @@ export function LocationPresenceList(): JSX.Element {
         <div className={styles.emptyState}>Nessuno presente</div>
       ) : (
         <ul className={styles.playerList} role="list">
-          {characters.map((presence) => (
-            <li key={presence.characterId} className={styles.playerItem} role="listitem">
-              <button
-                type="button"
-                className={styles.playerButton}
-                aria-label={`${presence.characterName}. Clicca per vedere profilo`}
-                onClick={() => {
-                  const isOwnDraftCharacter =
-                    presence.characterId === selectedCharacter?._id &&
-                    selectedCharacter?.playerStatus === 'draft' &&
-                    hasGamePermission('game:character:wizard');
+          {characters.map((presence) => {
+            const fullName = presence.characterSurname
+              ? `${presence.characterName} ${presence.characterSurname}`
+              : presence.characterName;
 
-                  if (isOwnDraftCharacter) {
-                    router.push('/character/wizard');
-                    return;
-                  }
+            return (
+              <li key={presence.characterId} className={styles.playerItem} role="listitem">
+                <button
+                  type="button"
+                  className={styles.playerButton}
+                  aria-label={`${fullName}. Clicca per vedere profilo`}
+                  onClick={() => {
+                    const isOwnDraftCharacter =
+                      presence.characterId === selectedCharacter?._id &&
+                      selectedCharacter?.playerStatus === 'draft' &&
+                      hasGamePermission('game:character:wizard');
 
-                  openWindow('characterSheet', {
-                    characterId: presence.characterId,
-                    characterName: presence.characterName,
-                    avatar: presence.avatar || undefined,
-                  });
-                }}
-              >
-                {presence.characterName}
-              </button>
-            </li>
-          ))}
+                    if (isOwnDraftCharacter) {
+                      router.push('/character/wizard');
+                      return;
+                    }
+
+                    openWindow('characterSheet', {
+                      characterId: presence.characterId,
+                      characterName: fullName,
+                      avatar: presence.avatar || undefined,
+                    });
+                  }}
+                >
+                  {fullName}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

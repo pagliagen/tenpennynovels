@@ -569,6 +569,7 @@ export class GameController {
         const eventData = {
           characterId: character.id,
           characterName: character.name,
+          characterSurname: character.surname || null,
           oldLocationId: oldLocation?.toString() || null,
           newLocationId: locationId === '' ? null : locationId,
           locationName: location.name,

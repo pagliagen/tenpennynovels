@@ -1,22 +1,25 @@
+@use '../../../variables' as *;
+
 /**
  * Market Styles — Mercato (catalogo strumenti + servizi continuativi)
  *
- * Same Victorian palette as CharacterDirectory.module.scss for visual
- * consistency across utility windows.
+ * Base scura, coerente con il resto delle finestre (Window.module.scss) e
+ * con i popup della mappa (Modal.module.scss) — stesso registro cromatico
+ * oro/parchment/bruno, niente più carta chiara.
  */
 
 .marketContainer {
   padding: 24px;
   font-family: 'Playfair Display', serif;
-  color: #2c2416;
-  background: #faf8f3;
+  color: $text-primary;
+  background: transparent;
   height: 100%;
   overflow-y: auto;
 }
 
 .header {
   margin-bottom: 16px;
-  border-bottom: 2px solid #8b7355;
+  border-bottom: 2px solid $gold-30;
   padding-bottom: 16px;
 }
 
@@ -24,7 +27,7 @@
   font-size: 28px;
   font-weight: bold;
   margin: 0 0 12px 0;
-  color: #3d2f1f;
+  color: $text-primary;
 }
 
 .walletBar {
@@ -32,9 +35,9 @@
   flex-wrap: wrap;
   gap: 16px;
   font-size: 14px;
-  color: #5a4a3a;
-  background: #f5f1e8;
-  border: 1px solid #d4c4a8;
+  color: $text-secondary;
+  background: $brown-20;
+  border: 1px solid $gold-20;
   border-radius: 4px;
   padding: 10px 14px;
 }
@@ -47,9 +50,9 @@
 
 .tab {
   padding: 8px 20px;
-  border: 1px solid #8b7355;
-  background: #f5f1e8;
-  color: #5a4a3a;
+  border: 1px solid $gold-30;
+  background: $brown-20;
+  color: $text-secondary;
   cursor: pointer;
   border-radius: 4px 4px 0 0;
   font-family: inherit;
@@ -57,8 +60,8 @@
 }
 
 .tabActive {
-  background: #8b7355;
-  color: #faf8f3;
+  background: $gold-70;
+  color: #1a1612;
   font-weight: bold;
 }
 
@@ -77,12 +80,12 @@
 .searchInput,
 .select {
   padding: 8px 12px;
-  border: 1px solid #d4c4a8;
+  border: 1px solid $gold-20;
   border-radius: 4px;
   font-family: inherit;
   font-size: 14px;
-  background: #fff;
-  color: #2c2416;
+  background: $brown-20;
+  color: $text-primary;
 }
 
 .itemGrid {
@@ -92,10 +95,10 @@
 }
 
 .itemCard {
-  border: 1px solid #d4c4a8;
+  border: 1px solid $gold-20;
   border-radius: 6px;
   padding: 14px;
-  background: #fff;
+  background: $brown-20;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -114,8 +117,8 @@
   height: 140px;
   object-fit: cover;
   border-radius: 4px;
-  border: 1px solid #d4c4a8;
-  background: #f5f1e8;
+  border: 1px solid $gold-20;
+  background: $brown-20;
 }
 
 .itemImageOverlay {
@@ -125,8 +128,8 @@
   overflow-y: auto;
   font-size: 12px;
   line-height: 1.4;
-  color: #faf8f3;
-  background: rgba(44, 36, 22, 0.9);
+  color: $text-primary;
+  background: rgba(10, 8, 6, 0.92);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease;
@@ -140,44 +143,44 @@
   display: block;
   font-weight: bold;
   font-size: 16px;
-  color: #3d2f1f;
+  color: $text-primary;
   white-space: nowrap;
   overflow: hidden;
 }
 
 .itemDescription {
   font-size: 13px;
-  color: #5a4a3a;
+  color: $text-secondary;
   margin: 0;
   line-height: 1.4;
 }
 
 .itemRequirement {
   font-size: 12px;
-  color: #a03d3d;
+  color: $color-error;
   font-style: italic;
   margin: 0;
 }
 
 .emptyState {
   text-align: center;
-  color: #5a4a3a;
+  color: $text-secondary;
   padding: 24px;
   font-style: italic;
 }
 
 .modalDescription {
-  color: #5a4a3a;
+  color: $text-secondary;
   line-height: 1.5;
 }
 
 .modalPrice {
   font-weight: bold;
-  color: #3d2f1f;
+  color: $text-primary;
 }
 
 .modalWarning {
-  color: #a03d3d;
+  color: $color-error;
   font-style: italic;
 }
 
@@ -196,8 +199,8 @@
 }
 
 .primaryButton {
-  background: #8b7355;
-  color: #faf8f3;
+  background: $gold-70;
+  color: #1a1612;
   border: none;
   border-radius: 4px;
   padding: 8px 16px;
@@ -206,15 +209,16 @@
   font-size: 14px;
 
   &:disabled {
-    background: #c4b8a4;
+    background: $gold-20;
+    color: $text-secondary;
     cursor: not-allowed;
   }
 }
 
 .secondaryButton {
   background: transparent;
-  color: #5a4a3a;
-  border: 1px solid #8b7355;
+  color: $text-secondary;
+  border: 1px solid $gold-30;
   border-radius: 4px;
   padding: 8px 16px;
   cursor: pointer;
@@ -222,8 +226,8 @@
   font-size: 14px;
 
   &:disabled {
-    color: #c4b8a4;
-    border-color: #d4c4a8;
+    color: $text-tertiary;
+    border-color: $gold-10;
     cursor: not-allowed;
   }
 }
@@ -232,21 +236,21 @@
   display: flex;
   gap: 16px;
   font-size: 14px;
-  color: #5a4a3a;
-  background: #f5f1e8;
-  border: 1px solid #d4c4a8;
+  color: $text-secondary;
+  background: $brown-20;
+  border: 1px solid $gold-20;
   border-radius: 4px;
   padding: 10px 14px;
 }
 
 .serviceCategoryGroup {
-  border-top: 1px solid #d4c4a8;
+  border-top: 1px solid $gold-20;
   padding-top: 12px;
 }
 
 .serviceCategoryTitle {
   font-size: 18px;
-  color: #3d2f1f;
+  color: $text-primary;
   margin: 0 0 8px 0;
 }
 
@@ -256,7 +260,7 @@
   align-items: center;
   gap: 16px;
   padding: 10px 0;
-  border-bottom: 1px solid #ede5d5;
+  border-bottom: 1px solid $gold-10;
 }
 
 .serviceName {
@@ -265,6 +269,6 @@
 }
 
 .serviceCost {
-  color: #6b5335;
+  color: $text-secondary;
   font-size: 13px;
 }

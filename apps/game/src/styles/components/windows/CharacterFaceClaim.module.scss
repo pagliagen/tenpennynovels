@@ -1,33 +1,36 @@
+@use '../../variables' as *;
+
 /**
  * Character Face Claim Styles
  *
- * Victorian-themed styling for character face claim management window.
+ * Base scura, coerente con il resto delle finestre (Window.module.scss) e
+ * con i popup della mappa (Modal.module.scss).
  */
 
 .container {
   padding: 24px;
   font-family: 'Playfair Display', serif;
-  color: #2c2416;
-  background: #faf8f3;
+  color: $text-primary;
+  background: transparent;
   height: 100%;
   overflow-y: auto;
 }
 
 .header {
   margin-bottom: 24px;
-  border-bottom: 2px solid #8b7355;
+  border-bottom: 2px solid $gold-30;
   padding-bottom: 16px;
 
   h2 {
     font-size: 28px;
     font-weight: bold;
     margin: 0 0 8px 0;
-    color: #3d2f1f;
+    color: $text-primary;
   }
 
   p {
     font-size: 15px;
-    color: #5a4a3a;
+    color: $text-secondary;
     margin: 0;
     font-style: italic;
   }
@@ -38,19 +41,19 @@
 
   .warning {
     padding: 16px;
-    background: #fff3cd;
-    border: 1px solid #ffc107;
+    background: rgba(255, 193, 7, 0.12);
+    border: 1px solid rgba(255, 193, 7, 0.4);
     border-radius: 4px;
-    color: #856404;
+    color: #ffd966;
     font-size: 15px;
   }
 
   .success {
     padding: 16px;
-    background: #d4edda;
-    border: 1px solid #28a745;
+    background: rgba(40, 167, 69, 0.12);
+    border: 1px solid rgba(40, 167, 69, 0.4);
     border-radius: 4px;
-    color: #155724;
+    color: #6fcf7c;
     font-size: 15px;
   }
 }
@@ -63,24 +66,24 @@
   display: block;
   font-size: 15px;
   font-weight: 600;
-  color: #3d2f1f;
+  color: $text-primary;
   margin-bottom: 8px;
 }
 
 .input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #8b7355;
+  border: 1px solid $gold-30;
   border-radius: 4px;
   font-family: 'Playfair Display', serif;
   font-size: 15px;
-  background: #ffffff;
-  color: #2c2416;
+  background: $brown-20;
+  color: $text-primary;
 
   &:focus {
     outline: none;
-    border-color: #6b5645;
-    box-shadow: 0 0 0 2px rgba(107, 86, 69, 0.1);
+    border-color: $gold-50;
+    box-shadow: 0 0 0 2px $gold-10;
   }
 }
 
@@ -88,7 +91,7 @@
   display: block;
   margin-top: 8px;
   font-size: 13px;
-  color: #7a6a5a;
+  color: $text-tertiary;
   font-style: italic;
 }
 
@@ -97,28 +100,28 @@
 
   .checking {
     padding: 12px;
-    background: #e8f4f8;
-    border: 1px solid #b8dae4;
+    background: rgba(49, 112, 143, 0.15);
+    border: 1px solid rgba(49, 112, 143, 0.4);
     border-radius: 4px;
-    color: #31708f;
+    color: #7ec8e3;
     font-size: 15px;
   }
 
   .warning {
     padding: 12px;
-    background: #fff3cd;
-    border: 1px solid #ffc107;
+    background: rgba(255, 193, 7, 0.12);
+    border: 1px solid rgba(255, 193, 7, 0.4);
     border-radius: 4px;
-    color: #856404;
+    color: #ffd966;
     font-size: 15px;
   }
 
   .success {
     padding: 12px;
-    background: #d4edda;
-    border: 1px solid #28a745;
+    background: rgba(40, 167, 69, 0.12);
+    border: 1px solid rgba(40, 167, 69, 0.4);
     border-radius: 4px;
-    color: #155724;
+    color: #6fcf7c;
     font-size: 15px;
   }
 }
@@ -128,7 +131,7 @@
 
   small {
     font-size: 13px;
-    color: #7a6a5a;
+    color: $text-tertiary;
     font-style: italic;
   }
 }
@@ -147,8 +150,8 @@
   align-items: flex-start;
   gap: 16px;
   padding: 16px;
-  border: 1px solid #8b7355;
-  background: #f5f1e8;
+  border: 1px solid $gold-30;
+  background: $brown-20;
   border-radius: 4px;
   cursor: pointer;
   text-align: left;
@@ -156,7 +159,7 @@
   transition: background 0.2s ease;
 
   &:hover {
-    background: #e8dcc8;
+    background: $brown-30;
   }
 }
 
@@ -171,21 +174,21 @@
   height: 100px;
   object-fit: cover;
   border-radius: 4px;
-  border: 1px solid #8b7355;
+  border: 1px solid $gold-30;
 }
 
 .wikiTitle {
   font-weight: bold;
   margin-bottom: 8px;
   font-size: 15px;
-  color: #3d2f1f;
+  color: $text-primary;
 }
 
 .wikiDates {
   font-weight: normal;
   margin-left: 8px;
   font-size: 13px;
-  color: #5a4a3a;
+  color: $text-secondary;
 }
 
 .wikiOccupation {
@@ -198,20 +201,20 @@
 
 .wikiExtract {
   font-size: 13px;
-  color: #5a4a3a;
+  color: $text-secondary;
   line-height: 1.4;
 }
 
 .actions {
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1px solid #d4c4a8;
+  border-top: 1px solid $gold-20;
 }
 
 .saveButton {
   padding: 12px 32px;
-  background: #8b7355;
-  color: #ffffff;
+  background: $gold-70;
+  color: #1a1612;
   border: none;
   border-radius: 4px;
   font-family: 'Playfair Display', serif;
@@ -221,11 +224,12 @@
   transition: background 0.2s ease;
 
   &:hover:not(:disabled) {
-    background: #6b5645;
+    background: $gold-80;
   }
 
   &:disabled {
-    background: #c4b4a8;
+    background: $gold-20;
+    color: $text-secondary;
     cursor: not-allowed;
     opacity: 0.6;
   }
@@ -234,30 +238,30 @@
 .successMessage {
   margin-top: 16px;
   padding: 12px;
-  background: #d4edda;
-  border: 1px solid #28a745;
+  background: rgba(40, 167, 69, 0.12);
+  border: 1px solid rgba(40, 167, 69, 0.4);
   border-radius: 4px;
-  color: #155724;
+  color: #6fcf7c;
   font-size: 15px;
 }
 
 .warningMessage {
   margin-top: 16px;
   padding: 12px;
-  background: #fff3cd;
-  border: 1px solid #ffc107;
+  background: rgba(255, 193, 7, 0.12);
+  border: 1px solid rgba(255, 193, 7, 0.4);
   border-radius: 4px;
-  color: #856404;
+  color: #ffd966;
   font-size: 15px;
 }
 
 .errorMessage {
   margin-top: 16px;
   padding: 12px;
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
+  background: rgba(220, 53, 69, 0.12);
+  border: 1px solid rgba(220, 53, 69, 0.4);
   border-radius: 4px;
-  color: #721c24;
+  color: #ff8a95;
   font-size: 15px;
 }
 
@@ -268,30 +272,30 @@
   justify-content: center;
   padding: 48px;
   font-style: italic;
-  color: #7a6a5a;
+  color: $text-secondary;
 }
 
 .error {
-  color: #8b3a3a;
+  color: $color-error;
 }
 
 // Anagrafe Prestavolti
 .registrySection {
   margin-top: 32px;
   padding-top: 24px;
-  border-top: 2px solid #8b7355;
+  border-top: 2px solid $gold-30;
 }
 
 .registryTitle {
   font-size: 20px;
   font-weight: bold;
-  color: #3d2f1f;
+  color: $text-primary;
   margin-bottom: 8px;
 }
 
 .registrySubtitle {
   font-size: 13px;
-  color: #7a6a5a;
+  color: $text-tertiary;
   font-style: italic;
   margin-bottom: 16px;
 }
@@ -300,19 +304,19 @@
 .registryEmpty {
   padding: 24px;
   text-align: center;
-  color: #7a6a5a;
+  color: $text-tertiary;
   font-style: italic;
-  background: #f5f1e8;
-  border: 1px dashed #8b7355;
+  background: $brown-20;
+  border: 1px dashed $gold-30;
   border-radius: 4px;
 }
 
 .registryTableContainer {
   max-height: 400px;
   overflow-y: auto;
-  border: 1px solid #8b7355;
+  border: 1px solid $gold-30;
   border-radius: 4px;
-  background: #ffffff;
+  background: $brown-10;
 }
 
 .registryTable {
@@ -323,17 +327,17 @@
   thead {
     position: sticky;
     top: 0;
-    background: #d4c4a8;
+    background: $brown-30;
     z-index: 10;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 
     th {
       padding: 12px 16px;
       text-align: left;
       font-weight: 600;
       font-size: 14px;
-      color: #3d2f1f;
-      border-bottom: 2px solid #8b7355;
+      color: $text-primary;
+      border-bottom: 2px solid $gold-30;
 
       &:first-child { width: 35%; }
       &:nth-child(2) { width: 40%; }
@@ -343,12 +347,12 @@
 
   tbody {
     tr {
-      border-bottom: 1px solid #e0d5c7;
+      border-bottom: 1px solid $gold-10;
       transition: background 0.15s ease;
 
-      &:nth-child(even) { background: #f9f6f0; }
+      &:nth-child(even) { background: $brown-20; }
       &:hover {
-        background: #f0e8d8;
+        background: $brown-30;
         cursor: pointer;
       }
     }
@@ -356,19 +360,19 @@
     td {
       padding: 12px 16px;
       font-size: 14px;
-      color: #2c2416;
+      color: $text-primary;
     }
   }
 }
 
 .prestavoltoCell {
   font-weight: 600;
-  color: #3d2f1f;
+  color: $text-primary;
 }
 
 .dateCell {
   text-align: center;
-  color: #5a4a3a;
+  color: $text-secondary;
   font-size: 13px;
 }
 
@@ -382,7 +386,7 @@
   padding: 8px;
   text-align: center;
   font-size: 12px;
-  color: #7a6a5a;
-  background: #f5f1e8;
-  border-top: 1px solid #8b7355;
+  color: $text-tertiary;
+  background: $brown-20;
+  border-top: 1px solid $gold-30;
 }

@@ -121,7 +121,7 @@ export function CharacterSheetLeftPanel({
       {/* Character Info Preview */}
       <div className={styles.infoPreview}>
         <h3 className={styles.infoName}>
-          {character.name}
+          {character.name}{character.surname ? ` ${character.surname}` : ''}
         </h3>
         {character.occupation && (
           <p className={styles.infoOccupation}>

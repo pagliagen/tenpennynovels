@@ -95,6 +95,7 @@ interface PresenceActions {
   handlePlayerEntered: (event: {
     characterId: string;
     characterName: string;
+    characterSurname?: string | null;
     locationId: string;
     timestamp: string;
   }) => void;
@@ -291,7 +292,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
           {
             characterId: event.characterId,
             characterName: event.characterName,
-            characterSurname: null,
+            characterSurname: event.characterSurname ?? null,
             locationId: event.locationId,
             locationName: 'Unknown Location', // Will be updated by global_presence_update
             locationSlug: '', // WebSocket events don't have slug

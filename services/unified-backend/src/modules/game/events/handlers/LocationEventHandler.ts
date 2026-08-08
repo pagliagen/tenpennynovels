@@ -149,6 +149,7 @@ export class LocationEventHandler extends BaseEventHandler {
       this.io.to(`location_${event.newLocationId}`).emit('player_entered', {
         characterId: event.characterId,
         characterName: event.characterName,
+        characterSurname: event.characterSurname ?? null,
         locationId: event.newLocationId,
         timestamp: event.timestamp
       });

@@ -41,7 +41,9 @@ export function CharacterProfile(): JSX.Element | null {
     return null;
   }
 
-  const characterName = selectedCharacter.name || 'Unknown Character';
+  const characterName = selectedCharacter.name
+    ? `${selectedCharacter.name}${selectedCharacter.surname ? ` ${selectedCharacter.surname}` : ''}`
+    : 'Unknown Character';
 
   /**
    * Handle Avatar Click
@@ -54,7 +56,7 @@ export function CharacterProfile(): JSX.Element | null {
     } else {
       openWindow('characterSheet', {
         characterId: selectedCharacter._id,
-        characterName: selectedCharacter.name,
+        characterName,
         avatar: selectedCharacter.avatar,
       });
     }

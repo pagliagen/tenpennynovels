@@ -173,15 +173,14 @@
 .playerButton {
   width: 100%;
   padding: 4px;
-  background: rgba(139, 69, 19, 0.1);
-  border: 1px solid rgba(139, 69, 19, 0.3);
+  text-align: center;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: 'Thrifted Attire', serif;
-  font-size: 14px;
-  color: #b8860b;
-  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ebe9e5; 
   text-shadow: 0 0 3px rgba(184, 134, 11, 0.2);
 
   &:hover {
