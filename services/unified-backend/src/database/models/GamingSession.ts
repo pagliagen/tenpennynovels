@@ -62,12 +62,10 @@ export interface IGamingSession extends Document {
   // Status
   status: 'planned' | 'active' | 'completed' | 'cancelled' | 'postponed';
   
-  // Quest management fields
-  turnOrder?: Schema.Types.ObjectId[]; // Order of turns for quest
+  // Turn-based / action-mode fields (used by TurnManager and ChatController)
+  turnOrder?: Schema.Types.ObjectId[]; // Order of turns
   actionModeActive?: boolean; // Whether action mode is currently active
   actionModeEndsAt?: Date; // When action mode ends
-  lastMasterScreenAt?: Date; // Last time master sent a screen message
-  currentQuestStatus?: 'planning' | 'active' | 'completed' | 'cancelled'; // Quest-specific status
 
   // Turn-based system fields
   currentTurnIndex?: number; // Current turn index in turnOrder (0-based)
@@ -237,7 +235,7 @@ const GamingSessionSchema = new Schema<IGamingSession>({
     default: 'planned'
   },
   
-  // Quest management fields
+  // Turn-based / action-mode fields
   turnOrder: [{
     type: Schema.Types.ObjectId,
     ref: 'Character'
@@ -247,11 +245,6 @@ const GamingSessionSchema = new Schema<IGamingSession>({
     default: false
   },
   actionModeEndsAt: Date,
-  lastMasterScreenAt: Date,
-  currentQuestStatus: {
-    type: String,
-    enum: ['planning', 'active', 'completed', 'cancelled']
-  },
 
   // Turn-based system fields
   currentTurnIndex: {

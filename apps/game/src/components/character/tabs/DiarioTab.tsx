@@ -25,6 +25,7 @@ import {
   useDiaryEntries,
   useEncounters,
   useUpdateDiaryEntry,
+  useUpdateChatScene,
   downloadSessionTranscript,
   downloadSceneTranscript
 } from '@/hooks/useCharacterDiary';
@@ -86,7 +87,7 @@ export function DiarioTab({ character, permissions }: DiarioTabProps): JSX.Eleme
 
       {subTab === 'classico' && <DiarioClassico character={character} permissions={permissions} />}
       {subTab === 'incontrati' && <PersonaggiIncontrati character={character} permissions={permissions} />}
-      {subTab === 'role' && <RoleLog character={character} />}
+      {subTab === 'role' && <RoleLog character={character} permissions={permissions} />}
 
       {/* Metadata di base, sempre visibili in fondo */}
       <div className={styles.mtSection}>
@@ -286,11 +287,16 @@ interface RoleEntry {
   summary?: string;
 }
 
-function RoleLog({ character }: { character: CharacterSheetData['character'] }) {
+function RoleLog({ character, permissions }: { character: CharacterSheetData['character']; permissions: CharacterSheetPermissions }) {
   const { data: sessionsData, isLoading: sessionsLoading } = useCharacterSessions(character._id);
   const { data: scenesData, isLoading: scenesLoading } = useCharacterChatScenes(character._id);
+  const updateChatScene = useUpdateChatScene(character._id);
   const [reportSessionTitle, setReportSessionTitle] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editSummary, setEditSummary] = useState('');
+  const canWrite = permissions.editPermissions.diario;
 
   const isLoading = sessionsLoading || scenesLoading;
 
@@ -305,10 +311,23 @@ function RoleLog({ character }: { character: CharacterSheetData['character'] }) 
     ...(scenesData?.scenes.map((scene): RoleEntry => ({
       kind: 'scene',
       id: scene._id,
-      title: `Giocata a ${scene.locationName || 'location sconosciuta'}`,
-      date: scene.startedAt
+      title: scene.title,
+      date: scene.startedAt,
+      summary: scene.summary
     })) ?? [])
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const startEditing = (entry: RoleEntry) => {
+    setEditingId(entry.id);
+    setEditTitle(entry.title);
+    setEditSummary(entry.summary ?? '');
+  };
+
+  const handleSaveEdit = async (sceneId: string) => {
+    if (!editTitle.trim()) return;
+    await updateChatScene.mutateAsync({ sceneId, title: editTitle.trim(), summary: editSummary.trim() });
+    setEditingId(null);
+  };
 
   const handleDownload = async (entry: RoleEntry) => {
     setDownloadingId(entry.id);
@@ -337,24 +356,65 @@ function RoleLog({ character }: { character: CharacterSheetData['character'] }) 
       <div className={styles.reviewList}>
         {entries.map((entry) => (
           <div key={`${entry.kind}-${entry.id}`} className={styles.reviewCard}>
-            <div className={styles.cardHeaderRow}>
-              <strong>{entry.title}</strong>
-              <span className={styles.reviewMeta}>{new Date(entry.date).toLocaleDateString('it-IT')}</span>
-            </div>
-            {entry.summary && <p className={styles.reviewNotes}>{entry.summary}</p>}
-            <div className={styles.actionButtonRow} style={{ marginTop: '0.75rem' }}>
-              <button
-                type="button"
-                className={styles.actionButton}
-                onClick={() => handleDownload(entry)}
-                disabled={downloadingId === entry.id}
-              >
-                {downloadingId === entry.id ? 'Preparazione…' : '⬇️ Scarica giocata'}
-              </button>
-              <button type="button" className={styles.actionButton} onClick={() => setReportSessionTitle(entry.title)}>
-                🚩 Segnala al master
-              </button>
-            </div>
+            {editingId === entry.id ? (
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Titolo</label>
+                <input
+                  className={styles.formInput}
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  maxLength={150}
+                  required
+                />
+                <label className={styles.formLabel}>Riassunto</label>
+                <textarea
+                  className={styles.formTextarea}
+                  value={editSummary}
+                  onChange={(e) => setEditSummary(e.target.value)}
+                  maxLength={10000}
+                  placeholder="Racconta com'è andata questa giocata dal punto di vista del tuo personaggio…"
+                />
+                <div className={styles.actionButtonRow} style={{ marginTop: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className={styles.actionButton}
+                    onClick={() => handleSaveEdit(entry.id)}
+                    disabled={updateChatScene.isPending || !editTitle.trim()}
+                  >
+                    {updateChatScene.isPending ? 'Salvataggio…' : 'Salva'}
+                  </button>
+                  <button type="button" className={styles.actionButton} onClick={() => setEditingId(null)}>
+                    ✕ Annulla
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.cardHeaderRow}>
+                  <strong>{entry.title}</strong>
+                  <span className={styles.reviewMeta}>{new Date(entry.date).toLocaleDateString('it-IT')}</span>
+                </div>
+                {entry.summary && <p className={styles.reviewNotes}>{entry.summary}</p>}
+                <div className={styles.actionButtonRow} style={{ marginTop: '0.75rem' }}>
+                  <button
+                    type="button"
+                    className={styles.actionButton}
+                    onClick={() => handleDownload(entry)}
+                    disabled={downloadingId === entry.id}
+                  >
+                    {downloadingId === entry.id ? 'Preparazione…' : '⬇️ Scarica giocata'}
+                  </button>
+                  {entry.kind === 'scene' && canWrite && (
+                    <button type="button" className={styles.actionButton} onClick={() => startEditing(entry)}>
+                      ✏️ Modifica
+                    </button>
+                  )}
+                  <button type="button" className={styles.actionButton} onClick={() => setReportSessionTitle(entry.title)}>
+                    🚩 Segnala al master
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         ))}
       </div>

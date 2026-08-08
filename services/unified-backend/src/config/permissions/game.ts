@@ -75,14 +75,6 @@ export const GamePermissions = {
   BLOCK_NOTES_WRITE: 'game:block-notes:write',
   BLOCK_NOTES_DELETE: 'game:block-notes:delete',
 
-  // Quests
-  QUESTS_READ: 'game:quests:read',
-  QUESTS_CREATE: 'game:quests:create', // master
-  QUESTS_START: 'game:quests:start', // master
-  QUESTS_END: 'game:quests:end', // master
-  QUESTS_ACTION_MODE: 'game:quests:action-mode', // master
-  QUESTS_REVEAL_ACTIONS: 'game:quests:reveal-actions', // master
-
   // Chat
   CHAT_SEND: 'game:chat:send',
   CHAT_WHISPER: 'game:chat:whisper',
@@ -273,7 +265,6 @@ export const GameRolePermissions: Record<string, GamePermission[]> = {
     GamePermissions.BLOCK_NOTES_READ,
     GamePermissions.BLOCK_NOTES_WRITE,
     GamePermissions.BLOCK_NOTES_DELETE,
-    GamePermissions.QUESTS_READ,
     GamePermissions.CHAT_SEND,
     GamePermissions.CHAT_WHISPER,
     GamePermissions.CHAT_OFFGAME,
@@ -362,11 +353,6 @@ export const GameRolePermissions: Record<string, GamePermission[]> = {
     GamePermissions.CHAT_MASTER_ACTION,
     GamePermissions.CHAT_USE_FAKE_PNG,  // PNG Light masking
     GamePermissions.CHAT_SOCIAL_CONFLICTS,
-    GamePermissions.QUESTS_CREATE,
-    GamePermissions.QUESTS_START,
-    GamePermissions.QUESTS_END,
-    GamePermissions.QUESTS_ACTION_MODE,
-    GamePermissions.QUESTS_REVEAL_ACTIONS,
     GamePermissions.LOCATIONS_GRANT_ACCESS,
     GamePermissions.MODERATION_CHAT_CLEAR,
     GamePermissions.ADMIN_SHOPS_RESTOCK,

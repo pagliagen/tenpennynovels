@@ -1,5 +1,5 @@
 import { HydratedDocument } from 'mongoose';
-import { Chat, ChatScene, IChatScene } from '@database/models';
+import { Chat, ChatScene, CharacterChatScene, IChatScene } from '@database/models';
 import { logger } from '../logger';
 import { EmbeddingService } from '@modules/documents/services/EmbeddingService';
 
@@ -19,6 +19,13 @@ import { EmbeddingService } from '@modules/documents/services/EmbeddingService';
  * chiusura viene "popolata" derivando i partecipanti direttamente dai
  * messaggi taggati (Chat.chatSceneId) — Chat resta l'unica fonte di verità,
  * niente push concorrenti su un array da mantenere a mano.
+ *
+ * Alla chiusura, `ChatScene` fa anche da "ancora" condivisa per il fork in
+ * copie personali (`CharacterChatScene`, una per personaggio partecipante):
+ * titolo e riassunto sono soggettivi, quindi non possono vivere su un unico
+ * documento condiviso. La ChatScene originale resta in collezione per
+ * sempre come riferimento stabile (Chat.chatSceneId continua a puntarci),
+ * ma non viene più esposta al frontend dopo la chiusura.
  */
 
 const SCENE_TIMEOUT_MS = 60 * 60 * 1000; // 60 minuti
@@ -97,15 +104,83 @@ export class ChatSceneService {
     });
   }
 
-  /** Chiude una scena "popolandola": deriva i partecipanti dai messaggi reali (Chat.chatSceneId). */
+  /**
+   * Chiude una scena "popolandola" (deriva i partecipanti dai messaggi reali,
+   * Chat.chatSceneId) e la "forka" in una copia personale per ciascun
+   * partecipante (CharacterChatScene), con titolo di default e riassunto
+   * vuoto da compilare in seguito.
+   *
+   * La claim iniziale (findOneAndUpdate su status:'open') è atomica: chiude
+   * il cron (closeStaleScenes) e la chiusura immediata per indipendenza
+   * narrativa possono capitare sulla stessa scena in corse concorrenti. Senza
+   * questa guardia, il secondo caller rifarebbe la fork e duplicherebbe le
+   * copie personali per ogni partecipante.
+   */
   private static async closeScene(scene: HydratedDocument<IChatScene>): Promise<void> {
+    const claimed = await ChatScene.findOneAndUpdate(
+      { _id: scene._id, status: { $eq: 'open' } },
+      { $set: { status: 'closed', closedAt: new Date() } },
+      { new: true }
+    );
+    if (!claimed) return; // già chiusa da un altro caller concorrente
+
     const participantCharacterIds = await Chat.distinct('characterId', {
-      chatSceneId: scene._id.toString()
+      chatSceneId: claimed._id.toString()
     });
-    scene.participantCharacterIds = participantCharacterIds;
-    scene.status = 'closed';
-    scene.closedAt = new Date();
-    await scene.save();
+    claimed.participantCharacterIds = participantCharacterIds;
+    await claimed.save();
+
+    if (participantCharacterIds.length === 0) return;
+
+    const { title, summary } = await ChatSceneService.generateTitleAndSummary(claimed);
+
+    await CharacterChatScene.insertMany(
+      participantCharacterIds.map((characterId) => ({
+        characterId,
+        sourceSceneId: claimed._id.toString(),
+        locationId: claimed.locationId,
+        locationName: claimed.locationName,
+        title,
+        summary: summary || undefined,
+        startedAt: claimed.startedAt,
+        closedAt: claimed.closedAt as Date
+      }))
+    );
+  }
+
+  /**
+   * Titolo + riassunto generati dall'AI (embeddings-worker /summarize/scene),
+   * seme comune per tutte le copie personali (poi ciascun personaggio le
+   * corregge/riscrive per conto proprio - non sono N generazioni separate).
+   * Se l'AI non è disponibile o fallisce, fallback sul titolo calcolato
+   * client-side di prima e riassunto vuoto: la chiusura scena non deve mai
+   * bloccarsi o fallire per un problema del servizio AI (path fire-and-forget,
+   * chiamato dal cron ogni 5 minuti).
+   */
+  private static async generateTitleAndSummary(scene: HydratedDocument<IChatScene>): Promise<{ title: string; summary: string }> {
+    const fallbackTitle = `Giocata a ${scene.locationName || 'location sconosciuta'}`;
+
+    try {
+      const messages = await Chat.find({ chatSceneId: { $eq: scene._id.toString() } })
+        .sort({ timestamp: 1 })
+        .lean();
+
+      if (messages.length === 0) return { title: fallbackTitle, summary: '' };
+
+      const transcript = messages
+        .map((m) => `${m.characterName}: ${m.content}`)
+        .join('\n');
+
+      const result = await EmbeddingService.summarizeScene({ transcript, locationName: scene.locationName });
+      if (!result?.success || !result.title) {
+        return { title: fallbackTitle, summary: '' };
+      }
+
+      return { title: result.title, summary: result.summary || '' };
+    } catch (error) {
+      logger.error('[ChatScene] Summarization failed, using fallback title/empty summary', { error });
+      return { title: fallbackTitle, summary: '' };
+    }
   }
 
   private static async tagMessage(chatMessageId: string, chatSceneId: string): Promise<void> {
@@ -168,23 +243,22 @@ export class ChatSceneService {
   }
 
   static async getScenesForCharacter(characterId: string) {
-    return ChatScene.find({ participantCharacterIds: { $eq: characterId } })
+    return CharacterChatScene.find({ characterId: { $eq: characterId } })
       .sort({ startedAt: -1 })
       .lean();
   }
 
   /**
-   * Ritorna null se la scena non esiste o se il personaggio non ne è
-   * partecipante (il controller traduce entrambi i casi in 404, senza
-   * distinguerli: non deve rivelare l'esistenza di scene altrui).
+   * Ritorna null se la scena non esiste o non è del personaggio (il
+   * controller traduce entrambi i casi in 404, senza distinguerli: non deve
+   * rivelare l'esistenza di scene altrui). {_id, characterId} nella stessa
+   * query fonde esistenza e proprietà in un solo round-trip.
    */
   static async getSceneTranscript(sceneId: string, characterId: string) {
-    const scene = await ChatScene.findById(sceneId).lean();
-    if (!scene || !scene.participantCharacterIds.includes(characterId)) {
-      return null;
-    }
+    const scene = await CharacterChatScene.findOne({ _id: sceneId, characterId: { $eq: characterId } }).lean();
+    if (!scene) return null;
 
-    const messages = await Chat.find({ chatSceneId: { $eq: sceneId } })
+    const messages = await Chat.find({ chatSceneId: { $eq: scene.sourceSceneId } })
       .sort({ timestamp: 1 })
       .lean();
 
@@ -193,5 +267,18 @@ export class ChatSceneService {
       .join('\n');
 
     return { scene, transcript, messageCount: messages.length };
+  }
+
+  /** Aggiorna titolo/riassunto della copia personale. Ritorna null se non esiste o non è del personaggio. */
+  static async updateScene(sceneId: string, characterId: string, updates: { title?: string; summary?: string }) {
+    const $set: Record<string, string> = {};
+    if (updates.title !== undefined) $set.title = updates.title;
+    if (updates.summary !== undefined) $set.summary = updates.summary;
+
+    return CharacterChatScene.findOneAndUpdate(
+      { _id: sceneId, characterId: { $eq: characterId } },
+      { $set },
+      { new: true }
+    ).lean();
   }
 }

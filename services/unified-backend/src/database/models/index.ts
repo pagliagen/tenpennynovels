@@ -16,6 +16,7 @@ export { Location, type ILocation } from './Location';
 export { Chat, type IChat } from './Chat';
 export { ChatBackup } from './ChatBackup';
 export { ChatScene, type IChatScene } from './ChatScene';
+export { CharacterChatScene, type ICharacterChatScene } from './CharacterChatScene';
 export { CharacterNotes, type ICharacterNotes } from './CharacterNotes';
 
 // Combat & Confrontation System (TiroContrapposto)

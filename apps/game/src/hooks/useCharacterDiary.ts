@@ -59,13 +59,16 @@ export interface CharacterGamingSession {
 
 export interface CharacterChatScene {
   _id: string;
+  characterId: string;
+  sourceSceneId: string;
   locationId: string;
   locationName?: string;
-  participantCharacterIds: string[];
+  title: string;
+  summary?: string;
   startedAt: string;
-  lastActivityAt: string;
-  status: 'open' | 'closed';
-  closedAt?: string;
+  closedAt: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // --- Diario classico ---
@@ -156,6 +159,15 @@ export function useCharacterChatScenes(characterId: string | undefined) {
     queryKey: ['character', characterId, 'chat-scenes'],
     queryFn: () => unwrap(api.get<{ data: { scenes: CharacterChatScene[] } }>(`/game/characters/${characterId}/chat-scenes`)),
     enabled: !!characterId
+  });
+}
+
+export function useUpdateChatScene(characterId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sceneId, ...data }: { sceneId: string; title?: string; summary?: string }) =>
+      unwrap(api.put<{ data: { scene: CharacterChatScene } }>(`/game/characters/${characterId}/chat-scenes/${sceneId}`, data)),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['character', characterId, 'chat-scenes'] })
   });
 }
 

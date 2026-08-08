@@ -6,7 +6,6 @@ import { requireGamePermission } from '../middleware/gamePermissions';
 import { LocationController } from '../controllers/LocationController';
 // ChatsController - location actions moved to chats (see chats.ts)
 import { CharacterNotesController } from '../controllers/CharacterNotesController';
-import { QuestController } from '../controllers/QuestController';
 
 const router = Router();
 
@@ -156,49 +155,6 @@ router.delete('/block-notes/:notesId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:block-notes:delete'),
   CharacterNotesController.deleteNotes
-);
-
-// Quest routes (using GamingSession)
-router.post('/quests',
-  locationsWriteLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:quests:create'),
-  QuestController.createQuest
-);
-
-router.get('/quests/:questId',
-  locationsReadLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:quests:read'),
-  QuestController.getQuestStatus
-);
-
-router.post('/quests/:questId/start',
-  locationsWriteLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:quests:start'),
-  QuestController.startQuest
-);
-
-router.post('/quests/:questId/end',
-  locationsWriteLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:quests:end'),
-  QuestController.endQuest
-);
-
-router.post('/quests/:questId/action-mode',
-  locationsWriteLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:quests:action-mode'),
-  QuestController.activateActionMode
-);
-
-router.post('/quests/:questId/reveal-actions',
-  locationsWriteLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:quests:reveal-actions'),
-  QuestController.revealActions
 );
 
 // Bot-only endpoints (API key auth, no JWT)

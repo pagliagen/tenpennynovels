@@ -15,6 +15,7 @@ import { askWithContext } from '../services/qa/RAGPipeline';
 import { extractKeywords } from '../services/qa/AnswerEvaluator';
 import { extractInsight } from '../services/qa/DocumentInsightExtractor';
 import { classifySceneContinuation } from '../services/qa/SceneClassifier';
+import { summarizeScene } from '../services/qa/SceneSummarizer';
 
 export class EmbeddingsHttpServer {
   private app: express.Application;
@@ -285,6 +286,30 @@ export class EmbeddingsHttpServer {
         res.json({ success: true, result });
       } catch (error: any) {
         logger.error('Error in /classify/scene-continuation endpoint', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+      }
+    });
+
+    /**
+     * Scene summarization (unified-backend "chat scenes"): genera titolo e
+     * riassunto oggettivo di una scena chiusa, seme per le copie personali
+     * per personaggio (poi editabili singolarmente). Stesso Ollama/modello
+     * del Bibliotecario e della classificazione scene.
+     * POST /summarize/scene
+     * Body: { transcript: string, locationName?: string }
+     */
+    this.app.post('/summarize/scene', async (req: Request, res: Response) => {
+      try {
+        const { transcript, locationName } = req.body;
+
+        if (!transcript || typeof transcript !== 'string') {
+          return res.status(400).json({ success: false, error: 'Missing or invalid transcript parameter' });
+        }
+
+        const result = await summarizeScene({ transcript, locationName });
+        res.json({ success: true, ...result });
+      } catch (error: any) {
+        logger.error('Error in /summarize/scene endpoint', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
       }
     });

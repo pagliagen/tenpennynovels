@@ -50,6 +50,12 @@ interface SceneClassificationResponse {
   result: { matchedSceneId: string | null; confidence: number };
 }
 
+interface SceneSummarizationResponse {
+  success: boolean;
+  title: string;
+  summary: string;
+}
+
 export class EmbeddingService {
   // Ollama availability is cached briefly: /ask, extractKeywords and extractInsight
   // are all called within a single search request and would otherwise each trigger
@@ -301,6 +307,34 @@ export class EmbeddingService {
       return await response.json() as SceneClassificationResponse;
     } catch (error: any) {
       logger.error(`Error in classifySceneContinuation: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Genera titolo + riassunto oggettivo di una scena chiusa (ChatSceneService),
+   * seme per le copie personali per personaggio. Stesso Ollama/modello del
+   * Bibliotecario e della classificazione scene, via embeddings-worker.
+   * Timeout più largo di /classify (500 token vs 100): la generazione del
+   * riassunto è più lenta della sola classificazione.
+   */
+  static async summarizeScene(payload: { transcript: string; locationName?: string }): Promise<SceneSummarizationResponse | null> {
+    try {
+      const response = await fetch(`${EMBEDDINGS_SERVICE_URL}/summarize/scene`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(45000)
+      });
+
+      if (!response.ok) {
+        logger.error(`[EmbeddingService] /summarize/scene error: ${response.status}`);
+        return null;
+      }
+
+      return await response.json() as SceneSummarizationResponse;
+    } catch (error: any) {
+      logger.error(`Error in summarizeScene: ${error.message}`);
       return null;
     }
   }
