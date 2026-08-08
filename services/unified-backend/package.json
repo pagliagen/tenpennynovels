@@ -75,7 +75,8 @@
     "node": ">=24.18.0"
   },
   "overrides": {
-    "htmlparser2": "^9.1.0"
+    "htmlparser2": "^9.1.0",
+    "nanoid": "^3.3.17"
   },
   "allowScripts": {
     "bcrypt@6.0.0": true,
