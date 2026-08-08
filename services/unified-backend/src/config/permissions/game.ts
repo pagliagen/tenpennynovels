@@ -87,7 +87,7 @@ export const GamePermissions = {
   CHAT_MASTER_ACTION: 'game:chat:master-action', // master
   CHAT_MODERATION_ACTION: 'game:chat:moderation-action', // moderatore
   CHAT_USE_FAKE_PNG: 'game:chat:use-fake-png', // master (PNG Light masking)
-  CHAT_SOCIAL_CONFLICTS: 'game:chat:social-conflicts', // master
+  CHAT_SOCIAL_CONFLICTS: 'game:chat:social-conflicts', // TiroContrapposto (opposed rolls)
 
   // Messages
   MESSAGES_SEND: 'game:messages:send',
@@ -270,6 +270,7 @@ export const GameRolePermissions: Record<string, GamePermission[]> = {
     GamePermissions.CHAT_OFFGAME,
     GamePermissions.CHAT_DICE,
     GamePermissions.CHAT_SOCIAL_CLASH,
+    GamePermissions.CHAT_SOCIAL_CONFLICTS,
     GamePermissions.CHAT_READ,
     GamePermissions.CHAT_EDIT,
     GamePermissions.MESSAGES_SEND,

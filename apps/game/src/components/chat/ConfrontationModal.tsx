@@ -22,6 +22,7 @@ interface ConfrontationModalProps {
   characterSkills?: Array<{ id: string; name: string; value: number; category?: string }>;
   occupants: Array<{ characterId: string; characterName: string }>;
   currentCharacterId: string;
+  currentPosition: string | null;
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -49,6 +50,7 @@ export function ConfrontationModal({
   characterSkills = [],
   occupants,
   currentCharacterId,
+  currentPosition,
   onClose,
   onSuccess,
 }: ConfrontationModalProps) {
@@ -118,6 +120,7 @@ export function ConfrontationModal({
         defenderId: selectedTarget!,
         content: message.trim(),
         additionalMessage: selectedSkill === 'Raggirare' ? lieText.trim() : undefined,
+        position: currentPosition || undefined,
       });
 
       onSuccess?.();

@@ -1461,10 +1461,16 @@ export class CharacterController {
             firstSkillKeyFormat: Object.keys(allSkillsToSave)[0]?.match(/^[0-9a-f]{24}$/i) ? 'ObjectId' : 'Name'
           });
           } else {
-          // Per personaggi non-DRAFT, comportamento originale (solo skills modificate)
+          // Per personaggi non-DRAFT: merge mirato, MAI un clear().
+          // Il percorso reale di modifica skill post-approvazione è
+          // CharacterProgressionController.improveSkill, che fa .set() su una
+          // singola skill senza toccare le altre. Questo ramo generico esiste
+          // solo come fallback difensivo per un'eventuale futura chiamata diretta
+          // a questo endpoint con una chiave skills parziale: prima faceva
+          // character.skills.clear() e riscriveva SOLO le skill nel payload,
+          // cancellando silenziosamente tutte le altre skill del personaggio.
           // Note: Keys are ObjectId strings, not skill names
-          logger.info('[SKILLS UPDATE] Using non-DRAFT path (modified skills only)');
-          character.skills.clear();
+          logger.info('[SKILLS UPDATE] Using non-DRAFT path (merge modified skills only, no clear)');
           const skillsToSave = Object.entries(filteredUpdates.skills);
           skillsToSave.forEach(([skillId, skillValue]) => {
             // Save with ObjectId key (payload keys are already ObjectIds)

@@ -91,6 +91,17 @@ export class MessageTransformer {
     if (action.socialConflict) {
       enriched.socialConflict = action.socialConflict;
     }
+    // targetCharacters: WhisperEnricher only fires for actionType === 'whisper',
+    // but other actionTypes (confrontation_reaction_request, master, moderation)
+    // can also carry visibility: 'whisper'/'master_only' with real targets. The
+    // client re-derives its own whisper visibility from this raw field (see
+    // isMessageVisible in MessageList.tsx), so it must survive regardless of
+    // actionType - without it a valid target sees the visibility check silently
+    // fail and the message never renders, even though the server already decided
+    // to send it to them.
+    if (action.targetCharacters && action.targetCharacters.length > 0) {
+      enriched.targetCharacters = action.targetCharacters;
+    }
     if (action.confrontation) {
       enriched.confrontation = this.maskConfrontationForViewer(action.confrontation, context);
     }

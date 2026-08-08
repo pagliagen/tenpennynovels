@@ -21,6 +21,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 import { locationChatsApi } from '@/lib/api/locationChats';
+import { locationsApi } from '@/lib/api/locations';
 import type { ChatMessage, ChatOccupant } from '@/types/chat';
 import { logger } from '@/lib/logger';
 
@@ -202,8 +203,28 @@ export const useChatStore = create<ChatStore>()(
           logger.info(`🔖 Restored saved position for location: ${savedPosition}`);
         }
 
-        // Load messages
-        await get().loadMessages(locationId);
+        // Load messages + current occupants in parallel. Occupants seed the
+        // store with everyone already present - without this, occupants only
+        // grows via the player_entered WebSocket event (join AFTER this client
+        // connected), so anyone already in the location when the page loads
+        // is invisible client-side (e.g. confrontation button stays disabled).
+        await Promise.all([
+          get().loadMessages(locationId),
+          locationsApi.getOccupants(locationId)
+            .then(({ occupants }) => {
+              get().setOccupants(
+                occupants.map((occ) => ({
+                  characterId: occ.characterId,
+                  characterName: occ.characterName,
+                  currentTag: occ.currentTag || undefined,
+                  isActive: true,
+                }))
+              );
+            })
+            .catch((error) => {
+              logger.error('❌ Failed to load location occupants:', { error });
+            }),
+        ]);
       },
 
       /**

@@ -34,6 +34,10 @@ export interface EnrichedChatMessage {
   socialConflict?: EnrichedSocialConflict;
   confrontation?: EnrichedConfrontation;
 
+  // Raw whisper/master_only target IDs (client re-derives its own visibility
+  // check from this - see targetCharacters handling in MessageTransformer.transform)
+  targetCharacters?: string[];
+
   // Optional metadata
   editHistory?: Array<{
     content: string;
@@ -148,6 +152,7 @@ export interface EnrichedConfrontation {
     skillName: string;
     label: string;
     specialRule?: string;
+    value?: number;
   }>;
 
   attackSkill?: string;

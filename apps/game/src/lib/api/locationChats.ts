@@ -212,6 +212,7 @@ export const locationChatsApi = {
     content: string;
     additionalMessage?: string;
     forceAbortPendingReaction?: boolean;
+    position?: string;
   }): Promise<ChatMessage> {
     const response = await api.post<{ data: { action: ChatMessage } }>(
       '/game/chats/confrontation-attack',

@@ -35,6 +35,14 @@ export interface EnterLocationResponse {
   };
 }
 
+export interface LocationOccupant {
+  characterId: string;
+  characterName: string;
+  enteredAt: string;
+  lastSeen: string;
+  currentTag: string | null;
+}
+
 export interface LeaveLocationResponse {
   characterId: string;
   currentLocation: null;
@@ -89,5 +97,25 @@ export const locationsApi = {
    */
   async leave(): Promise<LeaveLocationResponse> {
     return api.post('/game/locations/leave');
+  },
+
+  /**
+   * Get Location Occupants - Current full occupants list
+   *
+   * Used to seed chatStore.occupants on chat mount: without this, the store
+   * only learns about occupants who join AFTER this client connected (via the
+   * player_entered WebSocket event), so anyone already present when the page
+   * loads/refreshes is invisible client-side (e.g. the confrontation button
+   * stays disabled with "serve almeno un altro personaggio" even with 2+ PG
+   * actually in the location).
+   *
+   * @param {string} locationId - MongoDB ObjectId of location
+   * @returns {Promise<{ occupants: LocationOccupant[] }>} Current occupants
+   */
+  async getOccupants(locationId: string): Promise<{ occupants: LocationOccupant[] }> {
+    const response = await api.get<{ success: boolean; data: { occupants: LocationOccupant[] } }>(
+      `/game/locations/${locationId}/occupants`
+    );
+    return response.data;
   }
 };

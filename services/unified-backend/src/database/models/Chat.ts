@@ -101,6 +101,7 @@ export interface IChat extends Document {
       skillName: string;
       label: string;
       specialRule?: string;
+      value?: number;
     }>;
 
     // Populated when phase = 'result'
@@ -321,7 +322,8 @@ export const ChatSchema = new Schema<IChat>({
     availableDefenseSkills: [{
       skillName: String,
       label: String,
-      specialRule: String
+      specialRule: String,
+      value: Number
     }],
     attackSkill: String,
     defenseSkill: String,

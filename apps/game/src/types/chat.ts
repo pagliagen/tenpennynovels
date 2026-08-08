@@ -100,6 +100,7 @@ export interface ConfrontationPayload {
     skillName: string;
     label: string;
     specialRule?: string;
+    value?: number; // Defender's skill value, absent for __NO_DEFENSE__
   }>;
 
   // Populated when phase = 'result'

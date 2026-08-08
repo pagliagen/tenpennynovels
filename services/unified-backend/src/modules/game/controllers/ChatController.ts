@@ -70,6 +70,101 @@ export class ChatController {
   }
 
   /**
+   * Resolve a character's skill value by skill name.
+   *
+   * character.skills is keyed by Skill ObjectId, but the confrontation system
+   * (social conflicts, TiroContrapposto) identifies skills by name (attackSkill,
+   * SkillConfrontation.skillName, counterSkills[].skillName). This bridges the two.
+   *
+   * character.skills is a Mongoose Map on non-.lean() documents (Character.ts
+   * schema: `type: Map`) but a plain object once .lean()'d - callers here mix
+   * both, so read via .get() when it's a real Map instead of bracket notation
+   * (which silently returns undefined on a Map, since entries aren't own props).
+   */
+  /**
+   * Emit a full 'location_message_notification' for a saved Chat document.
+   *
+   * The confrontation flow (createConfrontationAttack, handleConfrontationReaction,
+   * handlePendingReactionAbort, forceConfrontationOutcome) historically emitted only
+   * { actionId, characterName, actionType, timestamp } - metadata, no `message` field.
+   * The frontend (useLocationChat.ts) always reads `payload.message._id`, so those
+   * partial payloads threw client-side and the message never reached the store -
+   * this is why a defender never saw the reaction request at all. This mirrors the
+   * correct payload shape createMessage() already uses, including whisper-only
+   * routing so reaction requests (visibility: 'whisper') don't leak to the whole room.
+   */
+  private static async emitConfrontationMessage(_req: Request, savedMessage: any): Promise<void> {
+    // req.app.get('io') is never populated in this app (no app.set('io', ...)
+    // anywhere) - the real instance lives in the getSocketIO() singleton, see
+    // socketInstance.ts. Every confrontation emit that used req.app.get('io')
+    // silently no-op'd: no error, just nothing delivered live.
+    const io = getSocketIO();
+    if (!io) return;
+
+    const locationId = savedMessage.locationId.toString();
+    const roomName = `location_${locationId}`;
+
+    let whisperEnrichment: { targetCharacterIds: string[]; targetCharacterNames: string[] } | undefined;
+    if (savedMessage.visibility === 'whisper' && savedMessage.targetCharacters?.length) {
+      const targetChars = await Character.find({ _id: { $in: savedMessage.targetCharacters } })
+        .select('_id name')
+        .lean();
+      const nameById = new Map(targetChars.map((c: any) => [c._id.toString(), c.name]));
+      whisperEnrichment = {
+        targetCharacterIds: savedMessage.targetCharacters,
+        targetCharacterNames: savedMessage.targetCharacters.map((id: string) => nameById.get(id) || 'Unknown')
+      };
+    }
+
+    const chatMessage = {
+      _id: savedMessage._id.toString(),
+      actionType: savedMessage.actionType,
+      characterId: savedMessage.characterId,
+      characterName: savedMessage.characterName,
+      characterAvatar: savedMessage.characterAvatar || undefined,
+      position: savedMessage.position || undefined,
+      locationId,
+      content: savedMessage.content,
+      visibility: savedMessage.visibility,
+      diceResult: savedMessage.diceResult || undefined,
+      confrontation: savedMessage.confrontation || undefined,
+      targetCharacters: savedMessage.targetCharacters || undefined,
+      whisper: whisperEnrichment,
+      hiddenContent: savedMessage.hiddenContent || undefined,
+      editHistory: savedMessage.editHistory || [],
+      timestamp: savedMessage.timestamp.toISOString()
+    };
+
+    const notification = { message: chatMessage, locationId };
+
+    if (savedMessage.visibility === 'whisper' || savedMessage.visibility === 'master_only') {
+      const recipientRooms = [
+        `character_${savedMessage.characterId}`,
+        'staff',
+        ...(savedMessage.targetCharacters || []).map((id: string) => `character_${id}`),
+      ];
+      io.to(recipientRooms).emit('location_message_notification', notification);
+    } else {
+      io.to(roomName).emit('location_message_notification', notification);
+    }
+  }
+
+  private static async getSkillValueByName(character: any, skillName: string): Promise<number> {
+    const skill = await Skill.findOne({ name: skillName }).select('_id').lean();
+    if (!skill) return 0;
+
+    const skillId = skill._id.toString();
+    const skillData = character.skills instanceof Map
+      ? character.skills.get(skillId)
+      : character.skills?.[skillId];
+    if (typeof skillData === 'number') return skillData;
+    if (skillData && typeof skillData === 'object' && 'total' in skillData) {
+      return (skillData as { total: number }).total;
+    }
+    return 0;
+  }
+
+  /**
    * Create a new location action (message)
    * POST /game/locations/actions
    */
@@ -1323,16 +1418,7 @@ export class ChatController {
       }
 
       // Get attacker skill value (handle both number and SkillBreakdown)
-      const attackerSkillData = attackerCharacter.skills?.[attackerSkill];
-      let attackerValue = 0;
-
-      if (attackerSkillData !== undefined) {
-        if (typeof attackerSkillData === 'number') {
-          attackerValue = attackerSkillData;
-        } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-          attackerValue = (attackerSkillData as { total: number }).total;
-        }
-      }
+      const attackerValue = await ChatController.getSkillValueByName(attackerCharacter, attackerSkill);
 
       // If attacker doesn't have the skill, return error
       if (attackerValue === 0) {
@@ -1359,18 +1445,8 @@ export class ChatController {
         return;
       }
 
-      // BUG FIX: Use bracket notation instead of .get() (skills is a plain object, not a Map)
       // Get defender skill value (handle both number and SkillBreakdown)
-      const defenderSkillData = defenderCharacter.skills?.[defenderSkill];
-      let defenderValue = 0;
-
-      if (defenderSkillData !== undefined) {
-        if (typeof defenderSkillData === 'number') {
-          defenderValue = defenderSkillData;
-        } else if (defenderSkillData && typeof defenderSkillData === 'object' && 'total' in defenderSkillData) {
-          defenderValue = (defenderSkillData as { total: number }).total;
-        }
-      }
+      let defenderValue = await ChatController.getSkillValueByName(defenderCharacter, defenderSkill);
 
       // If skill doesn't exist or is 0, use default value of 1 (minimum skill level)
       if (defenderValue === 0) {
@@ -1710,7 +1786,8 @@ export class ChatController {
         defenderId,
         content,
         additionalMessage, // For Raggirare lie text
-        forceAbortPendingReaction // User confirmed abort of pending reaction
+        forceAbortPendingReaction, // User confirmed abort of pending reaction
+        position // Attacker's position tag - without it the message renders dimmed (see MessageList.shouldDimMessage)
       } = req.body;
 
       // Validate required fields
@@ -1776,15 +1853,7 @@ export class ChatController {
         return;
       }
 
-      const attackerSkillData = attackerCharacter.skills?.[attackSkill];
-      let attackerValue = 0;
-      if (attackerSkillData !== undefined) {
-        if (typeof attackerSkillData === 'number') {
-          attackerValue = attackerSkillData;
-        } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-          attackerValue = (attackerSkillData as { total: number }).total;
-        }
-      }
+      const attackerValue = await ChatController.getSkillValueByName(attackerCharacter, attackSkill);
 
       if (attackerValue === 0) {
         res.status(400).json(errorResponse(
@@ -1847,11 +1916,18 @@ export class ChatController {
       // ═══ UNIFIED 2-PHASE FLOW (ALL CONFRONTATIONS) ═══
 
       // Build availableDefenseSkills with __NO_DEFENSE__ option
-      const availableDefenseSkills = config.counterSkills.map((cs: any) => ({
+      interface DefenseSkillOption {
+        skillName: string;
+        label: string;
+        specialRule?: string;
+        value?: number;
+      }
+      const availableDefenseSkills: DefenseSkillOption[] = await Promise.all(config.counterSkills.map(async (cs: any) => ({
         skillName: cs.skillName,
         label: cs.label,
-        specialRule: cs.specialRule
-      }));
+        specialRule: cs.specialRule,
+        value: await ChatController.getSkillValueByName(defenderCharacter, cs.skillName)
+      })));
 
       // Add "Non voglio tirare/difendermi" option (always enabled)
       const allowNoDefense = await configService.getConfig('confrontation_allow_no_defense') as boolean;
@@ -1863,7 +1939,8 @@ export class ChatController {
         availableDefenseSkills.push({
           skillName: '__NO_DEFENSE__',
           label: noDefenseLabel,
-          specialRule: 'auto_fail'
+          specialRule: 'auto_fail',
+          value: undefined
         });
       }
 
@@ -1902,12 +1979,13 @@ export class ChatController {
         characterName: character.characterName,
         content: content.trim(),
         locationId,
+        position: position || undefined,
         visibility: 'whisper',
         targetCharacters: [character.characterId, defenderId],
         characterRoles: character.gameplayRoles || [],
         timestamp: new Date(),
         confrontation: {
-          type: encounterType,
+          type: config.category === 'social' ? 'social' : 'combat',
           encounterId: encounter._id.toString(),
           phase: 'waiting_reaction',
           attackerCharacterId: character.characterId,
@@ -1923,20 +2001,19 @@ export class ChatController {
         messageData.hiddenContent = additionalMessage;
       }
 
-      const message = await Chat.create(messageData);
+      // CombatEncounter and Chat aren't in a transaction: if message creation
+      // fails, delete the encounter too - otherwise it's left in 'waiting_reaction'
+      // forever and silently blocks retries via the skill-usage-limit check above.
+      let message;
+      try {
+        message = await Chat.create(messageData);
+      } catch (messageError) {
+        await CombatEncounter.deleteOne({ _id: encounter._id });
+        throw messageError;
+      }
 
       // Emit WebSocket notification
-      const io = req.app.get('io');
-      if (io) {
-        const roomName = `location_${locationId}`;
-        io.to(roomName).emit('location_message_notification', {
-          locationId,
-          actionId: message._id,
-          characterName: character.characterName,
-          actionType: 'confrontation_reaction_request',
-          timestamp: message.timestamp
-        });
-      }
+      await ChatController.emitConfrontationMessage(req, message);
 
       logger.info(`Confrontation reaction request created: ${message._id} (${attackSkill} attack by ${character.characterName})`);
 
@@ -2062,15 +2139,7 @@ export class ChatController {
       if (defenseSkillName === '__NO_DEFENSE__') {
         // Defender chose not to defend - auto-fail
         const attackSkill = message.confrontation.attackSkill;
-        const attackerSkillData = attackerCharacter.skills?.[attackSkill];
-        let attackerValue = 0;
-        if (attackerSkillData !== undefined) {
-          if (typeof attackerSkillData === 'number') {
-            attackerValue = attackerSkillData;
-          } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-            attackerValue = (attackerSkillData as { total: number }).total;
-          }
-        }
+        const attackerValue = await ChatController.getSkillValueByName(attackerCharacter, attackSkill);
 
         const attackRoll = ChatController.rollDice('1d100').result;
         const attackDegree = calculateSuccessDegree(attackRoll, attackerValue).degree;
@@ -2100,16 +2169,7 @@ export class ChatController {
             { $set: { status: 'completed', 'currentTurn.status': 'resolved', 'currentTurn.defenseSkill': 'Nessuna difesa' } }
           );
 
-          const io = req.app.get('io');
-          if (io) {
-            io.to(`location_${message.locationId}`).emit('location_message_notification', {
-              locationId: message.locationId,
-              actionId: messageId,
-              characterName: character.characterName,
-              actionType: updated.actionType,
-              timestamp: updated.timestamp
-            });
-          }
+          await ChatController.emitConfrontationMessage(req, updated);
         }
 
         logger.info(`No-defense auto-fail: ${messageId} (${character.characterName} chose not to defend)`);
@@ -2135,15 +2195,7 @@ export class ChatController {
           if (constitutionCheck.degree === 'failure' || constitutionCheck.degree === 'fumble') {
             // Failed constitution check - cannot defend (same as no-defense)
             const attackSkill = message.confrontation.attackSkill;
-            const attackerSkillData = attackerCharacter.skills?.[attackSkill];
-            let attackerValue = 0;
-            if (attackerSkillData !== undefined) {
-              if (typeof attackerSkillData === 'number') {
-                attackerValue = attackerSkillData;
-              } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-                attackerValue = (attackerSkillData as { total: number }).total;
-              }
-            }
+            const attackerValue = await ChatController.getSkillValueByName(attackerCharacter, attackSkill);
 
             const attackRoll = ChatController.rollDice('1d100').result;
             const attackDegree = calculateSuccessDegree(attackRoll, attackerValue).degree;
@@ -2175,16 +2227,7 @@ export class ChatController {
                 { $set: { status: 'completed', 'currentTurn.status': 'resolved' } }
               );
 
-              const io = req.app.get('io');
-              if (io) {
-                io.to(`location_${message.locationId}`).emit('location_message_notification', {
-                  locationId: message.locationId,
-                  actionId: messageId,
-                  characterName: character.characterName,
-                  actionType: updated.actionType,
-                  timestamp: updated.timestamp
-                });
-              }
+              await ChatController.emitConfrontationMessage(req, updated);
             }
 
             logger.info(`Constitution check failed: ${messageId} (${character.characterName} too wounded to defend, ${constitutionRoll} vs ${constitutionValue})`);
@@ -2200,26 +2243,10 @@ export class ChatController {
 
       // Get attacker skill value
       const attackSkill = message.confrontation.attackSkill;
-      const attackerSkillData = attackerCharacter.skills?.[attackSkill];
-      let attackerValue = 0;
-      if (attackerSkillData !== undefined) {
-        if (typeof attackerSkillData === 'number') {
-          attackerValue = attackerSkillData;
-        } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-          attackerValue = (attackerSkillData as { total: number }).total;
-        }
-      }
+      const attackerValue = await ChatController.getSkillValueByName(attackerCharacter, attackSkill);
 
       // Get defender skill value
-      const defenderSkillData = defenderCharacter.skills?.[defenseSkillName];
-      let defenderValue = 0;
-      if (defenderSkillData !== undefined) {
-        if (typeof defenderSkillData === 'number') {
-          defenderValue = defenderSkillData;
-        } else if (defenderSkillData && typeof defenderSkillData === 'object' && 'total' in defenderSkillData) {
-          defenderValue = (defenderSkillData as { total: number }).total;
-        }
-      }
+      let defenderValue = await ChatController.getSkillValueByName(defenderCharacter, defenseSkillName);
 
       // Default to 1 if skill not found
       if (defenderValue === 0) {
@@ -2277,16 +2304,8 @@ export class ChatController {
         );
 
         // Emit update for main message
-        const io = req.app.get('io');
-        if (io) {
-          io.to(`location_${message.locationId}`).emit('location_message_notification', {
-            locationId: message.locationId,
-            actionId: messageId,
-            characterName: character.characterName,
-            actionType: updated.actionType,
-            timestamp: updated.timestamp
-          });
-        }
+        const io = getSocketIO();
+        await ChatController.emitConfrontationMessage(req, updated);
 
         // CREATE DEFENDER MESSAGE (only if defender wins/tie)
         if (!attackerWins) {
@@ -2302,7 +2321,7 @@ export class ChatController {
           }
           // Y has failure/fumble BUT X failed worse → basic message
           else {
-            defenderMessage = `${attackerCharacter.name} sta dicendo una stronzata.`;
+            defenderMessage = `L'istinto ti dice di non fidarti del tutto delle parole di ${attackerCharacter.name}.`;
           }
 
           // Create whisper message for defender
@@ -2312,6 +2331,7 @@ export class ChatController {
             characterName: character.characterName,
             content: defenderMessage,
             locationId: message.locationId,
+            position: message.position || undefined,
             visibility: 'whisper',
             targetCharacters: [message.confrontation.defenderCharacterId],
             characterRoles: ['master'], // Visible to defender + master
@@ -2346,6 +2366,7 @@ export class ChatController {
                 characterName: defenderRevealMessage.characterName,
                 content: defenderRevealMessage.content,
                 locationId: defenderRevealMessage.locationId,
+                position: defenderRevealMessage.position || undefined,
                 visibility: defenderRevealMessage.visibility,
                 targetCharacters: defenderRevealMessage.targetCharacters,
                 confrontation: defenderRevealMessage.confrontation,
@@ -2483,17 +2504,7 @@ export class ChatController {
       );
 
       // Emit WebSocket notification (SAME actionId, message was updated)
-      const io = req.app.get('io');
-      if (io) {
-        const roomName = `location_${message.locationId}`;
-        io.to(roomName).emit('location_message_notification', {
-          locationId: message.locationId,
-          actionId: messageId,
-          characterName: character.characterName,
-          actionType: updated.actionType,
-          timestamp: updated.timestamp
-        });
-      }
+      await ChatController.emitConfrontationMessage(req, updated);
 
       logger.info(`Confrontation resolved: ${messageId} (${outcome}: ${attackDegree} vs ${defenseDegree})`);
 
@@ -2566,15 +2577,7 @@ export class ChatController {
 
     // Get attacker skill value
     const attackSkill = message.confrontation.attackSkill;
-    const attackerSkillData = attackerCharacter.skills?.[attackSkill];
-    let attackerValue = 0;
-    if (attackerSkillData !== undefined) {
-      if (typeof attackerSkillData === 'number') {
-        attackerValue = attackerSkillData;
-      } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-        attackerValue = (attackerSkillData as { total: number }).total;
-      }
-    }
+    const attackerValue = await ChatController.getSkillValueByName(attackerCharacter, attackSkill);
 
     // Roll attack (defender auto-fails)
     const attackRoll = ChatController.rollDice('1d100').result;
@@ -2641,7 +2644,7 @@ export class ChatController {
     }
 
     // Update message
-    await Chat.findOneAndUpdate(
+    const updated: any = await Chat.findOneAndUpdate(
       { _id: messageId, actionType: 'confrontation_reaction_request' },
       { $set: updateFields, $unset: { targetCharacters: '', 'confrontation.availableDefenseSkills': '' } },
       { new: true }
@@ -2654,15 +2657,8 @@ export class ChatController {
     );
 
     // Emit WebSocket update
-    const io = req.app.get('io');
-    if (io) {
-      io.to(`location_${message.locationId}`).emit('location_message_notification', {
-        locationId: message.locationId,
-        actionId: messageId,
-        characterName: attackerCharacter.name,
-        actionType: updateFields.actionType,
-        timestamp: new Date()
-      });
+    if (updated) {
+      await ChatController.emitConfrontationMessage(req, updated);
     }
 
     logger.info(`Pending reaction aborted: ${messageId} by ${abortedByCharacterId}`);
@@ -2760,25 +2756,8 @@ export class ChatController {
       const attackSkill = message.confrontation.attackSkill;
       const defenseSkill = message.confrontation.availableDefenseSkills?.[0]?.skillName || 'Unknown';
 
-      const attackerSkillData = attackerCharacter.skills?.[attackSkill];
-      let attackerValue = 0;
-      if (attackerSkillData !== undefined) {
-        if (typeof attackerSkillData === 'number') {
-          attackerValue = attackerSkillData;
-        } else if (attackerSkillData && typeof attackerSkillData === 'object' && 'total' in attackerSkillData) {
-          attackerValue = (attackerSkillData as { total: number }).total;
-        }
-      }
-
-      const defenderSkillData = defenderCharacter.skills?.[defenseSkill];
-      let defenderValue = 0;
-      if (defenderSkillData !== undefined) {
-        if (typeof defenderSkillData === 'number') {
-          defenderValue = defenderSkillData;
-        } else if (defenderSkillData && typeof defenderSkillData === 'object' && 'total' in defenderSkillData) {
-          defenderValue = (defenderSkillData as { total: number }).total;
-        }
-      }
+      const attackerValue = await ChatController.getSkillValueByName(attackerCharacter, attackSkill);
+      const defenderValue = await ChatController.getSkillValueByName(defenderCharacter, defenseSkill);
 
       // Roll dice (for record, outcome is forced)
       const attackRoll = ChatController.rollDice('1d100').result;
@@ -2865,16 +2844,7 @@ export class ChatController {
       );
 
       // Emit WebSocket update
-      const io = req.app.get('io');
-      if (io) {
-        io.to(`location_${message.locationId}`).emit('location_message_notification', {
-          locationId: message.locationId,
-          actionId: messageId,
-          characterName: character.characterName,
-          actionType: updated.actionType,
-          timestamp: updated.timestamp
-        });
-      }
+      await ChatController.emitConfrontationMessage(req, updated);
 
       logger.info(`Confrontation forced by master: ${messageId} (${outcome}, ${character.characterName})`);
       res.json(createResponse({ action: updated, outcome }, 'Esito forzato dal master', getRequestId(req)));

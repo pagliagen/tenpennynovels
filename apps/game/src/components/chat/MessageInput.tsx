@@ -336,7 +336,7 @@ export function MessageInput({
    * @param id - skillId (ObjectId) for skills, statName for stats
    * @param displayName - name to show in default message
    */
-  const handleSkillStatRoll = async (_type: 'skill' | 'stat', id: string, displayName: string) => {
+  const handleSkillStatRoll = async (type: 'skill' | 'stat', id: string, displayName: string) => {
     // Validate position first
     if (!currentPosition) {
       setIsPositionButtonFlashing(true);
@@ -350,9 +350,9 @@ export function MessageInput({
 
     try {
       const data: SendMessageRequest = {
-        actionType: 'stat_check',
+        actionType: type === 'skill' ? 'skill_check' : 'stat_check',
         content: messageInput.trim() || `Tiro su ${displayName}`, // Default text if empty
-        statName: id, // For stats, name is the ID
+        ...(type === 'skill' ? { skillId: id } : { statName: id }),
         locationPngId: selectedLocationPngId || undefined,
       };
 
@@ -747,6 +747,7 @@ export function MessageInput({
           characterSkills={characterData.skills}
           occupants={occupants}
           currentCharacterId={characterData.characterId}
+          currentPosition={currentPosition}
           onClose={() => setIsConfrontationModalOpen(false)}
           onSuccess={() => {
             setIsConfrontationModalOpen(false);

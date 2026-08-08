@@ -78,6 +78,9 @@ export function ReactionRequestMessage({ message, currentCharacterId }: Reaction
                   type="button"
                 >
                   {skill.label}
+                  {typeof skill.value === 'number' && (
+                    <span className={styles.skillValue}>{skill.value}%</span>
+                  )}
                   {skill.specialRule && skill.specialRule !== 'auto_fail' && (
                     <span className={styles.specialRule}>{skill.specialRule}</span>
                   )}
