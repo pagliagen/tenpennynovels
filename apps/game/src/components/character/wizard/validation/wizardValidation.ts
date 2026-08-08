@@ -10,6 +10,7 @@
  */
 
 import type { CharacterCreationConfig } from '@/lib/api/character';
+import { computeSkillPools, computeSkillPoolUsage } from '@/lib/utils/skillPools';
 import type {
   WizardBasicInfo,
   WizardOccupation,
@@ -115,7 +116,7 @@ export function validateStep3(stats: WizardStats, creationConfig?: CharacterCrea
 
 export function validateStep4(
   skills: Record<string, SkillBreakdown>,
-  _stats: WizardStats,
+  stats: WizardStats,
   occupation: WizardOccupation,
   dynamicSkills: DynamicSkill[],
   creationConfig?: CharacterCreationConfig | null
@@ -123,22 +124,23 @@ export function validateStep4(
   const errors: Record<string, string> = {};
 
   // Get config values (fallback to defaults if not provided)
-  const TOTAL_SKILL_POINTS = creationConfig?.skills.totalPoints ?? 250;
   const CREATION_CAP = creationConfig?.skills.creationCap ?? 75;
   const CREATION_CAP_WITH_OCC = creationConfig?.skills.creationCapWithOccupation ?? 80;
 
-  const totalSpent = Object.values(skills).reduce(
-    (sum, skill) => sum + skill.manualPoints + skill.requiredBonus,
-    0
-  );
+  const pools = computeSkillPools(stats, creationConfig);
+  const usage = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools);
+  const totalSpent = usage.totalSpent;
 
-  if (totalSpent !== TOTAL_SKILL_POINTS) {
-    const diff = totalSpent - TOTAL_SKILL_POINTS;
-    if (diff > 0) {
-      errors.skillsBudget = `Punti abilità: ${totalSpent}/${TOTAL_SKILL_POINTS} (superato di ${diff})`;
-    } else {
-      errors.skillsBudget = `Punti abilità: ${totalSpent}/${TOTAL_SKILL_POINTS} (mancano ${Math.abs(diff)} punti)`;
-    }
+  if (usage.baseUsed > pools.basePool) {
+    errors.skillsBudget =
+      `Punti abilità: superati i pool disponibili ` +
+      `(Professione: ${usage.spentOcc}/${pools.occPool}, Hobby: ${usage.spentHobby}/${pools.hobbyPool}, ` +
+      `Base: ${usage.baseUsed}/${pools.basePool})`;
+  } else if (totalSpent !== pools.totalPool) {
+    const diff = totalSpent - pools.totalPool;
+    errors.skillsBudget = diff > 0
+      ? `Punti abilità: ${totalSpent}/${pools.totalPool} (superato di ${diff})`
+      : `Punti abilità: ${totalSpent}/${pools.totalPool} (mancano ${Math.abs(diff)} punti)`;
   }
 
   for (const [skillName, skill] of Object.entries(skills)) {

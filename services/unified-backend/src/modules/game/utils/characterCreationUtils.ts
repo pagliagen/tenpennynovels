@@ -1,7 +1,7 @@
 import { Character, Occupation, Skill } from '@database/models';
 import { ICharacter, SkillBreakdown } from '@database/models/Character';
 import { IOccupation } from '@database/models/Occupation';
-import { CharacterCreationConfig, calculateIntelligenceBonus } from '@shared/services/CharacterCreationConfigService';
+import { CharacterCreationConfig, calculateStatFormula } from '@shared/services/CharacterCreationConfigService';
 import { logger } from '../logger';
 
 /**
@@ -14,10 +14,66 @@ import { logger } from '../logger';
 interface SkillPointsCalculation {
   basePoints: number; // 200 punti base
   intBonus: number; // INT/2 bonus points
-  totalAvailable: number; // Total points available for distribution
+  basePool: number; // Flexible pool, spendable on any skill (= basePoints)
+  occPool: number; // EDU x N, spendable ONLY on occupation-eligible skills
+  hobbyPool: number; // INT x N, spendable ONLY on non-occupation skills
+  totalAvailable: number; // basePool + occPool + hobbyPool
   occupationRequiredSkills: number; // Number of skills that must be improved (always 6)
   skillCap: number; // Maximum value per skill during creation (default 75)
   finalSkillCap: number; // Maximum value after occupation bonuses (default 80)
+}
+
+/**
+ * The set of skills considered "occupation-eligible" for a given occupation:
+ * every skill listed in any requiredSkillSlots option (all options, not just
+ * the one the player ultimately picks for a multi-choice slot - the whole
+ * list is "professional" per CoC rules) plus every bonusSkills entry.
+ * Placeholder skills (e.g. "Lingua straniera") are tracked by name, since
+ * their real dynamic entries don't have a fixed catalog skill ID.
+ */
+interface OccupationSkillSet {
+  skillIds: Set<string>;
+  placeholderNames: Set<string>;
+}
+
+/**
+ * Build the occupation-eligible skill set for the EDU-pool / INT-pool split.
+ * Expects requiredSkillSlots.options and bonusSkills.skillId to be populated
+ * (same shape CharacterController/validateCharacterSubmission already fetch).
+ */
+export function buildOccupationSkillSet(occupation: IOccupation): OccupationSkillSet {
+  const skillIds = new Set<string>();
+  const placeholderNames = new Set<string>();
+
+  (occupation.requiredSkillSlots || []).forEach((slot: any) => {
+    (slot.options || []).forEach((option: any) => {
+      if (option && typeof option === 'object' && option._id) {
+        if (option.isPlaceholder) {
+          placeholderNames.add(option.name);
+        } else {
+          skillIds.add(option._id.toString());
+        }
+      } else if (option) {
+        // Not populated - fall back to the raw ObjectId (can't tell if it's a placeholder)
+        skillIds.add(option.toString());
+      }
+    });
+  });
+
+  (occupation.bonusSkills || []).forEach((bonusSkill: any) => {
+    const skillId = bonusSkill.skillId;
+    if (skillId && typeof skillId === 'object' && skillId._id) {
+      if (skillId.isPlaceholder) {
+        placeholderNames.add(skillId.name);
+      } else {
+        skillIds.add(skillId._id.toString());
+      }
+    } else if (skillId) {
+      skillIds.add(skillId.toString());
+    }
+  });
+
+  return { skillIds, placeholderNames };
 }
 
 interface OccupationBonusResult {
@@ -68,11 +124,15 @@ function resolveBaseValue(baseValue: string | number, characterStats?: Record<st
 /**
  * Calculate available skill points for a character
  *
- * Formula: flat value from SystemConfiguration (default 250, replaces old formula 200+INT/2)
+ * Three pools:
+ * - basePool: flat value from SystemConfiguration (default 250, replaces old formula 200+INT/2),
+ *   spendable on any skill.
+ * - occPool: EDU x N (config.skills.occupationPointsFormula), spendable ONLY on occupation skills.
+ * - hobbyPool: INT x N (config.skills.hobbyPointsFormula), spendable ONLY on non-occupation skills.
  *
  * @param character - The character object
  * @param config - Character creation configuration
- * @param totalSkillPoints - Total skill points from SystemConfiguration (optional, for async fetch)
+ * @param totalSkillPoints - Total base skill points from SystemConfiguration (optional, for async fetch)
  * @returns Skill points calculation breakdown
  */
 export function calculateAvailableSkillPoints(
@@ -81,10 +141,23 @@ export function calculateAvailableSkillPoints(
   totalSkillPoints?: number
 ): SkillPointsCalculation {
   // Use flat value from SystemConfiguration (passed as parameter) or fallback to 250
-  const totalAvailable = totalSkillPoints ?? 250;
+  const basePool = totalSkillPoints ?? 250;
+
+  const occPool = Math.max(0, calculateStatFormula(
+    config.skills.occupationPointsFormula || 'EDUx4',
+    'EDU',
+    character.stats.education
+  ));
+  const hobbyPool = Math.max(0, calculateStatFormula(
+    config.skills.hobbyPointsFormula || 'INTx2',
+    'INT',
+    character.stats.intelligence
+  ));
+
+  const totalAvailable = basePool + occPool + hobbyPool;
 
   // For backward compatibility, keep basePoints and intBonus fields but set to total and 0
-  const basePoints = totalAvailable;
+  const basePoints = basePool;
   const intBonus = 0;
 
   // Skill caps from config
@@ -94,8 +167,10 @@ export function calculateAvailableSkillPoints(
   logger.debug('Calculating skill points', {
     characterId: character._id.toString(),
     intelligence: character.stats.intelligence,
-    basePoints,
-    intBonus,
+    education: character.stats.education,
+    basePool,
+    occPool,
+    hobbyPool,
     totalAvailable,
     skillCap,
     finalSkillCap
@@ -104,6 +179,9 @@ export function calculateAvailableSkillPoints(
   return {
     basePoints,
     intBonus,
+    basePool,
+    occPool,
+    hobbyPool,
     totalAvailable,
     occupationRequiredSkills: 6, // Always 6 required skills per occupation
     skillCap,
@@ -363,9 +441,14 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   const skillCap = skillPoints.skillCap;
   const finalSkillCap = skillPoints.finalSkillCap;
 
-  // Calculate total points spent on skills
-  let skillPointsSpent = 0;
-  
+  // Occupation-eligible skill set, for the EDU-pool / INT-pool split.
+  const occSkillSet = buildOccupationSkillSet(occupation);
+
+  // Calculate points spent, split by pool (occupation-eligible vs hobby)
+  let spentOcc = 0;
+  let spentHobby = 0;
+  const countedDynamicSkillNames = new Set<string>();
+
   // Handle Mongoose Map - convert to object and filter out internal properties
   let skillsObj: Record<string, number | SkillBreakdown> = {};
   if (character.skills instanceof Map) {
@@ -377,7 +460,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   } else {
     skillsObj = (character.skills || {}) as Record<string, number | SkillBreakdown>;
   }
-  
+
   const skillEntries = Object.entries(skillsObj);
 
   for (const [skillKey, skillValue] of skillEntries) {
@@ -403,8 +486,14 @@ export async function validateCharacterSubmission(character: ICharacter, config:
     let occupationBonus: number = 0;
     let skillDisplayName: string;
 
+    let isOccupationSkill = false;
+
     if (!skill) {
-      // Check if this is a dynamic/placeholder skill (e.g., "Lingua straniera (Latino)")
+      // Check if this is a dynamic/placeholder skill keyed by its full name (legacy
+      // format - the current wizard keys character.skills by a synthetic skillId that
+      // never survives CharacterController's ObjectId-format filter, so dynamic skill
+      // points normally live ONLY in character.dynamicSkills[] - see the dedicated
+      // loop below this one, which is what actually counts them for fresh characters).
       const dynamicEntry = (character.dynamicSkills || []).find(
         (ds) => ds.skillName === skillKey
       );
@@ -414,8 +503,11 @@ export async function validateCharacterSubmission(character: ICharacter, config:
         continue;
       }
 
+      countedDynamicSkillNames.add(dynamicEntry.skillName);
+
       // Dynamic skill found — use its breakdown directly and count the points
       skillDisplayName = dynamicEntry.skillName;
+      isOccupationSkill = occSkillSet.placeholderNames.has(dynamicEntry.basedOnTemplate);
 
       if (typeof skillValue === 'object' && skillValue !== null && 'total' in skillValue) {
         const breakdown = skillValue as SkillBreakdown;
@@ -429,6 +521,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
       }
     } else {
       skillDisplayName = skill.name;
+      isOccupationSkill = occSkillSet.skillIds.has(skill._id.toString());
 
       if (typeof skillValue === 'object' && skillValue !== null && 'total' in skillValue) {
         const breakdown = skillValue as SkillBreakdown;
@@ -445,7 +538,11 @@ export async function validateCharacterSubmission(character: ICharacter, config:
 
     // Budget calculation: manualPoints + requiredBonus count, occupationBonus does NOT
     const pointsSpent = manualPoints + requiredBonus;
-    skillPointsSpent += pointsSpent;
+    if (isOccupationSkill) {
+      spentOcc += pointsSpent;
+    } else {
+      spentHobby += pointsSpent;
+    }
 
     // Check cap (allow final cap if occupation bonuses applied)
     const maxAllowed = character.occupationBonusesApplied ? finalSkillCap : skillCap;
@@ -456,11 +553,48 @@ export async function validateCharacterSubmission(character: ICharacter, config:
     }
   }
 
-  if (skillPointsSpent > skillPoints.totalAvailable) {
-    result.errors.push(`Hai superato i punti abilità disponibili (spesi: ${skillPointsSpent}, disponibili: ${skillPoints.totalAvailable})`);
+  // Dynamic/placeholder skills (e.g. "Lingua straniera (Italiano)") normally live ONLY
+  // here, not in character.skills - see the comment above. Count them directly from
+  // their own breakdown fields, skipping any already counted via the legacy name-keyed
+  // path above to avoid double-counting.
+  for (const dynamicEntry of character.dynamicSkills || []) {
+    if (countedDynamicSkillNames.has(dynamicEntry.skillName)) continue;
+
+    const manualPoints = dynamicEntry.manualPoints || 0;
+    const requiredBonus = dynamicEntry.requiredBonus || 0;
+    const pointsSpent = manualPoints + requiredBonus;
+    const isOccupationSkill = occSkillSet.placeholderNames.has(dynamicEntry.basedOnTemplate);
+
+    if (isOccupationSkill) {
+      spentOcc += pointsSpent;
+    } else {
+      spentHobby += pointsSpent;
+    }
+
+    const maxAllowed = character.occupationBonusesApplied ? finalSkillCap : skillCap;
+    if (dynamicEntry.value > maxAllowed) {
+      result.errors.push(`L'abilità "${dynamicEntry.skillName}" supera il limite (${dynamicEntry.value} > ${maxAllowed})`);
+      result.isValid = false;
+    }
+  }
+
+  // Feasibility check across the 3 pools: the flexible base pool covers whatever
+  // overflows the earmarked occupation/hobby pools, but not beyond its own size.
+  const overflowOcc = Math.max(0, spentOcc - skillPoints.occPool);
+  const overflowHobby = Math.max(0, spentHobby - skillPoints.hobbyPool);
+  const skillPointsSpent = spentOcc + spentHobby;
+
+  if (overflowOcc + overflowHobby > skillPoints.basePool) {
+    result.errors.push(
+      `Punti abilità: superati i pool disponibili (Professione: ${spentOcc}/${skillPoints.occPool}, ` +
+      `Hobby: ${spentHobby}/${skillPoints.hobbyPool}, Base: ${overflowOcc + overflowHobby}/${skillPoints.basePool})`
+    );
     result.isValid = false;
   } else if (skillPointsSpent < skillPoints.totalAvailable) {
     result.errors.push(`Devi spendere tutti i punti abilità (spesi: ${skillPointsSpent}, disponibili: ${skillPoints.totalAvailable}, rimanenti: ${skillPoints.totalAvailable - skillPointsSpent})`);
+    result.isValid = false;
+  } else if (skillPointsSpent > skillPoints.totalAvailable) {
+    result.errors.push(`Hai superato i punti abilità disponibili (spesi: ${skillPointsSpent}, disponibili: ${skillPoints.totalAvailable})`);
     result.isValid = false;
   }
 

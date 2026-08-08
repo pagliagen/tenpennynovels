@@ -17,6 +17,38 @@
   @include forms.stepDescription;
 }
 
+.pointsSummary {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  background: #000;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  display: flex;
+}
+
+.pointsLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.pointsValue {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pointsValid {
+  color: var(--color-success);
+}
+
+.pointsExceeded {
+  color: var(--color-error);
+}
+
 .section {
   position: relative;
 }
@@ -35,6 +67,10 @@
 
 .errorSummary {
   @include forms.errorSummary;
+}
+
+.warningBox {
+  @include forms.warningBox;
 }
 
 .skillsContent {
@@ -76,6 +112,13 @@
   color: #856404;
   border-color: #ffc107;
   font-weight: bold;
+}
+
+.badgeOccupation {
+  @extend .badge;
+  background: #cce5ff;
+  color: #004085;
+  border-color: #004085;
 }
 
 .totalInput {

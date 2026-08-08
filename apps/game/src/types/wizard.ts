@@ -84,8 +84,20 @@ export interface WizardOccupation {
   /** Flag: occupation bonuses have been applied to skills */
   occupationBonusesApplied: boolean;
 
-  /** Placeholder skill names required by this occupation (e.g., ["Lingua straniera"]) */
+  /**
+   * Placeholder skill (template) names on this occupation's skill list (e.g., ["Lingua straniera"]).
+   * Doubles as the occupation-eligible placeholder set for the EDU/hobby skill point pools:
+   * a dynamic skill counts as "occupation" iff its basedOnTemplate is in this list.
+   */
   requiredPlaceholderSkills: string[];
+
+  /**
+   * Catalog skill IDs on this occupation's skill list: every option across every
+   * requiredSkillSlots slot (not just the one chosen, for multi-option slots) plus
+   * every bonusSkills entry. Used to classify skill-point spend into the EDUx4
+   * (occupation) vs INTx2 (hobby) pool - see lib/utils/skillPools.ts.
+   */
+  occupationSkillIds: string[];
 }
 
 /**

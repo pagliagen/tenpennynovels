@@ -13,10 +13,10 @@
 import { useEffect, useMemo } from 'react';
 
 import { useSkills, useOccupations } from '@/hooks/useCharacterCreation';
+import { computeSkillPools, computeSkillPoolUsage } from '@/lib/utils/skillPools';
 import { useWizardStore, resolveSkillBaseValue } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step4Skills.module.scss';
 
-import { BudgetIndicator } from '../shared/BudgetIndicator';
 import { PlaceholderSkillManager } from '../shared/PlaceholderSkillManager';
 import { useWizardToolbar } from '../WizardSlotsContext';
 import { logger } from '@/lib/logger';
@@ -37,18 +37,26 @@ export function Step4Skills(): JSX.Element {
   // Fetch occupations to get required skills data
   const { data: occupations } = useOccupations();
 
-  // Get total skill points from config (flat value, no INT bonus)
-  const totalBudget = creationConfig?.skills.totalPoints ?? 250;
-
-  // Calculate spent points (manualPoints + requiredBonus count toward budget, occupationBonus does NOT)
-  const spentPoints = Object.values(skills).reduce(
-    (sum, skill) => sum + skill.manualPoints + skill.requiredBonus,
-    0
-  );
+  // Three pools: base (flexible) + occupation (EDUxN, professione) + hobby (INTxN)
+  const pools = computeSkillPools(stats, creationConfig);
+  const usage = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools);
+  const occupationFormula = creationConfig?.skills.occupationPointsFormula ?? 'EDUx4';
+  const hobbyFormula = creationConfig?.skills.hobbyPointsFormula ?? 'INTx2';
 
   useWizardToolbar(() => (
-    <BudgetIndicator spent={spentPoints} total={totalBudget} label="Punti Abilità" />
-  ), [spentPoints, totalBudget]);
+    <div className={styles.pointsSummary}>
+      <span className={styles.pointsLabel}>PUNTI:</span>
+      <span className={`${styles.pointsValue} ${usage.spentOcc > pools.occPool ? styles.pointsExceeded : ''}`}>
+        Professione ({occupationFormula}) {usage.spentOcc}/{pools.occPool}
+      </span>
+      <span className={`${styles.pointsValue} ${usage.spentHobby > pools.hobbyPool ? styles.pointsExceeded : ''}`}>
+        Hobby ({hobbyFormula}) {usage.spentHobby}/{pools.hobbyPool}
+      </span>
+      <span className={`${styles.pointsValue} ${usage.baseUsed > pools.basePool ? styles.pointsExceeded : styles.pointsValid}`}>
+        Base liberi {usage.baseUsed}/{pools.basePool}
+      </span>
+    </div>
+  ), [usage.spentOcc, usage.spentHobby, usage.baseUsed, pools.occPool, pools.hobbyPool, pools.basePool, occupationFormula, hobbyFormula]);
 
   // Initialize skills with base values from API (resolve formulas with current stats)
   useEffect(() => {
@@ -163,11 +171,13 @@ export function Step4Skills(): JSX.Element {
       return; // Silently ignore
     }
 
-    // Validation 2: Budget check
-    const currentManualPoints = skill.manualPoints;
-    const pointDifference = calculatedManual - currentManualPoints;
-    if (spentPoints + pointDifference > totalBudget) {
-      return; // Would exceed budget
+    // Validation 2: Budget check (occupation/hobby pools + shared base pool feasibility)
+    const hypothetical = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools, {
+      skillId,
+      manualPoints: calculatedManual,
+    });
+    if (!hypothetical.isFeasible) {
+      return; // Would exceed the available pools
     }
 
     // Validation 3: Cap enforcement
@@ -214,6 +224,12 @@ export function Step4Skills(): JSX.Element {
   return (
     <div className={styles.stepContent} data-step="skills">
       <div className={styles.skillsContent}>
+        {usage.totalSpent > pools.totalPool && (
+          <div className={styles.warningBox}>
+            ⚠️ Hai speso più punti di quanti ne siano ora disponibili (probabilmente EDU o INT sono cambiati tornando allo Step 3). Riduci qualche abilità per rientrare nel budget.
+          </div>
+        )}
+
         {/* Placeholder Skills (specializations like Lingua Straniera) */}
         {placeholderSkills.length > 0 && (
           <div className={styles.section}>
@@ -275,6 +291,11 @@ export function Step4Skills(): JSX.Element {
                       {skill.occupationBonus > 0 && (
                         <span className={styles.badgeBonus} title="Non conta verso il budget">
                           +{skill.occupationBonus}
+                        </span>
+                      )}
+                      {occupation.occupationSkillIds?.includes(skillDef.id) && (
+                        <span className={styles.badgeOccupation} title="Sul listino della professione: spende dal pool EDUxN">
+                          Professione
                         </span>
                       )}
                       {skill.requiredBonus > 0 && (

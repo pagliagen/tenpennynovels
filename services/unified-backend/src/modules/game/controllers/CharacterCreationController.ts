@@ -94,6 +94,8 @@ export class CharacterCreationController {
         },
         skillsConfig: {
           totalPoints: parseSkillTotalPoints(rulesConfig.skills.totalPointsFormula),
+          occupationPointsFormula: rulesConfig.skills.occupationPointsFormula,
+          hobbyPointsFormula: rulesConfig.skills.hobbyPointsFormula,
           creationCap: rulesConfig.skills.creationCap,
           creationCapWithOccupation: rulesConfig.skills.creationCapWithOccupation,
         },

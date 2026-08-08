@@ -43,6 +43,10 @@ export interface CharacterCreationConfig {
   };
   skills: {
     totalPoints: number;
+    /** EDU x N formula (e.g. "EDUx4"), pool spendable ONLY on occupation skills */
+    occupationPointsFormula?: string;
+    /** INT x N formula (e.g. "INTx2"), pool spendable ONLY on non-occupation skills */
+    hobbyPointsFormula?: string;
     creationCap: number;
     creationCapWithOccupation: number;
   };

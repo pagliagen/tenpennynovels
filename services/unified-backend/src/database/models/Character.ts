@@ -113,6 +113,15 @@ export interface ICharacter extends Document, SoftDeleteMethods {
     customValue: string;        // Specialization value (e.g., "Italiano")
     value: number;              // Current skill value
     category: string;           // Skill category
+    // Breakdown mirrors SkillBreakdown. The wizard always sends these (see
+    // transformForBackend in wizardStore.ts) but until now the schema didn't
+    // declare them, so Mongoose silently stripped them on save - only `value`
+    // survived, making it impossible to know how many were manualPoints vs
+    // requiredBonus for skill-point-budget validation.
+    base?: number;
+    requiredBonus?: number;
+    manualPoints?: number;
+    occupationBonus?: number;
   }>;
 
   // Background guidato strutturato
@@ -491,7 +500,11 @@ const CharacterSchema = new Schema<ICharacter>({
       basedOnTemplate: { type: String, required: true }, // Template skill name
       customValue: { type: String, required: true },    // Specialization value
       value: { type: Number, required: true },          // Current skill value
-      category: { type: String, required: true }        // Skill category
+      category: { type: String, required: true },       // Skill category
+      base: { type: Number, default: 0 },
+      requiredBonus: { type: Number, default: 0 },
+      manualPoints: { type: Number, default: 0 },
+      occupationBonus: { type: Number, default: 0 }
     }],
     default: []
   },

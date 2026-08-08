@@ -235,6 +235,7 @@ const initialState = (): Omit<
     selectedAlternativeSkills: {},
     occupationBonusesApplied: false,
     requiredPlaceholderSkills: [],
+    occupationSkillIds: [],
   },
 
   // Step 3: Stats
@@ -678,6 +679,10 @@ export const useWizardStore = create<WizardStore>()(
         let changesMade = false;
 
         const requiredPlaceholderSkills: string[] = [];
+        // Every catalog skill ID appearing in ANY slot option (all options, not just the
+        // one auto-assigned/chosen) plus every bonus skill - the whole list is "professional"
+        // for the EDUx4 skill-point-pool purposes, see WizardOccupation.occupationSkillIds.
+        const occupationSkillIds: string[] = [];
 
         // Collect dynamic skill IDs to preserve their requiredBonus (set by user via PlaceholderSkillManager)
         const { dynamicSkills: currentDynamicSkills } = get();
@@ -698,14 +703,23 @@ export const useWizardStore = create<WizardStore>()(
           const options = slot.options || [];
           if (options.length === 0) return;
 
+          // Every option on the slot's list is "professional" for pool purposes,
+          // regardless of how many options there are or which one gets auto-assigned.
+          options.forEach((opt: any) => {
+            if (opt.isPlaceholder) {
+              requiredPlaceholderSkills.push(opt.name);
+              return;
+            }
+            const optDef = skillDefinitions.find(
+              (s: any) => s.id === opt.skillId || s.id === opt.id || s.name === opt.name
+            );
+            if (optDef) {
+              occupationSkillIds.push(optDef.id);
+            }
+          });
+
           // Multi-option slot: player must choose, skip auto-assign
           if (options.length > 1) {
-            // Track any placeholder skills in multi-option slots
-            options.forEach((opt: any) => {
-              if (opt.isPlaceholder) {
-                requiredPlaceholderSkills.push(opt.name);
-              }
-            });
             return;
           }
 
@@ -723,7 +737,6 @@ export const useWizardStore = create<WizardStore>()(
           }
 
           if (skillDef.isPlaceholder) {
-            requiredPlaceholderSkills.push(skillDef.name);
             return;
           }
 
@@ -790,6 +803,12 @@ export const useWizardStore = create<WizardStore>()(
               return;
             }
 
+            if (skillDef.isPlaceholder) {
+              requiredPlaceholderSkills.push(skillDef.name);
+            } else {
+              occupationSkillIds.push(skillDef.id);
+            }
+
             const resolvedBonusBase = resolveSkillBaseValue(skillDef.baseFormula, skillDef.baseValue, stats);
             const currentSkill = updatedSkills[skillDef.id] || {
               base: resolvedBonusBase,
@@ -831,7 +850,8 @@ export const useWizardStore = create<WizardStore>()(
         const updates: any = {
           occupation: {
             ...get().occupation,
-            requiredPlaceholderSkills,
+            requiredPlaceholderSkills: Array.from(new Set(requiredPlaceholderSkills)),
+            occupationSkillIds: Array.from(new Set(occupationSkillIds)),
             occupationBonusesApplied: true, // Mark as applied after auto-assignment
           },
         };
@@ -1187,6 +1207,7 @@ export const useWizardStore = create<WizardStore>()(
             selectedAlternativeSkills: {},
             occupationBonusesApplied: true,
             requiredPlaceholderSkills: [],
+            occupationSkillIds: [], // Recomputed by the Step 4 effect on mount (autoAssignRequiredSkills)
           },
           stats: {
             strength: charStats.strength || 20,

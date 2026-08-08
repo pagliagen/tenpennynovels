@@ -71,6 +71,8 @@ export interface CharacterCreationConfig {
   skills: {
     totalPointsFormula: string; // "constant:200" or "formula:EDUx4" (use 'x' for multiplication)
     intelligenceBonusFormula: string;  // "INT/2", "INTx2", "INT+10", "constant:N"
+    occupationPointsFormula: string;   // "EDUx4" - pool riservato alle skill di professione
+    hobbyPointsFormula: string;        // "INTx2" - pool riservato alle skill hobbistiche
     creationCap: number;                // Normal creation cap
     creationCapWithOccupation: number;  // Cap with occupation bonus
     gameplayCap: number;                // Gameplay cap - >= creationCap
@@ -170,6 +172,8 @@ export class CharacterCreationConfigService {
       skills: {
         totalPointsFormula: configs['character_creation_skills_total_points_formula'] || 'constant:200',
         intelligenceBonusFormula: configs['character_creation_skills_int_bonus_formula'] || 'INT/2',
+        occupationPointsFormula: configs['character_creation_skills_occupation_points_formula'] || 'EDUx4',
+        hobbyPointsFormula: configs['character_creation_skills_hobby_points_formula'] || 'INTx2',
         creationCap: configs['character_creation_skills_creation_cap'] || 75,
         creationCapWithOccupation: configs['character_creation_skills_creation_cap_with_occupation'] || 80,
         gameplayCap: configs['character_creation_skills_gameplay_cap'] || 99,
@@ -251,6 +255,8 @@ export class CharacterCreationConfigService {
       { key: 'character_creation_stats_description', value: config.stats.description },
       { key: 'character_creation_skills_total_points_formula', value: config.skills.totalPointsFormula },
       { key: 'character_creation_skills_int_bonus_formula', value: config.skills.intelligenceBonusFormula },
+      { key: 'character_creation_skills_occupation_points_formula', value: config.skills.occupationPointsFormula },
+      { key: 'character_creation_skills_hobby_points_formula', value: config.skills.hobbyPointsFormula },
       { key: 'character_creation_skills_creation_cap', value: config.skills.creationCap },
       { key: 'character_creation_skills_creation_cap_with_occupation', value: config.skills.creationCapWithOccupation },
       { key: 'character_creation_skills_gameplay_cap', value: config.skills.gameplayCap },
@@ -663,6 +669,8 @@ export class CharacterCreationConfigService {
       skills: {
         totalPointsFormula: 'constant:200',
         intelligenceBonusFormula: 'INT/2',
+        occupationPointsFormula: 'EDUx4',
+        hobbyPointsFormula: 'INTx2',
         creationCap: 75,
         creationCapWithOccupation: 80,
         gameplayCap: 99,
@@ -730,14 +738,20 @@ export const getCharacterCreationConfig = () => CharacterCreationConfigService.g
 // ==================== FORMULA PARSER FUNCTIONS ====================
 
 /**
- * Parse and calculate intelligence bonus from formula
- * Supports: INT/N, INTxN, INT+N, INT-N, constant:N
- * @param formula - Formula to calculate (e.g., "INT/2", "INTx2", "INT+10", "constant:25")
- * @param intelligenceValue - Intelligence stat value
- * @returns Calculated INT bonus (floored)
+ * Parse and calculate a stat-derived bonus/pool from a formula string.
+ * Supports: {TOKEN}/N, {TOKEN}xN, {TOKEN}+N, {TOKEN}-N, constant:N
+ * Generalized from the original INT-only bonus formula so the same parser
+ * backs the occupation (EDUx4) and hobby (INTx2) skill point pools too.
+ *
+ * @param formula - Formula to calculate (e.g., "INT/2", "EDUx4", "INT+10", "constant:25")
+ * @param token - Stat placeholder used in the formula (e.g., "INT", "EDU")
+ * @param statValue - The stat's numeric value
+ * @returns Calculated bonus (floored)
  */
-export function calculateIntelligenceBonus(formula: string, intelligenceValue: number): number {
-  if (!formula) return Math.floor(intelligenceValue / 2); // Default: INT/2
+export function calculateStatFormula(formula: string, token: string, statValue: number): number {
+  const fallback = () => Math.floor(statValue / 2);
+
+  if (!formula) return fallback();
 
   // Constant formula: "constant:25"
   if (formula.startsWith('constant:')) {
@@ -748,8 +762,8 @@ export function calculateIntelligenceBonus(formula: string, intelligenceValue: n
   // Replace "x" with "*" for multiplication (user-friendly)
   let processedFormula = formula.replace(/x/gi, '*');
 
-  // Replace "INT" with actual value
-  processedFormula = processedFormula.replace(/INT/gi, intelligenceValue.toString());
+  // Replace the stat token (e.g. "INT", "EDU") with its actual value
+  processedFormula = processedFormula.replace(new RegExp(token, 'gi'), statValue.toString());
 
   try {
     // Validate: Only allow numbers, +, -, *, /, (, ), ., spaces
@@ -758,20 +772,29 @@ export function calculateIntelligenceBonus(formula: string, intelligenceValue: n
         original: formula,
         processed: processedFormula
       });
-      return Math.floor(intelligenceValue / 2); // Fallback
+      return fallback();
     }
 
     // Evaluate mathematical expression
     const result = eval(processedFormula);
     return Math.floor(result);
   } catch (error: any) {
-    logger.error('Error evaluating intelligence bonus formula', {
+    logger.error('Error evaluating stat formula', {
       formula,
-      intelligenceValue,
+      token,
+      statValue,
       error: error.message
     });
-    return Math.floor(intelligenceValue / 2); // Fallback to INT/2
+    return fallback();
   }
+}
+
+/**
+ * @deprecated Use calculateStatFormula(formula, 'INT', intelligenceValue) directly.
+ * Kept as a thin wrapper so existing callers keep compiling.
+ */
+export function calculateIntelligenceBonus(formula: string, intelligenceValue: number): number {
+  return calculateStatFormula(formula, 'INT', intelligenceValue);
 }
 
 /**
