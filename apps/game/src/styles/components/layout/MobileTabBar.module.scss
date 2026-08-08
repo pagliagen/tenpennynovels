@@ -1,0 +1,65 @@
+@use '../../variables' as *;
+
+.tabBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1050; // sopra ForumModal/PresenceModal (1000)
+  display: flex;
+  height: 56px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: linear-gradient(180deg, rgba(20, 20, 20, 0.98), rgba(10, 10, 10, 0.98));
+  border-top: 2px solid $gold-30;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.tab,
+.tabActive {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: $font-serif;
+  transition: $transition-fast;
+}
+
+.tab {
+  color: $text-secondary;
+}
+
+.tabActive {
+  color: $gold;
+}
+
+.tabIcon {
+  position: relative;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.tabLabel {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.tabBadge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: #a13925;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}

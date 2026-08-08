@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback, useState } from 'react';
 
+import { useIsCompactLayout } from '@/hooks/useIsCompactLayout';
 import { useForumStore } from '@/store/forumStore';
 import styles from '@/styles/components/forum/ForumModal.module.scss';
 
@@ -20,6 +21,7 @@ const ANIMATION_DURATION = 400; // ms, must match .closing animation duration in
 export function ForumModal(): JSX.Element | null {
   const { isOpen, isCollapsed, view, closeForum, expandForum, syncWithUrl } = useForumStore();
   const [isClosing, setIsClosing] = useState(false);
+  const isCompactLayout = useIsCompactLayout();
 
   const handleClose = useCallback(() => {
     setIsClosing(true);
@@ -67,6 +69,12 @@ export function ForumModal(): JSX.Element | null {
   if (!isOpen) return null;
 
   if (isCollapsed) {
+    // Layout compatto: niente striscia laterale (non c'è più spazio riservato
+    // a destra sotto COMPACT_LAYOUT_BREAKPOINT, la bacheca è a schermo intero
+    // quando aperta). Lo stato "ridotta" resta comunque isCollapsed:true - il
+    // bottone Bacheca in topbar (openForum) la riespande dove stava, invariato.
+    if (isCompactLayout) return null;
+
     return (
       <button
         type="button"

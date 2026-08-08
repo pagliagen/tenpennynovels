@@ -29,6 +29,12 @@
   position: relative;
   z-index: 100;
   margin: 0 auto;
+
+  // Shell mobile (useIsMobileShell, useIsCompactLayout.ts): niente più
+  // larghezza fissa, la topbar segue il contenitore.
+  @media (max-width: 1023px) {
+    width: 100%;
+  }
 }
 
 .utilityButtonsContainer {
@@ -41,6 +47,10 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+
+  @media (max-width: 1150px) {
+    right: 5px;
+  } 
 }
 
 /* ========================================
@@ -167,11 +177,50 @@
   }
 }
 
+// Shell mobile: icone e cerchio location più piccoli, il set stesso è già
+// ridotto a monte (TopBar.tsx, isMobileShell) - senza restringerle non
+// basterebbe comunque a stare in una larghezza da telefono.
+@media (max-width: 1023px) {
+  .iconsContainerLeft,
+  .iconsContainerRight {
+    height: 48px;
+
+    button,
+    a {
+      margin-top: 14px;
+    }
+  }
+
+  .iconButton,
+  .featureHubAnchor {
+    width: 48px;
+    height: 48px;
+  }
+
+  .featureHubAnchor {
+    margin-top: 14px;
+
+    button {
+      height: 48px;
+    }
+  }
+}
+
 
 .iconImage {
   object-fit: contain;
   width: calc(100% - 14px);
   height: calc(100% - 14px);
+}
+
+// Avatar del toggle sidebar: a differenza delle altre icone (glifi su sfondo
+// scuro, object-fit: contain con padding) è una foto reale, deve riempire
+// il cerchio come un vero avatar.
+.sidebarToggleAvatarImage {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
 }
 
 .featureHubDropdown {
@@ -309,6 +358,14 @@
 
   &:hover .locationImage {
     border-color: #892012;
+  }
+
+  // Shell mobile: stesse proporzioni (2:1), più piccolo - il nome location
+  // ha già un auto-fit (TopBar.tsx useLayoutEffect) che lo scala di
+  // conseguenza, nessuna modifica separata necessaria lì.
+  @media (max-width: 1023px) {
+    width: 140px;
+    height: 70px;
   }
 }
 

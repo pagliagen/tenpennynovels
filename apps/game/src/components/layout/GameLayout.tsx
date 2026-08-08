@@ -23,6 +23,7 @@ import { forumPreferenceKeys, useForumUnreadSummary } from '@/hooks/useForumPref
 import { forumSocialKeys } from '@/hooks/useForumSocial';
 import { useOffGameUnreadCount } from '@/hooks/useOffGameChat';
 import { useOnGameUnreadCount } from '@/hooks/useOnGameMessages';
+import { useIsCompactLayout, useIsMobileShell } from '@/hooks/useIsCompactLayout';
 import { useTicketNotifications } from '@/hooks/useTicketNotifications';
 import { useUnreadTicketsCount } from '@/hooks/useTickets';
 import { api } from '@/lib/api/client';
@@ -48,6 +49,7 @@ import { AudioManagerController } from '../windows/AudioManagerController';
 import { WindowRenderer } from '../windows/WindowRenderer';
 
 import { LocationInfoModal } from './LocationInfoModal';
+import { MobileTabBar } from './MobileTabBar';
 import { TopBar } from './TopBar';
 import { logger } from '@/lib/logger';
 
@@ -72,6 +74,24 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const [showAudioPopup, setShowAudioPopup] = useState(false);
   const [showChatPopup, setShowChatPopup] = useState(false);
   const [showLocationInfo, setShowLocationInfo] = useState(false);
+
+  // Sidebar responsive: sotto COMPACT_LAYOUT_BREAKPOINT non c'è più spazio per la
+  // colonna fissa (325px sidebar + 1024px mainContent = 1349px richiesti) - diventa
+  // un drawer a comparsa invece di stare sempre nel flusso. Stessa soglia usata da
+  // ForumModal per passare a schermo intero - unica fonte di verità condivisa.
+  const isCompactLayout = useIsCompactLayout();
+  const isMobileShell = useIsMobileShell();
+  const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
+
+  // Se la finestra torna larga mentre il drawer è aperto, richiudilo: altrimenti
+  // resterebbe "aperto" in stato ma invisibile (la sidebar torna inline) e si
+  // riaprirebbe da sola come overlay al prossimo giro sotto la soglia. Vale
+  // anche entrando nella shell mobile (isMobileShell): lì l'icona/drawer non
+  // esiste più, ma isCompactLayout resta true (1024 < 1500) quindi da solo
+  // non basterebbe a far scattare la chiusura.
+  useEffect(() => {
+    if (!isCompactLayout || isMobileShell) setIsSidebarDrawerOpen(false);
+  }, [isCompactLayout, isMobileShell]);
 
   // Auth store: Get current character and permissions
   const selectedCharacter = useAuthStore((state) => state.selectedCharacter);
@@ -383,8 +403,31 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
       <div className={styles.gameContainer}>
         {/* ========================================
           SIDEBAR - Left side with character info
+          Sotto i 1500px non sta più inline: diventa un drawer, montato solo
+          quando aperto (backdrop + pannello), invece di essere sempre nel
+          flusso flex.
           ======================================== */}
-        <aside className={styles.sidebar}>
+        {(!isCompactLayout || isSidebarDrawerOpen) && (
+        <>
+        {isCompactLayout && (
+          <div
+            className={styles.sidebarBackdrop}
+            onClick={() => setIsSidebarDrawerOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+        <aside className={`${styles.sidebar} ${isCompactLayout ? styles.sidebarDrawer : ''}`.trim()}>
+          {isCompactLayout && (
+            <button
+              type="button"
+              className={styles.sidebarDrawerClose}
+              onClick={() => setIsSidebarDrawerOpen(false)}
+              aria-label="Chiudi menu personaggio"
+            >
+              ✕
+            </button>
+          )}
+
           {/* Clock Upper - Date, Profile, Weather */}
           <div className={styles.clockUpper}>
             {/* Date Display */}
@@ -438,6 +481,8 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             <div className={styles.footerText}>THE VOICES OF LONDON</div>
           </div>
         </aside>
+        </>
+        )}
 
         {/* ========================================
           MAIN CONTENT - Right side with top bar + content
@@ -467,6 +512,11 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
             locationImageUrl={topBarLocationProps.locationImageUrl}
             isInLondon={topBarLocationProps.isInLondon}
             onLocationDisplayClick={() => setShowLocationInfo(true)}
+            showSidebarToggle={isCompactLayout && !isMobileShell}
+            isSidebarOpen={isSidebarDrawerOpen}
+            onToggleSidebar={() => setIsSidebarDrawerOpen((v) => !v)}
+            sidebarToggleAvatar={selectedCharacter?.avatar ?? undefined}
+            isMobileShell={isMobileShell}
           />
 
           {/* Body Container - Page content */}
@@ -492,6 +542,9 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
       {/* Presence Modal - Side drawer */}
       <PresenceModal />
+
+      {/* Mobile Tab Bar - sotto MOBILE_SHELL_BREAKPOINT: Presenti | Game | Bacheca */}
+      {isMobileShell && <MobileTabBar unreadForumCount={forumUnreadSummary?.count ?? 0} />}
 
       {/* Location Info Modal - Name, description and points of interest */}
       {showLocationInfo && (

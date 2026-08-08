@@ -16,7 +16,6 @@
 
 .gameContainer {
   min-height: 100vh;
-  min-width: 1650px;
   display: flex;
   flex-direction: row; // Sidebar | Main Content
   color: var(--color-text-primary);
@@ -39,6 +38,62 @@
   margin-right: 5px;
   user-select: none;
   -webkit-user-select: none;
+}
+
+// Layout compatto (<1500px, vedi GameLayout.tsx isCompactLayout): la sidebar
+// esce dal flusso flex e diventa un drawer sopra il resto, con backdrop.
+.sidebarBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1900;
+  animation: sidebarBackdropFadeIn 0.25s ease-out;
+}
+
+@keyframes sidebarBackdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sidebarDrawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2000;
+  margin-right: 0;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+  animation: sidebarDrawerSlideIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes sidebarDrawerSlideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.sidebarDrawerClose {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid $gold-30;
+  color: $text-primary;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: $transition-fast;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: $gold-50;
+    color: $gold;
+  }
 }
 
 /* Clock Upper Section */
@@ -199,10 +254,32 @@
 .mainContent {
   display: flex;
   flex-direction: column; // TopBar | Body
-  flex: 1;
+  flex: 0;
   min-height: 837px;
   height: 100vh;
   overflow: hidden;
+  width: 100%;
+  min-width: 1024px;
+
+  @media (min-width: 1600px) {
+    flex: 1;
+  }
+  @media (min-width: 1260px) and (max-width: 1499px) {
+    flex: 1;
+  }
+  @media (min-width: 1024px) and (max-width: 1149px) {
+    flex: 1;
+  }
+
+  // Sotto MOBILE_SHELL_BREAKPOINT (useIsCompactLayout.ts) il floor da 1024px
+  // sparisce: la struttura cambia (shell mobile a 3 pannelli, MobileTabBar),
+  // non solo le dimensioni. flex:1 è necessario qui: la base è flex:0 (nessuna
+  // delle tre media query sopra copre sotto i 1024px), senza sarebbe 0px di
+  // larghezza - invisibile ma senza scroll orizzontale, quindi silenzioso.
+  @media (max-width: 1023px) {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .locations {
@@ -221,6 +298,13 @@
   margin-right: auto;
   margin-left: auto;
   width: 100%;
+
+  // Shell mobile: la MobileTabBar è fixed in fondo allo schermo (56px +
+  // safe-area) - senza questo padding coprirebbe l'ultima riga di contenuto
+  // (es. il bottone Invia della chat).
+  @media (max-width: 1023px) {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+  }
   max-width: 1024px; 
   z-index: 100;
 
@@ -365,16 +449,6 @@
    ======================================== */
 
 @media (max-width: 768px) {
-  .gameContainer {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    flex: 0 0 auto;
-    height: 200px;
-    width: 100%;
-  }
-
   .utilityPopupContent {
     min-width: 90%;
     max-width: 90%;

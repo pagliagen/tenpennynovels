@@ -104,6 +104,21 @@ interface TopBarProps {
 
   /** Click handler for the location display (opens location info popup) */
   onLocationDisplayClick?: () => void;
+
+  /** Layout compatto (sidebar collassata a drawer): mostra il toggle sidebar */
+  showSidebarToggle?: boolean;
+
+  /** Se il drawer della sidebar è aperto (per lo stato visivo del toggle) */
+  isSidebarOpen?: boolean;
+
+  /** Click handler per aprire/chiudere il drawer della sidebar */
+  onToggleSidebar?: () => void;
+
+  /** Avatar del personaggio, mostrato nel toggle sidebar quando visibile */
+  sidebarToggleAvatar?: string;
+
+  /** Shell mobile (sotto MOBILE_SHELL_BREAKPOINT): icone ridotte, Bacheca raggiunta via MobileTabBar */
+  isMobileShell?: boolean;
 }
 
 /**
@@ -150,6 +165,11 @@ export function TopBar({
   locationImageUrl = '/images/topbar/location-image.png',
   isInLondon = true,
   onLocationDisplayClick,
+  showSidebarToggle = false,
+  isSidebarOpen = false,
+  onToggleSidebar,
+  sidebarToggleAvatar,
+  isMobileShell = false,
 }: TopBarProps): JSX.Element {
   const router = useRouter();
 
@@ -286,8 +306,29 @@ export function TopBar({
           MAIN CONTENT
           ======================================== */}
         <div className={styles.topBarContent}>
-          {/* Left Icons - 3 elements */}
+          {/* Left Icons - 3 elements (+1 toggle sidebar in layout compatto) */}
           <div className={styles.iconsContainerLeft}>
+            {/* Sidebar Toggle - solo in layout compatto (sidebar collassata a drawer) */}
+            {showSidebarToggle && (
+              <button
+                type="button"
+                onClick={onToggleSidebar}
+                className={styles.iconButton}
+                title={isSidebarOpen ? 'Chiudi menu personaggio' : 'Apri menu personaggio'}
+                aria-expanded={isSidebarOpen}
+              >
+                <img
+                  src={sidebarToggleAvatar || '/images/sidebar/miniavatar_default.png'}
+                  alt=""
+                  aria-hidden="true"
+                  className={styles.sidebarToggleAvatarImage}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/sidebar/miniavatar_default.png';
+                  }}
+                />
+              </button>
+            )}
+
             {/* Quick Map */}
             <button
               type="button"
@@ -302,24 +343,26 @@ export function TopBar({
               />
             </button>
 
-            {/* Forum (Bacheca) - Popup */}
-            <button
-              type="button"
-              onClick={onForumClick}
-              className={styles.iconButton}
-              title={unreadForumCount > 0 ? `Bacheca (${unreadForumCount} argomenti con novità)` : 'Bacheca'}
-            >
-              <img
-                src="/images/topbar/button-forum.png"
-                alt="Bacheca"
-                className={styles.iconImage}
-              />
-              {unreadForumCount > 0 && (
-                <span className={styles.notificationBadge}>
-                  {unreadForumCount > 99 ? '99+' : unreadForumCount}
-                </span>
-              )}
-            </button>
+            {/* Forum (Bacheca) - Popup. Nella shell mobile è raggiunta dalla MobileTabBar */}
+            {!isMobileShell && (
+              <button
+                type="button"
+                onClick={onForumClick}
+                className={styles.iconButton}
+                title={unreadForumCount > 0 ? `Bacheca (${unreadForumCount} argomenti con novità)` : 'Bacheca'}
+              >
+                <img
+                  src="/images/topbar/button-forum.png"
+                  alt="Bacheca"
+                  className={styles.iconImage}
+                />
+                {unreadForumCount > 0 && (
+                  <span className={styles.notificationBadge}>
+                    {unreadForumCount > 99 ? '99+' : unreadForumCount}
+                  </span>
+                )}
+              </button>
+            )}
 
             {/* OnGame Mail (Victorian Post) - Popup */}
             <button
@@ -488,25 +531,42 @@ export function TopBar({
                       🎭 il mio prestavolto
                     </button>
                   )}
+
+                  {/* Shell mobile: Documenti non ha un'icona propria, vive qui */}
+                  {isMobileShell && (
+                    <a
+                      id="tpn_documenti_hub"
+                      href={documentsUrl}
+                      target="tpn_documenti"
+                      rel="noopener noreferrer"
+                      className={styles.featureHubItem}
+                      role="menuitem"
+                      onClick={() => setIsFeatureHubOpen(false)}
+                    >
+                      📄 Documenti
+                    </a>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Documents - Link to new page */}
-            <a
-              id="tpn_documenti"
-              href={documentsUrl}
-              target="tpn_documenti"
-              rel="noopener noreferrer"
-              className={styles.iconButton}
-              title="Documenti"
-            >
-              <img
-                src="/images/topbar/button-documents.png"
-                alt="Documenti"
-                className={styles.iconImage}
-              />
-            </a>
+            {/* Documents - Link to new page. Nella shell mobile vive nel menu Utilità sopra */}
+            {!isMobileShell && (
+              <a
+                id="tpn_documenti"
+                href={documentsUrl}
+                target="tpn_documenti"
+                rel="noopener noreferrer"
+                className={styles.iconButton}
+                title="Documenti"
+              >
+                <img
+                  src="/images/topbar/button-documents.png"
+                  alt="Documenti"
+                  className={styles.iconImage}
+                />
+              </a>
+            )}
 
             {/* Tickets - Popup */}
             <button
