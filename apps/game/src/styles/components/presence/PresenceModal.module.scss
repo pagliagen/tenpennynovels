@@ -28,8 +28,14 @@
     animation: slideOutToRight 0.3s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
   }
 
-  @media (max-width: 768px) {
+  // Stessa soglia di ForumModal (useIsCompactLayout.ts) - sotto i 1024 il
+  // pannello è a schermo intero, coerente col modello "3 pannelli" della
+  // MobileTabBar. min-width va azzerato qui: altrimenti su un telefono
+  // (~375-414px) il floor di 500px vincerebbe su width:100% e causerebbe
+  // overflow orizzontale.
+  @media (max-width: 1023px) {
     width: 100%;
+    min-width: 0;
     height: 100%;
   }
 }

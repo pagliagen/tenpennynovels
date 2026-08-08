@@ -313,4 +313,24 @@
   .messageCard {
     padding: $spacing-md $spacing-lg;
   }
+
+  // A 375-414px la colonna sinistra fissa da 100px mangiava ~27% della riga
+  // prima del contenuto del messaggio - qui diventa proporzionata.
+  .messageCardLeft {
+    min-width: 56px;
+    max-width: 56px;
+    gap: 4px;
+  }
+
+  .messageAvatar {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  .characterName,
+  .messageTimestamp {
+    font-size: 11px;
+  }
 }
