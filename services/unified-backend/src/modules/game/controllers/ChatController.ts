@@ -150,6 +150,10 @@ export class ChatController {
   }
 
   private static async getSkillValueByName(character: any, skillName: string): Promise<number> {
+    // NoSQL injection guard: skillName must be a plain string, never a query
+    // object (e.g. { $ne: null }), before it's used as a filter value below.
+    if (typeof skillName !== 'string') return 0;
+
     const skill = await Skill.findOne({ name: skillName }).select('_id').lean();
     if (!skill) return 0;
 
@@ -1377,6 +1381,19 @@ export class ChatController {
         return;
       }
 
+      // attackerSkill must be a plain string — reject query objects (e.g. { $ne: null })
+      // before it's used as a filter value anywhere below (NoSQL injection guard)
+      if (typeof attackerSkill !== 'string') {
+        res.status(400).json(errorResponse(
+          'attackerSkill non valido',
+          'INVALID_ATTACKER_SKILL',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       // CHECK: Character has pending reaction to resolve?
       const pendingReactionId = await ChatController.checkPendingReaction(character.characterId, locationId);
       if (pendingReactionId) {
@@ -1802,6 +1819,19 @@ export class ChatController {
         return;
       }
 
+      // attackSkill must be a plain string — reject query objects (e.g. { $ne: null })
+      // before it's used as a filter value anywhere below (NoSQL injection guard)
+      if (typeof attackSkill !== 'string') {
+        res.status(400).json(errorResponse(
+          'attackSkill non valido',
+          'INVALID_ATTACK_SKILL',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       // CHECK: Attacker has pending reaction to resolve?
       const pendingReaction = await Chat.findOne({
         locationId,
@@ -2075,6 +2105,18 @@ export class ChatController {
         res.status(400).json(errorResponse(
           'messageId non valido',
           'INVALID_MESSAGE_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // defenseSkillName must be a plain string — same NoSQL injection guard as messageId above
+      if (typeof defenseSkillName !== 'string') {
+        res.status(400).json(errorResponse(
+          'defenseSkillName non valido',
+          'INVALID_DEFENSE_SKILL',
           undefined,
           400,
           getRequestId(req)
