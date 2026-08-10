@@ -30,7 +30,6 @@ export interface DiaryEntry {
   title: string;
   content: string;
   entryDate: string;
-  isVisible: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -93,7 +92,7 @@ export function useCreateDiaryEntry(characterId: string | undefined) {
 export function useUpdateDiaryEntry(characterId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ entryId, ...data }: { entryId: string; title?: string; content?: string; isVisible?: boolean }) =>
+    mutationFn: ({ entryId, ...data }: { entryId: string; title?: string; content?: string; entryDate?: string }) =>
       unwrap(api.put<{ data: { entry: DiaryEntry } }>(`/game/characters/${characterId}/diary-entries/${entryId}`, data)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['character', characterId, 'diary-entries'] })
   });

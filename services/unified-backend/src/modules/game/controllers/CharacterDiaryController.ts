@@ -68,8 +68,7 @@ export class CharacterDiaryController {
         characterId,
         title: title.trim(),
         content: content.trim(),
-        entryDate: entryDate ? new Date(entryDate) : new Date(),
-        isVisible: true
+        entryDate: entryDate ? new Date(entryDate) : new Date()
       });
 
       res.status(201).json(successResponse({ entry }, undefined, getRequestId(req)));
@@ -83,7 +82,7 @@ export class CharacterDiaryController {
     try {
       const { characterId, entryId } = req.params;
       const userId = req.user!.userId;
-      const { title, content, entryDate, isVisible } = req.body || {};
+      const { title, content, entryDate } = req.body || {};
 
       const { character, isOwner } = await resolveViewer(characterId, userId);
       if (!character) {
@@ -104,7 +103,6 @@ export class CharacterDiaryController {
       if (title !== undefined) entry.title = String(title).trim();
       if (content !== undefined) entry.content = String(content).trim();
       if (entryDate !== undefined) entry.entryDate = new Date(entryDate);
-      if (isVisible !== undefined) entry.isVisible = !!isVisible;
       await entry.save();
 
       res.json(successResponse({ entry }, undefined, getRequestId(req)));

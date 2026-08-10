@@ -250,7 +250,8 @@ export default function LoginPage() {
   return (
     <FormPageLayout
       title="Ten Penny Novels | Gioco di Ruolo Londra Vittoriana"
-      description="Ten Penny Novels: GDR gratuito nella Londra Vittoriana 1890. Call of Cthulhu via chat, narrazione investigativa. Crea il tuo personaggio e gioca."
+      description="Ten Penny Novels: GDR gratuito nella Londra Vittoriana 1890. Crea il tuo personaggio e gioca via chat investigativa."
+ 
       canonical="https://tenpennynovels.com/"
       schema={homeSchema}
       noindex={false}

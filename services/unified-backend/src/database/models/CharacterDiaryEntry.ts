@@ -10,7 +10,6 @@ export interface ICharacterDiaryEntry extends Document {
   title: string;
   content: string;
   entryDate: Date;
-  isVisible: boolean; // flag on/off del giocatore (non è visibilità pubblica: resta privata)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,10 +36,6 @@ const CharacterDiaryEntrySchema = new Schema<ICharacterDiaryEntry>({
     type: Date,
     required: true,
     default: Date.now
-  },
-  isVisible: {
-    type: Boolean,
-    default: true
   }
 }, {
   timestamps: true,

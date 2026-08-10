@@ -24,7 +24,6 @@ import {
   useDeleteEncounter,
   useDiaryEntries,
   useEncounters,
-  useUpdateDiaryEntry,
   useUpdateChatScene,
   downloadSessionTranscript,
   downloadSceneTranscript
@@ -112,7 +111,6 @@ export function DiarioTab({ character, permissions }: DiarioTabProps): JSX.Eleme
 function DiarioClassico({ character, permissions }: { character: CharacterSheetData['character']; permissions: CharacterSheetPermissions }) {
   const { data, isLoading } = useDiaryEntries(character._id);
   const createEntry = useCreateDiaryEntry(character._id);
-  const updateEntry = useUpdateDiaryEntry(character._id);
   const deleteEntry = useDeleteDiaryEntry(character._id);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
@@ -173,13 +171,6 @@ function DiarioClassico({ character, permissions }: { character: CharacterSheetD
             <p className={styles.reviewNotes}>{entry.content}</p>
             {canWrite && (
               <div className={styles.actionButtonRow} style={{ marginTop: '0.75rem' }}>
-                <button
-                  type="button"
-                  className={styles.actionButton}
-                  onClick={() => updateEntry.mutate({ entryId: entry._id, isVisible: !entry.isVisible })}
-                >
-                  {entry.isVisible ? '👁️ Attiva' : '🚫 Disattivata'}
-                </button>
                 <button
                   type="button"
                   className={styles.actionButtonDanger}
