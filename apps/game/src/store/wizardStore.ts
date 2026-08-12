@@ -1047,7 +1047,7 @@ export const useWizardStore = create<WizardStore>()(
 
         const payload: CharacterCreatePayload = {
           // Basic info (field name reconciliation as per CharacterCreatePayload type)
-          name: basicInfo.firstName,
+          firstName: basicInfo.firstName,
           surname: basicInfo.lastName || undefined,
           birthDate: basicInfo.birthDate || undefined,
           birthPlace: basicInfo.birthPlace,
@@ -1145,8 +1145,8 @@ export const useWizardStore = create<WizardStore>()(
           updatedAt: character.updatedAt,
         } });
 
-        // name → firstName, surname → lastName (no concatenation)
-        const firstName = character.name || '';
+        // firstName → firstName (no reconciliation), surname → lastName
+        const firstName = character.firstName || '';
         const surname = character.surname || '';
 
         // Process skills (handle both Map and plain object)

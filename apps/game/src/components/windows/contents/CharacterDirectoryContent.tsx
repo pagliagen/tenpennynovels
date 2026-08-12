@@ -121,7 +121,7 @@ export function CharacterDirectoryContent(): JSX.Element {
             id="search"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="es. Arthur Pemberton"
+            placeholder="es. mario_rossi"
             className={styles.searchInput}
           />
         </div>
@@ -203,7 +203,7 @@ export function CharacterDirectoryContent(): JSX.Element {
                     <tr
                       key={character._id}
                       onClick={(e) =>
-                        handleCharacterClick(e, character._id, `${character.name} ${character.surname}`, character.avatar)
+                        handleCharacterClick(e, character._id, character.name, character.avatar)
                       }
                       className={styles.row}
                     >
@@ -214,7 +214,6 @@ export function CharacterDirectoryContent(): JSX.Element {
                         ) : (
                           <div className={styles.avatarPlaceholder}>
                             {character.name.charAt(0)}
-                            {character.surname.charAt(0)}
                           </div>
                         )}
                       </td>
@@ -223,7 +222,7 @@ export function CharacterDirectoryContent(): JSX.Element {
                       <td className={styles.tdName}>
                         <div className={styles.nameCell}>
                           <span className={styles.fullName}>
-                            {character.name} {character.surname}
+                            {character.name}
                           </span>
                         </div>
                       </td>

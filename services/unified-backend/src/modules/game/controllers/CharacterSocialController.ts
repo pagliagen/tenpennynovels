@@ -67,7 +67,7 @@ export class CharacterSocialController {
       res.json(successResponse(
         {
           characterId,
-          characterName: `${character.name} ${character.surname}`,
+          characterName: character.name,
           corporations: characterCorporations
         },
         undefined,

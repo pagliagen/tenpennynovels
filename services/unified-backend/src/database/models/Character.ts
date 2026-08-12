@@ -24,7 +24,8 @@ export interface ICharacter extends Document, SoftDeleteMethods {
   referentCharacterId?: Schema.Types.ObjectId; // For PNG only - points to user's PG principale
 
   // Character basic info
-  name: string; // visibile a tutti (NOW UNIQUE)
+  name: string; // identità di gioco (UNIQUE) - coincide con lo username dell'account, non modificabile dal giocatore
+  firstName?: string; // nome di finzione (RP) - editabile dal giocatore, visibile solo in scheda
   surname?: string; // cognome - opzionale, visibile a tutti
   age?: number; // età reale - visibile solo ai master (opzionale per PNG/Master)
   apparentAge?: number; // età apparente - visibile a tutti (opzionale per PNG/Master)
@@ -282,6 +283,12 @@ const CharacterSchema = new Schema<ICharacter>({
   name: {
     type: String,
     required: true,
+    trim: true,
+    maxlength: 50
+  },
+  firstName: {
+    type: String,
+    required: false,
     trim: true,
     maxlength: 50
   },

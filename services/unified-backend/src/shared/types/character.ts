@@ -85,7 +85,8 @@ export interface VictorianSkills {
 export interface Character {
   id: string;
   userId: string;
-  name: string; // visibile a tutti
+  name: string; // identità di gioco (= username), immutabile
+  firstName?: string; // nome di finzione (RP) - visibile a tutti
   age: number;
   apparentAge: number; // età apparente - visibile a tutti
   birthDate?: string; // data di nascita in formato gg/mm/yyyy (es: "14/4/1844") - visibile solo ai master

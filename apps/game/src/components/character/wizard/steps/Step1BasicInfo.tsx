@@ -121,7 +121,7 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
             <div className={styles.formGroupFull}>
               <div className={styles.formGroup}>
                 <label htmlFor="firstName" className={styles.label}>
-                  <EyeIcon visible={isPrivate('name')} /> NOME COMPLETO<span className={styles.required}>*</span>
+                  <EyeIcon visible={isPrivate('firstName')} /> NOME COMPLETO<span className={styles.required}>*</span>
                 </label>
                 <input
                   type="text"

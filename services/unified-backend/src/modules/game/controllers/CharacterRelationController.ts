@@ -21,8 +21,8 @@ export class CharacterRelationController {
           { toCharacterId: characterId }
         ]
       })
-      .populate('fromCharacterId', 'name surname gameplayRoles')
-      .populate('toCharacterId', 'name surname gameplayRoles')
+      .populate('fromCharacterId', 'name gameplayRoles')
+      .populate('toCharacterId', 'name gameplayRoles')
       .populate('relationshipTypeId', 'name description isPublicRelationship respectabilityModifier')
       .sort({ establishedAt: -1 });
 
@@ -41,10 +41,7 @@ export class CharacterRelationController {
             : rel.fromCharacterId._id,
           name: rel.fromCharacterId._id.toString() === characterId.toString()
             ? rel.toCharacterId.name
-            : rel.fromCharacterId.name,
-          surname: rel.fromCharacterId._id.toString() === characterId.toString()
-            ? rel.toCharacterId.surname
-            : rel.fromCharacterId.surname
+            : rel.fromCharacterId.name
         },
         status: rel.status,
         isInitiator: rel.fromCharacterId._id.toString() === characterId.toString(),
@@ -136,7 +133,7 @@ export class CharacterRelationController {
         return;
       }
 
-      const targetCharacter = await Character.findById(targetCharacterId).select('name surname gender socialClass');
+      const targetCharacter = await Character.findById(targetCharacterId).select('name gender socialClass');
       if (!targetCharacter) {
         res.status(404).json(errorResponse(
           'Personaggio target non trovato',
@@ -354,8 +351,7 @@ export class CharacterRelationController {
             status: newRelationship.status,
             targetCharacter: {
               id: targetCharacter._id,
-              name: targetCharacter.name,
-              surname: targetCharacter.surname
+              name: targetCharacter.name
             },
             requiresApproval: relationshipType.requiresMutualApproval,
             proposedAt: newRelationship.proposedAt
@@ -397,8 +393,8 @@ export class CharacterRelationController {
 
       const relationship = await CharacterRelation.findById(relationshipId)
         .populate('relationshipTypeId', 'name requiresMutualApproval hasReciprocalType')
-        .populate('fromCharacterId', 'name surname')
-        .populate('toCharacterId', 'name surname');
+        .populate('fromCharacterId', 'name')
+        .populate('toCharacterId', 'name');
 
       if (!relationship) {
         res.status(404).json(errorResponse(
@@ -528,8 +524,8 @@ export class CharacterRelationController {
       const { relationshipId } = req.params;
 
       const relationship = await CharacterRelation.findById(relationshipId)
-        .populate('fromCharacterId', 'name surname')
-        .populate('toCharacterId', 'name surname');
+        .populate('fromCharacterId', 'name')
+        .populate('toCharacterId', 'name');
 
       if (!relationship) {
         res.status(404).json(errorResponse(

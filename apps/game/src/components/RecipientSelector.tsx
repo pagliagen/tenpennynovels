@@ -43,10 +43,7 @@ export function RecipientSelector({
   // Get character display name
   const getCharacterName = useCallback((characterId: string) => {
     const character = directoryData?.data.characters.find((c) => c._id === characterId);
-    if (character) {
-      return character.surname ? `${character.name} ${character.surname}` : character.name;
-    }
-    return characterId; // Fallback to ID if not found
+    return character ? character.name : characterId; // Fallback to ID if not found
   }, [directoryData]);
 
   const handleSelect = (character: CharacterListItem) => {
@@ -126,9 +123,7 @@ export function RecipientSelector({
                       />
                     )}
                     <span className={styles.characterName}>
-                      {character.surname
-                        ? `${character.name} ${character.surname}`
-                        : character.name}
+                      {character.name}
                     </span>
                   </button>
                 ))}

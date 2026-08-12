@@ -215,15 +215,10 @@ export class CharacterSessionManager {
       character.lastActive = new Date();
       await character.save();
 
-      // Build full character name (name + surname if present)
-      const fullCharacterName = character.surname
-        ? `${character.name} ${character.surname}`
-        : character.name;
-
       // Generate character context token
       const characterToken = CryptoUtils.generateCharacterContextToken({
         characterId: character.id,
-        characterName: fullCharacterName,
+        characterName: character.name,
         userId: userId,
         gameplayRoles: character.gameplayRoles || [],
         isApproved: character.playerStatus === 'approved',
@@ -250,14 +245,14 @@ export class CharacterSessionManager {
         type: 'user_character_selected',
         userId: userId,
         characterId: character.id,
-        characterName: fullCharacterName,
+        characterName: character.name,
         timestamp: new Date().toISOString()
       }));
 
       logger.info('Character context activated', {
         characterId: character.id,
         userId,
-        name: fullCharacterName
+        name: character.name
       });
 
       return characterToken;

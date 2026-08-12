@@ -113,13 +113,9 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             return next(new Error('Personaggio non trovato'));
           }
 
-          const fullCharacterName = character.surname
-            ? `${character.name} ${character.surname}`
-            : character.name;
-
           socket.data.character = {
             characterId: character.id,
-            characterName: fullCharacterName,
+            characterName: character.name,
             userId: session.userId,
             isApproved: character.playerStatus === 'approved',
             gameplayRoles: character.gameplayRoles || [],
@@ -128,7 +124,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
             characterPermissions: character.characterPermissions || []
           };
 
-          logger.debug(`WebSocket: Session authenticated for character ${fullCharacterName}`, { sessionId });
+          logger.debug(`WebSocket: Session authenticated for character ${character.name}`, { sessionId });
 
         } catch (error: unknown) {
           logger.error('WebSocket: Session validation error', { error, sessionId });

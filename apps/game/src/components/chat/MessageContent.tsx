@@ -31,8 +31,8 @@ export function MessageContent({ content, mentionVariant = 'default' }: MessageC
   const occupants = useChatOccupants();
   const openWindow = useWindowManagerStore((state) => state.openWindow);
 
-  // Character.name has a unique index backend-side, so matching on the first
-  // token of characterName (name [+ surname]) can't collide between occupants.
+  // Character.name has a unique index backend-side (= username), so matching
+  // on the first token of characterName can't collide between occupants.
   const occupantsByFirstName = useMemo(() => {
     const map = new Map<string, { characterId: string; characterName: string }>();
     for (const occupant of occupants) {

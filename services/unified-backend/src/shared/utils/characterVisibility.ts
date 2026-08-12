@@ -81,7 +81,7 @@ export class CharacterVisibilityFilter {
       }
     } else {
       // Fallback: lista hardcoded (retrocompatibilità)
-      result.name = character.name;
+      result.firstName = character.firstName;
       result.apparentAge = character.apparentAge;
       result.occupation = character.occupation;
     }

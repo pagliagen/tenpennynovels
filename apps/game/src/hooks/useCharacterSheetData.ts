@@ -64,6 +64,8 @@ export interface CharacterSheetData {
   character: {
     _id: string;
     name: string;
+    /** Nome di finzione (RP) — editabile solo nel wizard, visibile in scheda (Character.ts) */
+    firstName?: string;
     /** Cognome — opzionale, visibile a tutti (Character.ts) */
     surname?: string;
     characterType: 'pg_principale' | 'pg_master' | 'png';

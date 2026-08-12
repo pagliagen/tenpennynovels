@@ -38,7 +38,6 @@ import { logger } from '@/lib/logger';
 interface CharacterData {
   characterId: string;
   name: string;
-  surname?: string;
   avatar?: string;
   skills?: Array<{ id: string; name: string; value: number; category?: string }>;
   stats?: Record<string, number>;
@@ -223,7 +222,7 @@ export function MessageInput({
 
   const currentName = useMemo(() => {
     if (!fakePngData?.activeFakePngId) {
-      return `${characterData.name}${characterData.surname ? ' ' + characterData.surname : ''}`;
+      return characterData.name;
     }
 
     const activeFake = fakePngData.fakePngs.find(
@@ -234,8 +233,8 @@ export function MessageInput({
       return `${activeFake.name}${activeFake.surname ? ' ' + activeFake.surname : ''}`;
     }
 
-    return `${characterData.name}${characterData.surname ? ' ' + characterData.surname : ''}`;
-  }, [fakePngData, characterData.name, characterData.surname]);
+    return characterData.name;
+  }, [fakePngData, characterData.name]);
 
   const isMasked = !!fakePngData?.activeFakePngId;
 

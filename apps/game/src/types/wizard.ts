@@ -248,7 +248,7 @@ export interface CharacterCreationConfig {
  */
 export interface CharacterCreatePayload {
   // Basic info (field name reconciliation)
-  name: string; // firstName maps directly to name
+  firstName: string; // nome di finzione (RP) - chiave identica lato backend, nessuna reconciliation
   surname?: string; // lastName maps directly to surname (optional)
   birthDate?: string; // gg/mm/yyyy format
   birthPlace: string;

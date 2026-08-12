@@ -311,7 +311,7 @@ export class ChatController {
 
       // Check if fake PNG active + permission valid
       let isMasked = false;
-      let displayName = buildFullName(freshCharacter.name, freshCharacter.surname);
+      let displayName = freshCharacter.name;
       let displayAvatar = freshCharacter.avatar;
       let realCharacterName: string | undefined;
 

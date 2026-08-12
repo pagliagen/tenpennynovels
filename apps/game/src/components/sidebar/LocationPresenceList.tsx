@@ -74,16 +74,12 @@ export function LocationPresenceList(): JSX.Element {
       ) : (
         <ul className={styles.playerList} role="list">
           {characters.map((presence) => {
-            const fullName = presence.characterSurname
-              ? `${presence.characterName} ${presence.characterSurname}`
-              : presence.characterName;
-
             return (
               <li key={presence.characterId} className={styles.playerItem} role="listitem">
                 <button
                   type="button"
                   className={styles.playerButton}
-                  aria-label={`${fullName}. Clicca per vedere profilo`}
+                  aria-label={`${presence.characterName}. Clicca per vedere profilo`}
                   onClick={() => {
                     const isOwnDraftCharacter =
                       presence.characterId === selectedCharacter?._id &&
@@ -97,12 +93,12 @@ export function LocationPresenceList(): JSX.Element {
 
                     openWindow('characterSheet', {
                       characterId: presence.characterId,
-                      characterName: fullName,
+                      characterName: presence.characterName,
                       avatar: presence.avatar || undefined,
                     });
                   }}
                 >
-                  {fullName}
+                  {presence.characterName}
                 </button>
               </li>
             );

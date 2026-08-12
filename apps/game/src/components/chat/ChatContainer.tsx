@@ -126,7 +126,6 @@ export function ChatContainer({ locationSlug, locationId, locationName }: ChatCo
   const characterData = {
     characterId: selectedCharacter?._id || '',
     name: selectedCharacter?.name || '',
-    surname: selectedCharacter?.surname,
     avatar: selectedCharacter?.avatar || undefined,
     skills: characterSheet?.character?.skills
       ? Object.entries(characterSheet.character.skills).map(([skillId, skillData]: [string, any]) => ({

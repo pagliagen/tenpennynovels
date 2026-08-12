@@ -60,7 +60,7 @@ export class CharacterValidationMiddleware {
    * da validateBackgroundCompletion (submit) e characterCreationUtils.
    */
   static validateCharacterUpdate = [
-    body('name')
+    body('firstName')
       .optional()
       .isLength({ min: 2, max: MAX_NAME })
       .withMessage(`Nome deve essere tra 2 e ${MAX_NAME} caratteri`)

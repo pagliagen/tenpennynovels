@@ -42,7 +42,7 @@ export function InformazioniTab({ character, permissions }: InformazioniTabProps
 
       {/* Anagrafica pubblica */}
       <div className={styles.grid2}>
-        <InfoField label="Nome" value={character.name} />
+        <InfoField label="Nome" value={character.firstName || 'N/A'} />
         <InfoField label="Cognome" value={character.surname || 'N/A'} />
         <InfoField label="Età apparente" value={character.apparentAge?.toString() || 'N/A'} />
         <InfoField label="Genere" value={character.gender === 'male' ? 'Maschile' : character.gender === 'female' ? 'Femminile' : character.gender || 'N/A'} />

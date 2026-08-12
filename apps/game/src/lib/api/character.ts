@@ -127,36 +127,6 @@ export const characterApi = {
   },
 
   /**
-   * Check Name Availability
-   *
-   * Checks if a character name is available (not already taken).
-   * Character names must be unique across the entire database.
-   *
-   * **Use Case**: Real-time validation in wizard Step 1 (firstName + lastName).
-   *
-   * @param {string} name - Full character name to check (e.g., "Arthur Pemberton")
-   * @returns {Promise<{ available: boolean; name?: string; error?: string }>} Name availability result
-   * @throws {ApiError} If request fails
-   *
-   * @example
-   * ```typescript
-   * const result = await characterApi.checkNameAvailability('Arthur Pemberton');
-   * if (result.available) {
-   *   logger.info('Name is available!');
-   * } else {
-   *   logger.info('Name already taken:', { error: result.error });
-   * }
-   * ```
-   */
-  async checkNameAvailability(name: string): Promise<{ available: boolean; name?: string; error?: string }> {
-    const response = await api.post<{ available: boolean; name?: string; error?: string }>(
-      '/game/characters/check-name',
-      { name }
-    );
-    return response;
-  },
-
-  /**
    * Get Character by ID
    *
    * Fetches complete character data including stats, skills, background.

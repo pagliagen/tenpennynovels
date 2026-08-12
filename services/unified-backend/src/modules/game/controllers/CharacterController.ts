@@ -61,51 +61,6 @@ export class CharacterController {
   }
 
   /**
-   * POST /characters/check-name
-   * Check if character name is available
-   */
-  static async checkNameAvailability(req: Request, res: Response): Promise<void> {
-    try {
-      const { name } = req.body;
-
-      // Validate input
-      if (!name || typeof name !== 'string' || name.trim().length < 2) {
-        res.status(400).json({
-          available: false,
-          error: 'Nome deve essere almeno 2 caratteri'
-        });
-        return;
-      }
-
-      const trimmedName = name.trim();
-
-      // Check if name exists (excluding soft-deleted characters)
-      const existingCharacter = await Character.findOne({
-        name: trimmedName,
-        isDeleted: false  // Exclude soft-deleted
-      });
-
-      res.json({
-        available: !existingCharacter,
-        name: trimmedName
-      });
-
-    } catch (error: unknown) {
-      const err = error as Error;
-      logger.error('Error checking name availability:', {
-        message: err.message,
-        stack: err.stack,
-        name: err.name
-      });
-
-      res.status(500).json({
-        available: false,
-        error: 'Errore durante verifica disponibilità nome'
-      });
-    }
-  }
-
-  /**
    * GET /characters/my
    * Get user's characters
    */
@@ -1167,7 +1122,7 @@ export class CharacterController {
       // (skill/stats restano fuori: passano dal flusso dedicato di spesa px, vedi SkillController).
       const masterEditableFields = [
         ...limitedEditableFields,
-        'name', 'surname', 'age', 'apparentAge', 'gender', 'birthDate', 'birthPlace',
+        'firstName', 'surname', 'age', 'apparentAge', 'gender', 'birthDate', 'birthPlace',
         'physicalDescription', 'publicDescription', 'privateDescription', 'nationality',
         'description', 'motivations', 'fears',
         'height', 'weight', 'eyeColor', 'hairColor', 'visibleMarks', 'hiddenMarks',
@@ -1196,10 +1151,8 @@ export class CharacterController {
       }
 
       // Handle field name mapping from frontend to backend (only for DRAFT)
+      // "name" non è mai rimappabile da qui: coincide con lo username, immutabile (vedi RegistrationController).
       if (character.playerStatus === 'draft') {
-        if (filteredUpdates.firstName !== undefined) {
-          character.name = filteredUpdates.firstName;
-        }
         if (filteredUpdates.lastName !== undefined) {
           character.surname = filteredUpdates.lastName;
         }
@@ -1214,7 +1167,7 @@ export class CharacterController {
       if (character.playerStatus === 'draft') {
         // DRAFT characters can update all fields
         allowedFields = [
-          'name', 'surname', 'age', 'apparentAge', 'gender', 'birthDate', 'birthPlace',
+          'firstName', 'surname', 'age', 'apparentAge', 'gender', 'birthDate', 'birthPlace',
           'physicalDescription', 'publicDescription', 'privateDescription', 'nationality',
           'description', 'stats', 'skills', 'derived', 'occupation', 'avatar', 'profileImage',
           'prestavolto', 'motivations', 'fears', 'audioTheme',
@@ -1844,7 +1797,7 @@ export class CharacterController {
 
       allFaceClaims = allChars.map((char: any) => ({
         prestavolto: char.prestavolto,
-        characterName: `${char.name}${char.surname ? ' ' + char.surname : ''}`,
+        characterName: char.name,
         characterId: char._id.toString(),
         playerStatus: char.playerStatus,
         prestavoltoApprovedAt: char.prestavoltoApprovedAt || null
@@ -1863,7 +1816,7 @@ export class CharacterController {
 
         if (exactChar) {
           exactMatch = {
-            characterName: `${exactChar.name}${exactChar.surname ? ' ' + exactChar.surname : ''}`,
+            characterName: exactChar.name,
             status: exactChar.playerStatus
           };
         }
@@ -1881,7 +1834,7 @@ export class CharacterController {
 
           matches = fuzzyChars.map((char: any) => ({
             prestavolto: char.prestavolto,
-            characterName: `${char.name}${char.surname ? ' ' + char.surname : ''}`,
+            characterName: char.name,
             status: char.playerStatus
           }));
         }
@@ -2038,7 +1991,7 @@ export class CharacterController {
         changedBy: new Types.ObjectId(userId),
         status: isChange ? 'pending' : 'approved',
         notes: isChange ? 'Cambio prestavolto - richiede approvazione staff' :
-               duplicate ? `Duplicato rilevato: ${duplicate.name}${duplicate.surname ? ' ' + duplicate.surname : ''}` :
+               duplicate ? `Duplicato rilevato: ${duplicate.name}` :
                'Primo assegnamento'
       } as unknown as NonNullable<ICharacter['prestavoltoHistory']>[number]);
 
@@ -2067,7 +2020,7 @@ export class CharacterController {
           isChange,
           requiresApproval: newStatus === 'pending_change',
           hasDuplicate: !!duplicate,
-          duplicateCharacter: duplicate ? `${duplicate.name}${duplicate.surname ? ' ' + duplicate.surname : ''}` : null
+          duplicateCharacter: duplicate ? duplicate.name : null
         },
         isChange ? 'Prestavolto aggiornato. Richiede approvazione staff.' : 'Prestavolto aggiornato con successo',
         getRequestId(req)

@@ -102,7 +102,7 @@ export class PresenceController {
         return;
       }
 
-      const characterName = char.surname ? `${char.name} ${char.surname}` : char.name;
+      const characterName = char.name;
       const currentLocation = char.currentLocation;
 
       // Clear Character.currentLocation

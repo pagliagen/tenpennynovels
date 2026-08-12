@@ -185,7 +185,7 @@ function TransferModal({ item, characterId, onClose }: { item: InventoryItemView
           <option value="">Seleziona…</option>
           {candidates.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.name} {c.surname || ''}
+              {c.name}
             </option>
           ))}
         </select>

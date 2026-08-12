@@ -41,7 +41,6 @@ export default function CharacterBannedPage(): JSX.Element {
           {selectedCharacter && (
             <p className={styles.paragraphMuted}>
               Personaggio: <strong>{selectedCharacter.name}</strong>
-              {selectedCharacter.surname ? ` ${selectedCharacter.surname}` : ''}
             </p>
           )}
           <p className={styles.paragraph}>

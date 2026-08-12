@@ -190,15 +190,10 @@ export class AuthMiddleware {
               return next();
             }
 
-            // Build full character name
-            const fullCharacterName = character.surname
-              ? `${character.name} ${character.surname}`
-              : character.name;
-
             // Populate req.character (same structure as JWT token)
             req.character = {
               characterId: character.id,
-              characterName: fullCharacterName,
+              characterName: character.name,
               userId: session.userId,
               avatar: character.avatar,
               gameplayRoles: character.gameplayRoles || [],
@@ -222,7 +217,7 @@ export class AuthMiddleware {
             logAuth('character_session_validated', session.userId, {
               sessionId,
               characterId: character.id,
-              characterName: fullCharacterName,
+              characterName: character.name,
               ipAddress: req.ip
             });
 

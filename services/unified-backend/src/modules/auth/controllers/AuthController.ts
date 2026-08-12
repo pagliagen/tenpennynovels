@@ -445,17 +445,12 @@ export class AuthController {
       character.currentLocation = null; // Park character at London (root location)
       await character.save();
 
-      // Build full character name (name + surname if present)
-      const fullCharacterName = character.surname
-        ? `${character.name} ${character.surname}`
-        : character.name;
-
       // Publish character activation event to Redis
       await redis.publish('user:events', JSON.stringify({
         type: 'user_character_selected',
         userId: userId,
         characterId: character.id,
-        characterName: fullCharacterName,
+        characterName: character.name,
         timestamp: new Date().toISOString()
       }));
 

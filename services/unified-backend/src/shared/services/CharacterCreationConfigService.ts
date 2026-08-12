@@ -207,7 +207,7 @@ export class CharacterCreationConfigService {
         damageBonus: configs['character_creation_formulas_damage_bonus'] || this.getDefaultDamageBonus(),
       },
       fieldVisibility: configs['character_creation_field_visibility'] || {
-        name: true,
+        firstName: true,
         surname: true,
         apparentAge: true,
         gender: true,
@@ -709,7 +709,7 @@ export class CharacterCreationConfigService {
         damageBonus: this.getDefaultDamageBonus()
       },
       fieldVisibility: {
-        name: true,
+        firstName: true,
         surname: true,
         apparentAge: true,
         gender: true,

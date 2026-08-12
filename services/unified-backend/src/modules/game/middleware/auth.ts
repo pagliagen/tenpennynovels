@@ -172,12 +172,11 @@ export class AuthMiddleware {
             return;
           }
 
-          const characterName = character.surname ? `${character.name} ${character.surname}` : character.name;
           const now = Math.floor(Date.now() / 1000);
 
           req.character = {
             characterId: character.id,
-            characterName,
+            characterName: character.name,
             userId: session.userId,
             isApproved: character.playerStatus === 'approved',
             gameplayRoles: character.gameplayRoles || [],
@@ -190,7 +189,7 @@ export class AuthMiddleware {
           logger.debug('Session authenticated via X-Session-Id header', {
             sessionId,
             characterId: character.id,
-            characterName
+            characterName: character.name
           });
 
           // Update session activity (async, non-blocking)

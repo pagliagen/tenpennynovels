@@ -37,13 +37,6 @@ const charactersWriteLimiter = rateLimit({
 });
 
 // Character creation and management
-// Check name availability (must be before /create for route matching)
-router.post('/characters/check-name',
-  charactersWriteLimiter,
-  AuthMiddleware.requireUserAuth,
-  CharacterController.checkNameAvailability
-);
-
 router.get('/characters/my',
   charactersReadLimiter,
   AuthMiddleware.requireUserAuth,

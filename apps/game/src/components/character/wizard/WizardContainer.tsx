@@ -85,7 +85,7 @@ function useStoreHydrated(): boolean {
 function WizardContainerInner({ characterId, onSubmittingChange }: WizardContainerProps): JSX.Element {
   const router = useRouter();
   const { toolbarContent, footerActionsContent } = useWizardSlots();
-  const { setSelectedCharacter, setGamePermissions, setAdminPanelAccessFromSession, setCharacterBan } =
+  const { selectedCharacter, setSelectedCharacter, setGamePermissions, setAdminPanelAccessFromSession, setCharacterBan } =
     useAuthStore();
   const {
     currentStep,
@@ -359,7 +359,7 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
     );
   }
 
-  const charName = basicInfo.firstName ? `${basicInfo.firstName} ${basicInfo.lastName}` : 'Nuovo Personaggio';
+  const charName = selectedCharacter?.name || 'Nuovo Personaggio';
 
   return (
     <div className={styles.wizardContainer}>

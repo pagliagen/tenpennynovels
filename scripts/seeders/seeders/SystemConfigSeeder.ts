@@ -391,7 +391,7 @@ const ALL_CONFIGS: ConfigRecord[] = [
     configSection: 'character_creation',
     configType: 'json',
     value: {
-      name: true,
+      firstName: true,
       surname: true,
       apparentAge: true,
       gender: true,

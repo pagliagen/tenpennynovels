@@ -54,8 +54,7 @@ export default function PresentiOnlinePage(): JSX.Element {
 
     // Apply search filter
     let filtered = presenceList.filter((p) => {
-      const fullName = `${p.characterName} ${p.characterSurname || ''}`.toLowerCase();
-      return fullName.includes(searchQuery.toLowerCase());
+      return p.characterName.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
     // Apply location filter
@@ -219,9 +218,7 @@ function PresenceGroup({ title, players, highlight = false }: PresenceGroupProps
             <button
               type="button"
               className={styles.playerButton}
-              aria-label={`${presence.characterName}${
-                presence.characterSurname ? ' ' + presence.characterSurname : ''
-              }, in ${presence.locationName}. Clicca per profilo`}
+              aria-label={`${presence.characterName}, in ${presence.locationName}. Clicca per profilo`}
               onClick={() => {
                 const isOwnDraftCharacter =
                   presence.characterId === selectedCharacter?._id &&
@@ -255,7 +252,6 @@ function PresenceGroup({ title, players, highlight = false }: PresenceGroupProps
               <div className={styles.playerInfo}>
                 <div className={styles.playerName}>
                   {presence.characterName}
-                  {presence.characterSurname && ` ${presence.characterSurname}`}
                 </div>
 
                 <div

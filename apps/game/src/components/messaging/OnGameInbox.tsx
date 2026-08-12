@@ -58,9 +58,9 @@ export function OnGameInbox({ onThreadSelect, onCompose }: OnGameInboxProps) {
   };
 
   // Format partner display name
-  const formatPartnerName = (partner?: { name: string; surname?: string }) => {
+  const formatPartnerName = (partner?: { name: string }) => {
     if (!partner) return 'Sconosciuto';
-    return partner.surname ? `${partner.name} ${partner.surname}` : partner.name;
+    return partner.name;
   };
 
   const getUnreadCount = (thread: OnGameThread) => {
