@@ -16,7 +16,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-lg);
-  padding: var(--spacing-lg);
+  padding-left: var(--spacing-lg);
+  padding-right: var(--spacing-lg);
 }
 
 .formColumn {
@@ -59,6 +60,12 @@
     flex-shrink: 0;
   }
 
+  >span {
+    flex: 1;
+    min-width: 0;
+    width: 100%; 
+  }
+
   >input,
   >select {
     flex: 1;
@@ -66,7 +73,7 @@
     width: 100%;
   }
 }
-
+ 
 // Form group single - for single-row fields (Titolo di Studio, Occupazione Attuale)
 .formGroupSingle {
   display: flex;
@@ -104,6 +111,13 @@
     margin-left: -16px; // Pull back into the padding space
     margin-right: 4px;
   }
+}
+
+.unit {
+  font-size: 0.75rem;
+  font-family: var(--font-primary);
+  color: #8b7355;
+  font-style: italic;
 }
 
 .required {

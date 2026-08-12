@@ -59,16 +59,55 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
   const errors = stepErrors[1] || {};
 
   const handleChange = (field: keyof typeof basicInfo, value: any) => {
+    switch (field) {
+      case 'weight':
+        if (value && !/^\d+$/.test(value)) {
+          value = '';
+        }
+        break;
+      case 'height':
+        if (value && !/^\d+$/.test(value)) {
+          value = '';
+        }
+        break;
+      default:
+        stepErrors[1] = { ...stepErrors[1], [field]: '' };
+    }
     updateBasicInfo(field, value);
   };
 
   const handleBirthDateChange = (value: string) => {
+    const [dayStr, monthStr, yearStr] = value.split('/');
+    const year = Number(yearStr);
+
+    // Calcolo limite: anno massimo consentito = 1895 - 18 = 1877
+    const maxYear = 1877;
+    // Adotta limiti config, ma se mai sotto 18, forzare 18 come minimo
+    const minAge = Math.max(ageMin, 18);
     const age = calculateAge(value);
+
+    // Blocca subito: non aggiornare birthDate se anno oltre il massimo consentito
+    if (!year || year > maxYear) {
+      // Aggiorna comunque il campo birthDate per mostrare UI feedback,
+      // ma azzera age/apparentAge nel caso di valore errato
+      updateBasicInfo('birthDate', value);
+      updateBasicInfo('age', null);
+      updateBasicInfo('apparentAge', null);
+      stepErrors[1] = { ...stepErrors[1], birthDate: 'Anno di nascita non valido' };
+      return;
+    } else {
+      stepErrors[1] = { ...stepErrors[1], birthDate: '' };
+    }
+
     updateBasicInfo('birthDate', value);
 
-    if (age !== null && age >= ageMin && age <= ageMax) {
+    if (age !== null && age >= minAge && age <= ageMax) {
       updateBasicInfo('age', age);
       updateBasicInfo('apparentAge', age);
+    } else {
+      // Se età fuori range permette feedback form-field immediato
+      updateBasicInfo('age', null);
+      updateBasicInfo('apparentAge', null);
     }
   };
 
@@ -79,64 +118,85 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
         <div className={styles.formColumn}>
           {/* NOME + COGNOME (stessa riga) */}
           <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label htmlFor="firstName" className={styles.label}>
-                <EyeIcon visible={isPrivate('name')} /> NOME <span className={styles.required}>*</span>
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                value={basicInfo.firstName}
-                onChange={(e) => handleChange('firstName', e.target.value)}
-                className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`}
-                placeholder="Nome"
-              />
+            <div className={styles.formGroupFull}>
+              <div className={styles.formGroup}>
+                <label htmlFor="firstName" className={styles.label}>
+                  <EyeIcon visible={isPrivate('name')} /> NOME COMPLETO<span className={styles.required}>*</span>
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  value={basicInfo.firstName}
+                  onChange={(e) => handleChange('firstName', e.target.value)}
+                  className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`}
+                  placeholder="Nome"
+                />
+              </div>
+              <small className={styles.helpText}>
+                Indicare il nome completo del personaggio.
+              </small>
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="lastName" className={styles.label}>
-                <EyeIcon visible={isPrivate('surname')} /> COGNOME <span className={styles.required}>*</span>
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                value={basicInfo.lastName}
-                onChange={(e) => handleChange('lastName', e.target.value)}
-                className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`}
-                placeholder="Cognome"
-              />
+
+            <div className={styles.formGroupFull}>
+              <div className={styles.formGroup}>
+                <label htmlFor="lastName" className={styles.label}>
+                  <EyeIcon visible={isPrivate('surname')} /> COGNOME <span className={styles.required}>*</span>
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  value={basicInfo.lastName}
+                  onChange={(e) => handleChange('lastName', e.target.value)}
+                  className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`}
+                  placeholder="Cognome"
+                />
+              </div>
+              <small className={styles.helpText}>
+                Indicare il cognome del personaggio.
+              </small>
             </div>
           </div>
 
           {/* DATA DI NASCITA + ETÀ APPARENTE (stessa riga) */}
           <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label htmlFor="birthDate" className={styles.label}>
-                <EyeIcon visible={isPrivate('birthDate', false)} /> DATA DI NASCITA <span className={styles.required}>*</span>
-              </label>
-              <input
-                type="text"
-                id="birthDate"
-                value={basicInfo.birthDate}
-                onChange={(e) => handleBirthDateChange(e.target.value)}
-                className={`${styles.input} ${errors.birthDate ? styles.inputError : ''}`}
-                placeholder="gg/mm/aaaa"
-              />
+            <div className={styles.formGroupFull}>
+              <div className={styles.formGroup}>
+                <label htmlFor="birthDate" className={styles.label}>
+                  <EyeIcon visible={isPrivate('birthDate', false)} /> DATA DI NASCITA <span className={styles.required}>*</span>
+                </label>
+                <input
+                  type="text"
+                  id="birthDate"
+                  value={basicInfo.birthDate}
+                  onChange={(e) => handleBirthDateChange(e.target.value)}
+                  className={`${styles.input} ${errors.birthDate ? styles.inputError : ''}`}
+                  placeholder="gg/mm/aaaa"
+                />
+              </div>
+              <small className={styles.helpText}>
+                {errors.birthDate ? errors.birthDate : 'Indicare la data di nascita del personaggio.'}
+              </small>
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="apparentAge" className={styles.label}>
-                <EyeIcon visible={isPrivate('apparentAge')} /> ETÀ APPARENTE
-              </label>
-              <input
-                type="number"
-                id="apparentAge"
-                value={basicInfo.apparentAge}
-                onChange={(e) => handleChange('apparentAge', parseInt(e.target.value) || 0)}
-                className={styles.input}
-                min={ageMin}
-                max={ageMax}
-              />
+            <div className={styles.formGroupFull}>
+              <div className={styles.formGroup}>
+                <label htmlFor="apparentAge" className={styles.label}>
+                  <EyeIcon visible={isPrivate('apparentAge')} /> ETÀ APPARENTE
+                </label>
+                <input
+                  type="number"
+                  id="apparentAge"
+                  value={basicInfo.apparentAge}
+                  onChange={(e) => handleChange('apparentAge', parseInt(e.target.value) || 0)}
+                  className={styles.input}
+                  min={ageMin}
+                  max={ageMax}
+                />
+              </div>
+              <small className={styles.helpText}>
+                Indicare l'età apparente del personaggio.
+              </small>
             </div>
           </div>
 
@@ -154,7 +214,7 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               >
                 <option value="">Seleziona...</option>
                 <option value="male">Maschile</option>
-                <option value="female">Femminile</option> 
+                <option value="female">Femminile</option>
               </select>
             </div>
 
@@ -190,8 +250,9 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
                 value={basicInfo.height}
                 onChange={(e) => handleChange('height', e.target.value)}
                 className={`${styles.input} ${errors.height ? styles.inputError : ''}`}
-                placeholder={`es. 175 ${creationConfig?.limits.height.unit ?? 'cm'}`}
+                placeholder={`es. 175`}
               />
+              <span className={styles.unit}>in {creationConfig?.limits.height.unit ?? 'cm'}</span>
             </div>
 
             <div className={styles.formGroup}>
@@ -204,8 +265,9 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
                 value={basicInfo.weight}
                 onChange={(e) => handleChange('weight', e.target.value)}
                 className={`${styles.input} ${errors.weight ? styles.inputError : ''}`}
-                placeholder={`es. 70 ${creationConfig?.limits.weight.unit ?? 'kg'}`}
+                placeholder={`es. 70`}
               />
+              <span className={styles.unit}>in {creationConfig?.limits.weight.unit ?? 'kg'}</span>
             </div>
           </div>
 
@@ -221,9 +283,6 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               className={styles.textarea}
               rows={3}
             />
-            <small className={styles.helpText}>
-              Segni normalmente coperti dai vestiti
-            </small>
           </div>
 
           {/* SEGNI PARTICOLARI VISIBILI */}
@@ -238,9 +297,6 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               className={styles.textarea}
               rows={3}
             />
-            <small className={styles.helpText}>
-              Cicatrici, nei, tatuaggi visibili
-            </small>
           </div>
         </div>
 
@@ -258,9 +314,6 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               className={styles.textarea}
               rows={12}
             />
-            <small className={styles.helpText}>
-              Condizioni mediche croniche o problemi di salute. Coerente con i valori di Costituzione. Lasciare il campo vuoto se il pg è in salute.
-            </small>
           </div>
 
           {/* FEDINA PENALE */}
@@ -276,25 +329,22 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               rows={8}
               placeholder="Nessuna, oppure descrivi..."
             />
-            <small className={styles.helpText}>
-              Elencare anno, luogo e reato commesso. Es: 1870, Londra, Rapina a mano armata
-            </small>
           </div>
 
           {/* TITOLO DI STUDIO */}
           <div className={styles.formGroupFull}>
-          <div className={styles.formGroup}>
-            <label htmlFor="educationTitle" className={styles.label}>
-              <EyeIcon visible={isPrivate('educationTitle', false)} /> TITOLO DI STUDIO
-            </label>
-            <input
-              type="text"
-              id="educationTitle"
-              value={basicInfo.educationTitle}
-              onChange={(e) => handleChange('educationTitle', e.target.value)}
-              className={styles.input}
-              placeholder="es. Laurea in Legge, Diploma..."
-            />
+            <div className={styles.formGroup}>
+              <label htmlFor="educationTitle" className={styles.label}>
+                <EyeIcon visible={isPrivate('educationTitle', false)} /> TITOLO DI STUDIO
+              </label>
+              <input
+                type="text"
+                id="educationTitle"
+                value={basicInfo.educationTitle}
+                onChange={(e) => handleChange('educationTitle', e.target.value)}
+                className={styles.input}
+                placeholder="es. Laurea in Legge, Diploma..."
+              />
             </div>
             <small className={styles.helpText}>
               Indicare il titolo di studio ed eventuale specializzazione, in coerenza con il valore di Educazione. Nessun PG è analfabeta e tutti sono in grado di leggere e scrivere.
@@ -302,20 +352,23 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
           </div>
 
           {/* OCCUPAZIONE ATTUALE */}
-          <div className={styles.formGroupFull}> 
-          <div className={styles.formGroup}>
-            <label htmlFor="currentOccupation" className={styles.label}>
-              <EyeIcon visible={isPrivate('occupation')} /> OCCUPAZIONE ATTUALE
-            </label>
-            <input
-              type="text"
-              id="currentOccupation"
-              value={occupation.currentOccupation || ''}
-              onChange={(e) => updateOccupation({ currentOccupation: e.target.value })}
-              className={styles.input}
-              placeholder="es. Avvocato, Medico..."
-            />
-          </div>
+          <div className={styles.formGroupFull}>
+            <div className={styles.formGroup}>
+              <label htmlFor="currentOccupation" className={styles.label}>
+                <EyeIcon visible={isPrivate('occupation')} /> OCCUPAZIONE ATTUALE
+              </label>
+              <input
+                type="text"
+                id="currentOccupation"
+                value={occupation.currentOccupation || ''}
+                onChange={(e) => updateOccupation({ currentOccupation: e.target.value })}
+                className={styles.input}
+                placeholder="es. Avvocato, Medico..."
+              />
+            </div>
+            <small className={styles.helpText}>
+              Indicare l'occupazione attuale del personaggio.
+            </small>
           </div>
         </div>
       </div>

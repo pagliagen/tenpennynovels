@@ -46,7 +46,7 @@ export function WizardFooter({
             className={styles.buttonPrimary}
             disabled={isSubmitting}
           >
-            Vai avanti
+            Valida e Continua
           </button>
         )}
       </div>

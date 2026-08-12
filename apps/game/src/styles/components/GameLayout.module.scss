@@ -305,7 +305,7 @@
   @media (max-width: 1023px) {
     padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   }
-  max-width: 1024px; 
+  max-width: calc(100% - 150px); 
   z-index: 100;
 
   // Custom scrollbar styling

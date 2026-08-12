@@ -102,6 +102,13 @@ export function LocationsMap({
             height={1024}
             className={styles.mapImage}
           />
+          <img
+            src="/locations/cityoflondon.png"
+            alt="Mappa di Londra 1889"
+            width={1536}
+            height={1024}
+            className={styles.logoImage}
+          />
 
           {/* District & quartiere buttons */}
           {districtsWithPosition.map((location) => {

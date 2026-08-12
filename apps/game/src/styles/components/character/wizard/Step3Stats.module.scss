@@ -65,7 +65,8 @@
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-lg);
   margin-top: var(--spacing-lg);
-  padding: 0 var(--spacing-lg);
+  padding-left: var(--spacing-lg);
+  padding-right: var(--spacing-lg);
 }
 
 .panelLeft,
