@@ -29,6 +29,7 @@ import { characterApi } from '@/lib/api/character';
 import type { DamageBonusEntry } from '@/lib/api/gameConfig';
 import { gameConfigApi } from '@/lib/api/gameConfig';
 import { logger } from '@/lib/logger';
+import { computeInitialBaseClaims, computeSkillPools, isOccupationSkill, sumSkillSpend } from '@/lib/utils/skillPools';
 import type {
   WizardData,
   WizardBasicInfo,
@@ -265,6 +266,10 @@ const initialState = (): Omit<
   // Step 4: Dynamic Skills
   dynamicSkills: [],
 
+  // Step 4: base pool (200pt) claim tracking - see WizardData doc
+  baseClaimedByOcc: 0,
+  baseClaimedByHobby: 0,
+
   // Step 5: Background (structured fields matching backend schema)
   background: {
     briefHistory: '',
@@ -428,20 +433,19 @@ export const useWizardStore = create<WizardStore>()(
       /**
        * Update Single Stat
        *
-       * Updates one stat value and recalculates derived stats.
+       * Updates one stat value and recalculates derived stats. Nessun clamp sul
+       * range qui: il giocatore deve poter digitare liberamente (es. "3" mentre
+       * scrive "35"), la validazione di min/max/budget avviene solo allo step
+       * change (validateStep3, vedi wizardValidation.ts).
        *
        * @param statName - Stat name (strength, dexterity, etc.)
-       * @param value - New value (1-100)
+       * @param value - New value
        */
       updateStat: (statName, value) => {
-        // Clamp value to valid range (config-driven min - see character_creation_stats_base_points)
-        const minValue = get().creationConfig?.stats.minValue ?? 20;
-        const clampedValue = Math.max(minValue, Math.min(100, value));
-
         set({
           stats: {
             ...get().stats,
-            [statName]: clampedValue,
+            [statName]: value,
           },
         });
 
@@ -531,6 +535,7 @@ export const useWizardStore = create<WizardStore>()(
               skills: { totalPoints: 250, creationCap: 75, creationCapWithOccupation: 80 },
               occupation: {},
               limits: {
+                referenceYear: 1895,
                 age: { min: 16, max: 80 },
                 weight: { min: 30, max: 200, unit: 'kg' },
                 height: { min: 100, max: 250, unit: 'cm' },
@@ -558,7 +563,7 @@ export const useWizardStore = create<WizardStore>()(
        * @param breakdown - Partial breakdown data
        */
       updateSkill: (skillName, breakdown) => {
-        const { skills } = get();
+        const { skills, occupation, dynamicSkills, stats, creationConfig, baseClaimedByOcc, baseClaimedByHobby } = get();
         const currentSkill = skills[skillName] || {
           total: 0,
           base: 0,
@@ -579,11 +584,51 @@ export const useWizardStore = create<WizardStore>()(
           updatedSkill.manualPoints +
           updatedSkill.occupationBonus;
 
+        // Base pool first when adding, base pool LAST when removing: claim/
+        // release it here, in real time, as this specific edit happens. See
+        // WizardData doc - this is the single point where manualPoints/
+        // requiredBonus actually change, so it's the only place that needs to
+        // know the spend order.
+        const oldSpent = currentSkill.manualPoints + currentSkill.requiredBonus;
+        const newSpent = updatedSkill.manualPoints + updatedSkill.requiredBonus;
+        const delta = newSpent - oldSpent;
+
+        let newBaseClaimedByOcc = baseClaimedByOcc;
+        let newBaseClaimedByHobby = baseClaimedByHobby;
+
+        if (delta !== 0) {
+          const isOccupation = isOccupationSkill(skillName, dynamicSkills, occupation);
+
+          if (delta > 0) {
+            // Aumento: prova a reclamare altro base, solo se ce n'è ancora -
+            // altrimenti il di più va sul paniere specifico (EDUx4/INTx2).
+            const { basePool } = computeSkillPools(stats, creationConfig);
+            const available = Math.max(0, basePool - baseClaimedByOcc - baseClaimedByHobby);
+            const claim = Math.min(delta, available);
+            if (isOccupation) newBaseClaimedByOcc += claim;
+            else newBaseClaimedByHobby += claim;
+          } else {
+            // Diminuzione: libera prima l'eccedenza sul paniere specifico
+            // (EDUx4/INTx2) - il base si libera solo quando quella arriva a
+            // zero. Il claim non può mai superare la spesa attuale del tipo:
+            // bloccarlo a quel tetto realizza esattamente questa priorità.
+            const skillsAfterChange = { ...skills, [skillName]: updatedSkill };
+            const { spentOccRaw, spentHobbyRaw } = sumSkillSpend(skillsAfterChange, dynamicSkills, occupation);
+            if (isOccupation) {
+              newBaseClaimedByOcc = Math.min(baseClaimedByOcc, spentOccRaw);
+            } else {
+              newBaseClaimedByHobby = Math.min(baseClaimedByHobby, spentHobbyRaw);
+            }
+          }
+        }
+
         set({
           skills: {
             ...skills,
             [skillName]: updatedSkill,
           },
+          baseClaimedByOcc: newBaseClaimedByOcc,
+          baseClaimedByHobby: newBaseClaimedByHobby,
         });
       },
 
@@ -602,11 +647,11 @@ export const useWizardStore = create<WizardStore>()(
       /**
        * Apply Occupation Bonuses
        *
-       * Applies occupation bonuses to required skills (boost to 40) and bonus skill (+30).
+       * Applies occupation bonuses to required skills (boost to requiredSkillMinimum) and bonus skill.
        *
        * **Logic**:
-       * - Required skills: If current total < 40, apply requiredBonus = (40 - base)
-       * - Bonus skill: Apply +30 occupationBonus (can exceed 75, up to 80)
+       * - Required skills: If current total < requiredSkillMinimum, apply requiredBonus = (requiredSkillMinimum - base)
+       * - Bonus skill: Apply occupationBonus (configurable, default 30 - can exceed 75, up to 80)
        *
        * @param requiredSkillIds - Array of required skill IDs
        * @param bonusSkillId - Single bonus skill ID
@@ -614,14 +659,15 @@ export const useWizardStore = create<WizardStore>()(
       applyOccupationBonuses: (requiredSkills, bonusSkill) => {
         const { skills, creationConfig } = get();
         const updatedSkills = { ...skills };
+        const requiredSkillMinimum = creationConfig?.occupation?.requiredSkillMinimum ?? 30;
         const bonusSkillPoints = creationConfig?.occupation?.bonusSkillPoints ?? 30;
 
-        // Required skills: boost to 40 if < 40
+        // Required skills: boost to requiredSkillMinimum if below
         for (const skillName of requiredSkills) {
           if (updatedSkills[skillName]) {
             const current = updatedSkills[skillName].total;
-            if (current < 40) {
-              updatedSkills[skillName].requiredBonus = 40 - updatedSkills[skillName].base;
+            if (current < requiredSkillMinimum) {
+              updatedSkills[skillName].requiredBonus = requiredSkillMinimum - updatedSkills[skillName].base;
               updatedSkills[skillName].total =
                 updatedSkills[skillName].base +
                 updatedSkills[skillName].requiredBonus +
@@ -654,7 +700,7 @@ export const useWizardStore = create<WizardStore>()(
        * Auto-Assign Required Skills
        *
        * Automatically calculates and assigns requiredBonus for mandatory occupation skills.
-       * This ensures skills reach the required minimum (default 40) without consuming user budget.
+       * This ensures skills reach the required minimum (default 30) without consuming user budget.
        *
        * **Key Rules**:
        * - Only processes mandatory skills (no alternatives)
@@ -676,6 +722,7 @@ export const useWizardStore = create<WizardStore>()(
         const { skills, stats, creationConfig } = get();
         const updatedSkills = { ...skills };
         const defaultBonusSkillPoints = creationConfig?.occupation?.bonusSkillPoints ?? 30;
+        const requiredMinimum = creationConfig?.occupation?.requiredSkillMinimum ?? 30;
         let changesMade = false;
 
         const requiredPlaceholderSkills: string[] = [];
@@ -755,7 +802,6 @@ export const useWizardStore = create<WizardStore>()(
             currentSkill.total = resolvedBase + currentSkill.requiredBonus + currentSkill.manualPoints + currentSkill.occupationBonus;
           }
 
-          const requiredMinimum = 40;
           const newRequiredBonus = Math.max(0, requiredMinimum - currentSkill.base);
 
           if (currentSkill.requiredBonus !== newRequiredBonus) {
@@ -847,13 +893,24 @@ export const useWizardStore = create<WizardStore>()(
         }
 
         // Update state (skills + required placeholder tracking + flag)
+        const dedupedOccupation = {
+          ...get().occupation,
+          requiredPlaceholderSkills: Array.from(new Set(requiredPlaceholderSkills)),
+          occupationSkillIds: Array.from(new Set(occupationSkillIds)),
+          occupationBonusesApplied: true, // Mark as applied after auto-assignment
+        };
+
+        // Occupation just (re)selected: this is a reset point for base-claim
+        // tracking, no incremental history to preserve. Recompute both claims
+        // from scratch, deterministically (computeInitialBaseClaims doc).
+        const { spentOccRaw, spentHobbyRaw } = sumSkillSpend(updatedSkills, get().dynamicSkills, dedupedOccupation);
+        const pools = computeSkillPools(stats, creationConfig);
+        const { baseClaimedByOcc, baseClaimedByHobby } = computeInitialBaseClaims(spentOccRaw, spentHobbyRaw, pools.basePool);
+
         const updates: any = {
-          occupation: {
-            ...get().occupation,
-            requiredPlaceholderSkills: Array.from(new Set(requiredPlaceholderSkills)),
-            occupationSkillIds: Array.from(new Set(occupationSkillIds)),
-            occupationBonusesApplied: true, // Mark as applied after auto-assignment
-          },
+          occupation: dedupedOccupation,
+          baseClaimedByOcc,
+          baseClaimedByHobby,
         };
 
         if (changesMade) {
@@ -925,19 +982,19 @@ export const useWizardStore = create<WizardStore>()(
       validateStep: (step) => {
         const state = get();
         const validators: Record<number, () => import('@/types/wizard').ValidationResult> = {
-          1: () => require('@/components/character/wizard/validation/wizardValidation').validateStep1(state.basicInfo, state.creationConfig),
+          1: () => require('@/components/character/wizard/validation/wizardValidation').validateStep1(state.basicInfo, state.occupation, state.creationConfig),
           2: () => require('@/components/character/wizard/validation/wizardValidation').validateStep2(state.occupation),
           3: () => require('@/components/character/wizard/validation/wizardValidation').validateStep3(state.stats, state.creationConfig),
-          4: () => require('@/components/character/wizard/validation/wizardValidation').validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills, state.creationConfig),
+          4: () => require('@/components/character/wizard/validation/wizardValidation').validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills, state.creationConfig, state.baseClaimedByOcc, state.baseClaimedByHobby),
           5: () => require('@/components/character/wizard/validation/wizardValidation').validateStep5(state.background, state.creationConfig),
           6: () => {
             const v = require('@/components/character/wizard/validation/wizardValidation');
             const allValid = [1, 2, 3, 4, 5].every((s) => {
               const r = {
-                1: v.validateStep1(state.basicInfo, state.creationConfig),
+                1: v.validateStep1(state.basicInfo, state.occupation, state.creationConfig),
                 2: v.validateStep2(state.occupation),
                 3: v.validateStep3(state.stats, state.creationConfig),
-                4: v.validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills, state.creationConfig),
+                4: v.validateStep4(state.skills, state.stats, state.occupation, state.dynamicSkills, state.creationConfig, state.baseClaimedByOcc, state.baseClaimedByHobby),
                 5: v.validateStep5(state.background, state.creationConfig),
               }[s];
               return r?.valid ?? true;
@@ -954,12 +1011,17 @@ export const useWizardStore = create<WizardStore>()(
         for (let step = 1; step <= 5; step++) {
           const stepResult = get().validateStep(step);
           if (!stepResult.valid) {
-            errors[`step${step}`] = `Step ${step} ha errori`;
+            // Riporta i messaggi effettivi calcolati da validateStep, non un
+            // placeholder generico: Step6Review li mostra all'utente e deve
+            // sapere cosa correggere, non solo "quale step ha problemi".
+            Object.entries(stepResult.errors).forEach(([field, message]) => {
+              errors[`step${step}_${field}`] = message;
+            });
           }
         }
         const { occupation } = get();
         if (occupation.occupationBonusesApplied === false) {
-          errors.occupationBonuses = "Devi applicare i bonus dell'occupazione (Step 4)";
+          errors.step4_occupationBonuses = "Devi applicare i bonus dell'occupazione (Step 4)";
         }
         return { valid: Object.keys(errors).length === 0, errors };
       },
@@ -1227,6 +1289,11 @@ export const useWizardStore = create<WizardStore>()(
             ideaRoll: derived.ideaRoll ?? charStats.ideaRoll ?? 20,
           },
           skills: skillsObj,
+          // Placeholder until autoAssignRequiredSkills runs (Step4Skills mount) and
+          // establishes the real baseline from occupation.occupationSkillIds, not
+          // yet known at draft-load time.
+          baseClaimedByOcc: 0,
+          baseClaimedByHobby: 0,
           background: character.background ? {
             briefHistory: character.background.briefHistory || '',
             significantEvents: character.background.significantEvents || '',

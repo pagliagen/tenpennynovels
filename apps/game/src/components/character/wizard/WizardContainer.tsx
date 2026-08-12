@@ -102,6 +102,8 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
     stats,
     skills,
     dynamicSkills,
+    baseClaimedByOcc,
+    baseClaimedByHobby,
     background,
     _draftCharacterId,
     _serverUpdatedAt,
@@ -216,6 +218,8 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
       stats,
       skills,
       dynamicSkills,
+      baseClaimedByOcc,
+      baseClaimedByHobby,
       background,
       creationConfig,
     });
@@ -224,7 +228,7 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
       validation[i] = results[i]?.valid ?? true;
     }
     return validation;
-  }, [basicInfo, occupation, stats, skills, dynamicSkills, background, creationConfig]);
+  }, [basicInfo, occupation, stats, skills, dynamicSkills, baseClaimedByOcc, baseClaimedByHobby, background, creationConfig]);
 
   const handleNext = () => {
     nextStep();

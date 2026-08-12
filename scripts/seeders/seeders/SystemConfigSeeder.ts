@@ -208,8 +208,8 @@ const ALL_CONFIGS: ConfigRecord[] = [
     configKey: 'character_creation_occupation_required_skill_minimum',
     configSection: 'character_creation',
     configType: 'number',
-    value: 40,
-    defaultValue: 40,
+    value: 30,
+    defaultValue: 30,
     description: 'Valore minimo richiesto per abilità obbligatorie occupazione',
     isActive: true,
     metadata: { version: 1 },
@@ -255,7 +255,17 @@ const ALL_CONFIGS: ConfigRecord[] = [
     metadata: { version: 1 },
   },
 
-  // Limits Section (4 records)
+  // Limits Section (5 records)
+  {
+    configKey: 'character_creation_limits_reference_year',
+    configSection: 'character_creation',
+    configType: 'number',
+    value: 1895,
+    defaultValue: 1895,
+    description: 'Anno di ambientazione (Vittoriana): la data di nascita del personaggio deve essere precedente',
+    isActive: true,
+    metadata: { version: 1 },
+  },
   {
     configKey: 'character_creation_limits_age',
     configSection: 'character_creation',

@@ -21,10 +21,6 @@ export interface StatControlProps {
   isHigh?: boolean;
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
 export function StatControl({
   label,
   abbreviation,
@@ -35,16 +31,21 @@ export function StatControl({
   max = 85,
   isHigh = false,
 }: StatControlProps) {
+  // Nessun clamp durante la digitazione: il giocatore deve poter scrivere
+  // liberamente il valore (es. "3" mentre scrive "35"). Solo verifica che sia
+  // numerico, altrimenti ignora il carattere. Min/max/budget sono validati
+  // allo step change (validateStep3, wizardValidation.ts) — min/max qui restano
+  // solo come hint nativi dell'input.
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value;
       if (raw === '') return;
       const next = parseInt(raw, 10);
       if (!Number.isNaN(next)) {
-        onChange(clamp(next, min, max));
+        onChange(next);
       }
     },
-    [onChange, min, max]
+    [onChange]
   );
 
   return (

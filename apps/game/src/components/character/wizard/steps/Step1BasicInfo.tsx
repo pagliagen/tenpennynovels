@@ -16,17 +16,18 @@ import styles from '@/styles/components/character/wizard/Step1BasicInfo.module.s
 import { EyeIcon } from '../EyeIcon';
 
 /**
- * Calculate age from birthdate (relative to 1895 Victorian setting)
+ * Calculate age from birthdate relative to the setting's reference year
+ * (1° gennaio dell'anno di ambientazione, es. 1895 per il Victorian setting)
  */
-const calculateAge = (birthDateStr: string): number | null => {
+const calculateAge = (birthDateStr: string, referenceYear: number): number | null => {
   if (!birthDateStr || !/^\d{2}\/\d{2}\/\d{4}$/.test(birthDateStr)) return null;
 
   const [day, month, year] = birthDateStr.split('/').map(Number);
 
-  if (!day || !month || !year || year >= 1895) return null;
+  if (!day || !month || !year || year >= referenceYear) return null;
 
   const birthDate = new Date(year, month - 1, day);
-  const referenceDate = new Date(1895, 0, 1);
+  const referenceDate = new Date(referenceYear, 0, 1);
   let age = referenceDate.getFullYear() - birthDate.getFullYear();
   const monthDiff = referenceDate.getMonth() - birthDate.getMonth();
 
@@ -49,6 +50,7 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
 
   const ageMin = creationConfig?.limits.age.min ?? 16;
   const ageMax = creationConfig?.limits.age.max ?? 80;
+  const referenceYear = creationConfig?.limits.referenceYear ?? 1895;
 
   /**
    * Restituisce true (eye icon visibile) se il campo è privato.
@@ -77,37 +79,55 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
   };
 
   const handleBirthDateChange = (value: string) => {
-    const [dayStr, monthStr, yearStr] = value.split('/');
+    const [, , yearStr] = value.split('/');
     const year = Number(yearStr);
 
-    // Calcolo limite: anno massimo consentito = 1895 - 18 = 1877
-    const maxYear = 1877;
-    // Adotta limiti config, ma se mai sotto 18, forzare 18 come minimo
+    // Adotta i limiti da config, ma sotto i 18 non si scende mai
     const minAge = Math.max(ageMin, 18);
-    const age = calculateAge(value);
+    // Anno massimo consentito = referenceYear - minAge (approssimazione veloce per
+    // bloccare subito anni palesemente fuori range; il controllo preciso sull'età
+    // reale calcolata da calculateAge avviene comunque sotto)
+    const maxYear = referenceYear - minAge;
+    const age = calculateAge(value, referenceYear);
 
-    // Blocca subito: non aggiornare birthDate se anno oltre il massimo consentito
-    if (!year || year > maxYear) {
-      // Aggiorna comunque il campo birthDate per mostrare UI feedback,
-      // ma azzera age/apparentAge nel caso di valore errato
-      updateBasicInfo('birthDate', value);
-      updateBasicInfo('age', null);
-      updateBasicInfo('apparentAge', null);
-      stepErrors[1] = { ...stepErrors[1], birthDate: 'Anno di nascita non valido' };
-      return;
-    } else {
-      stepErrors[1] = { ...stepErrors[1], birthDate: '' };
-    }
+    // ETÀ APPARENTE resta agganciata all'età reale finché il giocatore non l'ha
+    // scostata manualmente: senza questo controllo, ogni correzione della data di
+    // nascita sovrascriverebbe silenziosamente un'età apparente scelta di proposito.
+    const apparentAgeInSync = !basicInfo.apparentAge || basicInfo.apparentAge === basicInfo.age;
 
     updateBasicInfo('birthDate', value);
 
-    if (age !== null && age >= minAge && age <= ageMax) {
-      updateBasicInfo('age', age);
-      updateBasicInfo('apparentAge', age);
-    } else {
-      // Se età fuori range permette feedback form-field immediato
+    // Blocca subito: anno oltre il massimo approssimato (troppo recente per avere minAge anni,
+    // oppure successivo/uguale all'anno di ambientazione)
+    if (!year || year > maxYear) {
       updateBasicInfo('age', null);
-      updateBasicInfo('apparentAge', null);
+      if (apparentAgeInSync) updateBasicInfo('apparentAge', null);
+      stepErrors[1] = {
+        ...stepErrors[1],
+        birthDate: `Anno di nascita non valido (deve essere prima del ${referenceYear}, personaggio maggiorenne)`,
+      };
+      return;
+    }
+
+    // Controllo preciso sull'età reale: un anno dentro maxYear può comunque risultare
+    // sotto minAge se la nascita cade tardi nell'anno (compleanno non ancora raggiunto
+    // al 1° gennaio dell'anno di ambientazione)
+    if (age !== null && age < minAge) {
+      updateBasicInfo('age', null);
+      if (apparentAgeInSync) updateBasicInfo('apparentAge', null);
+      stepErrors[1] = { ...stepErrors[1], birthDate: `Il personaggio deve avere almeno ${minAge} anni` };
+      return;
+    }
+
+    stepErrors[1] = { ...stepErrors[1], birthDate: '' };
+
+    if (age !== null && age <= ageMax) {
+      updateBasicInfo('age', age);
+      if (apparentAgeInSync) updateBasicInfo('apparentAge', age);
+    } else {
+      // Data incompleta (in digitazione) o età oltre il massimo
+      updateBasicInfo('age', null);
+      if (apparentAgeInSync) updateBasicInfo('apparentAge', null);
     }
   };
 
@@ -355,19 +375,22 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
           <div className={styles.formGroupFull}>
             <div className={styles.formGroup}>
               <label htmlFor="currentOccupation" className={styles.label}>
-                <EyeIcon visible={isPrivate('occupation')} /> OCCUPAZIONE ATTUALE
+                <EyeIcon visible={isPrivate('occupation')} /> OCCUPAZIONE ATTUALE<span className={styles.required}>*</span>
               </label>
               <input
                 type="text"
                 id="currentOccupation"
                 value={occupation.currentOccupation || ''}
-                onChange={(e) => updateOccupation({ currentOccupation: e.target.value })}
-                className={styles.input}
+                onChange={(e) => {
+                  stepErrors[1] = { ...stepErrors[1], currentOccupation: '' };
+                  updateOccupation({ currentOccupation: e.target.value });
+                }}
+                className={`${styles.input} ${errors.currentOccupation ? styles.inputError : ''}`}
                 placeholder="es. Avvocato, Medico..."
               />
             </div>
             <small className={styles.helpText}>
-              Indicare l'occupazione attuale del personaggio.
+              {errors.currentOccupation ? errors.currentOccupation : "Indicare l'occupazione attuale del personaggio."}
             </small>
           </div>
         </div>

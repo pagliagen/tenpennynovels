@@ -28,7 +28,7 @@ import { logger } from '@/lib/logger';
  * @returns {JSX.Element} Step 4 form
  */
 export function Step4Skills(): JSX.Element {
-  const { stats, skills, occupation, dynamicSkills, updateSkill, autoAssignRequiredSkills, stepErrors, creationConfig } = useWizardStore();
+  const { stats, skills, occupation, dynamicSkills, baseClaimedByOcc, baseClaimedByHobby, updateSkill, autoAssignRequiredSkills, stepErrors, creationConfig } = useWizardStore();
   const errors = stepErrors[4] || {};
 
   // Fetch skills from API
@@ -39,7 +39,7 @@ export function Step4Skills(): JSX.Element {
 
   // Three pools: base (flexible) + occupation (EDUxN, professione) + hobby (INTxN)
   const pools = computeSkillPools(stats, creationConfig);
-  const usage = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools);
+  const usage = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools, baseClaimedByOcc, baseClaimedByHobby);
   const occupationFormula = creationConfig?.skills.occupationPointsFormula ?? 'EDUx4';
   const hobbyFormula = creationConfig?.skills.hobbyPointsFormula ?? 'INTx2';
 
@@ -93,7 +93,7 @@ export function Step4Skills(): JSX.Element {
    * - Occupation changes
    * - Skill definitions load
    *
-   * Ensures mandatory occupation skills automatically reach required minimum (40).
+   * Ensures mandatory occupation skills automatically reach required minimum (config-driven, default 30).
    */
   useEffect(() => {
     // Guard: require occupation, skills, and occupations data
@@ -163,30 +163,12 @@ export function Step4Skills(): JSX.Element {
     const occupationBonus = skill.occupationBonus;
     const requiredBonus = skill.requiredBonus;
 
-    // Reverse calculation: manualPoints = total - base - requiredBonus - occupationBonus
+    // Reverse calculation: manualPoints = total - base - requiredBonus - occupationBonus.
+    // Nessun blocco qui (minimo/budget/cap): il giocatore deve poter digitare
+    // liberamente il totale desiderato. La validazione avviene solo allo step
+    // change (validateStep4, wizardValidation.ts).
     const calculatedManual = newTotal - base - requiredBonus - occupationBonus;
 
-    // Validation 1: Can't go below minimum (base + bonuses)
-    if (calculatedManual < 0) {
-      return; // Silently ignore
-    }
-
-    // Validation 2: Budget check (occupation/hobby pools + shared base pool feasibility)
-    const hypothetical = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools, {
-      skillId,
-      manualPoints: calculatedManual,
-    });
-    if (!hypothetical.isFeasible) {
-      return; // Would exceed the available pools
-    }
-
-    // Validation 3: Cap enforcement
-    const maxTotal = skill.occupationBonus > 0 ? 80 : 75;
-    if (newTotal > maxTotal) {
-      return; // Would exceed cap
-    }
-
-    // Update skill (updateSkill will recalculate total)
     updateSkill(skillId, {
       manualPoints: calculatedManual,
     });
@@ -218,8 +200,8 @@ export function Step4Skills(): JSX.Element {
   // Placeholder skills that need specialization (e.g. Lingua Straniera, Arte, Scienza)
   const placeholderSkills = apiSkills.filter((s) => s.isPlaceholder);
 
-  // Required minimum from global config (occupation.requiredSkillMinimum), default 40
-  const requiredSkillMinimum = creationConfig?.occupation?.requiredSkillMinimum ?? 40;
+  // Required minimum from global config (occupation.requiredSkillMinimum), default 30
+  const requiredSkillMinimum = creationConfig?.occupation?.requiredSkillMinimum ?? 30;
 
   return (
     <div className={styles.stepContent} data-step="skills">
@@ -299,7 +281,7 @@ export function Step4Skills(): JSX.Element {
                         </span>
                       )}
                       {skill.requiredBonus > 0 && (
-                        <span className={styles.badgeRequired} title="Abilità obbligatoria, portata a 40">
+                        <span className={styles.badgeRequired} title={`Abilità obbligatoria, portata a ${requiredSkillMinimum}`}>
                           Richiesta
                         </span>
                       )}

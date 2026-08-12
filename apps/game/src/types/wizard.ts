@@ -169,6 +169,16 @@ export interface WizardData {
   derivedStats: DerivedStats;
   skills: Record<string, SkillBreakdown>; // Dynamic skill map
   dynamicSkills: DynamicSkill[]; // Unlocked specializations
+  /**
+   * How much of the shared base pool (200pt) is currently claimed by
+   * occupation-type vs hobby-type skill spend. Updated incrementally, in real
+   * time, by whichever action actually changes a skill's points (updateSkill,
+   * autoAssignRequiredSkills) - never recomputed from scratch from a plain
+   * `skills` snapshot, which has no meaningful order and can't tell "this
+   * skill's points came from base" from "this skill's points overflowed".
+   */
+  baseClaimedByOcc: number;
+  baseClaimedByHobby: number;
   background: WizardBackground;
 }
 
@@ -221,7 +231,7 @@ export interface SkillsConfig {
  * Occupation Config (from character-creation.json)
  */
 export interface OccupationConfig {
-  requiredSkillMinimum: number; // 40
+  requiredSkillMinimum: number; // 30
   bonusSkillPoints: number; // 30
   requiredSkillCount: { min: number; max: number }; // { min: 6, max: 6 }
   bonusSkillCount: { min: number; max: number }; // { min: 1, max: 1 }

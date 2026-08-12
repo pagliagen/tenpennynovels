@@ -54,7 +54,10 @@ export function Step2Occupation(): JSX.Element {
   const handleSelect = (occupationId: string) => {
     const occ = occupations?.find((o) => o.id === occupationId);
     if (occ) {
-      updateOccupation({ occupationId: occ.id, currentOccupation: occ.name });
+      // Solo l'occupationId (esperienza pregressa, usata per calcolo skill points):
+      // "Occupazione Attuale" in Informazioni Base è un campo distinto, compilato
+      // liberamente dal giocatore, e non va sovrascritto qui.
+      updateOccupation({ occupationId: occ.id });
     }
   };
 

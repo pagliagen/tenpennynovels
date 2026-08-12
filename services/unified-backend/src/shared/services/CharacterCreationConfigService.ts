@@ -87,6 +87,8 @@ export interface CharacterCreationConfig {
     description: string;
   };
   limits: {
+    /** Anno di ambientazione (Vittoriana): la data di nascita deve essere precedente a questo anno */
+    referenceYear: number;
     age: { min: number; max: number };
     weight: { min: number; max: number; unit: string };
     height: { min: number; max: number; unit: string };
@@ -181,13 +183,14 @@ export class CharacterCreationConfigService {
         description: configs['character_creation_skills_description'] || '',
       },
       occupation: {
-        requiredSkillMinimum: configs['character_creation_occupation_required_skill_minimum'] || 40,
+        requiredSkillMinimum: configs['character_creation_occupation_required_skill_minimum'] || 30,
         requiredSkillCount: configs['character_creation_occupation_required_skill_count'] || { min: 6, max: 6 },
         bonusSkillCount: configs['character_creation_occupation_bonus_skill_count'] || { min: 1, max: 1 },
         bonusSkillPoints: configs['character_creation_occupation_bonus_skill_points'] || 30,
         description: configs['character_creation_occupation_description'] || '',
       },
       limits: {
+        referenceYear: configs['character_creation_limits_reference_year'] || 1895,
         age: configs['character_creation_limits_age'] || { min: 16, max: 80 },
         weight: configs['character_creation_limits_weight'] || { min: 30, max: 200, unit: 'kg' },
         height: configs['character_creation_limits_height'] || { min: 100, max: 250, unit: 'cm' },
@@ -678,13 +681,14 @@ export class CharacterCreationConfigService {
         description: 'Default skill system'
       },
       occupation: {
-        requiredSkillMinimum: 40,
+        requiredSkillMinimum: 30,
         requiredSkillCount: { min: 6, max: 6 },
         bonusSkillCount: { min: 1, max: 1 },
         bonusSkillPoints: 30,
         description: 'Default occupation system'
       },
       limits: {
+        referenceYear: 1895,
         age: { min: 16, max: 80 },
         weight: { min: 30, max: 200, unit: 'kg' },
         height: { min: 100, max: 250, unit: 'cm' },

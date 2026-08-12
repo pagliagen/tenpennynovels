@@ -2,7 +2,7 @@
  * Placeholder Skill Manager
  *
  * Manages placeholder skills (like "Lingua straniera", "Arte", etc.) that require specialization.
- * User adds multiple specializations and selects ONE as "primary" (receives required bonus to reach 40).
+ * User adds multiple specializations and selects ONE as "primary" (receives required bonus to reach requiredMinimum).
  *
  * @module components/character/wizard/shared/PlaceholderSkillManager
  * @since 2.0.0
@@ -19,7 +19,7 @@ import { logger } from '@/lib/logger';
 interface PlaceholderSkillManagerProps {
   /** Placeholder skill definition from API */
   placeholderSkill: any;
-  /** Required minimum value (default 40) */
+  /** Required minimum value (config-driven, default 30) */
   requiredMinimum: number;
 }
 
@@ -163,7 +163,7 @@ export function PlaceholderSkillManager({
       <div className={styles.placeholderHeader}>
         <strong>⚠️ {placeholderSkill.name}</strong>
         <span className={styles.placeholderNote}>
-          Aggiungi almeno una {placeholderTypeLabel} e selezionala come principale (40 punti)
+          Aggiungi almeno una {placeholderTypeLabel} e selezionala come principale ({requiredMinimum} punti)
         </span>
       </div>
 
@@ -202,7 +202,7 @@ export function PlaceholderSkillManager({
                         name={`primary-${placeholderSkill.id}`}
                         checked={isPrimary}
                         onChange={() => handleSelectPrimary(ds.skillId)}
-                        title="Seleziona come principale (40 punti)"
+                        title={`Seleziona come principale (${requiredMinimum} punti)`}
                       />
                     </td>
                     <td>

@@ -149,6 +149,18 @@
   }
 }
 
+// Il popup nativo del <select> (lista opzioni) non eredita `background: transparent`:
+// senza colori espliciti, Firefox può renderizzarlo con testo scuro su sfondo scuro
+// (tema di sistema), illeggibile. Fissiamo qui sfondo e testo del popup.
+.select {
+  color-scheme: light;
+
+  option {
+    background-color: #f5f0e6 !important;
+    color: #2c2416 !important;
+  }
+}
+
 .textarea {
   padding: 6px 8px;
   height: 70px;

@@ -603,7 +603,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   // 1 option = mandatory skill; N options = player picks one.
 
   // Extract required minimum from config
-  const requiredSkillMinimum = config.occupation.requiredSkillMinimum || 40;
+  const requiredSkillMinimum = config.occupation.requiredSkillMinimum || 30;
 
   let slotsValidated = 0;
   const totalSlots = occupation.requiredSkillSlots?.length || 0;

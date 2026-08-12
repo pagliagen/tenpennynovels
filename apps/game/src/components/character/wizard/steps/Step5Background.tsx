@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { validateStep5 } from '../validation/wizardValidation';
 import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step5Background.module.scss';
@@ -28,9 +28,19 @@ export function Step5Background({ fieldVisibility }: Step5BackgroundProps): JSX.
   const { background, updateBackground, creationConfig } = useWizardStore();
 
   // Live validation so errors are visible without clicking "next"
-  const errors = useMemo(
+  const allErrors = useMemo(
     () => validateStep5(background, creationConfig).errors,
     [background, creationConfig]
+  );
+
+  // Un campo mostra l'errore solo dopo che l'utente l'ha abbandonato (blur),
+  // non appena entra nello step o mentre sta ancora scrivendo: altrimenti un
+  // campo vuoto allarma subito senza che l'utente abbia fatto nulla.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const handleBlur = (field: string) => setTouched((prev) => ({ ...prev, [field]: true }));
+  const errors = useMemo(
+    () => Object.fromEntries(Object.entries(allErrors).filter(([field]) => touched[field])),
+    [allErrors, touched]
   );
 
   const bgLimits = creationConfig?.limits.backgroundFields;
@@ -61,10 +71,10 @@ export function Step5Background({ fieldVisibility }: Step5BackgroundProps): JSX.
               id="briefHistory"
               value={background.briefHistory || ''}
               onChange={(e) => handleChange('briefHistory', e.target.value)}
+              onBlur={() => handleBlur('briefHistory')}
               className={`${styles.textarea} ${styles.textareaLarge} ${errors.briefHistory ? styles.inputError : ''}`}
               rows={12}
               maxLength={briefHistoryMax}
-              placeholder="Devi realizzare la storia del tuo personaggio. Una cinquantina di righe, almeno 500 parole..."
             />
             <div className={styles.helpTextContainer}>
               <small className={styles.helpText}>
@@ -83,10 +93,10 @@ export function Step5Background({ fieldVisibility }: Step5BackgroundProps): JSX.
               id="significantEvents"
               value={background.significantEvents || ''}
               onChange={(e) => handleChange('significantEvents', e.target.value)}
+              onBlur={() => handleBlur('significantEvents')}
               className={styles.textarea}
               rows={8}
               maxLength={significantEventsMax}
-              placeholder="Successi, fallimenti, lutti, incontri, scandali..."
             />
             <div className={styles.helpTextContainer}>
               <small className={styles.helpText}>
@@ -108,10 +118,10 @@ export function Step5Background({ fieldVisibility }: Step5BackgroundProps): JSX.
               id="importantRelationships"
               value={background.importantRelationships || ''}
               onChange={(e) => handleChange('importantRelationships', e.target.value)}
+              onBlur={() => handleBlur('importantRelationships')}
               className={styles.textarea}
               rows={6}
               maxLength={importantRelationshipsMax}
-              placeholder="Ci sono personaggi della community con cui hai o potresti avere un rapporto speciale?..."
             />
             <div className={styles.helpTextContainer}>
               <small className={styles.helpText}>
@@ -130,10 +140,10 @@ export function Step5Background({ fieldVisibility }: Step5BackgroundProps): JSX.
               id="personality"
               value={background.personality || ''}
               onChange={(e) => handleChange('personality', e.target.value)}
+              onBlur={() => handleBlur('personality')}
               className={`${styles.textarea} ${errors.personality ? styles.inputError : ''}`}
               rows={6}
               maxLength={personalityMax}
-              placeholder="Tratti dominanti, atteggiamento, abitudini, contraddizioni..."
             />
             <div className={styles.helpTextContainer}>
               <small className={styles.helpText}>
@@ -152,10 +162,10 @@ export function Step5Background({ fieldVisibility }: Step5BackgroundProps): JSX.
               id="ideology"
               value={background.ideology || ''}
               onChange={(e) => handleChange('ideology', e.target.value)}
+              onBlur={() => handleBlur('ideology')}
               className={styles.textarea}
               rows={6}
               maxLength={ideologyMax}
-              placeholder="Valori morali, religione, filosofia, visione del mondo..."
             />
             <div className={styles.helpTextContainer}>
               <small className={styles.helpText}>

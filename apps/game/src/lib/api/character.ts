@@ -52,6 +52,8 @@ export interface CharacterCreationConfig {
   };
   occupation: any;
   limits: {
+    /** Anno di ambientazione (Vittoriana): la data di nascita deve essere precedente a questo anno */
+    referenceYear: number;
     age: { min: number; max: number };
     weight: { min: number; max: number; unit: string };
     height: { min: number; max: number; unit: string };

@@ -21,7 +21,11 @@ import type {
   ValidationResult,
 } from '@/types/wizard';
 
-export function validateStep1(basicInfo: WizardBasicInfo, creationConfig?: CharacterCreationConfig | null): ValidationResult {
+export function validateStep1(
+  basicInfo: WizardBasicInfo,
+  occupation: WizardOccupation,
+  creationConfig?: CharacterCreationConfig | null
+): ValidationResult {
   const errors: Record<string, string> = {};
 
   const ageMin = creationConfig?.limits.age.min ?? 16;
@@ -64,6 +68,9 @@ export function validateStep1(basicInfo: WizardBasicInfo, creationConfig?: Chara
       errors.weight = `Peso deve essere tra ${weightMin} e ${weightMax} ${weightUnit}`;
     }
   }
+  if (!occupation.currentOccupation || occupation.currentOccupation.trim() === '') {
+    errors.currentOccupation = 'Occupazione attuale è obbligatoria';
+  }
 
   return { valid: Object.keys(errors).length === 0, errors };
 }
@@ -73,9 +80,6 @@ export function validateStep2(occupation: WizardOccupation): ValidationResult {
 
   if (!occupation.occupationId) {
     errors.occupationId = "Seleziona un'occupazione";
-  }
-  if (!occupation.currentOccupation) {
-    errors.currentOccupation = 'Inserisci titolo occupazione';
   }
 
   return { valid: Object.keys(errors).length === 0, errors };
@@ -119,7 +123,9 @@ export function validateStep4(
   stats: WizardStats,
   occupation: WizardOccupation,
   dynamicSkills: DynamicSkill[],
-  creationConfig?: CharacterCreationConfig | null
+  creationConfig?: CharacterCreationConfig | null,
+  baseClaimedByOcc = 0,
+  baseClaimedByHobby = 0
 ): ValidationResult {
   const errors: Record<string, string> = {};
 
@@ -128,10 +134,10 @@ export function validateStep4(
   const CREATION_CAP_WITH_OCC = creationConfig?.skills.creationCapWithOccupation ?? 80;
 
   const pools = computeSkillPools(stats, creationConfig);
-  const usage = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools);
+  const usage = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools, baseClaimedByOcc, baseClaimedByHobby);
   const totalSpent = usage.totalSpent;
 
-  if (usage.baseUsed > pools.basePool) {
+  if (usage.overflowOcc > 0 || usage.overflowHobby > 0) {
     errors.skillsBudget =
       `Punti abilità: superati i pool disponibili ` +
       `(Professione: ${usage.spentOcc}/${pools.occPool}, Hobby: ${usage.spentHobby}/${pools.hobbyPool}, ` +
@@ -147,6 +153,10 @@ export function validateStep4(
     const cap = skill.occupationBonus > 0 ? CREATION_CAP_WITH_OCC : CREATION_CAP;
     if (skill.total > cap) {
       errors[`skill_${skillName}`] = `${skillName}: ${skill.total}/${cap} (cap superato)`;
+    }
+    if (skill.manualPoints < 0) {
+      const floor = skill.base + skill.requiredBonus + skill.occupationBonus;
+      errors[`skill_${skillName}_min`] = `${skillName}: il totale non può scendere sotto ${floor}`;
     }
   }
 
@@ -224,13 +234,15 @@ export function validateAllSteps(data: {
   stats: WizardStats;
   skills: Record<string, SkillBreakdown>;
   dynamicSkills: DynamicSkill[];
+  baseClaimedByOcc?: number;
+  baseClaimedByHobby?: number;
   background: WizardBackground;
   creationConfig?: CharacterCreationConfig | null;
 }): Record<number, ValidationResult> {
-  const step1 = validateStep1(data.basicInfo, data.creationConfig);
+  const step1 = validateStep1(data.basicInfo, data.occupation, data.creationConfig);
   const step2 = validateStep2(data.occupation);
   const step3 = validateStep3(data.stats, data.creationConfig);
-  const step4 = validateStep4(data.skills, data.stats, data.occupation, data.dynamicSkills, data.creationConfig);
+  const step4 = validateStep4(data.skills, data.stats, data.occupation, data.dynamicSkills, data.creationConfig, data.baseClaimedByOcc, data.baseClaimedByHobby);
   const step5 = validateStep5(data.background, data.creationConfig);
   const allValid = step1.valid && step2.valid && step3.valid && step4.valid && step5.valid;
 

@@ -24,19 +24,20 @@ interface Step6ReviewProps {
  * Step 6: Conferma Component
  */
 export function Step6Review({ onSubmit, isSubmitting }: Step6ReviewProps): JSX.Element {
-  const { validateAll, stepErrors } = useWizardStore();
+  const { validateAll } = useWizardStore();
 
   // Run validation
   const validation = validateAll();
-  const allErrors = stepErrors;
 
-  // Flatten all errors from all steps
-  const allErrorsList: Array<{ step: string; field: string; error: string }> = [];
-  Object.entries(allErrors).forEach(([step, errors]) => {
-    Object.entries(errors).forEach(([field, error]) => {
-      allErrorsList.push({ step, field, error });
-    });
-  });
+  // Elenco errori dal risultato fresco di validateAll (non da stepErrors: quello
+  // si popola solo mentre l'utente interagisce con i campi, quindi resta vuoto
+  // per gli step mai toccati anche se in realtà non sono validi).
+  const allErrorsList: Array<{ step: string; error: string }> = Object.entries(validation.errors).map(
+    ([key, error]) => {
+      const stepMatch = key.match(/^step(\d+)_/);
+      return { step: stepMatch?.[1] ?? '-', error };
+    }
+  );
 
   const handleSubmit = async () => {
     if (!validation.valid) return;
@@ -56,8 +57,8 @@ export function Step6Review({ onSubmit, isSubmitting }: Step6ReviewProps): JSX.E
           <h4>⚠️ Errori di Validazione</h4>
           <p>Correggi i seguenti errori prima di procedere:</p>
           <ul className={styles.errorList}>
-            {allErrorsList.map(({ step, field, error }, index) => (
-              <li key={`${step}-${field}-${index}`}>
+            {allErrorsList.map(({ step, error }, index) => (
+              <li key={`${step}-${index}`}>
                 <strong>Step {step}:</strong> {error}
               </li>
             ))}
