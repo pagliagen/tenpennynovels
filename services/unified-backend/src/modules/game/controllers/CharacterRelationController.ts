@@ -7,6 +7,7 @@ import { auditLogger } from '@modules/admin/utils/auditLogger';
 import { redis } from '@config/runtime/redis';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
+import { isValidObjectId } from '@shared/utils/validation';
 
 
 export class CharacterRelationController {
@@ -126,6 +127,23 @@ export class CharacterRelationController {
         res.status(400).json(errorResponse(
           'Personaggio target e tipo di relazione sono obbligatori',
           'VALIDATION_ERROR',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // targetCharacterId/relationshipTypeId must be plain ObjectId strings -
+      // reject query objects (e.g. { $ne: null }) before they're used as
+      // filter values anywhere below (NoSQL injection guard)
+      if (
+        typeof targetCharacterId !== 'string' || !isValidObjectId(targetCharacterId) ||
+        typeof relationshipTypeId !== 'string' || !isValidObjectId(relationshipTypeId)
+      ) {
+        res.status(400).json(errorResponse(
+          'ID personaggio o tipo di relazione non validi',
+          'INVALID_ID_FORMAT',
           undefined,
           400,
           getRequestId(req)
