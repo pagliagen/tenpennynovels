@@ -15,12 +15,15 @@ import { useState } from 'react';
 import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/PlaceholderSkillManager.module.scss';
 import { logger } from '@/lib/logger';
+import { WarningIcon } from '../WarningIcon';
 
 interface PlaceholderSkillManagerProps {
   /** Placeholder skill definition from API */
   placeholderSkill: any;
   /** Required minimum value (config-driven, default 30) */
   requiredMinimum: number;
+  /** Step-level validation error for this placeholder (validateStep4), if any */
+  error?: string;
 }
 
 /**
@@ -35,6 +38,7 @@ interface PlaceholderSkillManagerProps {
 export function PlaceholderSkillManager({
   placeholderSkill,
   requiredMinimum,
+  error,
 }: PlaceholderSkillManagerProps): JSX.Element {
   const { skills, dynamicSkills, addDynamicSkill, removeDynamicSkill, updateSkill } = useWizardStore();
   const [isAdding, setIsAdding] = useState(false);
@@ -162,6 +166,7 @@ export function PlaceholderSkillManager({
       {/* Header */}
       <div className={styles.placeholderHeader}>
         <strong>⚠️ {placeholderSkill.name}</strong>
+        <WarningIcon message={error} />
         <span className={styles.placeholderNote}>
           Aggiungi almeno una {placeholderTypeLabel} e selezionala come principale ({requiredMinimum} punti)
         </span>

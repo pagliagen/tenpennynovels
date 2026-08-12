@@ -18,6 +18,7 @@ import styles from '@/styles/components/character/wizard/Step2Occupation.module.
 import { CategoryFilter } from '../shared/CategoryFilter';
 import { OccupationCard } from '../shared/OccupationCard';
 import { useWizardToolbar } from '../WizardSlotsContext';
+import { WarningIcon } from '../WarningIcon';
 
 
 /**
@@ -87,6 +88,11 @@ export function Step2Occupation(): JSX.Element {
 
   return (
     <div className={styles.stepContent} data-step="occupation">
+      {errors.occupationId && (
+        <p>
+          <WarningIcon message={errors.occupationId} /> Seleziona un&apos;occupazione per continuare.
+        </p>
+      )}
       <div className={styles.grid}>
         {filteredOccupations.map((occ) => (
           <OccupationCard
@@ -97,17 +103,6 @@ export function Step2Occupation(): JSX.Element {
           />
         ))}
       </div>
-
-      {Object.keys(errors).length > 0 && (
-        <div className={styles.errorSummary}>
-          <h4>Errori di Validazione:</h4>
-          <ul>
-            {Object.entries(errors).map(([field, error]) => (
-              <li key={field}>{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }

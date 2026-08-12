@@ -14,6 +14,7 @@
 import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step1BasicInfo.module.scss';
 import { EyeIcon } from '../EyeIcon';
+import { WarningIcon } from '../WarningIcon';
 
 /**
  * Calculate age from birthdate relative to the setting's reference year
@@ -142,6 +143,7 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               <div className={styles.formGroup}>
                 <label htmlFor="firstName" className={styles.label}>
                   <EyeIcon visible={isPrivate('firstName')} /> NOME COMPLETO<span className={styles.required}>*</span>
+                  <WarningIcon message={errors.firstName} />
                 </label>
                 <input
                   type="text"
@@ -162,6 +164,7 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               <div className={styles.formGroup}>
                 <label htmlFor="lastName" className={styles.label}>
                   <EyeIcon visible={isPrivate('surname')} /> COGNOME <span className={styles.required}>*</span>
+                  <WarningIcon message={errors.lastName} />
                 </label>
                 <input
                   type="text"
@@ -184,6 +187,7 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               <div className={styles.formGroup}>
                 <label htmlFor="birthDate" className={styles.label}>
                   <EyeIcon visible={isPrivate('birthDate', false)} /> DATA DI NASCITA <span className={styles.required}>*</span>
+                  <WarningIcon message={errors.birthDate} />
                 </label>
                 <input
                   type="text"
@@ -225,6 +229,7 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
             <div className={styles.formGroup}>
               <label htmlFor="gender" className={styles.label}>
                 <EyeIcon visible={isPrivate('gender')} /> GENERE <span className={styles.required}>*</span>
+                <WarningIcon message={errors.gender} />
               </label>
               <select
                 id="gender"
@@ -263,6 +268,7 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
             <div className={styles.formGroup}>
               <label htmlFor="height" className={styles.label}>
                 <EyeIcon visible={isPrivate('height')} /> ALTEZZA <span className={styles.required}>*</span>
+                <WarningIcon message={errors.height} />
               </label>
               <input
                 type="text"
@@ -278,6 +284,7 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
             <div className={styles.formGroup}>
               <label htmlFor="weight" className={styles.label}>
                 <EyeIcon visible={isPrivate('weight')} /> PESO <span className={styles.required}>*</span>
+                <WarningIcon message={errors.weight} />
               </label>
               <input
                 type="text"
@@ -303,6 +310,9 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               className={styles.textarea}
               rows={3}
             />
+            <small className={styles.helpText}>
+              Indicare i segni particolari non visibili del personaggio.
+            </small>
           </div>
 
           {/* SEGNI PARTICOLARI VISIBILI */}
@@ -317,6 +327,9 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               className={styles.textarea}
               rows={3}
             />
+            <small className={styles.helpText}>
+              Indicare i segni particolari visibili del personaggio.
+            </small>
           </div>
         </div>
 
@@ -334,6 +347,9 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               className={styles.textarea}
               rows={12}
             />
+            <small className={styles.helpText}>
+              Indicare le patologie del personaggio.
+            </small>
           </div>
 
           {/* FEDINA PENALE */}
@@ -349,6 +365,9 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
               rows={8}
               placeholder="Nessuna, oppure descrivi..."
             />
+            <small className={styles.helpText}>
+              Indicare la fedina penale del personaggio.
+            </small>
           </div>
 
           {/* TITOLO DI STUDIO */}
@@ -376,6 +395,7 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
             <div className={styles.formGroup}>
               <label htmlFor="currentOccupation" className={styles.label}>
                 <EyeIcon visible={isPrivate('occupation')} /> OCCUPAZIONE ATTUALE<span className={styles.required}>*</span>
+                <WarningIcon message={errors.currentOccupation} />
               </label>
               <input
                 type="text"
@@ -401,17 +421,6 @@ export function Step1BasicInfo({ fieldVisibility }: Step1BasicInfoProps): JSX.El
         <img src="/images/tenpenny.png" alt="" className={styles.stampImage} />
       </div>
 
-      {/* Error Summary */}
-      {Object.keys(errors).length > 0 && (
-        <div className={styles.errorSummary}>
-          <h4>Errori di Validazione:</h4>
-          <ul>
-            {Object.entries(errors).map(([field, error]) => (
-              <li key={field}>{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }

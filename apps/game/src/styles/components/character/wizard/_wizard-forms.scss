@@ -87,7 +87,9 @@
 @mixin textarea {
   @include inputBase;
   resize: vertical;
-  min-height: 80px;
+  min-height: 60px;
+  max-height: 60px;
+  height: 60px;
 }
 
 @mixin helpText {

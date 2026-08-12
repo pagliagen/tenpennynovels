@@ -16,6 +16,7 @@ import { validateStep5 } from '../validation/wizardValidation';
 import { useWizardStore } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step5Background.module.scss';
 import { EyeIcon } from '../EyeIcon';
+import { WarningIcon } from '../WarningIcon';
 
 interface Step5BackgroundProps {
   fieldVisibility?: Record<string, boolean>;
@@ -66,6 +67,7 @@ export function Step5Background({ fieldVisibility }: Step5BackgroundProps): JSX.
           <div className={styles.formGroupFull}>
             <label htmlFor="briefHistory" className={styles.label}>
               <EyeIcon visible={isPrivate('briefHistory')} /> STORIA IN BREVE
+              <WarningIcon message={errors.briefHistory} />
             </label>
             <textarea
               id="briefHistory"
@@ -135,6 +137,7 @@ export function Step5Background({ fieldVisibility }: Step5BackgroundProps): JSX.
           <div className={styles.formGroupFull}>
             <label htmlFor="personality" className={styles.label}>
               <EyeIcon visible={isPrivate('personality')} /> PERSONALITÀ
+              <WarningIcon message={errors.personality} />
             </label>
             <textarea
               id="personality"
@@ -177,17 +180,6 @@ export function Step5Background({ fieldVisibility }: Step5BackgroundProps): JSX.
         </div>
       </div>
 
-      {/* Error Summary */}
-      {Object.keys(errors).length > 0 && (
-        <div className={styles.errorSummary}>
-          <h4>Errori di Validazione:</h4>
-          <ul>
-            {Object.entries(errors).map(([field, error]) => (
-              <li key={field}>{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }

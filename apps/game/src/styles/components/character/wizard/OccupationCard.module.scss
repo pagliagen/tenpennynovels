@@ -30,15 +30,6 @@
   box-shadow: var(--shadow-golden-glow);
 }
 
-.separator {
-  width: 50px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-top: 5px;
-  margin-bottom: 5px;
-  object-fit: contain;
-}
-
 .header {
   position: relative;
   display: flex;
@@ -90,9 +81,9 @@
 }
 
 .footer {
-  display: flex;
-  gap: var(--spacing-xs); 
+  display: flex; 
   flex-wrap: wrap;
+  margin-top: 10px;
 }
 
 .infoSection {

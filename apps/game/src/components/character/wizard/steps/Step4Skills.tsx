@@ -19,6 +19,7 @@ import styles from '@/styles/components/character/wizard/Step4Skills.module.scss
 
 import { PlaceholderSkillManager } from '../shared/PlaceholderSkillManager';
 import { useWizardToolbar } from '../WizardSlotsContext';
+import { WarningIcon } from '../WarningIcon';
 import { logger } from '@/lib/logger';
 
 
@@ -55,8 +56,9 @@ export function Step4Skills(): JSX.Element {
       <span className={`${styles.pointsValue} ${usage.baseUsed > pools.basePool ? styles.pointsExceeded : styles.pointsValid}`}>
         Base liberi {usage.baseUsed}/{pools.basePool}
       </span>
+      <WarningIcon message={stepErrors[4]?.skillsBudget} />
     </div>
-  ), [usage.spentOcc, usage.spentHobby, usage.baseUsed, pools.occPool, pools.hobbyPool, pools.basePool, occupationFormula, hobbyFormula]);
+  ), [usage.spentOcc, usage.spentHobby, usage.baseUsed, pools.occPool, pools.hobbyPool, pools.basePool, occupationFormula, hobbyFormula, stepErrors]);
 
   // Initialize skills with base values from API (resolve formulas with current stats)
   useEffect(() => {
@@ -221,6 +223,7 @@ export function Step4Skills(): JSX.Element {
                 key={placeholderSkill.id}
                 placeholderSkill={placeholderSkill}
                 requiredMinimum={requiredSkillMinimum}
+                error={errors[`placeholder_${placeholderSkill.name}`]}
               />
             ))}
           </div>
@@ -242,11 +245,13 @@ export function Step4Skills(): JSX.Element {
               const maxTotal = skill.occupationBonus > 0 ? 80 : 75;
               const minTotal = skill.base + skill.requiredBonus + skill.occupationBonus;
               const isAtCap = skill.total >= maxTotal;
+              const skillError = errors[`skill_${skillDef.id}`] || errors[`skill_${skillDef.id}_min`];
 
               return (
                 <div key={skillDef.id} className={styles.skillCard}>
                   <div className={styles.skillCardHeader}>
                     <strong className={styles.skillName}>{skillDef.name}</strong>
+                    <WarningIcon message={skillError} />
                   </div>
 
                   <div className={styles.skillCardBody}>
@@ -292,17 +297,6 @@ export function Step4Skills(): JSX.Element {
           </div>
         </div>
 
-        {/* Validation Errors */}
-        {Object.keys(errors).length > 0 && (
-          <div className={styles.errorSummary}>
-            <h4>Errori di Validazione:</h4>
-            <ul>
-              {Object.entries(errors).map(([field, error]) => (
-                <li key={field}>{error}</li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
     </div>
   );

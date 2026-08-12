@@ -45,8 +45,6 @@ export function OccupationCard({ occupation, isSelected, onSelect }: OccupationC
         <p className={styles.description}>{occupation.description}</p>
       </div>
 
-      <img src="/images/separatore.gif" alt="Separatore" className={styles.separator} />
-
       <footer className={styles.footer}>
         <div className={styles.infoSection}>
           <span className={styles.infoLabel}>Contatti:</span>

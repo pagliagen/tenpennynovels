@@ -18,6 +18,7 @@ import { DerivedStatCard } from '../shared/DerivedStatCard';
 import { getOccupationImage } from '../shared/OccupationIconMap';
 import { StatControl } from '../shared/StatControl';
 import { useWizardToolbar } from '../WizardSlotsContext';
+import { WarningIcon } from '../WarningIcon';
 
 
 const STATS = [
@@ -54,6 +55,7 @@ export function Step3Stats(): JSX.Element {
 
   const selectedOcc = occupations?.find((o) => o.id === occupation.occupationId);
   const occImage = selectedOcc ? getOccupationImage(selectedOcc.image) : null;
+  const combinedError = Object.values(errors).filter(Boolean).join(' — ');
 
   useWizardToolbar(() => (
     <>
@@ -90,7 +92,7 @@ export function Step3Stats(): JSX.Element {
 
       <div className={styles.panels}>
         <div className={styles.panelLeft}>
-          <h3 className={styles.panelTitle}>CARATTERISTICHE PRINCIPALI</h3>
+          <h3 className={styles.panelTitle}>CARATTERISTICHE PRINCIPALI <WarningIcon message={combinedError} /></h3>
           <div className={styles.statsGrid}>
             {STATS.map((stat) => (
               <StatControl
@@ -142,16 +144,6 @@ export function Step3Stats(): JSX.Element {
         </div>
       </div>
 
-      {Object.keys(errors).length > 0 && (
-        <div className={styles.errorSummary}>
-          <h4>Errori di Validazione:</h4>
-          <ul>
-            {Object.entries(errors).map(([field, error]) => (
-              <li key={field}>{error}</li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }
