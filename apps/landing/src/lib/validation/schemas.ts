@@ -90,17 +90,14 @@ export const EmailSchema = z
  * Password validation schema
  *
  * **Security Requirements**:
- * - Minimum 8 characters
- * - At least one letter (a-z, A-Z)
- * - At least one number (0-9)
- * - Special characters are optional but allowed
+ * - Minimum 4 characters
  *
  * @constant
  * @type {z.ZodString}
  *
  * @example
  * ```typescript
- * const result = PasswordSchema.safeParse('MyPassword123');
+ * const result = PasswordSchema.safeParse('abcd');
  * if (!result.success) {
  *   console.error('Password errors:', result.error.errors);
  * }
@@ -108,9 +105,7 @@ export const EmailSchema = z
  */
 export const PasswordSchema = z
   .string()
-  .min(8, { message: 'Password deve essere di almeno 8 caratteri' })
-  .regex(/[a-zA-Z]/, { message: 'Password deve contenere almeno una lettera' })
-  .regex(/[0-9]/, { message: 'Password deve contenere almeno un numero' });
+  .min(4, { message: 'Password deve essere di almeno 4 caratteri' });
 
 /**
  * Login form validation schema
@@ -149,7 +144,7 @@ export const LoginSchema = z.object({
  * **Fields**:
  * - username: Full username validation
  * - email: Valid email address
- * - password: Full security requirements
+ * - password: Minimo 4 caratteri
  * - confirmPassword: Must match password
  * - agreeToTerms: Must be explicitly true
  *
@@ -281,7 +276,7 @@ export const ForgotPasswordSchema = z.object({
  * Reset password form validation schema
  *
  * **Fields**:
- * - password: Full security requirements
+ * - password: Minimo 4 caratteri
  * - confirmPassword: Must match password
  *
  * **Cross-Field Validation**:

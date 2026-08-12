@@ -55,8 +55,8 @@ export class ValidationMiddleware {
       .withMessage('Email is required'),
 
     body('password')
-      .isLength({ min: 8 })
-      .withMessage('Password must be at least 8 characters long')
+      .isLength({ min: 4 })
+      .withMessage('Password must be at least 4 characters long')
       .custom((password) => {
         const validation = CryptoUtils.validatePasswordStrength(password);
         if (!validation.isValid) {
@@ -141,8 +141,8 @@ export class ValidationMiddleware {
       .withMessage('Current password is required'),
 
     body('newPassword')
-      .isLength({ min: 8 })
-      .withMessage('New password must be at least 8 characters long')
+      .isLength({ min: 4 })
+      .withMessage('New password must be at least 4 characters long')
       .custom((password) => {
         const validation = CryptoUtils.validatePasswordStrength(password);
         if (!validation.isValid) {
@@ -169,8 +169,8 @@ export class ValidationMiddleware {
    */
   static validatePasswordReset = [
     body('newPassword')
-      .isLength({ min: 8 })
-      .withMessage('New password must be at least 8 characters long')
+      .isLength({ min: 4 })
+      .withMessage('New password must be at least 4 characters long')
       .custom((password) => {
         const validation = CryptoUtils.validatePasswordStrength(password);
         if (!validation.isValid) {

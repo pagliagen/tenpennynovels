@@ -40,10 +40,10 @@ export const validationConfig = {
    * Configure which password requirements are enforced during registration and password changes.
    * Set flags to true to enable specific requirements, false to disable.
    *
-   * Current configuration: Only minimum length is enforced (8 characters)
+   * Current configuration: Only minimum length is enforced (4 characters)
    */
   password: {
-    minLength: 8,                      // Minimum password length (always enforced)
+    minLength: 4,                      // Minimum password length (always enforced)
     requireUppercase: false,           // Require at least one uppercase letter (A-Z)
     requireLowercase: false,           // Require at least one lowercase letter (a-z)
     requireNumber: false,              // Require at least one number (0-9)
