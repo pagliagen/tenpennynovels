@@ -40,6 +40,18 @@
  * - Overlay shows Victorian styled version
  * - Supports text, password, email variants
  */
+
+/**
+ * No-op animation used purely as an autofill-detection hook: browsers apply
+ * `:-webkit-autofill` when they fill a field, and firing this animation lets
+ * JS catch the `animationstart` event to resync the decorative mask (see
+ * useMaskedField and the &:-webkit-autofill rule below).
+ */
+@keyframes maskedFieldAutofillDetect {
+  from {}
+  to {}
+}
+
 @mixin masked-field {
   .masked-field {
     position: relative;
@@ -73,6 +85,19 @@
 
       &--error {
         border-color: var(--color-error-border);
+      }
+
+      /**
+       * Autofill detection trick (Chrome/Safari): browsers apply this
+       * pseudo-class when they autofill a field. Attaching a no-op animation
+       * to it lets JS listen for `animationstart` to know autofill just
+       * happened - the input's own `input`/`change` events aren't reliably
+       * fired by all autofill paths, which otherwise leaves the decorative
+       * mask overlay stuck showing stale/empty content. See useMaskedField.
+       */
+      &:-webkit-autofill {
+        animation-name: maskedFieldAutofillDetect;
+        animation-duration: 0.1s;
       }
     }
 

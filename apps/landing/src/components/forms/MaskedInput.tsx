@@ -159,15 +159,26 @@ export const MaskedInput: React.FC<MaskedInputProps> = ({
   className = '',
   register,
 }) => {
-  const { maskValue, isMaskActive } = useMaskedField(value, maskType);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const { maskValue, isMaskActive } = useMaskedField(value, maskType, inputRef);
 
   // Determine input type (password for password mask, text otherwise)
   const inputType = maskType === 'password' ? 'password' : 'text';
+
+  // react-hook-form's own ref (for its focus/validation management) must keep
+  // working - merge it with ours (which useMaskedField reads the real DOM
+  // value from, see hook doc for why that's needed).
+  const registerRef = register?.ref;
+  const setRefs = (el: HTMLInputElement | null) => {
+    inputRef.current = el;
+    if (typeof registerRef === 'function') registerRef(el);
+  };
 
   // Merge register props with manual props
   const inputProps = register
     ? {
         ...register,
+        ref: setRefs,
         id,
         name: name || id,
         type: inputType,
@@ -179,6 +190,7 @@ export const MaskedInput: React.FC<MaskedInputProps> = ({
         className: `masked-field__input ${error ? 'masked-field__input--error' : ''}`,
       }
     : {
+        ref: setRefs,
         id,
         name: name || id,
         type: inputType,

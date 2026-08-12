@@ -168,7 +168,11 @@ function generateMaskValue(value: string, type: MaskType): string {
  * }
  * ```
  */
-export function useMaskedField(value: string, type: MaskType): UseMaskedFieldReturn {
+export function useMaskedField(
+  value: string,
+  type: MaskType,
+  inputRef?: React.RefObject<HTMLInputElement | null>
+): UseMaskedFieldReturn {
   const [maskValue, setMaskValue] = useState<string>('');
   const [isMaskActive, setIsMaskActive] = useState<boolean>(false);
 
@@ -177,13 +181,47 @@ export function useMaskedField(value: string, type: MaskType): UseMaskedFieldRet
     setIsMaskActive(true);
   }, []);
 
-  // Update mask value when input value changes
+  // Normal path: value prop changes (typing through onChange/react-hook-form)
   useEffect(() => {
     if (isMaskActive) {
       const newMaskValue = generateMaskValue(value, type);
       setMaskValue(newMaskValue);
     }
   }, [value, type, isMaskActive]);
+
+  // Fallback path: password managers and some browser autofill flows write
+  // straight to the DOM without firing an event React's synthetic system
+  // picks up. That doesn't just leave the mask stale - it's worse: the real
+  // form state (react-hook-form, via `value`/`watch`) never learns about the
+  // autofilled text either, so on the *next* unrelated re-render React will
+  // reassert its own (still-empty) `value` prop onto the controlled input,
+  // silently wiping the autofilled password back to '' before the user even
+  // submits. Re-dispatching a genuine 'input' event on the signals that DO
+  // reliably fire in those cases (the :-webkit-autofill CSS animation trick,
+  // see masked-field__input in the stylesheet, plus blur as a catch-all
+  // before the user tabs away or submits) pushes the already-correct DOM
+  // value through the *normal* onChange -> form state -> value prop pipeline,
+  // fixing both the form state and, as a natural consequence, the mask.
+  useEffect(() => {
+    const el = inputRef?.current;
+    if (!el || !isMaskActive) return;
+
+    const forceReactResync = () => {
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    const handleAnimationStart = (e: AnimationEvent) => {
+      if (e.animationName === 'maskedFieldAutofillDetect') forceReactResync();
+    };
+
+    el.addEventListener('animationstart', handleAnimationStart);
+    el.addEventListener('blur', forceReactResync);
+
+    return () => {
+      el.removeEventListener('animationstart', handleAnimationStart);
+      el.removeEventListener('blur', forceReactResync);
+    };
+  }, [isMaskActive, inputRef]);
 
   return {
     maskValue,
