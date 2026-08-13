@@ -27,7 +27,8 @@ interface ApiParameter {
 interface ApiResponse {
   status: number;
   description: string;
-  schema?: any;
+  /** Forma libera (JSON Schema-like): descrive un body di risposta arbitrario, non un valore che il codice manipola. */
+  schema?: Record<string, unknown>;
 }
 
 // Global registry for all API endpoints
@@ -59,6 +60,18 @@ function registerEndpoint(endpoint: ApiEndpoint) {
 }
 
 /**
+ * Bersaglio di un decoratore legacy (`experimentalDecorators`) su un metodo:
+ * per un metodo statico `target` È la classe (una funzione); per un metodo
+ * d'istanza `target` è il prototype, e `.constructor` punta alla classe.
+ * Le due forme non si distinguono a priori: vanno gestite entrambe.
+ */
+type MethodDecoratorTarget = (new (...args: unknown[]) => unknown) | { constructor: new (...args: unknown[]) => unknown };
+
+function resolveControllerName(target: MethodDecoratorTarget): string {
+  return typeof target === 'function' ? target.name : target.constructor.name;
+}
+
+/**
  * API Documentation decorator for controller methods
  */
 export function ApiDoc(options: {
@@ -71,22 +84,22 @@ export function ApiDoc(options: {
   responses?: ApiResponse[];
   tags?: string[];
 }) {
-  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (target: MethodDecoratorTarget, propertyName: string, descriptor: PropertyDescriptor) {
     const endpoint: ApiEndpoint = {
       method: options.method.toUpperCase(),
       path: options.path,
       description: options.description,
       service: options.service,
-      controller: target.constructor.name,
+      controller: resolveControllerName(target),
       function: propertyName,
       authentication: options.authentication || 'required',
       parameters: options.parameters || [],
       responses: options.responses || [],
       tags: options.tags || []
     };
-    
+
     registerEndpoint(endpoint);
-    
+
     return descriptor;
   };
 }
@@ -109,32 +122,34 @@ export const DELETE = (path: string, description: string, service: string, optio
 export const PATCH = (path: string, description: string, service: string, options?: Partial<ApiEndpoint>) => 
   ApiDoc({ method: 'PATCH', path, description, service, ...options });
 
+interface ApiDocsExport {
+  generatedAt: string;
+  services: Record<string, { endpoints: Omit<ApiEndpoint, 'service'>[] }>;
+}
+
 /**
  * Export API documentation as JSON
  */
-export function exportApiDocs() {
-  const docs: any = {
-    generatedAt: new Date().toISOString(),
-    services: {}
-  };
-  
+export function exportApiDocs(): ApiDocsExport {
+  const services: ApiDocsExport['services'] = {};
+
   API_REGISTRY.forEach((endpoints, serviceName) => {
-    docs.services[serviceName] = {
-      endpoints: endpoints.map(endpoint => ({
-        method: endpoint.method,
-        path: endpoint.path,
-        description: endpoint.description,
-        authentication: endpoint.authentication,
-        controller: endpoint.controller,
-        function: endpoint.function,
-        parameters: endpoint.parameters,
-        responses: endpoint.responses,
-        tags: endpoint.tags
+    services[serviceName] = {
+      endpoints: endpoints.map(({ method, path, description, authentication, controller, function: fn, parameters, responses, tags }) => ({
+        method,
+        path,
+        description,
+        authentication,
+        controller,
+        function: fn,
+        parameters,
+        responses,
+        tags
       }))
     };
   });
-  
-  return docs;
+
+  return { generatedAt: new Date().toISOString(), services };
 }
 
 /**
