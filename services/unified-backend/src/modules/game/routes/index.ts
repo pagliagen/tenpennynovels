@@ -16,7 +16,6 @@ import offGameMessagesRoutes from './offGameMessages';
 // import documentRoutes from './documents';  // REMOVED: Moved to modules/documents
 import chatModerationRoutes from './chatModerationRoutes';
 import characterRelationRoutes from './characterRelations';
-import occupationRoutes from './occupations';
 import skillRoutes from './skills';
 import itemRoutes from './items';
 import sessionRoutes from './sessions';
@@ -57,7 +56,6 @@ router.use('/housing', locationPropertyRoutes);
 // router.use('/documents', documentRoutes);  // REMOVED: Moved to modules/documents (mount: /documents)
 router.use('/', chatModerationRoutes);
 router.use('/relationships', characterRelationRoutes);
-router.use('/occupations', occupationRoutes);
 router.use('/skills', skillRoutes);
 router.use('/items', itemRoutes);
 router.use('/sessions', sessionRoutes);

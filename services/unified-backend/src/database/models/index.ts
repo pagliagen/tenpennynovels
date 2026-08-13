@@ -114,13 +114,16 @@ export {
 } from './CharacterRelation';
 
 // Occupation System
+// Deprecato: i model vivono ora in features/occupazioni/models/ (Fase 6.2 del
+// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   Occupation,
   CharacterOccupationHistory,
   OccupationCategory,
   type IOccupation,
   type ICharacterOccupationHistory
-} from './Occupation';
+} from '@features/occupazioni/models/Occupation';
 
 // Ticketing System
 // Deprecato: i model vivono ora in features/tickets/models/ (Fase 6.1 del
@@ -247,6 +250,7 @@ registerSoftDeleteModel('locations', () => require('./Location').Location, 'name
 registerSoftDeleteModel('items', () => require('./Item').Item, 'name');
 registerSoftDeleteModel('documents', () => require('./Document').default, 'title');
 registerSoftDeleteModel('users', () => require('./User').User, 'username');
-registerSoftDeleteModel('occupations', () => require('./Occupation').Occupation, 'name');
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora
+registerSoftDeleteModel('occupations', () => require('@features/occupazioni/models/Occupation').Occupation, 'name');
 registerSoftDeleteModel('skills', () => require('./Skill').Skill, 'name');
 registerSoftDeleteModel('socialclassconfigs', () => require('./SocialClassConfig').SocialClassConfig, 'label');
