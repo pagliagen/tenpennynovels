@@ -12,9 +12,10 @@ import Document from '@database/models/Document';
 import DocumentSubtype from '@database/models/DocumentSubtype';
 import { EmbeddingService } from '../services/EmbeddingService';
 import { HierarchyService } from '../services/HierarchyService';
-import { DocumentSearchAgent } from '../services/DocumentSearchAgent';
 import { logger } from '@shared/utils/logger';
 import { isQuestion } from '../utils/questionDetector';
+import { extensions } from '@core/extensions/registry';
+import type { ContextChunk } from '@core/extensions/points';
 
 export class DocumentController {
   // ========== PUBLIC ROUTES ==========
@@ -510,7 +511,7 @@ export class DocumentController {
         clearInterval(keepAlive);
       });
 
-      const contextChunks = relevantResults.map(r => {
+      const contextChunks: ContextChunk[] = relevantResults.map(r => {
         const chunkId = searchResults.find(sr => sr.heading === r.matchHeading && sr.slug === r.route?.anchor?.replace('#', ''))?.chunkId;
         const chunk = chunkId ? chunks.find(c => c.chunkId === chunkId) : null;
         return {
@@ -526,7 +527,16 @@ export class DocumentController {
         };
       });
 
-      await DocumentSearchAgent.run(query, contextChunks, res, abortController.signal);
+      await extensions.emit('documents.search.stream', {
+        question: query,
+        chunks: contextChunks,
+        sse: { send: sendSSE },
+        signal: abortController.signal,
+      });
+      if (!abortController.signal.aborted) {
+        sendSSE('complete', {});
+        res.end();
+      }
       clearInterval(keepAlive);
     } catch (error: unknown) {
       logger.error('Error in semanticSearch:', error);
@@ -644,107 +654,15 @@ export class DocumentController {
   /**
    * GET /documents/ai-status
    * Returns whether the AI gateway is healthy and available for Q&A.
-   * aiAvailable è false se keeper_qa_enabled è spento, a prescindere dalla
-   * salute reale del gateway AI (feature disattivata di proposito).
+   * aiAvailable resta false se nessuna feature registrata sul filter la
+   * abilita (es. bibliotecario spento) — vedi core/extensions/registry.ts.
    */
-  static async aiStatus(_req: Request, res: Response): Promise<void> {
+  static async aiStatus(req: Request, res: Response): Promise<void> {
     try {
-      const keeperEnabled = await EmbeddingService.isKeeperQaEnabled();
-      const aiAvailable = keeperEnabled && await EmbeddingService.isAiAvailable();
-      res.json({ result: true, data: { aiAvailable } });
+      const capabilities = await extensions.apply('documents.search.capabilities', { aiAvailable: false }, { userId: req.user?.userId });
+      res.json({ result: true, data: capabilities });
     } catch {
       res.json({ result: true, data: { aiAvailable: false } });
-    }
-  }
-
-  /**
-   * GET /documents/ask?q=...
-   * AI-powered Q&A: semantic search → top chunks → local-ai Q&A → answer
-   * Graceful degradation: if AI unavailable, returns search results only
-   */
-  static async ask(req: Request, res: Response): Promise<void> {
-    try {
-      const { q: question, type, locale = 'it' } = req.query;
-
-      if (!question || typeof question !== 'string' || question.length < 3) {
-        res.status(400).json({ result: false, error: 'Domanda richiesta (minimo 3 caratteri)', code: 'MISSING_QUESTION' });
-        return;
-      }
-
-      const searchResults = await EmbeddingService.semanticSearch(
-        question, type as 'ambientazione' | 'regolamento' | undefined, 5, 0.01
-      );
-
-      if (searchResults.length === 0) {
-        res.json({
-          result: true,
-          data: { answer: null, aiAvailable: false, results: [], message: 'Nessun risultato trovato' },
-        });
-        return;
-      }
-
-      const chunkIds = searchResults.map(r => r.chunkId).filter(Boolean);
-      const db = mongoose.connection.db;
-      if (!db) throw new Error('Database connection not available');
-
-      const chunks = await db.collection('documentchunks').find({ chunkId: { $in: chunkIds } }).toArray();
-
-      const contextChunks = searchResults.map(result => {
-        const chunk = chunks.find(c => c.chunkId === result.chunkId);
-        if (!chunk) return null;
-        return {
-          heading: result.heading || chunk.heading || '',
-          content: chunk.content || '',
-          source: { documentId: result.documentId, slug: result.slug },
-        };
-      }).filter(Boolean);
-
-      // Try AI-powered answer via embeddings-worker
-      try {
-        const keeperEnabled = await EmbeddingService.isKeeperQaEnabled();
-        const healthy = keeperEnabled && await EmbeddingService.isAiAvailable();
-        if (healthy && contextChunks.length > 0) {
-          const qaResponse = await EmbeddingService.askQuestion({
-            question,
-            context: contextChunks.filter((c): c is NonNullable<typeof c> => c !== null),
-            // Il system prompt del Bibliotecario chiede 2-4 frasi (~150 token):
-            // un tetto a 1000 serviva solo a far spendere tempo di inferenza al
-            // modello senza produrre risposta utile. Il budget reale lo decide
-            // embeddings-worker (config.qa.maxAnswerTokens) se non lo forziamo qui.
-            options: { maxTokens: 300, locale: locale as string },
-          });
-
-          if (qaResponse?.success && qaResponse.answer) {
-            res.json({
-              result: true,
-              data: {
-                answer: qaResponse.answer,
-                aiAvailable: true,
-                sources: qaResponse.sources,
-                metadata: qaResponse.metadata,
-                results: searchResults.slice(0, 3),
-              },
-            });
-            return;
-          }
-        }
-      } catch (aiError: unknown) {
-        logger.warn(`[DocumentController] AI Q&A unavailable: ${aiError instanceof Error ? aiError.message : String(aiError)}`);
-      }
-
-      // Graceful degradation: return search results without AI answer
-      res.json({
-        result: true,
-        data: {
-          answer: null,
-          aiAvailable: false,
-          results: searchResults,
-          message: 'AI non disponibile, ecco i risultati della ricerca',
-        },
-      });
-    } catch (error: unknown) {
-      logger.error('Error in ask:', error);
-      res.status(500).json({ result: false, error: 'Errore Q&A', code: 'ASK_ERROR' });
     }
   }
 

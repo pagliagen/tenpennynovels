@@ -10,20 +10,6 @@ import { appConfig } from '@config/runtime';
 
 const EMBEDDINGS_SERVICE_URL = appConfig.services.embeddingsUrl;
 
-interface QAContextChunk {
-  heading: string;
-  content: string;
-  source?: { documentId?: string; slug?: string; fullPath?: string; title?: string; subtypeTitle?: string };
-}
-
-interface QAResponse {
-  success: boolean;
-  answer?: string;
-  sources?: Array<{ heading: string; slug?: string; fullPath?: string; title?: string; used: boolean }>;
-  metadata?: { model: string; tokensUsed: number };
-  error?: string;
-}
-
 interface QAExtractKeywordsResponse {
   success: boolean;
   keywords: string[];
@@ -57,13 +43,6 @@ interface SceneSummarizationResponse {
 }
 
 export class EmbeddingService {
-  // Ollama availability is cached briefly: /ask, extractKeywords and extractInsight
-  // are all called within a single search request and would otherwise each trigger
-  // their own live ping to embeddings-worker's /health (and thus to Ollama).
-  private static aiHealthy: boolean | null = null;
-  private static aiHealthCheckedAt = 0;
-  private static readonly AI_HEALTH_TTL_MS = 60_000;
-
   /**
    * Generate embedding for given text via embeddings-worker
    */
@@ -154,78 +133,6 @@ export class EmbeddingService {
       logger.error(`Error in semanticSearch: ${error.message}`);
       logger.error(`Error stack: ${error.stack}`);
       return [];
-    }
-  }
-
-  /**
-   * Whether the RAG (Bibliotecario) path is available, i.e. embeddings-worker
-   * is reachable AND Ollama is up. Cached for AI_HEALTH_TTL_MS to avoid a live
-   * Ollama probe on every question.
-   */
-  static async isAiAvailable(): Promise<boolean> {
-    const now = Date.now();
-    if (this.aiHealthy !== null && now - this.aiHealthCheckedAt < this.AI_HEALTH_TTL_MS) {
-      return this.aiHealthy;
-    }
-
-    try {
-      const response = await fetch(`${EMBEDDINGS_SERVICE_URL}/health`, {
-        signal: AbortSignal.timeout(3000)
-      });
-      const data = await response.json() as { ollama?: boolean };
-      this.aiHealthy = data.ollama === true;
-    } catch {
-      this.aiHealthy = false;
-    }
-
-    this.aiHealthCheckedAt = now;
-    return this.aiHealthy;
-  }
-
-  /**
-   * Risposta AI del Bibliotecario legata al servizio AI, non gestito dal
-   * server al momento. Config keeper_qa_enabled (sezione ai_features),
-   * default OFF: la ricerca documenti resta sempre attiva, solo questa
-   * generazione di risposte si disattiva.
-   */
-  static async isKeeperQaEnabled(): Promise<boolean> {
-    try {
-      const { ConfigurationService } = await import('@shared/services/ConfigurationService');
-      const { redis } = await import('@config/runtime/redis');
-      const configService = new ConfigurationService(redis.getClient(), logger);
-      const enabled = await configService.getConfig('keeper_qa_enabled');
-      return !!enabled;
-    } catch (error: unknown) {
-      logger.warn('[EmbeddingService] Failed to check keeper_qa_enabled, defaulting to disabled', { error });
-      return false;
-    }
-  }
-
-  /**
-   * AI-powered Q&A answer generation ("Bibliotecario") via embeddings-worker /ask
-   */
-  static async askQuestion(payload: {
-    question: string;
-    context: QAContextChunk[];
-    options?: { maxTokens?: number; locale?: string };
-  }): Promise<QAResponse | null> {
-    try {
-      const response = await fetch(`${EMBEDDINGS_SERVICE_URL}/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(60000)
-      });
-
-      if (!response.ok) {
-        logger.error(`[EmbeddingService] /ask error: ${response.status}`);
-        return null;
-      }
-
-      return await response.json() as QAResponse;
-    } catch (error: any) {
-      logger.error(`Error in askQuestion: ${error.message}`);
-      return null;
     }
   }
 
