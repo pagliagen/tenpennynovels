@@ -12,7 +12,6 @@ import chatRoutes from './chats';
 import offGameChatRoutes from './offGameChats';
 import onGameMessagesRoutes from './onGameMessages';
 import offGameMessagesRoutes from './offGameMessages';
-import corporationRoutes from './corporations';
 // import forumRoutes from './forum';
 // import documentRoutes from './documents';  // REMOVED: Moved to modules/documents
 import ticketRoutes from '../../tickets/routes/tickets';
@@ -54,7 +53,6 @@ router.use('/', offGameChatRoutes); // OffGame chat system
 router.use('/', onGameMessagesRoutes); // On-game postal system
 router.use('/', offGameMessagesRoutes); // Off-game messaging system
 router.use('/chats', chatRoutes); // Location chats (renamed from location actions)
-router.use('/', corporationRoutes);
 router.use('/housing', locationPropertyRoutes);
 // router.use('/forum', forumRoutes);
 // router.use('/documents', documentRoutes);  // REMOVED: Moved to modules/documents (mount: /documents)
