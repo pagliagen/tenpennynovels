@@ -88,7 +88,7 @@ async function startServer(): Promise<void> {
     logger.info('✅ Email service initialized');
 
     // Initialize Notification Service with WebSocket
-    const { NotificationService } = await import('@shared/services/NotificationService');
+    const { NotificationService } = await import('@features/tickets/api');
     NotificationService.initialize(io);
     logger.info('✅ Notification service initialized');
 

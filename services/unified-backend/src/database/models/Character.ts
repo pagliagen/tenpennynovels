@@ -3,7 +3,7 @@ import mongoose, { Schema, model, Document } from 'mongoose';
 import { calculateAllDerivedStats, getCharacterCreationConfig, type CharacterStats, type DerivedStats } from '../../shared/services/CharacterCreationConfigService';
 import { escapeRegex } from '@shared/utils/validation';
 import { softDeletePlugin, SoftDeleteMethods } from '../plugins/softDeletePlugin';
-import { NotificationService } from '../../shared/services/NotificationService';
+import { NotificationService } from '@features/tickets/api';
 import { createModuleLogger } from '@shared/utils/logger';
 
 const logger = createModuleLogger('character-model');

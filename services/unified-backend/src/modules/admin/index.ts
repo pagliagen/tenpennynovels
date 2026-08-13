@@ -4,7 +4,7 @@ import 'module-alias/register';
 import app from './app';
 import { logger } from './utils/logger';
 import { db, redis, appConfig } from '@config/runtime';
-import { escalationService } from './services/EscalationService';
+import { escalationService } from '@features/tickets/api';
 
 logger.info('Loading environment variables...');
 dotenv.config({ path: '../../.env' });
