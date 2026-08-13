@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-import { Corporation } from '@database/models/Corporation';
+import { isMember, getMemberCorporationIds } from '@features/corporazioni/api';
 import { ForumCategory } from '@database/models/ForumCategory';
 import type { IForumTopic, TopicAccessRule } from '@database/models/ForumTopic';
 import type { IForumDiscussion } from '@database/models/ForumDiscussion';
@@ -76,11 +76,7 @@ export async function canAccessTopic(
         break;
       case 'corporation':
         if (character && rule.corporationId) {
-          const isMember = await Corporation.exists({
-            _id: rule.corporationId,
-            'members.characterId': new mongoose.Types.ObjectId(character.characterId)
-          });
-          if (isMember) return true;
+          if (await isMember(character.characterId, rule.corporationId)) return true;
         }
         break;
     }
@@ -116,11 +112,7 @@ export async function matchesDiscussionVisibility(
       return isStaff;
     case 'corporation': {
       if (!character || !visibility.corporationId) return false;
-      const isMember = await Corporation.exists({
-        _id: visibility.corporationId,
-        'members.characterId': new mongoose.Types.ObjectId(character.characterId)
-      });
-      return !!isMember;
+      return isMember(character.characterId, visibility.corporationId);
     }
     case 'characterList':
       return !!character && !!visibility.characterIds?.some((id) => id.toString() === character.characterId);
@@ -164,8 +156,8 @@ export async function buildDiscussionVisibilityFilter(
   const isStaff = isStaffContext(character);
 
   let corporationIds: mongoose.Types.ObjectId[] = [];
-  if (charObjectId) {
-    corporationIds = await Corporation.find({ 'members.characterId': charObjectId }).distinct('_id');
+  if (character) {
+    corporationIds = await getMemberCorporationIds(character.characterId);
   }
 
   const visibilityOr: Record<string, unknown>[] = [

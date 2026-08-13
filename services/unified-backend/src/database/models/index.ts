@@ -24,14 +24,17 @@ export { SkillConfrontation, type ISkillConfrontation } from './SkillConfrontati
 export { CombatEncounter, type ICombatEncounter } from './CombatEncounter';
 
 // Corporation System
-export { 
-  Corporation, 
+// Deprecato: il model vive ora in features/corporazioni/models/Corporation.ts
+// (Fase 4 del refactor layer→feature). Shim di compatibilità per chi importa
+// ancora dal barrel — EconomyController.ts, CharacterSocialController.ts.
+export {
+  Corporation,
   CorporationMembershipRequest,
   CorporationInvitation,
   type ICorporation,
   type ICorporationMembershipRequest,
-  type ICorporationInvitation 
-} from './Corporation';
+  type ICorporationInvitation
+} from '@features/corporazioni/models/Corporation';
 
 // Item and Shop System
 export { 
