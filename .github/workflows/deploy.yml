@@ -176,10 +176,6 @@ jobs:
                 (cd "$service" && npm install)
               fi
             done
-            if [ -f "services/unified-backend/src/shared/package.json" ]; then
-              (cd "services/unified-backend/src/shared" && npm install)
-            fi
-
             echo "🏗️  Building backend services..."
             echo "Node version: $(node --version)"
             echo "npm version: $(npm --version)"

@@ -13,11 +13,11 @@
  *
  * Usage:
  * ```typescript
- * import { ConfigurationService } from '@tenpennynovels/shared';
- * import { redisClient } from './config/redis';
- * import { logger } from './utils/logger';
+ * import { ConfigurationService } from '@shared/services/ConfigurationService';
+ * import { redis } from '@config/runtime/redis';
+ * import { logger } from '@shared/utils/logger';
  *
- * const configService = new ConfigurationService(redisClient, logger);
+ * const configService = new ConfigurationService(redis.getClient(), logger);
  *
  * // Get single configuration
  * const template = await configService.getConfig('email_template_verification');

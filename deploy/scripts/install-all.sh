@@ -26,7 +26,5 @@ for service in services/*/; do
   fi
 done
 
-(cd "services/unified-backend/src/shared" && npm install || true)
-
 echo ""
 echo "✅ All dependencies installed!"
