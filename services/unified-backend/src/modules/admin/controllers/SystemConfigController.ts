@@ -18,18 +18,24 @@ export class SystemConfigController {
    */
   static async getFeatureFlags(req: Request, res: Response): Promise<void> {
     try {
+      // botManagementEnabled: letto direttamente, il bot non è ancora una
+      // feature registrata (arriva in Fase 3 del refactor). keeperQaEnabled:
+      // fonte unica ora è FeatureFlagService, non più una lettura ad-hoc —
+      // stessa chiave di risposta di sempre, per non rompere
+      // apps/management/src/store/featureFlagsStore.ts.
       const { ConfigurationService } = await import('@shared/services/ConfigurationService');
+      const { FeatureFlagService } = await import('@core/features/flags');
       const configService = new ConfigurationService(redis.getClient(), logger);
 
       const [botManagementEnabled, keeperQaEnabled] = await Promise.all([
         configService.getConfig('bot_management_enabled'),
-        configService.getConfig('keeper_qa_enabled'),
+        FeatureFlagService.isEnabled('bibliotecario'),
       ]);
 
       res.json(successResponse(
         {
           botManagementEnabled: botManagementEnabled ?? false,
-          keeperQaEnabled: keeperQaEnabled ?? false,
+          keeperQaEnabled,
         },
         undefined,
         getRequestId(req)
