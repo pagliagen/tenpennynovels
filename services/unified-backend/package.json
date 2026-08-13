@@ -17,6 +17,7 @@
     "build": "tsc",
     "start": "NODE_ENV=production node bootstrap.js",
     "type-check": "tsc --noEmit",
+    "lint:boundaries": "tsx src/scripts/check-boundaries.ts",
     "migrate:social-conflict": "tsx src/database/migrations/migrate-social-conflict.ts",
     "seed:skill-confrontations": "tsx src/database/seeds/skill-confrontations.ts",
     "generate:sitemap": "tsx src/scripts/generate-sitemap.ts"

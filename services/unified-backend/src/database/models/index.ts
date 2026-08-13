@@ -27,6 +27,7 @@ export { CombatEncounter, type ICombatEncounter } from './CombatEncounter';
 // Deprecato: il model vive ora in features/corporazioni/models/Corporation.ts
 // (Fase 4 del refactor layer→feature). Shim di compatibilità per chi importa
 // ancora dal barrel — EconomyController.ts, CharacterSocialController.ts.
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   Corporation,
   CorporationMembershipRequest,
