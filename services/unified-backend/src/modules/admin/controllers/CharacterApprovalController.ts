@@ -297,7 +297,8 @@ export class CharacterApprovalController {
       // Use local and shared models with proper imports
       const { Character } = await import('@database/models/Character');
       const { Item } = await import('@database/models/Item');
-      const { Occupation } = await import('@database/models/Occupation');
+      // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7)
+      const { Occupation } = await import('@features/occupazioni/models/Occupation');
       const { User } = await import('@database/models/User');
       
       // Get character with populated user data
@@ -838,7 +839,8 @@ export class CharacterApprovalController {
 
       // Use local and shared models with proper imports
       const { Character } = await import('@database/models/Character');
-      const { Occupation } = await import('@database/models/Occupation');
+      // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7)
+      const { Occupation } = await import('@features/occupazioni/models/Occupation');
       
       // Get character in PENDING_APPROVAL status - force fresh read
       const character = await Character.findOne({
