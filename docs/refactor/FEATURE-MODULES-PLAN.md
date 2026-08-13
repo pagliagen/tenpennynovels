@@ -486,7 +486,9 @@ Verificare che le dipendenze citate nei package.json rimossi (`express`, `redis`
 
 **0.3 — tsconfig**
 
-`services/unified-backend/tsconfig.json`, campo `exclude`: sostituire `"node_modules"` con `"**/node_modules"`. L'attuale pattern è relativo alla root e non copre quelli annidati.
+`services/unified-backend/tsconfig.json`, campo `exclude`: sostituire `"node_modules"` con `"**/node_modules"`.
+
+**Correzione rispetto alla stesura originale di questo piano**: qui si affermava che il pattern bare `"node_modules"` fosse relativo alla root e non coprisse le cartelle annidate. Verificato empiricamente (progetto di prova con un tipo rotto dentro un `node_modules` annidato, compilato prima e dopo la modifica): **il claim era sbagliato**. TypeScript tratta un identificatore senza wildcard come se avesse un prefisso implicito `**/`, quindi il pattern originale escludeva già correttamente anche i `node_modules` annidati — non stava scansionando `src/shared/node_modules` prima della 0.2. Il cambio resta comunque nel piano perché rende esplicito un comportamento che altrimenti è implicito e non ovvio da documentazione, a costo praticamente nullo — ma non va presentato come un fix di un bug reale.
 
 **0.4 — Verifica**
 
