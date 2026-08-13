@@ -123,19 +123,24 @@ export {
 } from './Occupation';
 
 // Ticketing System
+// Deprecato: i model vivono ora in features/tickets/models/ (Fase 6.1 del
+// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   Ticket,
   type ITicket
-} from './Ticket';
+} from '@features/tickets/models/Ticket';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   TicketMessage,
   type ITicketMessage
-} from './TicketMessage';
+} from '@features/tickets/models/TicketMessage';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   TicketNotification,
   type TicketNotificationType,
   type ITicketNotification
-} from './TicketNotification';
+} from '@features/tickets/models/TicketNotification';
 
 // Financial System
 export {

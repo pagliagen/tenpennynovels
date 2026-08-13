@@ -6,5 +6,6 @@
 import type { FeatureManifest } from '@core/features/types';
 import { bibliotecario } from './bibliotecario/manifest';
 import { corporazioni } from './corporazioni/manifest';
+import { tickets } from './tickets/manifest';
 
-export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni];
+export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni, tickets];

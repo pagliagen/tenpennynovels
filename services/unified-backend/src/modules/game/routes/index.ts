@@ -14,7 +14,6 @@ import onGameMessagesRoutes from './onGameMessages';
 import offGameMessagesRoutes from './offGameMessages';
 // import forumRoutes from './forum';
 // import documentRoutes from './documents';  // REMOVED: Moved to modules/documents
-import ticketRoutes from '../../tickets/routes/tickets';
 import chatModerationRoutes from './chatModerationRoutes';
 import characterRelationRoutes from './characterRelations';
 import occupationRoutes from './occupations';
@@ -56,7 +55,6 @@ router.use('/chats', chatRoutes); // Location chats (renamed from location actio
 router.use('/housing', locationPropertyRoutes);
 // router.use('/forum', forumRoutes);
 // router.use('/documents', documentRoutes);  // REMOVED: Moved to modules/documents (mount: /documents)
-router.use('/', ticketRoutes);
 router.use('/', chatModerationRoutes);
 router.use('/relationships', characterRelationRoutes);
 router.use('/occupations', occupationRoutes);
