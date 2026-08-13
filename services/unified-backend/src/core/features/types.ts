@@ -15,8 +15,17 @@
  * è sottoscritto e instradato ma mai pubblicato da nessuno in tutto il
  * repo, infrastruttura morta. Costruire eventHandlers ora avrebbe
  * significato rendere EventRouter registry-driven per collegare un
- * canale che nessuno usa. Resta un TODO per la prossima feature che
- * pubblica e sottoscrive eventi Redis reali.
+ * canale che nessuno usa.
+ *
+ * La Fase 6.1 (tickets) aveva il caso opposto: il canale 'ticket:events' è
+ * vivo (pubblicato da più punti reali). Verificato comunque come NON il
+ * trigger per eventHandlers: modules/game/events/handlers/TicketEventHandler.ts
+ * non ha alcun accoppiamento al model/tipi della feature — opera sul
+ * payload generico dell'evento, non fa query, e resta fuori da
+ * features/tickets/. Un canale Redis vivo da solo non basta: serve che
+ * l'handler STESSO dipenda dai model/tipi della feature per giustificare
+ * eventHandlers nel manifest. Resta un TODO per la prossima feature in cui
+ * questo è vero.
  */
 
 import type { Router } from 'express';

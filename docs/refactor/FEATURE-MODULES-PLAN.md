@@ -642,7 +642,7 @@ Una feature per PR. **Mai due feature in volo contemporaneamente.** Ordine per r
 
 | # | Feature | Perimetro indicativo | Note |
 |---|---|---|---|
-| 1 | `tickets` | 3 file | banale, buon riscaldamento |
+| 1 | `tickets` | ~16 file, ~6100 righe | stima iniziale errata ("3 file, banale"): ricognizione reale (Fase 6.1) mostra perimetro vicino a corporazioni, non un riscaldamento |
 | 2 | `occupazioni` | piccolo | |
 | 3 | `oggetti` + `economia` | medio | valutare se sono una feature o due |
 | 4 | `documenti` | medio | già quasi isolato, `dependsOn: ['bibliotecario']` no — l'inverso |
