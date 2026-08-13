@@ -101,7 +101,13 @@ export class ConfigurationService {
         return null;
       }
 
-      const value = config.value || config.defaultValue;
+      // ?? non ||: config.value può essere legittimamente false/0/'' — con ||
+      // un booleano false esplicito veniva scambiato per "non impostato" e
+      // ricadeva sempre su defaultValue, rendendo impossibile spegnere un
+      // flag con defaultValue:true (scoperto testando corporations_enabled,
+      // Fase 4 del refactor: invisibile su flag con default:false come
+      // keeper_qa_enabled, dove il fallback coincide comunque con false).
+      const value = config.value ?? config.defaultValue;
 
       // Cache for future requests
       await this.redis.setEx(cacheKey, CACHE_TTL, JSON.stringify(value));
@@ -141,7 +147,7 @@ export class ConfigurationService {
 
       const result: Record<string, any> = {};
       for (const config of configs) {
-        result[config.configKey] = config.value || config.defaultValue;
+        result[config.configKey] = config.value ?? config.defaultValue;
       }
 
       this.logger.info(`Fetched ${configs.length} configurations for section: ${section}`);
