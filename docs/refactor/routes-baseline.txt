@@ -166,8 +166,6 @@ GET /admin/users/summary
 GET /auth/check-email
 GET /auth/check-username
 GET /auth/effective-permissions
-GET /auth/occupations
-GET /auth/occupations/filtered
 GET /auth/profile
 GET /auth/profile/export
 GET /auth/reset-password/:token

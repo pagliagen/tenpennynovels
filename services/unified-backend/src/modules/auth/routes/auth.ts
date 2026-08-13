@@ -4,7 +4,6 @@ import { AuthController } from '../controllers/AuthController';
 import { PasswordController } from '../controllers/PasswordController';
 import { ProfileController } from '../controllers/ProfileController';
 import { SecurityController } from '../controllers/SecurityController';
-import { OccupationController } from '../controllers/OccupationController';
 import { AuthMiddleware } from '../middleware/auth';
 import { RateLimitMiddleware } from '../middleware/rateLimit';
 import { ValidationMiddleware } from '../middleware/validation';
@@ -174,17 +173,6 @@ router.post('/security/report-suspicious',
 router.post('/security/acknowledge-alert/:alertId',
   AuthMiddleware.authenticateUser(),
   SecurityController.acknowledgeAlert
-);
-
-// Public data routes (no authentication required)
-router.get('/occupations',
-  RateLimitMiddleware.apiCallsLimit(),
-  OccupationController.getAllOccupations
-);
-
-router.get('/occupations/filtered',
-  RateLimitMiddleware.apiCallsLimit(),
-  OccupationController.getFilteredOccupations
 );
 
 export default router;
