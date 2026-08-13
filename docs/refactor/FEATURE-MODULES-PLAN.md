@@ -127,13 +127,19 @@ Tre regole, verificate da script in CI:
 
 Il confine è la decisione architetturale più importante del piano. Sbagliato il confine, il refactor produce lo stesso groviglio in cartelle più belle.
 
-**Core** (stabile, ogni feature può dipenderci):
+**Core** (stabile, ogni feature può dipenderci — il minimo indispensabile perché il gioco esista: un GDR via chat non regge senza personaggi, un posto dove stare, e un modo per parlarci):
 
 ```
 src/core/
   auth/            autenticazione utente + sessione personaggio, middleware
   character/       Character, CharacterSession — l'entità attorno a cui ruota tutto
+                    (include Prestavolto e Anagrafica: oggi campi sullo stesso
+                    schema Mongoose, non collection separate — restano lì,
+                    nessuna estrazione prevista)
   user/            User
+  location/        Location — dove stanno i personaggi
+  chat/            Chat, il trasporto — invio/persistenza messaggi in una location
+  onGameMessages/  OnGameMessage, OnGameThread — sistema postale in-fiction
   permissions/     registry dei permessi
   config/          ConfigurationService, appConfig
   events/          bus Redis, RedisSubscriber, EventRouter, RedisChannel
@@ -144,18 +150,23 @@ src/core/
   logger/
 ```
 
-**Feature** (tutto il resto):
+**Feature** (tutto il resto — arricchisce il gioco ma non è indispensabile alla sua esistenza):
 
 ```
 src/features/
-  bibliotecario/   ← pilota fase 2
-  bot/             ← fase 3
-  corporazioni/    ← fase 4
-  tickets/  occupazioni/  oggetti/  economia/
-  forum/  documenti/  luoghi/  chat/     ← per ultime, le più grosse
+  bibliotecario/      ← pilota fase 2
+  bot/                ← fase 3
+  corporazioni/       ← fase 4
+  tickets/             ← fase 6.1, fatta
+  occupazioni/  oggetti/  economia/
+  forum/  documenti/
+  offGameMessages/     meta-comunicazione fuori fiction (OffGameChat legacy, OffGameThread, OffGameMessage)
+  fineSessione/        segmentazione della chat in scene narrative (ChatScene, CharacterChatScene, ChatSceneService) — sopra al trasporto core, non il trasporto stesso
 ```
 
-`Chat` e `Location` sono i casi contesi: molte feature ne dipendono. La scelta è **feature con API pubblica ampia**, non core: sono dominio di gioco, non infrastruttura. Migrarle per ultime, quando il pattern è rodato.
+**Decisione (2026-08-13, rivista rispetto alla bozza iniziale)**: `Location`, `Chat` (il trasporto) e i messaggi OnGame sono **core**, non feature — smentisce la classificazione originaria di questa sezione (che li aveva messi fra le feature "per ultime", contraddicendo peraltro §4.2 che già chiamava `Location` "un model del core"). Motivazione: senza personaggi, un posto dove stare, e un modo per parlarci non c'è gioco — sono le pareti portanti, non contenuto. Restano feature separabili sopra al trasporto: la segmentazione in scene (`fineSessione`, oggi `ChatSceneService`, già ben isolato — proprio model, proprio service) e la messaggistica OffGame (meta-comunicazione, non in-fiction). `Prestavolto` e `Anagrafica` restano dentro `character/`: sono campi sullo stesso schema Character, l'estrazione richiederebbe lo stesso debito già accettato per i campi bot su `Location` (Mongoose non supporta l'estensione di uno schema da parte di un altro modulo) — non ritenuto necessario.
+
+**Nota**: questa sezione descrive il confine *logico* target. Nessuna fase fino ad ora sposta fisicamente `Character`/`User`/`auth`/`Location`/`Chat`/messaggi OnGame dentro `src/core/` — restano nei vecchi path per-layer (`database/models/`, `modules/game/`, `modules/auth/`) finché non si esegue la Fase 7 (§5), esplicitamente rimandata alla fine dopo tutte le estrazioni di feature. Fino a quel momento "core" è una classificazione, non una posizione nel filesystem: le feature continuano a importare questi model con i path esistenti, non da `@core/*`.
 
 ### 3.3 Anatomia di una feature
 
@@ -638,23 +649,42 @@ Preferito uno script custom rispetto a ESLint: **`services/unified-backend` non 
 
 ### Fase 6 — Migrazione progressiva del resto
 
-Una feature per PR. **Mai due feature in volo contemporaneamente.** Ordine per rischio crescente:
+Una feature per PR. **Mai due feature in volo contemporaneamente.** Ordine deciso dall'utente (diverge dal rischio crescente quando serve — vedi nota su `bot`):
 
 | # | Feature | Perimetro indicativo | Note |
 |---|---|---|---|
-| 1 | `tickets` | ~16 file, ~6100 righe | stima iniziale errata ("3 file, banale"): ricognizione reale (Fase 6.1) mostra perimetro vicino a corporazioni, non un riscaldamento |
+| 1 | `tickets` | ~16 file, ~6100 righe | **fatta** (Fase 6.1) — stima iniziale errata ("3 file, banale"), perimetro reale vicino a corporazioni |
 | 2 | `occupazioni` | piccolo | |
 | 3 | `oggetti` + `economia` | medio | valutare se sono una feature o due |
 | 4 | `documenti` | medio | già quasi isolato, `dependsOn: ['bibliotecario']` no — l'inverso |
 | 5 | `forum` | 5 controller admin | il più duplicato sull'asse admin |
-| 6 | `luoghi` | grande | tocca `bot`, `chat` |
-| 7 | `chat` | **3083 + 1198 righe** | per ultima, richiede lo split di `ChatController` in service |
+| 6 | `fineSessione` | piccolo, già isolato | `ChatScene`, `CharacterChatScene`, `ChatSceneService` — segmentazione narrativa sopra al trasporto chat (core), proprio model e proprio service già oggi. Ordine rispetto a `offGameMessages` non vincolante, messa prima per rischio minore — default, non richiesta esplicita |
+| 7 | `offGameMessages` | da valutare | `OffGameChat` (legacy), `OffGameThread`, `OffGameMessage` — meta-comunicazione fuori fiction, mancava dalla lista originaria |
+| 8 | `bot` | vedi §4.2 | **out of scope rispetto al progetto, resta per ultima** — riportato in fondo il 2026-08-13 (era stato spostato dopo forum quando dipendeva dall'ordine con `luoghi`, ora che `luoghi` è core quella ragione non si applica più) |
 
-Alla fine: rimuovere lo shim `database/models/index.ts` e svuotare `src/modules/`.
+`luoghi` e `chat` (il trasporto) **rimossi dalla tabella**: riclassificati come core il 2026-08-13, vedi §3.2 — non si migrano più come feature.
+
+Alla fine di questa fase: rimuovere lo shim `database/models/index.ts` e svuotare `src/modules/` dai residui delle feature migrate (non da `Character`/`User`/`auth`/`Location`/`Chat`/messaggi OnGame, che restano lì fino alla Fase 7).
 
 ---
 
-### Fase 7 — Frontend (branch separato, fuori da questo piano)
+### Fase 7 — Consolidamento del core
+
+Aggiunta il 2026-08-13, esplicitamente **rimandata alla fine** su richiesta dell'utente: si esegue solo dopo che tutte le feature della Fase 6 sono migrate e testate.
+
+**Obiettivo**: rendere reale il confine solo logico descritto in §3.2 — spostare `Character`/`CharacterSession` (con Prestavolto e Anagrafica, che restano campi sullo stesso schema), `User`, `auth`, `Location`, `Chat` (il trasporto) e i messaggi OnGame (`OnGameMessage`, `OnGameThread`) da `database/models/`, `modules/game/`, `modules/auth/` dentro `src/core/`.
+
+**Non pianificata in dettaglio ora**: a differenza delle feature di Fase 6, qui non c'è un piano fase-per-fase pronto. `Character.ts` da solo è importato da decine di file in tutto il repo (ogni feature già migrata lo consuma) — il perimetro reale va ricognito con lo stesso pattern già rodato (2-3 agenti Explore in parallelo + un agente Plan di validazione) quando si arriva a questa fase, non anticipato ora. Aspettative realistiche:
+
+- Stesso pattern di shim già usato per le feature: re-export da `database/models/index.ts` verso `@core/character/models/Character`, ecc., rimosso solo a fine fase.
+- A differenza di una feature, `core/` non ha `manifest.ts`/flag/route proprie da montare — è puro spostamento di file e aggiornamento import, verificato con `dump-routes` (deve restare a diff zero) e `type-check`.
+- Rischio più alto delle fasi precedenti per superficie di impatto (tocca praticamente ogni feature esistente), non per complessità del singolo spostamento.
+
+**Criterio di uscita**: `src/modules/` (quanto resta dopo la Fase 6) svuotato, `database/models/index.ts` rimosso, `dump-routes` a diff zero, `type-check`/`build`/`lint:boundaries` puliti.
+
+---
+
+### Fase 8 — Frontend (branch separato, fuori da questo piano)
 
 Non toccare in questo branch. Da pianificare dopo:
 
