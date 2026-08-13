@@ -52,28 +52,31 @@ export class ExtensionRegistry {
    * omogeneo nel proprio K reale, ma la mappa le conserva sotto un tipo
    * "eraso" (keyof HookMap/FilterMap generico) perché TypeScript non
    * lega staticamente la chiave di un Map a un generico diverso per
-   * ogni entry. Gli `as` qui sotto ripristinano il tipo esatto nel punto
+   * ogni entry. I cast qui sotto ripristinano il tipo esatto nel punto
    * in cui K torna noto (get/set con lo stesso K usato in register);
    * non è un uso di `any`, è il pattern standard per un registro
-   * eterogeneo tipizzato per chiave.
+   * eterogeneo tipizzato per chiave. Passano da `unknown` (non da un
+   * cast diretto): con HookMap/FilterMap popolati, TS non trova più
+   * abbastanza overlap strutturale tra un K generico e una chiave
+   * letterale concreta per accettare un cast diretto.
    */
   private readonly hooks = new Map<keyof HookMap, RegisteredHandler<HookHandler<keyof HookMap>>[]>();
   private readonly filters = new Map<keyof FilterMap, RegisteredHandler<FilterHandler<keyof FilterMap>>[]>();
 
   registerHook<K extends keyof HookMap>(feature: FeatureKey, point: K, handler: HookHandler<K>, priority = DEFAULT_PRIORITY): void {
-    const list = (this.hooks.get(point) ?? []) as RegisteredHandler<HookHandler<K>>[];
+    const list = (this.hooks.get(point) ?? []) as unknown as RegisteredHandler<HookHandler<K>>[];
     list.push({ feature, priority, handler });
-    this.hooks.set(point, list as RegisteredHandler<HookHandler<keyof HookMap>>[]);
+    this.hooks.set(point, list as unknown as RegisteredHandler<HookHandler<keyof HookMap>>[]);
   }
 
   registerFilter<K extends keyof FilterMap>(feature: FeatureKey, point: K, handler: FilterHandler<K>, priority = DEFAULT_PRIORITY): void {
-    const list = (this.filters.get(point) ?? []) as RegisteredHandler<FilterHandler<K>>[];
+    const list = (this.filters.get(point) ?? []) as unknown as RegisteredHandler<FilterHandler<K>>[];
     list.push({ feature, priority, handler });
-    this.filters.set(point, list as RegisteredHandler<FilterHandler<keyof FilterMap>>[]);
+    this.filters.set(point, list as unknown as RegisteredHandler<FilterHandler<keyof FilterMap>>[]);
   }
 
   async emit<K extends keyof HookMap>(point: K, ctx: HookMap[K]): Promise<void> {
-    const registered = (this.hooks.get(point) ?? []) as RegisteredHandler<HookHandler<K>>[];
+    const registered = (this.hooks.get(point) ?? []) as unknown as RegisteredHandler<HookHandler<K>>[];
 
     for (const { feature, handler } of sortDeterministic(registered)) {
       if (!(await FeatureFlagService.isEnabled(feature))) continue;
@@ -86,7 +89,7 @@ export class ExtensionRegistry {
   }
 
   async apply<K extends keyof FilterMap>(point: K, value: FilterMap[K]['value'], ctx: FilterMap[K]['ctx']): Promise<FilterMap[K]['value']> {
-    const registered = (this.filters.get(point) ?? []) as RegisteredHandler<FilterHandler<K>>[];
+    const registered = (this.filters.get(point) ?? []) as unknown as RegisteredHandler<FilterHandler<K>>[];
 
     let current = value;
     for (const { feature, handler } of sortDeterministic(registered)) {

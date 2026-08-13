@@ -1,28 +1,61 @@
 /**
  * Contratti dei punti di estensione.
  *
- * Vuoti in questa fase (Fase 1 dello scaffolding: vedi
- * docs/refactor/FEATURE-MODULES-PLAN.md). Una voce si aggiunge qui SOLO
- * nel momento in cui una fase successiva introduce un extension point
- * reale — es. Fase 2: 'documents.search.stream', Fase 3:
- * 'chat.message.persisted' — leggendo il payload dal codice che lo
- * emette davvero, mai indovinandolo in anticipo.
+ * Una voce si aggiunge qui SOLO nel momento in cui una fase del refactor
+ * introduce un extension point reale, leggendo il payload dal codice che
+ * lo emette davvero — vedi docs/refactor/FEATURE-MODULES-PLAN.md.
  *
- * Interfacce vuote (non index signature): `keyof HookMap` è `never`
- * finché non c'è almeno una voce, quindi registerHook()/emit() non
- * possono accettare nessuna chiave inventata. Un'index signature
- * (`[point: string]: ...`) romperebbe questa garanzia rendendo
- * `keyof` uguale a `string` — qualunque stringa passerebbe.
+ * Interfacce non-vuote da qui in poi accettano solo le chiavi elencate:
+ * niente index signature, `keyof HookMap`/`keyof FilterMap` restano un
+ * union esplicito di stringhe letterali, non `string`.
  */
+
+/** Frammento di documento usato come contesto per una domanda al Bibliotecario. */
+export interface ContextChunk {
+  heading: string;
+  content: string;
+  source: {
+    documentId?: string;
+    slug?: string;
+    fullPath?: string;
+    title?: string;
+    subtypeTitle?: string;
+  };
+}
+
+/**
+ * Vista ristretta sullo stream SSE già aperto dal chiamante: una feature
+ * può solo inviare eventi, mai chiudere lo stream (invariante "chi apre
+ * lo stream lo chiude" — vedi FEATURE-MODULES-PLAN.md §7).
+ */
+export interface SseWriter {
+  send(event: string, data: unknown): void;
+}
 
 /** Extension point di sola notifica: nessun valore di ritorno, un errore in un handler non blocca il core. */
 export interface HookMap {
+  /**
+   * Fase 2 (bibliotecario). Il core ha già inviato l'evento 'results' sullo
+   * stream SSE della ricerca documenti; un handler può inviare eventi
+   * aggiuntivi sullo stesso stream ma non deve mai chiamare res.end() —
+   * resta il core a mandare 'complete' e chiudere, dopo che emit() risolve.
+   */
+  'documents.search.stream': {
+    question: string;
+    chunks: ContextChunk[];
+    sse: SseWriter;
+    signal: AbortSignal;
+  };
 }
 
 /**
  * Extension point di trasformazione: riceve un valore, ne restituisce uno,
- * eseguiti in sequenza per priorità. Ogni voce futura avrà la forma
- * `{ value: TValore; ctx: TContesto }`.
+ * eseguiti in sequenza per priorità.
  */
 export interface FilterMap {
+  /** Fase 2 (bibliotecario). Se nessuna feature registrata lo modifica, resta il valore di default passato dal chiamante. */
+  'documents.search.capabilities': {
+    value: { aiAvailable: boolean };
+    ctx: { userId?: string };
+  };
 }
