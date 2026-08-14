@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
+import { Character } from '@core/character/models/Character';
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 
@@ -202,7 +203,6 @@ export class CharacterValidationMiddleware {
       const characterId = req.params.characterId;
       const userId = req.user!.userId;
 
-      const Character = require('../../../database/models').Character;
       const character = await Character.findOne({
         _id: characterId,
         userId: userId

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Character } from '@core/character/models/Character';
 import { CharacterFinances } from '../models/CharacterFinances';
 import { logger } from '@modules/game/logger';
 import { CreditLineResetService } from '../services/CreditLineResetService';
@@ -16,7 +17,6 @@ export class FinancialController {
       const userId = req.user!.userId;
 
       // Check if user owns the character or is a master
-      const { Character } = require('../../../database/models');
       const character = await Character.findOne({
         _id: characterId
       });

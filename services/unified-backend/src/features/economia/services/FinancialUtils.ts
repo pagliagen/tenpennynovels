@@ -1,4 +1,5 @@
 import { SocialClassConfig } from '../models/SocialClassConfig';
+import { CharacterFinances } from '../models/CharacterFinances';
 import { SocialClass } from '@shared/types/socialClass';
 import { logger } from '@modules/game/logger';
 
@@ -83,8 +84,6 @@ export class FinancialUtils {
    */
   static async initializeCharacterFinances(characterId: string, socialClass: SocialClassConfigData, finanzaValue: number): Promise<void> {
     try {
-      const { CharacterFinances } = require('../../../database/models');
-
       // Generate random initial cash within the social class range
       const initialCash = Math.floor(
         Math.random() * (socialClass.initialWealth.maxCash - socialClass.initialWealth.minCash + 1)

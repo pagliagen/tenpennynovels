@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { logger } from '@modules/game/logger';
 import { FinancialUtils } from './FinancialUtils';
+import { CharacterFinances } from '../models/CharacterFinances';
 
 export class CreditLineResetService {
   private static isInitialized = false;
@@ -59,8 +60,6 @@ export class CreditLineResetService {
    */
   static async resetWeeklyCreditLines(): Promise<void> {
     try {
-      const { CharacterFinances } = require('../../database/models');
-
       // Get all character finances
       const allFinances = await CharacterFinances.find({});
 
@@ -120,7 +119,6 @@ export class CreditLineResetService {
       await this.resetWeeklyCreditLines();
 
       // Get count for response
-      const { CharacterFinances } = require('../../database/models');
       const count = await CharacterFinances.countDocuments();
 
       return {
