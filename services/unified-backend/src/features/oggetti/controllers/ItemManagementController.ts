@@ -402,21 +402,22 @@ export class ItemManagementController {
       // CWE-943: allowlist esplicita (rispecchia UpdateItemData del
       // frontend management) invece di spalmare req.body — un oggetto con
       // chiave "$set"/"$where" a livello root verrebbe interpretato come
-      // vero operatore Mongo. Ogni campo è copiato solo se del tipo
-      // atteso, mai passato così com'è.
-      const updateData: Record<string, unknown> = {};
-      if (typeof name === 'string') updateData.name = name;
-      if (typeof description === 'string') updateData.description = description;
-      if (typeof category === 'string') updateData.category = category;
-      if (typeof subcategory === 'string') updateData.subcategory = subcategory;
-      if (typeof imageUrl === 'string') updateData.imageUrl = imageUrl;
-      if (typeof isPublic === 'boolean') updateData.isPublic = isPublic;
-      if (typeof isAdminOnly === 'boolean') updateData.isAdminOnly = isAdminOnly;
-      if (Array.isArray(availableLocations)) updateData.availableLocations = availableLocations;
-      if (typeof basePrice === 'number') updateData.basePrice = basePrice;
-      if (properties && typeof properties === 'object' && !Array.isArray(properties)) updateData.properties = properties;
-      if (financialSettings && typeof financialSettings === 'object' && !Array.isArray(financialSettings)) updateData.financialSettings = financialSettings;
-      if (shopSettings && typeof shopSettings === 'object' && !Array.isArray(shopSettings)) updateData.shopSettings = shopSettings;
+      // vero operatore Mongo. Oggetto costruito come literal unico (non per
+      // assegnazioni successive) — ogni campo entra solo se del tipo atteso.
+      const updateData: Record<string, unknown> = {
+        ...(typeof name === 'string' && { name }),
+        ...(typeof description === 'string' && { description }),
+        ...(typeof category === 'string' && { category }),
+        ...(typeof subcategory === 'string' && { subcategory }),
+        ...(typeof imageUrl === 'string' && { imageUrl }),
+        ...(typeof isPublic === 'boolean' && { isPublic }),
+        ...(typeof isAdminOnly === 'boolean' && { isAdminOnly }),
+        ...(Array.isArray(availableLocations) && { availableLocations }),
+        ...(typeof basePrice === 'number' && { basePrice }),
+        ...(properties && typeof properties === 'object' && !Array.isArray(properties) && { properties }),
+        ...(financialSettings && typeof financialSettings === 'object' && !Array.isArray(financialSettings) && { financialSettings }),
+        ...(shopSettings && typeof shopSettings === 'object' && !Array.isArray(shopSettings) && { shopSettings }),
+      };
 
       if (!reason || reason.trim().length === 0) {
         res.status(400).json(errorResponse(

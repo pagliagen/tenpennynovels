@@ -287,18 +287,20 @@ export class OccupationManagementController {
 
       // CWE-943: allowlist esplicita invece di spalmare req.body — un
       // oggetto con chiave "$set"/"$where" a livello root verrebbe
-      // interpretato come vero operatore Mongo. Ogni campo è copiato
-      // solo se del tipo atteso, mai passato così com'è.
-      const updateData: Record<string, unknown> = {};
-      if (typeof name === 'string') updateData.name = name;
-      if (typeof description === 'string') updateData.description = description;
-      if (typeof category === 'string') updateData.category = category;
-      if (typeof contacts === 'string') updateData.contacts = contacts;
-      if (typeof earnings === 'string') updateData.earnings = earnings;
-      if (Array.isArray(requiredSkillSlots)) updateData.requiredSkillSlots = requiredSkillSlots;
-      if (Array.isArray(bonusSkills)) updateData.bonusSkills = bonusSkills;
-      if (typeof image === 'string') updateData.image = image;
-      if (typeof isActive === 'boolean') updateData.isActive = isActive;
+      // interpretato come vero operatore Mongo. Oggetto costruito come
+      // literal unico (non per assegnazioni successive) — ogni campo entra
+      // solo se del tipo atteso.
+      const updateData: Record<string, unknown> = {
+        ...(typeof name === 'string' && { name }),
+        ...(typeof description === 'string' && { description }),
+        ...(typeof category === 'string' && { category }),
+        ...(typeof contacts === 'string' && { contacts }),
+        ...(typeof earnings === 'string' && { earnings }),
+        ...(Array.isArray(requiredSkillSlots) && { requiredSkillSlots }),
+        ...(Array.isArray(bonusSkills) && { bonusSkills }),
+        ...(typeof image === 'string' && { image }),
+        ...(typeof isActive === 'boolean' && { isActive }),
+      };
 
       if (!reason || reason.trim().length === 0) {
         res.status(400).json(errorResponse(
