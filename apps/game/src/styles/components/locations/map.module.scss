@@ -65,12 +65,12 @@
    ======================================== */
 
 .mapImageWrapper {
-  position: relative;
-  width: 100%;
+  position: relative; 
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-top: 20px;
 }
 
 .mapImage {
