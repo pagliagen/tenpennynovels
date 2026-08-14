@@ -1988,8 +1988,7 @@ export class UserManagementController {
           build: 0
         },
         skills: {}, // Empty skills for PNG
-        isActive: false,
-        isBot: false
+        isActive: false
       });
 
       await png.save();
@@ -2136,8 +2135,7 @@ export class UserManagementController {
           build: 0
         },
         skills: {}, // Empty skills for Master
-        isActive: false,
-        isBot: false
+        isActive: false
       });
 
       await master.save();

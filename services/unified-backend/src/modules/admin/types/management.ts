@@ -294,7 +294,6 @@ export interface LocationSettingsUpdate {
   chat?: boolean;
   shop?: boolean;
   private?: boolean;
-  bot_enabled?: boolean;
   description?: string;
   maxOccupants?: number;
   accessRules?: LocationAccessRules;

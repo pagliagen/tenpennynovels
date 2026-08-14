@@ -39,11 +39,8 @@ export class CharacterApprovalController {
       if (userId) {
         filter.userId = userId;
       }
-      if (characterType === 'bot') {
-        filter.isBot = true;
-      } else if (characterType && ['pg_principale', 'pg_master', 'png'].includes(characterType)) {
+      if (characterType && ['pg_principale', 'pg_master', 'png'].includes(characterType)) {
         filter.characterType = characterType;
-        filter.isBot = { $ne: true };
       }
 
       // Use local model with proper imports
@@ -77,7 +74,7 @@ export class CharacterApprovalController {
             select: 'name slug',
             options: { strictPopulate: false }
           })
-          .select('name surname fullName occupation playerStatus createdAt submittedAt approvedAt rejectedAt userId canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions age gender socialClass location characterType referentCharacterId avatar isBot currentLocation')
+          .select('name surname fullName occupation playerStatus createdAt submittedAt approvedAt rejectedAt userId canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions age gender socialClass location characterType referentCharacterId avatar currentLocation')
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(pageSize)
@@ -119,7 +116,6 @@ export class CharacterApprovalController {
           gameplayRoles: char.gameplayRoles || [],
           characterPermissions: char.characterPermissions || [],
           characterType: char.characterType || 'pg_principale',
-          isBot: char.isBot || false,
           currentLocation: char.currentLocation ? {
             _id: char.currentLocation._id?.toString() || char.currentLocation.toString(),
             name: char.currentLocation.name || null,

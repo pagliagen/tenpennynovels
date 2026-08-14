@@ -122,8 +122,7 @@ export class LocationManagementController {
             visible: loc.settings?.visible ?? true,
             chat: loc.settings?.chat ?? true,
             shop: loc.settings?.shop ?? false,
-            private: loc.settings?.private ?? false,
-            bot_enabled: loc.bot_enabled ?? false
+            private: loc.settings?.private ?? false
           },
           statistics: {
             totalVisits: loc.statistics?.totalVisits || 0,
@@ -230,8 +229,7 @@ export class LocationManagementController {
           visible: location.settings?.visible ?? true,
           chat: location.settings?.chat ?? true,
           shop: location.settings?.shop ?? false,
-          private: location.settings?.private ?? false,
-          bot_enabled: location.bot_enabled ?? false
+          private: location.settings?.private ?? false
         },
         statistics: {
           totalVisits: location.statistics?.totalVisits || 0,
@@ -312,7 +310,6 @@ export class LocationManagementController {
       if (updates.chat !== undefined) updateData['settings.chat'] = updates.chat;
       if (updates.shop !== undefined) updateData['settings.shop'] = updates.shop;
       if (updates.private !== undefined) updateData['settings.private'] = updates.private;
-      if (updates.bot_enabled !== undefined) updateData.bot_enabled = updates.bot_enabled;
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.maxOccupants !== undefined) updateData.maxOccupants = updates.maxOccupants;
 
@@ -331,7 +328,6 @@ export class LocationManagementController {
           chat: updates.chat,
           shop: updates.shop,
           private: updates.private,
-          bot_enabled: updates.bot_enabled,
           description: updates.description,
           reason: updates.reason
         },
@@ -525,7 +521,6 @@ export class LocationManagementController {
           shop: settings?.shop ?? false,
           private: settings?.private ?? false
         },
-        bot_enabled: settings?.bot_enabled ?? false,
         statistics: {
           totalVisits: 0,
           uniqueVisitors: 0,
@@ -629,7 +624,6 @@ export class LocationManagementController {
         if (settings.chat !== undefined) updateData['settings.chat'] = settings.chat;
         if (settings.shop !== undefined) updateData['settings.shop'] = settings.shop;
         if (settings.private !== undefined) updateData['settings.private'] = settings.private;
-        if (settings.bot_enabled !== undefined) updateData.bot_enabled = settings.bot_enabled;
       }
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);

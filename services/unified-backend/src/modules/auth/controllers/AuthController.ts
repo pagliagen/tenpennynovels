@@ -197,7 +197,7 @@ export class AuthController {
       let characters = await Character.find({
         userId: user.id,
         playerStatus: { $in: ['draft', 'pending', 'approved'] }
-      }).select('id name surname playerStatus occupation currentLocation gameplayRoles characterType isBot lastActive submittedAt canAccessAdminPanel isGestore characterPermissions adminPermissions');
+      }).select('id name surname playerStatus occupation currentLocation gameplayRoles characterType lastActive submittedAt canAccessAdminPanel isGestore characterPermissions adminPermissions');
       
       logger.info(`User ${user.username} login: found ${characters.length} existing characters`);
 
