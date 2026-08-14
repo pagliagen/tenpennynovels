@@ -89,7 +89,9 @@ export interface ICorporation extends Document {
   influence: 'local' | 'regional' | 'national' | 'international';
   headquarters?: Schema.Types.ObjectId; // Location ID
   ownedLocations: Schema.Types.ObjectId[]; // Location IDs
-  ownedShops: Schema.Types.ObjectId[]; // Shop IDs
+  ownedShops: Schema.Types.ObjectId[]; // Shop IDs — ref di schema verso il model Shop
+  // (features/oggetti), che non ha alcun controller CRUD in tutto il repo: campo
+  // probabilmente sempre vuoto in pratica, nessuna dipendenza a livello di codice
 
   // Settings
   settings: {
