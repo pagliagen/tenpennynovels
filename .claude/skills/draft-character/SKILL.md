@@ -19,9 +19,8 @@ Example:
 - Credentials from: `docker-compose.yml`
 
 ## Required Models
-Check `services/unified-backend/src/database/models/` for available models:
-- `Character` - Character model
-- `User` - User model (for reviewedBy in reviewHistory)
+- `Character` — `services/unified-backend/src/core/character/models/Character.ts`
+- `User` — `services/unified-backend/src/core/auth/models/User.ts` (for reviewedBy in reviewHistory)
 
 ## Fields Updated in Character
 
@@ -37,7 +36,9 @@ When a character is reverted to DRAFT:
 
 **IMPORTANT**: Skills are preserved as-is. They are NOT deleted or modified.
 
-**IMPORTANT**: Must call `.save()` on the Mongoose document (not a raw `updateOne`). The model's pre-save hook (`services/unified-backend/src/database/models/Character.ts`, around line 998) runs `if (this.isModified('playerStatus') || this.isNew)` and, when `playerStatus === 'draft'`, automatically grants `characterPermissions` including `'game:character:wizard'` and `-game:character:read`. The game frontend's wizard redirect (`apps/game/src/components/layout/GameLayout.tsx`, `apps/game/src/pages/character/wizard.tsx`) requires BOTH `playerStatus === 'draft'` AND the `game:character:wizard` permission — if you set `playerStatus` via a raw driver update instead of `.save()`, the hook never runs and the wizard will not launch even though the character looks like a draft.
+**IMPORTANT**: Must call `.save()` on the Mongoose document (not a raw `updateOne`). The model's pre-save hook (`services/unified-backend/src/core/character/models/Character.ts`, around line 910) runs `if (this.isModified('playerStatus') || this.isNew)` and, when `playerStatus === 'draft'`, automatically grants `characterPermissions` including `'game:character:wizard'` and `-game:character:read`. The game frontend's wizard redirect (`apps/game/src/components/layout/GameLayout.tsx`, `apps/game/src/pages/character/wizard.tsx`) requires BOTH `playerStatus === 'draft'` AND the `game:character:wizard` permission — if you set `playerStatus` via a raw driver update instead of `.save()`, the hook never runs and the wizard will not launch even though the character looks like a draft.
+
+**Se il personaggio è GIÀ `draft`** ma manca comunque il permesso (es. `characterPermissions` rimasto stale da un `updateOne` precedente su questo stesso documento): la sola assegnazione `character.playerStatus = 'draft'` potrebbe non bastare a far scattare `isModified('playerStatus')` se il valore non cambia — chiamare esplicitamente `character.markModified('playerStatus')` prima di `.save()` per forzare la ricomputazione. Incidente reale 2026-08-14: un personaggio di test rimasto con `playerStatus: 'draft'` ma `characterPermissions` calcolato per `'pending'` (via `.save()` reale seguito da un reset via `updateOne` raw) — wizard irraggiungibile finché non risalvato con `markModified`.
 
 ## Implementation Pattern
 
@@ -52,7 +53,8 @@ When user requests character revert to draft:
 
 2. **Import models**:
    ```typescript
-   import { Character, User } from '../../database/models';
+   import { Character } from '@core/character/models/Character';
+   import { User } from '@core/auth/models/User';
    ```
 
 3. **Find system user for reviewedBy**:
@@ -92,7 +94,8 @@ When user requests character revert to draft:
 
 ```typescript
 import mongoose from 'mongoose';
-import { Character, User } from '../../database/models';
+import { Character } from '@core/character/models/Character';
+import { User } from '@core/auth/models/User';
 
 const MONGODB_URI = 'mongodb://admin:admin123@localhost:27017/tenpennynovels?authSource=admin';
 
