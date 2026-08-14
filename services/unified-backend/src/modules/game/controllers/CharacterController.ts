@@ -8,7 +8,8 @@ import { successResponse, errorResponse, createResponse, updateResponse, deleteR
 import { CharacterVisibilityFilter } from '@shared/utils/characterVisibility';
 import { escapeRegex, translateMongooseError } from '@shared/utils/validation';
 import { canReadOthersPrivate } from '@config/permissions';
-import { FinancialUtils } from '../utils/financialUtils';
+// boundary-allow: debito dichiarato, CharacterController.ts resta fuori dalla feature economia (Fase 6.3) fino al consolidamento del core (Fase 7)
+import { FinancialUtils } from '@features/economia/services/FinancialUtils';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
 import { appConfig } from '@config/runtime';
 

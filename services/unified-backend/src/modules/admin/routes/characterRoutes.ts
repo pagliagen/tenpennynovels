@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { CharacterApprovalController } from '../controllers/CharacterApprovalController';
 import { CharacterBanController } from '../controllers/CharacterBanController';
-import { CharacterFinancesManagementController } from '../controllers/CharacterFinancesManagementController';
+// boundary-allow: debito dichiarato, characterRoutes.ts resta fuori dalla feature economia (Fase 6.3) fino al consolidamento del core (Fase 7)
+import { CharacterFinancesManagementController } from '@features/economia/controllers/CharacterFinancesManagementController';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { requireViewPermission } from '../utils/permissions';
 import { autoLogOutcome } from '../middleware/auditMiddleware';

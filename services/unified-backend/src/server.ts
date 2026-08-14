@@ -117,7 +117,7 @@ async function startServer(): Promise<void> {
     logger.info('✅ Message backup cleanup CRON job started');
 
     // Start Service Cancellation Cleanup CRON Job (daily at midnight, Europe/London)
-    await import('@modules/game/jobs/serviceCancellationCleanup');
+    await import('@features/economia/api');
     logger.info('✅ Service cancellation cleanup CRON job started');
 
     // Start HTTP server
