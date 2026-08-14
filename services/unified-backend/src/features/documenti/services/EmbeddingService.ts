@@ -5,7 +5,7 @@
  * Tutte le operazioni vettoriali (Qdrant, Elasticsearch) sono gestite da embeddings-worker.
  *
  * classifySceneContinuation/summarizeScene sono debito dichiarato: 100% chat-only
- * (unici chiamanti: modules/game/services/ChatSceneService.ts), parcheggiati qui
+ * (unico chiamante: features/fineSessione/services/ChatSceneService.ts), parcheggiati qui
  * perché la destinazione originale del piano generale (core/ai/AiGatewayClient.ts)
  * non esiste ancora — deciso con l'utente in Fase 6.5, non creato in questa fase.
  */

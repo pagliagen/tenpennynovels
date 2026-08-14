@@ -15,8 +15,10 @@ export { Skill, SKILL_CATEGORY_LABELS, type ISkill } from './Skill';
 export { Location, type ILocation } from './Location';
 export { Chat, type IChat } from './Chat';
 export { ChatBackup } from './ChatBackup';
-export { ChatScene, type IChatScene } from './ChatScene';
-export { CharacterChatScene, type ICharacterChatScene } from './CharacterChatScene';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ChatScene, type IChatScene } from '@features/fineSessione/models/ChatScene';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { CharacterChatScene, type ICharacterChatScene } from '@features/fineSessione/models/CharacterChatScene';
 export { CharacterNotes, type ICharacterNotes } from './CharacterNotes';
 
 // Combat & Confrontation System (TiroContrapposto)

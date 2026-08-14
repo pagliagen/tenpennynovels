@@ -2,7 +2,6 @@ import { Router } from 'express';
 import characterRoutes from './characters';
 import characterDiaryRoutes from './characterDiary';
 import characterMasterNotesRoutes from './characterMasterNotes';
-import chatScenesRoutes from './chatScenes';
 import locationRoutes from './locations';
 import gameRoutes from './game';
 import messageRoutes from './messages';
@@ -38,7 +37,6 @@ router.get('/health', (req, res) => {
 router.use('/', characterRoutes);
 router.use('/', characterDiaryRoutes);
 router.use('/', characterMasterNotesRoutes);
-router.use('/', chatScenesRoutes);
 router.use('/', locationRoutes);
 router.use('/', gameRoutes);
 router.use('/', messageRoutes);
