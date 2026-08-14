@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { Character } from '@core/character/models/Character';
-import { Location, ChatBackup } from '@database/models';
+import { Location } from '@core/location/models/Location';
+import { checkLocationAccess } from '@core/location/services/checkLocationAccess';
+import { ChatBackup } from '@database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';
@@ -169,7 +171,7 @@ export class LocationController {
       }
 
       // Check access permissions
-      const hasAccess = await LocationController.checkLocationAccess(location, character);
+      const hasAccess = await checkLocationAccess(location, character);
       
       if (!hasAccess) {
         // Return 404 instead of 403 to prevent information disclosure
@@ -330,7 +332,7 @@ export class LocationController {
       }
 
       // Check access permissions
-      const hasAccess = await LocationController.checkLocationAccess(location, character);
+      const hasAccess = await checkLocationAccess(location, character);
       
       if (!hasAccess) {
         res.status(403).json(errorResponse(
@@ -872,48 +874,6 @@ export class LocationController {
   }
 
   /**
-   * Check if character has access to location
-   */
-  private static async checkLocationAccess(location: any, character: any): Promise<boolean> {
-    // Location must be visible first
-    if (!location.settings.visible) {
-      return false;
-    }
-
-    // Public locations are accessible to all
-    if (!location.settings.private) {
-      return true;
-    }
-
-    // Private locations access control
-    if (location.settings.private) {
-      // Check if character is the owner
-      if (location.access?.ownerId?.toString() === character.id) {
-        return true;
-      }
-      
-      // Check character-specific access
-      if (location.access?.characterAccess) {
-        const access = location.access.characterAccess.find((a: any) => a.characterId.toString() === character.id);
-        if (access) {
-          // Check if access is expired
-          if (access.duration === 'temporary' && access.expiresAt && new Date() > access.expiresAt) {
-            return false;
-          }
-          return access.permissions.includes('view');
-        }
-      }
-      
-      // Corporation access - feature not yet implemented
-      if (location.access?.corporationAccess) {
-        // Skipped until corporations feature is developed
-      }
-    }
-
-    return false;
-  }
-
-  /**
    * Get detailed access information for a location
    */
   /**
@@ -1062,7 +1022,7 @@ export class LocationController {
   }
 
   private static async getAccessInfo(location: any, character: any): Promise<any> {
-    const hasAccess = await LocationController.checkLocationAccess(location, character);
+    const hasAccess = await checkLocationAccess(location, character);
     
     if (!hasAccess) {
       return { hasAccess: false };
