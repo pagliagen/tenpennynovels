@@ -655,7 +655,7 @@ Una feature per PR. **Mai due feature in volo contemporaneamente.** Ordine decis
 |---|---|---|---|
 | 1 | `tickets` | ~16 file, ~6100 righe | **fatta** (Fase 6.1) — stima iniziale errata ("3 file, banale"), perimetro reale vicino a corporazioni |
 | 2 | `occupazioni` | ~9 file | **fatta** (Fase 6.2) — intrecciata con la creazione personaggio (core), niente flag, `characterCreationUtils.ts`/`CharacterCreationController.ts` restano fuori come debito dichiarato |
-| 3 | `economia` | medio — `CharacterFinances`, `SocialClassConfig`, `Service` + `FinancialController`/`ServicesController`/`SocialClassManagementController`/`CharacterFinancesManagementController` | va prima di `oggetti`: l'acquisto in negozio deve controllare i fondi, `oggetti` dichiara `dependsOn: ['economia']` |
+| 3 | `economia` | 14 file | **fatta** (Fase 6.3) — niente flag, `CharacterController.ts`/`characterRoutes.ts`/`server.ts` (cron) restano fuori come debito dichiarato. `economy.ts` ridotto alle sole route shop per la prossima fase |
 | 4 | `oggetti` | medio — `Item`/`CharacterInventory`/`Shop`/`ShopItem` + `ItemController`/`CharacterInventoryActionsController`/`ItemManagementController` | `EconomyController.ts`/`economy.ts` vanno spezzati fra economia (Financial/Services) e oggetti (shop-purchase: `getGeneralStore`/`purchaseItem`/`getShopItems`/`restockShop`). Model `Shop`: zero controller CRUD in tutto il repo, si sposta comunque verbatim (stesso file di Item.ts) |
 | 5 | `documenti` | medio | già quasi isolato, `dependsOn: ['bibliotecario']` no — l'inverso |
 | 6 | `forum` | 5 controller admin | il più duplicato sull'asse admin |
