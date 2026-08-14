@@ -24,7 +24,7 @@ import { WeaponService } from '../services/WeaponService';
 import { ChatMessageService } from '../services/ChatMessageService';
 
 // Chat Scene Service (segmentazione chat in scene narrative per personaggio)
-import { ChatSceneService } from '../services/ChatSceneService';
+import { ChatSceneService } from '@features/fineSessione/api';
 
 // WebSocket Service (Centralized emissions)
 import { ChatWebSocketService } from '../services/ChatWebSocketService';

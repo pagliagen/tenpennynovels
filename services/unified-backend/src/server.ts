@@ -104,7 +104,7 @@ async function startServer(): Promise<void> {
 
     // Start Scene Closing CRON Job (every 5 minutes, feature flag controlled)
     if (appConfig.features.sceneClosing) {
-      await import('./cron/sceneClosing');
+      await import('@features/fineSessione/api');
       logger.info('✅ Scene closing CRON job started');
     }
 
