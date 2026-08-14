@@ -22,12 +22,15 @@ import adminRoutes from './routes/admin';
  * per il suo side-effect (cron.schedule a livello di modulo), innescato da
  * server.ts con un import dinamico. Vedi commento in api.ts.
  *
- * EconomyController.ts/economy.ts (dominio "oggetti": shop-purchase) restano
- * fuori da questa feature — verranno spostati nella prossima fase (`oggetti`,
- * dependsOn: ['economia']). economy.ts oggi è stato ridotto alle sole route
- * shop, con una propria copia dei due rate limiter che prima condivideva con
- * le route services/financial qui migrate — comportamento leggermente diverso
- * (budget di rate-limit non più condiviso), dichiarato, non un bug.
+ * EconomyController.ts/economy.ts (dominio "oggetti": shop-purchase) sono
+ * stati spostati in features/oggetti/ (Fase 6.4, dependsOn: ['economia',
+ * 'corporazioni']), rinominato ShopController.ts — usa
+ * getCharacterFinancesSnapshot/deductCash/deductCredit di questo api.ts
+ * invece di importare CharacterFinances nudo. economy.ts prima dello
+ * spostamento aveva una propria copia dei due rate limiter che condivideva
+ * con le route services/financial qui migrate in Fase 6.3 — comportamento
+ * leggermente diverso (budget di rate-limit non più condiviso), dichiarato,
+ * non un bug.
  */
 export const economia: FeatureManifest = {
   key: 'economia',

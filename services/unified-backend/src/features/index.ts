@@ -9,5 +9,6 @@ import { corporazioni } from './corporazioni/manifest';
 import { tickets } from './tickets/manifest';
 import { occupazioni } from './occupazioni/manifest';
 import { economia } from './economia/manifest';
+import { oggetti } from './oggetti/manifest';
 
-export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni, tickets, occupazioni, economia];
+export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni, tickets, occupazioni, economia, oggetti];

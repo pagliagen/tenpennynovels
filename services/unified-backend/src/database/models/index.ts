@@ -26,7 +26,9 @@ export { CombatEncounter, type ICombatEncounter } from './CombatEncounter';
 // Corporation System
 // Deprecato: il model vive ora in features/corporazioni/models/Corporation.ts
 // (Fase 4 del refactor layer→feature). Shim di compatibilità per chi importa
-// ancora dal barrel — EconomyController.ts, CharacterSocialController.ts.
+// ancora dal barrel — CharacterSocialController.ts (ShopController.ts, ex
+// EconomyController.ts, dalla Fase 6.4 usa features/corporazioni/api invece
+// del barrel).
 // boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   Corporation,
@@ -38,8 +40,11 @@ export {
 } from '@features/corporazioni/models/Corporation';
 
 // Item and Shop System
-export { 
-  Item, 
+// Deprecato: i model vivono ora in features/oggetti/models/Item.ts (Fase 6.4 del
+// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export {
+  Item,
   CharacterInventory,
   Shop,
   ShopItem,
@@ -49,7 +54,7 @@ export {
   type IShopItem,
   ItemCategory,
   ITEM_CATEGORY_LABELS
-} from './Item';
+} from '@features/oggetti/models/Item';
 
 // Continuative Services System (VC-budget subscriptions: servitù, comunicazioni, trasporti, sicurezza)
 // Deprecato: il model vive ora in features/economia/models/ (Fase 6.3 del
@@ -254,7 +259,8 @@ export { DeletedRecord, type IDeletedRecord } from './DeletedRecord';
 import { registerSoftDeleteModel } from '../plugins/softDeleteRegistry';
 registerSoftDeleteModel('characters', () => require('./Character').Character, 'name');
 registerSoftDeleteModel('locations', () => require('./Location').Location, 'name');
-registerSoftDeleteModel('items', () => require('./Item').Item, 'name');
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora
+registerSoftDeleteModel('items', () => require('@features/oggetti/models/Item').Item, 'name');
 registerSoftDeleteModel('documents', () => require('./Document').default, 'title');
 registerSoftDeleteModel('users', () => require('./User').User, 'username');
 // boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora

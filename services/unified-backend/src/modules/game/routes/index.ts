@@ -3,10 +3,8 @@ import characterRoutes from './characters';
 import characterDiaryRoutes from './characterDiary';
 import characterMasterNotesRoutes from './characterMasterNotes';
 import chatScenesRoutes from './chatScenes';
-import characterInventoryActionsRoutes from './characterInventoryActions';
 import locationRoutes from './locations';
 import gameRoutes from './game';
-import economyRoutes from './economy';
 import messageRoutes from './messages';
 import chatRoutes from './chats';
 import offGameChatRoutes from './offGameChats';
@@ -17,7 +15,6 @@ import offGameMessagesRoutes from './offGameMessages';
 import chatModerationRoutes from './chatModerationRoutes';
 import characterRelationRoutes from './characterRelations';
 import skillRoutes from './skills';
-import itemRoutes from './items';
 import sessionRoutes from './sessions';
 import { locationPropertyRoutes } from './locationPropertyRoutes';
 import websocketEventRoutes from './websocketEvents';
@@ -42,10 +39,8 @@ router.use('/', characterRoutes);
 router.use('/', characterDiaryRoutes);
 router.use('/', characterMasterNotesRoutes);
 router.use('/', chatScenesRoutes);
-router.use('/', characterInventoryActionsRoutes);
 router.use('/', locationRoutes);
 router.use('/', gameRoutes);
-router.use('/', economyRoutes);
 router.use('/', messageRoutes);
 router.use('/', offGameChatRoutes); // OffGame chat system
 router.use('/', onGameMessagesRoutes); // On-game postal system
@@ -57,7 +52,6 @@ router.use('/housing', locationPropertyRoutes);
 router.use('/', chatModerationRoutes);
 router.use('/relationships', characterRelationRoutes);
 router.use('/skills', skillRoutes);
-router.use('/items', itemRoutes);
 router.use('/sessions', sessionRoutes);
 router.use('/character-creation-config', characterCreationRoutes); // Public character creation config
 router.use('/character-gen', characterGenConfigRoutes); // Character generation service config (no auth)
