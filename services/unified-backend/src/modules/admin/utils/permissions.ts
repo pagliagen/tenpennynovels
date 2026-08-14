@@ -399,7 +399,7 @@ export function requireAccess(section: string) {
 
     try {
       const { User } = await import('@core/auth/models/User');
-      const { Character } = await import('@database/models');
+      const { Character } = await import('@core/character/models/Character');
 
       const dbUser = await User.findById(user.userId);
       if (!dbUser) {
@@ -471,7 +471,7 @@ export function requireViewPermission(permission: AdminPermission) {
 
     try {
       const { User } = await import('@core/auth/models/User');
-      const { Character } = await import('@database/models');
+      const { Character } = await import('@core/character/models/Character');
 
       const dbUser = await User.findById(user.userId);
       if (!dbUser) {

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { Character, db } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { db } from '@database/models';
 import { OffGameChat } from '../models/OffGameChat';
 import { OffGameChatMessage } from '../models/OffGameChatMessage';
 import { OffGameChatParticipant } from '../models/OffGameChatParticipant';
@@ -508,7 +509,7 @@ export class OffGameChatController {
       }
 
       // Defense in depth: Verify sender character status (DRAFT restriction)
-      const { Character } = await import('@database/models');
+      const { Character } = await import('@core/character/models/Character');
       const senderCharacter = await Character.findById(characterId);
 
       if (!senderCharacter) {

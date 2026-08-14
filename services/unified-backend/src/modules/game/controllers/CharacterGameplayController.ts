@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { Character, Location } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { Location } from '@database/models';
 import { Occupation } from '@features/occupazioni/api';
 import { redis } from '@config/runtime/redis';
 import { logger } from '../logger';

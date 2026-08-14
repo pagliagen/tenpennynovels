@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { CharacterMasterNote } from '@database/models/CharacterMasterNote';
 import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';

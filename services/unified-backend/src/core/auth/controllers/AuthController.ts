@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { User } from '../models/User';
-import { Character, Location } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { Location } from '@database/models';
 import { CryptoUtils } from '../utils/crypto';
 import { AuthMiddleware } from '../middleware/auth';
 import { RateLimitMiddleware } from '../middleware/rateLimit';

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Types, Error as MongooseError } from 'mongoose';
-import { Character, Skill } from '@database/models';
-import type { ICharacter } from '@database/models/Character';
+import { Character, type ICharacter } from '@core/character/models/Character';
+import { Skill } from '@database/models';
 import { Occupation } from '@features/occupazioni/api';
 import { Item, CharacterInventory } from '@features/oggetti/api';
 import { logger } from '../logger';

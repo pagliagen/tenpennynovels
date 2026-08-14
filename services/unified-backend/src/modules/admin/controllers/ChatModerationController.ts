@@ -5,7 +5,7 @@ import { OnGameMessage } from '@database/models/OnGameMessage';
 // boundary-allow: ChatModerationController è infrastruttura di moderazione condivisa
 // fra location/onGame/offGame, resta fuori dal perimetro della feature offGameMessages.
 import { OffGameChatMessage } from '@features/offGameMessages/api';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { User } from '@core/auth/models/User';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';

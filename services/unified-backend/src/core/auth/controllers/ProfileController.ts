@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { User } from '../models/User';
-import { Character, db } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { db } from '@database/models';
 import { ApiResponse } from '../types/auth';
 import { logger, logAuth } from '../logger';
 import { redis } from '@config/runtime/redis';

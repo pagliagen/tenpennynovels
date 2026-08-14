@@ -1,5 +1,5 @@
 import { CharacterSession } from '../models/CharacterSession';
-import { Character } from '@database/models';
+import { Character } from '@core/character/models/Character';
 import { DeviceInfo } from '../types/auth';
 import { logger } from '../logger';
 import crypto from 'crypto';

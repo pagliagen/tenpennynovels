@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { User } from '@core/auth/models/User';
 import { logger } from '@shared/utils/logger';
 import {

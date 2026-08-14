@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { OnGameMessage } from '@database/models/OnGameMessage';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { OnGameThreadService } from './OnGameThreadService';
 // boundary-allow: MessageService è infrastruttura condivisa fra il sistema
 // postale onGame (core) e la feature offGameMessages — vedi

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { Chat, ChatBackup, GamingSession, Location, Character, SkillConfrontation, CombatEncounter, Skill } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { Chat, ChatBackup, GamingSession, Location, SkillConfrontation, CombatEncounter, Skill } from '@database/models';
 import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '@shared/utils/apiResponse';
 import { ConfigurationService } from '@shared/services/ConfigurationService';

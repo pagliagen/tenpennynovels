@@ -12,7 +12,7 @@ import { ForumDiscussionFavorite } from '../models/ForumDiscussionFavorite';
 import { ForumCharacterPreference } from '../models/ForumCharacterPreference';
 import { ForumTopicReadState } from '../models/ForumTopicReadState';
 import { ForumNotification } from '../models/ForumNotification';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { NotificationService } from '../services/NotificationService';
 import { escapeRegex } from '@shared/utils/validation';
 import { EmbeddingService } from '@features/documenti/api';

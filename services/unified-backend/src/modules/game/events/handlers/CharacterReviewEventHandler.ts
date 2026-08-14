@@ -72,7 +72,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
     reviewedByUsername: string
   ): Promise<void> {
     try {
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       const { User } = await import('@core/auth/models/User');
 
       // Find the reviewed character
@@ -222,7 +222,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
     note?: string
   ): Promise<void> {
     try {
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
 
       // Get updated character to find the user
       const character = await Character.findById(characterId).populate('userId');

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { ForumTopic } from '../models/ForumTopic';
 import { ForumTopicPermissionOverride, type ForumPermissionDecision } from '../models/ForumTopicPermissionOverride';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { AdminAuthMiddleware } from '@modules/admin/middleware/adminAuth';
 import { logger } from '@modules/admin/utils/logger';
 import { successResponse, errorResponse, getRequestId, deleteResponse } from '@shared/utils/apiResponse';

@@ -153,7 +153,7 @@ export class CorporationManagementController {
 
       // Use local model with proper imports
       const { Corporation } = await import('../models/Corporation');
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
 
       // Get corporation with populated references
       const corporation = await Corporation.findById(corporationId)

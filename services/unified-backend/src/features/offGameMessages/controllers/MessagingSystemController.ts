@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { OffGameChat } from '../models/OffGameChat';
 import { OffGameChatMessage } from '../models/OffGameChatMessage';
 import { OffGameChatParticipant } from '../models/OffGameChatParticipant';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { logger } from '@modules/admin/utils/logger';
 import { auditLogger } from '@modules/admin/utils/auditLogger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';

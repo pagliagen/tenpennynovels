@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { SocialClassConfig } from '../models/SocialClassConfig';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { logger } from '@modules/admin/utils/logger';
 import { auditLogger } from '@modules/admin/utils/auditLogger';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '@shared/utils/apiResponse';

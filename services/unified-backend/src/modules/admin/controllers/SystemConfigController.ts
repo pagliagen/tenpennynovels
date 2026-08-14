@@ -444,7 +444,7 @@ export class SystemConfigController {
     try {
       // Dynamic imports to avoid circular dependencies
       const { User } = await import('@core/auth/models/User');
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       const { Location } = await import('@database/models/Location');
 
       // Calculate date ranges
@@ -609,7 +609,7 @@ export class SystemConfigController {
         targetCount = await User.countDocuments({ isOnline: true });
       } else if (targetAudience === 'role_specific' && targetRoles.length > 0) {
         // Count users with specific character roles
-        const { Character } = await import('@database/models/Character');
+        const { Character } = await import('@core/character/models/Character');
         const characters = await Character.find({
           state: 'APPROVED',
           gameplayRoles: { $in: targetRoles }

@@ -102,7 +102,7 @@ export class OnGameMessageController {
       const totalCost = messageConfig.postageRequired * recipientIds.length;
 
       // Get sender character
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       const sender = await Character.findById(req.character.characterId);
 
       if (!sender) {

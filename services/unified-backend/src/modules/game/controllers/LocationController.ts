@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { Character, Location, ChatBackup } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { Location, ChatBackup } from '@database/models';
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';

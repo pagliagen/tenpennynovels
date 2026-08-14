@@ -1,4 +1,5 @@
-import { Location, Character } from '@database/models';
+import { Location } from '@database/models';
+import { Character } from '@core/character/models/Character';
 import type { ILocationPosition } from '@database/models/Location';
 import { logger } from '../logger';
 

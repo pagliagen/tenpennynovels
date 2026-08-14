@@ -1,4 +1,5 @@
-import { Character, db } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { db } from '@database/models';
 import { OffGameChat } from '../models/OffGameChat';
 import { OffGameChatMessage } from '../models/OffGameChatMessage';
 import { OffGameChatParticipant } from '../models/OffGameChatParticipant';

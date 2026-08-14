@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { AdminAuthMiddleware } from '@modules/admin/middleware/adminAuth';
 import { logger } from '@modules/admin/utils/logger';
 import { Occupation } from '../models/Occupation';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId, deleteResponse } from '@shared/utils/apiResponse';
 
 import { escapeRegex } from '@shared/utils/validation';

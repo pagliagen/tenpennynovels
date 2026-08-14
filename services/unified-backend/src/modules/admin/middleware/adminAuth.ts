@@ -108,7 +108,7 @@ export class AdminAuthMiddleware {
 
         // Load character and set admin roles
         if (finalCharacterId) {
-            const { Character } = require('@database/models/Character');
+            const { Character } = require('@core/character/models/Character');
             const { gameplayRolesToAdminRoles } = require('@config/permissions');
 
             try {

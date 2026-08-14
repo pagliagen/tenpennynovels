@@ -158,7 +158,7 @@ export class AuthMiddleware {
           }
 
           // Populate req.character from session
-          const { Character } = await import('@database/models');
+          const { Character } = await import('@core/character/models/Character');
           const character = await Character.findById(session.characterId);
 
           if (!character) {
@@ -290,7 +290,7 @@ export class AuthMiddleware {
         
         try {
           // Import here to avoid circular dependency
-          const { Character } = await import('@database/models');
+          const { Character } = await import('@core/character/models/Character');
 
           // Verify character exists and belongs to user
           const character = await Character.findOne({

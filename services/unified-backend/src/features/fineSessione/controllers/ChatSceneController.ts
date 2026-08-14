@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Character } from '@database/models';
+import { Character } from '@core/character/models/Character';
 import { logger } from '@modules/game/logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
 import { isValidObjectId } from '@shared/utils/validation';

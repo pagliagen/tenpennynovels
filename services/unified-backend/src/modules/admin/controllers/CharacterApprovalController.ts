@@ -44,7 +44,7 @@ export class CharacterApprovalController {
       }
 
       // Use local model with proper imports
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       
       // Get total count for pagination with error handling
       let totalItems;
@@ -192,7 +192,7 @@ export class CharacterApprovalController {
    */
   static async getPendingCharacters(req: Request, res: Response): Promise<void> {
     try {
-      const { Character: CharacterModel } = await import('@database/models/Character');
+      const { Character: CharacterModel } = await import('@core/character/models/Character');
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
       const priority = req.query.priority as string;
@@ -291,7 +291,7 @@ export class CharacterApprovalController {
       const characterId = req.params.characterId;
       
       // Use local and shared models with proper imports
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature oggetti (Fase 6.4) fino al consolidamento del core (Fase 7)
       const { Item } = await import('@features/oggetti/models/Item');
       // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7)
@@ -521,7 +521,7 @@ export class CharacterApprovalController {
       const updateData = req.body;
 
       // Use local model with proper imports
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
 
       // Find character
       const character = await Character.findById(characterId);
@@ -615,7 +615,7 @@ export class CharacterApprovalController {
         return;
       }
 
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
 
       // 1. Verify character exists and is PNG or Master
       const character = await Character.findById(characterId);
@@ -841,7 +841,7 @@ export class CharacterApprovalController {
       }
 
       // Use local and shared models with proper imports
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7)
       const { Occupation } = await import('@features/occupazioni/models/Occupation');
       
@@ -1071,7 +1071,7 @@ export class CharacterApprovalController {
    */
   static async getReviewStats(req: Request, res: Response): Promise<void> {
     try {
-      const { Character: CharacterModel } = await import('@database/models/Character');
+      const { Character: CharacterModel } = await import('@core/character/models/Character');
       const rawPeriod = req.query.period;
       const period: 'day' | 'week' | 'month' | 'year' =
         rawPeriod === 'day' || rawPeriod === 'week' || rawPeriod === 'month' || rawPeriod === 'year'
@@ -1275,7 +1275,7 @@ export class CharacterApprovalController {
    */
   static async updateReviewPriority(req: Request<{ characterId: string }>, res: Response): Promise<void> {
     try {
-      const { Character: CharacterModel } = await import('@database/models/Character');
+      const { Character: CharacterModel } = await import('@core/character/models/Character');
       const characterId = req.params.characterId;
       const { priority } = req.body;
 
@@ -1350,7 +1350,7 @@ export class CharacterApprovalController {
       const limit = parseInt(req.query.limit as string) || 10;
 
       // Use local model with proper imports
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
 
       const characters = await Character.find({
         state: 'PENDING_APPROVAL'
@@ -1419,7 +1419,7 @@ export class CharacterApprovalController {
         return;
       }
 
-      const { Character } = await import('@database/models');
+      const { Character } = await import('@core/character/models/Character');
       // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7)
       const { Occupation } = await import('@features/occupazioni/models/Occupation');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -1582,7 +1582,7 @@ export class CharacterApprovalController {
         return;
       }
 
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
         res.status(401).json(errorResponse(
@@ -1685,7 +1685,7 @@ export class CharacterApprovalController {
     try {
       const { characterId } = req.params;
 
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
         res.status(401).json(errorResponse(
@@ -1756,7 +1756,7 @@ export class CharacterApprovalController {
         return;
       }
 
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
         res.status(401).json(errorResponse(
@@ -1835,7 +1835,7 @@ export class CharacterApprovalController {
    */
   static async getDuplicateFaceClaims(req: Request, res: Response): Promise<void> {
     try {
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       const duplicates = await Character.aggregate([
         { $match: { prestavolto: { $exists: true, $nin: [null, ''] }, isDeleted: { $ne: true } } },
         { $group: {
@@ -1870,7 +1870,7 @@ export class CharacterApprovalController {
    */
   static async approveFaceClaim(req: Request, res: Response): Promise<void> {
     try {
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       const { Types } = await import('mongoose');
 
       // Validate characterId to prevent SQL injection
@@ -1905,7 +1905,7 @@ export class CharacterApprovalController {
    */
   static async rejectFaceClaim(req: Request, res: Response): Promise<void> {
     try {
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
       const { Types } = await import('mongoose');
 
       // Validate characterId to prevent SQL injection

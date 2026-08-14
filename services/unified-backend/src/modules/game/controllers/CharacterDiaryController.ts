@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { CharacterDiaryEntry } from '@database/models/CharacterDiaryEntry';
 import { CharacterEncounterNote } from '@database/models/CharacterEncounterNote';
 import { GamingSession } from '@database/models/GamingSession';

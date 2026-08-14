@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { Location } from '@database/models/Location';
 import { Item, ShopItem, CharacterInventory } from '../models/Item';
 import { getCharacterFinancesSnapshot, deductCash, deductCredit } from '@features/economia/api';

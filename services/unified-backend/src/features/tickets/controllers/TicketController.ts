@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
-import { Character, SystemConfiguration } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { SystemConfiguration } from '@database/models';
 import { Ticket } from '../models/Ticket';
 import { TicketMessage } from '../models/TicketMessage';
 import { TicketCategory, TicketPriority, TicketDepartment, TICKET_CATEGORIES, CATEGORY_DEPARTMENT_MAPPING, CATEGORY_PRIORITY_MAPPING } from '../types';

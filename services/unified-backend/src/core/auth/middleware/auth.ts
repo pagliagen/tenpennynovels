@@ -120,7 +120,7 @@ export class AuthMiddleware {
       try {
         // Import SessionStore dynamically to avoid circular dependency
         const { SessionStore } = await import('../services/SessionStore');
-        const { Character } = await import('@database/models');
+        const { Character } = await import('@core/character/models/Character');
 
         // 1. Read sessionId from header (or body for sendBeacon compatibility)
         const sessionId = (req.headers['x-session-id'] as string) || req.body?.sessionId;

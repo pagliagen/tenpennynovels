@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { Skill, ISkill } from '@database/models/Skill';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import {

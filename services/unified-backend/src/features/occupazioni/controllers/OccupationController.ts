@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Occupation } from '../models/Occupation';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { logger } from '@modules/game/logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
 

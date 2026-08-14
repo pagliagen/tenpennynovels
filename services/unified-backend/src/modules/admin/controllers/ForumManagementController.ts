@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { OnGameMessage } from '@database/models/OnGameMessage';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { Location } from '@database/models/Location';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';

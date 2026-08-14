@@ -21,7 +21,8 @@ import { getVisibleDashboardBadges, getUserPermissions, getVisibleMenuStructure,
 import { auditLogger } from '../utils/auditLogger';
 import { AuthUtils } from '../utils/auth';
 import { User } from '@core/auth/models/User';
-import { Character, Location, db } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { Location, db } from '@database/models';
 import { logger } from '../utils/logger';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 

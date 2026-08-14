@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { Character } from '@database/models';
+import { Character } from '@core/character/models/Character';
 import { User } from '@core/auth/models/User';
 import { redis } from '@config/runtime/redis';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';

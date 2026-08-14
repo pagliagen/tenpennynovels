@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Character } from '@database/models';
+import { Character } from '@core/character/models/Character';
 import { Corporation, CorporationInvitation } from '../models/Corporation';
 import { CorporationRole } from '../types';
 import { logger } from '@modules/game/logger';
