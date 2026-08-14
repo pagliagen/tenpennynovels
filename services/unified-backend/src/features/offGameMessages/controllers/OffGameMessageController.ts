@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { OffGameMessage } from '../models/OffGameMessage';
-// boundary-allow: MessageService è infrastruttura condivisa col sistema postale onGame
-// (core, fuori da questo refactor) — vedi manifest.ts per il dettaglio del debito.
-import { MessageService } from '@modules/game/services/MessageService';
+import { OffGameMessageService } from '../services/OffGameMessageService';
 import { OffGameThreadService } from '../services/OffGameThreadService';
 import { logger } from '@shared/utils/logger';
 import { successResponse, errorResponse, listResponse } from '@shared/utils/apiResponse';
@@ -55,7 +53,7 @@ export class OffGameMessageController {
       }
 
       // Send message via service
-      const message = await MessageService.sendOffGameMessage({
+      const message = await OffGameMessageService.sendOffGameMessage({
         senderId: new mongoose.Types.ObjectId(req.character.characterId),
         recipientId: new mongoose.Types.ObjectId(recipientId),
         content,
@@ -414,10 +412,9 @@ export class OffGameMessageController {
       }
 
       // Soft delete via MessageService
-      await MessageService.deleteMessage(
+      await OffGameMessageService.deleteMessage(
         new mongoose.Types.ObjectId(messageId),
-        new mongoose.Types.ObjectId(characterId),
-        'offgame'
+        new mongoose.Types.ObjectId(characterId)
       );
 
       res.status(200).json(successResponse(

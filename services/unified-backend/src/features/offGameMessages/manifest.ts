@@ -21,18 +21,15 @@ import mailRoutes from './routes/mail';
  *
  * dependsOn: [] — nessun import da altre feature.
  *
- * Debito accettato — infrastruttura condivisa col sistema postale onGame
- * (core, fuori da questo refactor): MessageService.ts e
- * MessageBackupService.ts restano in modules/game/services/ perché servono
- * sia OnGameMessage sia OffGameMessage nella stessa classe (branch interno
- * su messageContext). MessageService.ts importa OffGameMessage/
- * OffGameThreadService da @features/offGameMessages/api con
- * // boundary-allow (consumer trovato solo dal type-check post-switch, non
- * dalla ricognizione iniziale — import profondo pre-esistente verso
- * @database/models/OffGameMessage e verso './OffGameThreadService', mai
- * emerso nel grep perché relativo). Stesso trattamento già usato per
- * SitemapService.ts fuori da documenti (Fase 6.5) e ChatController.ts fuori
- * da oggetti/fineSessione.
+ * Debito parzialmente risolto in Fase 7.4: il ramo offGame di
+ * modules/game/services/MessageService.ts (branch interno su
+ * messageContext, condiviso con onGame) è stato estratto in
+ * features/offGameMessages/services/OffGameMessageService.ts — non più
+ * un import esterno con boundary-allow, ora interno alla feature.
+ * MessageBackupService.ts resta condiviso in modules/game/services/
+ * (usato da entrambi i rami onGame/offGame): una feature può importare
+ * da modules/ liberamente, nessun vincolo di boundary in quella
+ * direzione, non serve alcuna annotazione.
  *
  * Debito accettato — infrastruttura di moderazione condivisa fra
  * location/onGame/offGame (fuori perimetro, non toccata):

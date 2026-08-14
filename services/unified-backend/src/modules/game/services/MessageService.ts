@@ -1,11 +1,7 @@
 import mongoose from 'mongoose';
-import { OnGameMessage } from '@database/models/OnGameMessage';
+import { OnGameMessage } from '@core/chat/models/OnGameMessage';
 import { Character } from '@core/character/models/Character';
 import { OnGameThreadService } from './OnGameThreadService';
-// boundary-allow: MessageService è infrastruttura condivisa fra il sistema
-// postale onGame (core) e la feature offGameMessages — vedi
-// features/offGameMessages/manifest.ts per il dettaglio del debito.
-import { OffGameMessage, OffGameThreadService } from '@features/offGameMessages/api';
 import { MessageBackupService } from './MessageBackupService';
 import { logger } from '@shared/utils/logger';
 import { redis } from '@config/runtime/redis';
@@ -13,12 +9,14 @@ import { redis } from '@config/runtime/redis';
 /**
  * MessageService
  *
- * Main service for message operations (on-game and off-game).
+ * Main service for on-game message operations (postal system). La metà
+ * off-game si è spostata in features/offGameMessages/services/OffGameMessageService.ts
+ * (Fase 7.4, split non più necessario per boundary compliance — questo file
+ * resta in modules/, poteva già importare @features/offGameMessages/api
+ * liberamente — voluto comunque per separare le responsabilità).
  *
  * Features:
  * - Send on-game messages with delivery config snapshot
- * - Send off-game messages with real-time delivery
- * - Schedule delivery for delayed messages
  * - Mark messages as delivered
  * - Soft delete with backup creation
  */
@@ -149,108 +147,6 @@ export class MessageService {
   }
 
   /**
-   * Send off-game message (OOC chat)
-   *
-   * Validation:
-   * - Sender must exist (any character status allowed)
-   * - Recipient must exist
-   *
-   * @param params - Message parameters
-   * @returns Created message
-   */
-  static async sendOffGameMessage(params: {
-    senderId: mongoose.Types.ObjectId;
-    recipientId: mongoose.Types.ObjectId;
-    content: string;
-    replyTo?: mongoose.Types.ObjectId;
-  }): Promise<any> {
-    try {
-      // Validate sender exists
-      const sender = await Character.findById(params.senderId);
-      if (!sender) {
-        throw new Error('Sender not found');
-      }
-
-      // Validate recipient exists
-      const recipient = await Character.findById(params.recipientId);
-      if (!recipient) {
-        throw new Error('Recipient not found');
-      }
-
-      // Find or create thread
-      const thread = await OffGameThreadService.findOrCreateThread(
-        params.senderId,
-        params.recipientId
-      );
-
-      // Create message
-      const message = await OffGameMessage.create({
-        offGameThreadId: thread._id,
-        senderId: params.senderId,
-        content: params.content,
-        editHistory: [],
-        readBy: [],
-        replyTo: params.replyTo
-      });
-
-      // Update thread metadata
-      await OffGameThreadService.updateThreadMetadata(thread._id, params.content);
-
-      // Increment unread count for recipient
-      await OffGameThreadService.incrementUnreadCount(thread._id, params.recipientId);
-
-      logger.info('OffGame message sent', {
-        messageId: message._id,
-        senderId: params.senderId.toString(),
-        recipientId: params.recipientId.toString()
-      });
-
-      // Publish moderation event (non-blocking)
-      this.publishModerationEvent('offgame', {
-        messageId: message._id.toString(),
-        threadId: thread._id.toString(),
-        senderId: params.senderId.toString(),
-        content: params.content,
-        timestamp: Date.now()
-      }).catch(err =>
-        logger.error('Failed to publish OffGame moderation event', { error: err, messageId: message._id })
-      );
-
-      return message;
-    } catch (error) {
-      logger.error('Error sending OffGame message', { error, params });
-      throw error;
-    }
-  }
-
-  /**
-   * Schedule delivery for on-game message
-   *
-   * Used by CRON job to set scheduledDelivery field
-   *
-   * @param messageId - Message ID
-   * @param deliveryDate - Scheduled delivery date
-   */
-  static async scheduleDelivery(
-    messageId: mongoose.Types.ObjectId,
-    deliveryDate: Date
-  ): Promise<void> {
-    try {
-      await OnGameMessage.findByIdAndUpdate(messageId, {
-        scheduledDelivery: deliveryDate
-      });
-
-      logger.debug('OnGame message delivery scheduled', {
-        messageId: messageId.toString(),
-        deliveryDate: deliveryDate.toISOString()
-      });
-    } catch (error) {
-      logger.error('Error scheduling message delivery', { error, messageId: messageId.toString() });
-      throw error;
-    }
-  }
-
-  /**
    * Mark on-game message as delivered
    *
    * Called by CRON job when scheduledDelivery time is reached
@@ -278,86 +174,59 @@ export class MessageService {
   }
 
   /**
-   * Delete message (soft delete with backup)
+   * Delete on-game message (soft delete with backup)
    *
-   * OnGame: Per-user soft delete (sender or recipient can delete independently)
-   * OffGame: Simple soft delete (deletedAt timestamp)
+   * Per-user soft delete: sender or recipient can delete independently.
+   * Backup created only once both have deleted their side.
    *
    * @param messageId - Message ID
    * @param characterId - Character deleting the message
-   * @param messageContext - 'ongame' or 'offgame'
    */
   static async deleteMessage(
     messageId: mongoose.Types.ObjectId,
-    characterId: mongoose.Types.ObjectId,
-    messageContext: 'ongame' | 'offgame'
+    characterId: mongoose.Types.ObjectId
   ): Promise<void> {
     try {
-      if (messageContext === 'ongame') {
-        const message = await OnGameMessage.findById(messageId);
-        if (!message) {
-          throw new Error('Message not found');
-        }
+      const message = await OnGameMessage.findById(messageId);
+      if (!message) {
+        throw new Error('Message not found');
+      }
 
-        // Check if character is sender or recipient
-        const isSender = message.senderId.equals(characterId);
-        const isRecipient = message.recipientId.equals(characterId);
+      // Check if character is sender or recipient
+      const isSender = message.senderId.equals(characterId);
+      const isRecipient = message.recipientId.equals(characterId);
 
-        if (!isSender && !isRecipient) {
-          throw new Error('Character is not sender or recipient');
-        }
+      if (!isSender && !isRecipient) {
+        throw new Error('Character is not sender or recipient');
+      }
 
-        // Mark as deleted by sender or recipient
-        if (isSender) {
-          message.markDeletedBySender();
-        } else {
-          message.markDeletedByRecipient();
-        }
-
-        await message.save();
-
-        // If deleted by both, create backup
-        if (message.deletedBy.sender && message.deletedBy.recipient) {
-          await MessageBackupService.createBackup(message, 'ongame', characterId);
-          logger.info('OnGame message backup created (deleted by both)', {
-            messageId: messageId.toString()
-          });
-        }
-
-        logger.info('OnGame message marked deleted', {
-          messageId: messageId.toString(),
-          characterId: characterId.toString(),
-          isSender
-        });
+      // Mark as deleted by sender or recipient
+      if (isSender) {
+        message.markDeletedBySender();
       } else {
-        // OffGame: Simple soft delete
-        const message = await OffGameMessage.findById(messageId);
-        if (!message) {
-          throw new Error('Message not found');
-        }
+        message.markDeletedByRecipient();
+      }
 
-        // Check if character is sender
-        if (!message.senderId.equals(characterId)) {
-          throw new Error('Only sender can delete off-game messages');
-        }
+      await message.save();
 
-        message.markDeleted();
-        await message.save();
-
-        // Create backup
-        await MessageBackupService.createBackup(message, 'offgame', characterId);
-
-        logger.info('OffGame message marked deleted', {
-          messageId: messageId.toString(),
-          characterId: characterId.toString()
+      // If deleted by both, create backup
+      if (message.deletedBy.sender && message.deletedBy.recipient) {
+        await MessageBackupService.createBackup(message, 'ongame', characterId);
+        logger.info('OnGame message backup created (deleted by both)', {
+          messageId: messageId.toString()
         });
       }
+
+      logger.info('OnGame message marked deleted', {
+        messageId: messageId.toString(),
+        characterId: characterId.toString(),
+        isSender
+      });
     } catch (error) {
       logger.error('Error deleting message', {
         error,
         messageId: messageId.toString(),
-        characterId: characterId.toString(),
-        messageContext
+        characterId: characterId.toString()
       });
       throw error;
     }
@@ -366,16 +235,13 @@ export class MessageService {
   /**
    * Publish moderation event to Redis for AI processing
    *
-   * @param type - Message type ('ongame' | 'offgame')
    * @param eventData - Event payload
    */
   private static async publishModerationEvent(
-    type: 'ongame' | 'offgame',
+    type: 'ongame',
     eventData: any
   ): Promise<void> {
-    const channel = type === 'ongame'
-      ? 'embedding:ongame_message:created'
-      : 'embedding:offgame_message:created';
+    const channel = 'embedding:ongame_message:created';
 
     try {
       await redis.publish(channel, JSON.stringify(eventData));

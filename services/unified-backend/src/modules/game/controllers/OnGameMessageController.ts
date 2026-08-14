@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import { OnGameMessage } from '@database/models/OnGameMessage';
+import { OnGameMessage } from '@core/chat/models/OnGameMessage';
 import { MessageService } from '../services/MessageService';
 import { OnGameThreadService } from '../services/OnGameThreadService';
 import { logger } from '@shared/utils/logger';
@@ -340,7 +340,7 @@ export class OnGameMessageController {
       }
 
       const threadId = req.params.id as string;
-      const { OnGameThread } = await import('@database/models/OnGameThread');
+      const { OnGameThread } = await import('@core/chat/models/OnGameThread');
 
       // Get thread
       const thread = await OnGameThread.findById(threadId)
@@ -455,8 +455,7 @@ export class OnGameMessageController {
       // Soft delete via MessageService
       await MessageService.deleteMessage(
         new mongoose.Types.ObjectId(messageId),
-        new mongoose.Types.ObjectId(characterId),
-        'ongame'
+        new mongoose.Types.ObjectId(characterId)
       );
 
       res.status(200).json(successResponse(
@@ -700,7 +699,7 @@ export class OnGameMessageController {
       const skip = (page - 1) * limit;
 
       // Find or create thread with partner
-      const { OnGameThread } = await import('@database/models/OnGameThread');
+      const { OnGameThread } = await import('@core/chat/models/OnGameThread');
       const characterId = new mongoose.Types.ObjectId(req.character.characterId);
       const partnerObjectId = new mongoose.Types.ObjectId(partnerId);
 

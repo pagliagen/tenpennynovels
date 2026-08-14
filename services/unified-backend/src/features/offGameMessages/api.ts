@@ -14,9 +14,10 @@
  *   offGame della moderazione condivisa location/onGame/offGame — questo
  *   controller resta fuori dal perimetro (debito dichiarato, vedi
  *   manifest.ts) ma è un consumer reale con import profondo pre-esistente.
- * - modules/game/services/MessageService.ts (core-adiacente, condiviso col
- *   sistema postale onGame, resta fuori dal perimetro) usa OffGameMessage
- *   e OffGameThreadService per il ramo "offgame" del suo branch interno.
+ * - features/offGameMessages/services/OffGameMessageService.ts (interno alla
+ *   feature, Fase 7.4) usa OffGameMessage e OffGameThreadService — prima
+ *   viveva dentro modules/game/services/MessageService.ts come "ramo offgame"
+ *   di un metodo condiviso con onGame, estratto in un file proprio.
  */
 export { OffGameChatService } from './services/OffGameChatService';
 export { OffGameThreadService } from './services/OffGameThreadService';
