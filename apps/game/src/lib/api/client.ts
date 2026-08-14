@@ -160,7 +160,7 @@ const createApiClient = (): AxiosInstance => {
         if (wasAuthenticated) {
           useAuthStore.getState().logout();
           const landingUrl = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:4000';
-          window.location.href = `${landingUrl}/auth/login`;
+          window.location.href = `${landingUrl}`;
         }
       }
 
