@@ -665,7 +665,7 @@ Una feature per PR. **Mai due feature in volo contemporaneamente.** Ordine decis
 
 `luoghi` e `chat` (il trasporto) **rimossi dalla tabella**: riclassificati come core il 2026-08-13, vedi §3.2 — non si migrano più come feature.
 
-**Fase 6 completa (2026-08-14)**: tutte le righe della tabella sono chiuse (8 feature migrate, `bot`/`image-gen` rimosse invece che migrate). Non ancora eseguito, prossimo passo: rimuovere lo shim `database/models/index.ts` e svuotare `src/modules/` dai residui delle feature migrate (non da `Character`/`User`/`auth`/`Location`/`Chat`/messaggi OnGame, che restano lì fino alla Fase 7).
+**Fase 6 completa (2026-08-14)**: tutte le righe della tabella sono chiuse (8 feature migrate, `bot`/`image-gen` rimosse invece che migrate). **Shim rimosso (2026-08-14)**: lo shim di compatibilità in `database/models/index.ts` è stato eliminato — 5 feature avevano ancora consumer reali (in `modules/` e, in un caso, dentro `features/economia/**` stesso) che leggevano i model migrati dal barrel invece che dalla feature; tutti reindirizzati (2 commit separati) prima della rimozione. `src/modules/` risultava già privo di residui strutturali delle feature migrate (nessuna directory/file orfano trovato) — l'unico lavoro reale era il reindirizzamento import, non pulizia di file. Pronta per la Fase 7.
 
 ---
 
