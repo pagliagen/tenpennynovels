@@ -882,6 +882,11 @@ export class SocialClassManagementController {
       // Process each reorder request
       for (const order of classOrders) {
         try {
+          // CWE-943: guardia già presente sull'intero array sopra, ma
+          // ripetuta qui sul singolo elemento — l'analisi statica non
+          // collega in modo affidabile una validazione fatta in un loop
+          // precedente all'uso in un loop successivo.
+          if (typeof order.socialClassId !== 'string' || typeof order.displayOrder !== 'number') continue;
           const result = await SocialClassConfig.findByIdAndUpdate(
             order.socialClassId,
             { displayOrder: order.displayOrder },

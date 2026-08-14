@@ -1377,6 +1377,11 @@ export class CorporationManagementController {
 
           for (const corporationId of corporationIds) {
             try {
+              // CWE-943: guardia già presente sull'intero array sopra, ma
+              // ripetuta qui sul singolo elemento — l'analisi statica non
+              // collega in modo affidabile una validazione fatta in un
+              // loop precedente all'uso in un loop successivo.
+              if (typeof corporationId !== 'string') continue;
               const corporation = await Corporation.findById(corporationId);
               if (!corporation) {
                 errors.push({ corporationId, error: 'Corporazione non trovata' });

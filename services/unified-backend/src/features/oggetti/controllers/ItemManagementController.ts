@@ -393,15 +393,24 @@ export class ItemManagementController {
   static async updateItem(req: Request<{ itemId: string }>, res: Response): Promise<void> {
     try {
       const itemId = req.params.itemId;
-      const { reason, ...updateData } = req.body;
+      const { reason, ...rawUpdateData } = req.body;
 
-      // CWE-943: updateData va passato così com'è a findByIdAndUpdate senza
-      // wrapping esplicito in $set — una chiave root come "$set"/"$unset"/
-      // "$where" nel body verrebbe interpretata come vero operatore Mongo
-      // invece che come campo. Rimosse prima dell'update.
-      for (const key of Object.keys(updateData)) {
-        if (key.startsWith('$')) delete updateData[key];
+      // CWE-943: una chiave root come "$set"/"$unset"/"$where" nel body
+      // verrebbe interpretata come vero operatore Mongo invece che come
+      // campo. Rifiutata esplicitamente (400) invece di essere ripulita in
+      // place — l'update passato a findByIdAndUpdate è un oggetto nuovo,
+      // mai lo stesso riferimento del body ricevuto.
+      if (Object.keys(rawUpdateData).some((key) => key.startsWith('$'))) {
+        res.status(400).json(errorResponse(
+          'Campo di aggiornamento non valido',
+          'INVALID_UPDATE_FIELD',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
       }
+      const updateData: Record<string, unknown> = { ...rawUpdateData };
 
       if (!reason || reason.trim().length === 0) {
         res.status(400).json(errorResponse(
@@ -415,7 +424,7 @@ export class ItemManagementController {
       }
 
       // Validate category if provided
-      if (updateData.category && !Object.values(ItemCategory).includes(updateData.category)) {
+      if (updateData.category && !Object.values(ItemCategory).includes(updateData.category as ItemCategory)) {
         res.status(400).json(errorResponse(
           'Categoria oggetto non valida',
           'INVALID_CATEGORY',

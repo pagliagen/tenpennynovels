@@ -17,6 +17,7 @@
 
 import type { Application, RequestHandler } from 'express';
 import { logger } from '@shared/utils/logger';
+import { createGlobalRateLimiter } from '@shared/middleware/globalRateLimit';
 import { featureRegistry } from './registry';
 import { requireFeature } from './middleware/requireFeature';
 import { extensions } from '../extensions/registry';
@@ -28,10 +29,21 @@ const SCOPE_PREFIX: Record<FeatureRouteMount['scope'], string> = {
   admin: '/admin',
 };
 
+// CodeQL (js/missing-rate-limiting) non riesce a tracciare il limiter
+// applicato in app.ts fino a qui: le route delle feature sono registrate
+// dinamicamente in un loop, in un file diverso, non con una chiamata
+// diretta app.use() nello stesso punto testuale. Istanza separata (vedi
+// createGlobalRateLimiter) applicata direttamente qui, dove ogni router di
+// feature viene effettivamente montato — un solo punto per l'intera
+// superficie coperta da bootstrapFeatures().
+const featureRouteLimiter = createGlobalRateLimiter();
+
 function mountRoutes(app: Application, manifest: FeatureManifest): void {
   for (const mount of manifest.routes ?? []) {
     const fullPath = `${SCOPE_PREFIX[mount.scope]}${mount.path}`;
-    const handlers: RequestHandler[] = mount.gated === false ? [mount.router] : [requireFeature(manifest.key), mount.router];
+    const handlers: RequestHandler[] = mount.gated === false
+      ? [featureRouteLimiter, mount.router]
+      : [featureRouteLimiter, requireFeature(manifest.key), mount.router];
     app.use(fullPath, ...handlers);
   }
 }

@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import { createGlobalRateLimiter } from '@shared/middleware/globalRateLimit';
 import { requestIdMiddleware } from '@shared/middleware/requestId';
 import { normalizeQueryParams } from '@shared/middleware/normalizeQueryParams';
 import { maintenanceModeMiddleware } from '@shared/middleware/maintenanceMode';
@@ -118,21 +118,10 @@ app.get('/health', (req, res) => {
 // già presenti per-route (read/write/destructive, spesso più severi)
 // restano invariati e si applicano IN AGGIUNTA a questo, non al suo posto.
 // /health resta escluso: polling legittimo e frequente da Docker/PM2/LB.
-const globalLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip ?? ''),
-  handler: (_req, res) => {
-    res.status(429).json({
-      success: false,
-      error: 'Troppe richieste, riprova più tardi.',
-      code: 'GLOBAL_RATE_LIMIT_EXCEEDED',
-      timestamp: new Date().toISOString()
-    });
-  }
-});
+// Le route montate da bootstrapFeatures() (features/*) hanno la propria
+// istanza separata dello stesso limiter, applicata dentro
+// core/features/bootstrap.ts — vedi il commento lì per il motivo.
+const globalLimiter = createGlobalRateLimiter();
 
 // ===== Module Routes =====
 app.use(globalLimiter);

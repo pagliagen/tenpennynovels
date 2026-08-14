@@ -77,7 +77,10 @@ export class ForumBookmarkController {
       const characterId = new mongoose.Types.ObjectId(character.characterId);
 
       const filter: Record<string, unknown> = { characterId };
-      if (itemType && (itemType === 'discussion' || itemType === 'post')) {
+      // CWE-943: già sicuro (itemType === 'discussion'/'post' esclude
+      // qualunque oggetto per costruzione), ma il typeof esplicito è il
+      // pattern che l'analisi statica riconosce come sanitizzazione.
+      if (typeof itemType === 'string' && (itemType === 'discussion' || itemType === 'post')) {
         filter.itemType = itemType;
       }
 
