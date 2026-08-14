@@ -25,16 +25,24 @@ export class ItemController {
         limit = 20
       } = req.query;
 
+      // CWE-943: category/locationId/search arrivano da req.query — con il
+      // parser di Express (qs) un client può mandare ?category[$where]=...
+      // e ottenere un oggetto invece di una stringa, iniettando un
+      // operatore Mongo arbitrario nel filtro. Si accettano solo stringhe.
+      const safeCategory = typeof category === 'string' ? category : undefined;
+      const safeLocationId = typeof locationId === 'string' ? locationId : undefined;
+      const safeSearch = typeof search === 'string' ? search : undefined;
+
       // Build filter
       const filter: any = {};
 
       // Only show publicly available items or items available at specific locations
       if (includeUnavailable !== 'true') {
-        if (locationId) {
+        if (safeLocationId) {
           // Items available at specific location OR public items
           filter.$or = [
             { isPublic: true },
-            { availableLocations: locationId }
+            { availableLocations: safeLocationId }
           ];
         } else {
           // Only public items if no location specified
@@ -45,12 +53,12 @@ export class ItemController {
         filter.isAdminOnly = { $ne: true };
       }
 
-      if (category) filter.category = category;
+      if (safeCategory) filter.category = safeCategory;
       if (maxPrice) filter.basePrice = { ...filter.basePrice, $lte: Number(maxPrice) };
       if (minPrice) filter.basePrice = { ...filter.basePrice, $gte: Number(minPrice) };
 
-      if (search) {
-        const escapedSearch = escapeRegex(search as string);
+      if (safeSearch) {
+        const escapedSearch = escapeRegex(safeSearch);
         filter.$or = [
           { name: { $regex: escapedSearch, $options: 'i' } },
           { description: { $regex: escapedSearch, $options: 'i' } },
@@ -58,9 +66,12 @@ export class ItemController {
         ];
       }
 
-      // Build sort
+      // Build sort — sortBy è usato come chiave d'oggetto: allowlist esplicita
+      // invece di accettare qualunque stringa (evita anche path tipo __proto__).
+      const SORTABLE_FIELDS = new Set(['name', 'category', 'basePrice', 'createdAt']);
+      const safeSortBy = typeof sortBy === 'string' && SORTABLE_FIELDS.has(sortBy) ? sortBy : 'name';
       const sort: any = {};
-      sort[sortBy as string] = sortOrder === 'desc' ? -1 : 1;
+      sort[safeSortBy] = sortOrder === 'desc' ? -1 : 1;
 
       const items = await Item.find(filter)
         .populate('availableLocations', 'name type parentLocationId')
@@ -119,7 +130,7 @@ export class ItemController {
         characterId: character._id,
         totalItems: total,
         filteredItems: itemsWithEligibility.length,
-        filters: { category, locationId, maxPrice, minPrice, search }
+        filters: { category: safeCategory, locationId: safeLocationId, maxPrice, minPrice, search: safeSearch }
       });
 
       res.json(listResponse(

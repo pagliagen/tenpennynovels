@@ -61,7 +61,19 @@ const deleteMessageLimiter = rateLimit({
   skip: (req) => !req.user
 });
 
+// CodeQL: router.use(requireUserAuth)/requireCharacterContext fanno accessi
+// DB/Redis per OGNI richiesta su questo router, prima ancora di raggiungere
+// i limiter per-route sotto — un flood di richieste (anche con auth non
+// valida) li raggiungerebbe comunque senza limite. Limiter generico IP-based
+// davanti a tutto, i limiter più stretti per-route restano invariati a valle.
+const routerLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+});
+
 // All routes require user auth + character context
+router.use(routerLimiter);
 router.use(AuthMiddleware.requireUserAuth);
 router.use(AuthMiddleware.requireCharacterContext);
 

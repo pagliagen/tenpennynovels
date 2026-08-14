@@ -1,9 +1,20 @@
 import { Router } from 'express';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { MessagingSystemController } from '../controllers/MessagingSystemController';
 import { AdminAuthMiddleware } from '@modules/admin/middleware/adminAuth';
 import { requireViewPermission } from '@modules/admin/utils/permissions';
 
 const router = Router();
+
+// CodeQL non riconosce AdminAuthMiddleware.sensitiveOperationLimit() (Redis)
+// come rate limiting — la sua analisi statica cerca il pattern
+// express-rate-limit. Layer aggiuntivo sulle route distruttive, non in
+// sostituzione: il controllo Redis (10/ora) resta a valle.
+const destructiveLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 15,
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip ?? ''),
+});
 
 // All messaging system routes require admin access
 router.use(AdminAuthMiddleware.requireAdminAccess);
@@ -35,6 +46,7 @@ router.delete(
   '/chat/:chatId',
   requireViewPermission('messaging.detail.delete'),
   AdminAuthMiddleware.logAdminAction('delete_chat', 'messaging_system'),
+  destructiveLimiter,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   MessagingSystemController.deleteChat
 );
@@ -43,6 +55,7 @@ router.delete(
   '/message/:messageId',
   requireViewPermission('messaging.detail.delete'),
   AdminAuthMiddleware.logAdminAction('delete_message', 'messaging_system'),
+  destructiveLimiter,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   MessagingSystemController.deleteMessage
 );
@@ -52,6 +65,7 @@ router.post(
   '/chat/:chatId/participant/:participantId/moderate',
   requireViewPermission('messaging.moderation.manage'),
   AdminAuthMiddleware.logAdminAction('moderate_participant', 'messaging_system'),
+  destructiveLimiter,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   MessagingSystemController.moderateParticipant
 );
@@ -61,6 +75,7 @@ router.post(
   '/bulk',
   requireViewPermission('messaging.detail.update'),
   AdminAuthMiddleware.logAdminAction('bulk_messaging_operation', 'messaging_system'),
+  destructiveLimiter,
   AdminAuthMiddleware.sensitiveOperationLimit(),
   MessagingSystemController.bulkOperations
 );
