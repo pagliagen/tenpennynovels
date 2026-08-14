@@ -9,7 +9,7 @@ import { CharacterNotesController } from '../controllers/CharacterNotesControlle
 
 const router = Router();
 
-// Rate limiters — mirrors the convention in modules/forum/routes/forum.ts.
+// Rate limiters — mirrors the convention in features/forum/routes/game.ts.
 // The api-gateway also applies a 300 req/min fallback across all of /game,
 // but unified-backend's own routes should each state per-route intent
 // rather than relying solely on that upstream default.

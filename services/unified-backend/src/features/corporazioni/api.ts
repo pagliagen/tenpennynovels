@@ -1,8 +1,8 @@
 /**
  * Superficie pubblica della feature corporazioni per consumatori esterni
- * (modules/forum/services/ForumAccessService.ts; features/oggetti/ via
- * dependsOn dalla Fase 6.4). Sostituisce l'import diretto del model
- * Corporation — vedi Fase 4 del refactor.
+ * (features/forum/services/ForumAccessService.ts, features/oggetti/ — via
+ * dependsOn dichiarato nei rispettivi manifest). Sostituisce l'import
+ * diretto del model Corporation — vedi Fase 4 del refactor.
  */
 import { Types } from 'mongoose';
 import { Corporation } from './models/Corporation';

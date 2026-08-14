@@ -244,18 +244,32 @@ export {
 } from '@features/documenti/models/DocumentChunk';
 
 // Forum System
-export { ForumCategory, type IForumCategory } from './ForumCategory';
-export { ForumTopic, type IForumTopic } from './ForumTopic';
-export { ForumTopicPermissionOverride, type IForumTopicPermissionOverride, type ForumPermissionDecision, type ForumTopicPermissionOverrides } from './ForumTopicPermissionOverride';
-export { ForumDiscussion, type IForumDiscussion } from './ForumDiscussion';
-export { ForumPost, type IForumPost } from './ForumPost';
-export { ForumTopicFavorite, type IForumTopicFavorite } from './ForumTopicFavorite';
-export { ForumDiscussionFavorite, type IForumDiscussionFavorite } from './ForumDiscussionFavorite';
-export { ForumDiscussionSubscription, type IForumDiscussionSubscription } from './ForumDiscussionSubscription';
-export { ForumBookmark, BookmarkItemType, type IForumBookmark } from './ForumBookmark';
-export { ForumNotification, ForumNotificationType, type IForumNotification } from './ForumNotification';
-export { ForumCharacterPreference, type IForumCharacterPreference, type ForumReplyOrder } from './ForumCharacterPreference';
-export { ForumTopicReadState, type IForumTopicReadState } from './ForumTopicReadState';
+// Deprecato: i model vivono ora in features/forum/models/ (Fase 6.6 del
+// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumCategory, type IForumCategory } from '@features/forum/models/ForumCategory';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumTopic, type IForumTopic } from '@features/forum/models/ForumTopic';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumTopicPermissionOverride, type IForumTopicPermissionOverride, type ForumPermissionDecision, type ForumTopicPermissionOverrides } from '@features/forum/models/ForumTopicPermissionOverride';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumDiscussion, type IForumDiscussion } from '@features/forum/models/ForumDiscussion';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumPost, type IForumPost } from '@features/forum/models/ForumPost';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumTopicFavorite, type IForumTopicFavorite } from '@features/forum/models/ForumTopicFavorite';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumDiscussionFavorite, type IForumDiscussionFavorite } from '@features/forum/models/ForumDiscussionFavorite';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumDiscussionSubscription, type IForumDiscussionSubscription } from '@features/forum/models/ForumDiscussionSubscription';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumBookmark, BookmarkItemType, type IForumBookmark } from '@features/forum/models/ForumBookmark';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumNotification, ForumNotificationType, type IForumNotification } from '@features/forum/models/ForumNotification';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumCharacterPreference, type IForumCharacterPreference, type ForumReplyOrder } from '@features/forum/models/ForumCharacterPreference';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
+export { ForumTopicReadState, type IForumTopicReadState } from '@features/forum/models/ForumTopicReadState';
 
 // Deleted Records Archive
 export { DeletedRecord, type IDeletedRecord } from './DeletedRecord';
