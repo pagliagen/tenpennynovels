@@ -296,7 +296,7 @@ export class CharacterApprovalController {
       const { Item } = await import('@features/oggetti/models/Item');
       // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7)
       const { Occupation } = await import('@features/occupazioni/models/Occupation');
-      const { User } = await import('@database/models/User');
+      const { User } = await import('@core/auth/models/User');
       
       // Get character with populated user data
       const character = await Character.findById(characterId)

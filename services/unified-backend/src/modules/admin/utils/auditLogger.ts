@@ -298,7 +298,7 @@ class AuditLoggerClass {
 
     // Send email notification (non-blocking)
     try {
-      const { EmailService } = await import('@modules/auth/services/EmailService');
+      const { EmailService } = await import('@core/auth/services/EmailService');
       const { appConfig } = await import('@config/runtime');
 
       if (!appConfig.admin.notificationEmail) {

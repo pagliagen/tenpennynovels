@@ -83,7 +83,7 @@ async function startServer(): Promise<void> {
     await setupRedisAdapter();
 
     // Initialize Email Service
-    const { EmailService } = await import('@modules/auth/services/EmailService');
+    const { EmailService } = await import('@core/auth/services/EmailService');
     EmailService.initialize();
     logger.info('✅ Email service initialized');
 
@@ -95,6 +95,14 @@ async function startServer(): Promise<void> {
     // Start Sitemap CRON Job (daily at 03:00 + immediate on boot)
     await import('./cron/sitemapGeneration');
     logger.info('✅ Sitemap CRON job started');
+
+    // Start Session Cleanup Job (ogni 30 minuti, ripulisce CharacterSession
+    // scadute — collection Mongo di audit-trail legacy che prima cresceva
+    // senza limiti perché il job non era mai avviato. start() attende
+    // internamente la connessione DB, può partire subito dopo db.connect())
+    const { SessionCleanupJob } = await import('@core/auth/jobs/sessionCleanup');
+    await SessionCleanupJob.start();
+    logger.info('✅ Session cleanup job started');
 
     // Start Presence Cleanup CRON Job (every 5 minutes, feature flag controlled)
     if (appConfig.features.presenceCleanup) {

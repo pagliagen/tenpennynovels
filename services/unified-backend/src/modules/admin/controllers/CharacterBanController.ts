@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { Character, User } from '@database/models';
+import { Character } from '@database/models';
+import { User } from '@core/auth/models/User';
 import { redis } from '@config/runtime/redis';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { errorResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
-import { EmailService } from '@modules/auth/services/EmailService';
+import { EmailService } from '@core/auth/services/EmailService';
 import type { CharacterBanScope } from '@shared/utils/characterBan';
 
 export class CharacterBanController {

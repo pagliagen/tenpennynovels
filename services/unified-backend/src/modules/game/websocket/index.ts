@@ -81,7 +81,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
       if (sessionId) {
         try {
           // Import SessionStore and Character dynamically
-          const { SessionStore } = await import('../../../modules/auth/services/SessionStore');
+          const { SessionStore } = await import('@core/auth/services/SessionStore');
           const { Character } = await import('@database/models');
 
           // Lookup Redis session

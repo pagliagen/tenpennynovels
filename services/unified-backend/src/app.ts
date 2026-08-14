@@ -15,7 +15,7 @@ import { bootstrapFeatures } from '@core/features/bootstrap';
 import { FEATURES } from '@features/index';
 
 // Import module routes
-import authRoutes from '@modules/auth/routes/auth';
+import authRoutes from '@core/auth/routes/auth';
 import gameRoutes from '@modules/game/routes';
 import characterGenConfigRoutes from '@modules/game/routes/characterGenConfig';
 import adminRoutes from '@modules/admin/routes';

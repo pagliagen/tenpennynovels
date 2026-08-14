@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Ticket } from '../models/Ticket';
-import { User } from '@database/models/User';
+import { User } from '@core/auth/models/User';
 import { NotificationService } from '../services/NotificationService';
 import { logger } from '@modules/admin/utils/logger';
 import { errorResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';

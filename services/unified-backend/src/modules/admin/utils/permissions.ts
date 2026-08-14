@@ -25,7 +25,7 @@ export async function resolveAdminCharacterSelectionContext(
 
   if (sessionId) {
     try {
-      const { SessionStore } = await import('@modules/auth/services/SessionStore');
+      const { SessionStore } = await import('@core/auth/services/SessionStore');
       const session = await SessionStore.getSession(sessionId);
       if (session && session.userId === userId) {
         return { characterId: session.characterId, characterRoles: [] };
@@ -398,7 +398,8 @@ export function requireAccess(section: string) {
     }
 
     try {
-      const { User, Character } = await import('@database/models');
+      const { User } = await import('@core/auth/models/User');
+      const { Character } = await import('@database/models');
 
       const dbUser = await User.findById(user.userId);
       if (!dbUser) {
@@ -469,7 +470,8 @@ export function requireViewPermission(permission: AdminPermission) {
     }
 
     try {
-      const { User, Character } = await import('@database/models');
+      const { User } = await import('@core/auth/models/User');
+      const { Character } = await import('@database/models');
 
       const dbUser = await User.findById(user.userId);
       if (!dbUser) {

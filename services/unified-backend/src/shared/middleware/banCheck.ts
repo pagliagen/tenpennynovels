@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Character } from '@database/models/Character';
-import { User } from '@database/models/User';
+import { User } from '@core/auth/models/User';
 import { logger } from '@shared/utils/logger';
 import {
   blocksChatWrite as charBlocksChat,

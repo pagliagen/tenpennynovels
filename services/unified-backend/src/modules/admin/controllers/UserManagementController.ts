@@ -10,7 +10,8 @@ import {
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Types } from 'mongoose';
-import { User, Character, Chat } from '@database/models';
+import { User } from '@core/auth/models/User';
+import { Character, Chat } from '@database/models';
 import type { UserCharacter } from '../types/management';
 import type { SocialClass } from '@shared/types/socialClass';
 import { redis } from '@config/runtime/redis';
@@ -480,7 +481,7 @@ export class UserManagementController {
       }
 
       // Import User model
-      const { User } = await import('@database/models/User');
+      const { User } = await import('@core/auth/models/User');
 
       // Get audit info for bannedBy field (includes character name from cookie)
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -779,7 +780,7 @@ export class UserManagementController {
       const { reason } = req.body || {};
 
       // Import User model
-      const { User } = await import('@database/models/User');
+      const { User } = await import('@core/auth/models/User');
 
       // Update user in database - remove ban fields
       const user = await User.findByIdAndUpdate(
@@ -886,7 +887,7 @@ export class UserManagementController {
         return;
       }
 
-      const { User } = await import('@database/models/User');
+      const { User } = await import('@core/auth/models/User');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
         res.status(401).json(errorResponse(
@@ -988,7 +989,7 @@ export class UserManagementController {
         return;
       }
 
-      const { User } = await import('@database/models/User');
+      const { User } = await import('@core/auth/models/User');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
 
       // Unban all users
@@ -1743,7 +1744,7 @@ export class UserManagementController {
         return;
       }
 
-      const { User } = await import('@database/models/User');
+      const { User } = await import('@core/auth/models/User');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
 
       // Activate all users
@@ -1826,7 +1827,7 @@ export class UserManagementController {
         return;
       }
 
-      const { User } = await import('@database/models/User');
+      const { User } = await import('@core/auth/models/User');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
 
       // Deactivate all users

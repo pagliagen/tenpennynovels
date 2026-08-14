@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { CharacterSession } from '@database/models/CharacterSession';
+import { CharacterSession } from '@core/auth/models/CharacterSession';
 import { Character } from '@database/models/Character';
-import { User } from '@database/models/User';
+import { User } from '@core/auth/models/User';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';

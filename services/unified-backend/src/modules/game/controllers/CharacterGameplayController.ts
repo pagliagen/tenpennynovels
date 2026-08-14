@@ -16,7 +16,7 @@ import {
 } from '../utils/characterCreationUtils';
 import { smartTransaction } from '../utils/transactions';
 import jwt from 'jsonwebtoken';
-import { CharacterSessionManager } from '../../auth/utils/characterSessionManager';
+import { CharacterSessionManager } from '@core/auth/utils/characterSessionManager';
 
 function getJwtSecret(): string {
   if (!appConfig.jwt.secret) throw new Error('JWT_SECRET non configurato');
@@ -178,7 +178,7 @@ export class CharacterGameplayController {
       }
 
       // NEW FLOW: Create session in Redis (multi-tab support)
-      const { SessionStore } = await import('../../../modules/auth/services/SessionStore');
+      const { SessionStore } = await import('@core/auth/services/SessionStore');
 
       const deviceInfo = {
         userAgent: req.get('User-Agent') || 'Unknown',

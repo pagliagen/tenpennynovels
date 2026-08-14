@@ -443,7 +443,7 @@ export class SystemConfigController {
   static async getSystemStats(req: Request, res: Response): Promise<void> {
     try {
       // Dynamic imports to avoid circular dependencies
-      const { User } = await import('@database/models/User');
+      const { User } = await import('@core/auth/models/User');
       const { Character } = await import('@database/models/Character');
       const { Location } = await import('@database/models/Location');
 
@@ -596,7 +596,7 @@ export class SystemConfigController {
 
       // Dynamic imports to avoid circular dependencies
       const { BroadcastMessage } = await import('@database/models/BroadcastMessage');
-      const { User } = await import('@database/models/User');
+      const { User } = await import('@core/auth/models/User');
 
       // Calculate target count based on audience
       let targetCount = 0;

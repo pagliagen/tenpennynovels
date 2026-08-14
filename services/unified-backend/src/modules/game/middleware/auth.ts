@@ -125,7 +125,7 @@ export class AuthMiddleware {
       if (sessionId) {
         try {
           // Import SessionStore dynamically to avoid circular dependency
-          const { SessionStore } = await import('@modules/auth/services/SessionStore');
+          const { SessionStore } = await import('@core/auth/services/SessionStore');
           const session = await SessionStore.getSession(sessionId);
 
           if (!session) {

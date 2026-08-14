@@ -20,7 +20,8 @@ import { cdnRoutes } from './cdnRoutes';
 import { getVisibleDashboardBadges, getUserPermissions, getVisibleMenuStructure, haveAccessTo, debugPermissions } from '../utils/permissions';
 import { auditLogger } from '../utils/auditLogger';
 import { AuthUtils } from '../utils/auth';
-import { User, Character, Location, db } from '@database/models';
+import { User } from '@core/auth/models/User';
+import { Character, Location, db } from '@database/models';
 import { logger } from '../utils/logger';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 

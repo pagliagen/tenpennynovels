@@ -6,7 +6,7 @@
  * (e.g., game/middleware/auth which doesn't export these functions)
  */
 
-import { CryptoUtils } from '@modules/auth/utils/crypto';
+import { CryptoUtils } from '@core/auth/utils/crypto';
 
 // Re-export the class
 export { CryptoUtils };

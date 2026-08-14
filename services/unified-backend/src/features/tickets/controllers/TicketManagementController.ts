@@ -20,7 +20,7 @@ import { successResponse, errorResponse, listResponse, createResponse, updateRes
 
 import { escapeRegex } from '@shared/utils/validation';
 
-import { User } from '@database/models';
+import { User } from '@core/auth/models/User';
 import { Ticket } from '../models/Ticket';
 import { TicketMessage } from '../models/TicketMessage';
 
