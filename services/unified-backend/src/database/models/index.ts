@@ -3,9 +3,7 @@
 // Database connection manager
 export { db } from '../connection';
 
-// User and Authentication
-export { User, type IUser } from './User';
-export { CharacterSession, type ICharacterSession } from './CharacterSession';
+// User and Authentication: spostati in core/auth/models/ (Fase 7.1)
 
 // Character System
 export { Character, type ICharacter } from './Character';
@@ -123,7 +121,7 @@ registerSoftDeleteModel('locations', () => require('./Location').Location, 'name
 registerSoftDeleteModel('items', () => require('@features/oggetti/models/Item').Item, 'name');
 // boundary-allow: registro require()-based, non visto da check-boundaries.ts
 registerSoftDeleteModel('documents', () => require('@features/documenti/models/Document').default, 'title');
-registerSoftDeleteModel('users', () => require('./User').User, 'username');
+registerSoftDeleteModel('users', () => require('@core/auth/models/User').User, 'username');
 // boundary-allow: registro require()-based, non visto da check-boundaries.ts
 registerSoftDeleteModel('occupations', () => require('@features/occupazioni/models/Occupation').Occupation, 'name');
 registerSoftDeleteModel('skills', () => require('./Skill').Skill, 'name');
