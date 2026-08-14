@@ -6,9 +6,7 @@ import locationRoutes from './locations';
 import gameRoutes from './game';
 import messageRoutes from './messages';
 import chatRoutes from './chats';
-import offGameChatRoutes from './offGameChats';
 import onGameMessagesRoutes from './onGameMessages';
-import offGameMessagesRoutes from './offGameMessages';
 // import forumRoutes from './forum';
 // import documentRoutes from './documents';  // REMOVED: Moved to modules/documents
 import chatModerationRoutes from './chatModerationRoutes';
@@ -39,9 +37,7 @@ router.use('/', characterMasterNotesRoutes);
 router.use('/', locationRoutes);
 router.use('/', gameRoutes);
 router.use('/', messageRoutes);
-router.use('/', offGameChatRoutes); // OffGame chat system
 router.use('/', onGameMessagesRoutes); // On-game postal system
-router.use('/', offGameMessagesRoutes); // Off-game messaging system
 router.use('/chats', chatRoutes); // Location chats (renamed from location actions)
 router.use('/housing', locationPropertyRoutes);
 // router.use('/forum', forumRoutes);

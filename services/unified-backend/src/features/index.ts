@@ -13,5 +13,6 @@ import { oggetti } from './oggetti/manifest';
 import { documenti } from './documenti/manifest';
 import { forum } from './forum/manifest';
 import { fineSessione } from './fineSessione/manifest';
+import { offGameMessages } from './offGameMessages/manifest';
 
-export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni, tickets, occupazioni, economia, oggetti, documenti, forum, fineSessione];
+export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni, tickets, occupazioni, economia, oggetti, documenti, forum, fineSessione, offGameMessages];

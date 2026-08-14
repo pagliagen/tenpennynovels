@@ -368,60 +368,6 @@ export interface MessageLabel {
   createdAt: Date;
 }
 
-// OOC Chat System
-export interface OffGameChat {
-  id: string;
-  type: 'direct' | 'group';
-  name?: string; // For groups
-  description?: string; // For groups
-  participants: Array<{
-    userId: string;
-    username: string;
-    displayName?: string;
-    role: 'admin' | 'member';
-    joinedAt: Date;
-    isActive: boolean;
-    isOnline?: boolean;
-    lastSeen?: Date;
-  }>;
-  isPrivate: boolean;
-  maxMembers: number;
-  createdBy: string;
-  createdAt: Date;
-  lastMessage?: {
-    content: string;
-    sentAt: Date;
-    fromMe?: boolean;
-    fromUsername?: string;
-    isRead?: boolean;
-  };
-  unreadCount: number;
-  isPinned: boolean;
-  isArchived: boolean;
-}
-
-export interface OffGameMessage {
-  id: string;
-  chatId: string;
-  chatType: 'direct' | 'group';
-  fromUserId: string;
-  fromUsername: string;
-  fromDisplayName?: string;
-  content: string;
-  messageType: 'text' | 'system';
-  isEdited: boolean;
-  editedAt?: Date;
-  isDeleted: boolean;
-  replyToMessageId?: string;
-  replyToContent?: string;
-  readBy: Array<{
-    userId: string;
-    readAt: Date;
-  }>;
-  sentAt: Date;
-  updatedAt: Date;
-}
-
 // Relationship System
 export interface Relationship {
   id: string;

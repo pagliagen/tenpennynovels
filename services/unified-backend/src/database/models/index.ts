@@ -73,18 +73,21 @@ export {
 // LEGACY system: Supports groups, admins, configurable retention
 // NEW system: Simple 1-to-1 threads (see below)
 // Both systems are in production during gradual migration
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   OffGameChat,
   type IOffGameChat
-} from './OffGameChat';
+} from '@features/offGameMessages/models/OffGameChat';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   OffGameChatMessage,
   type IOffGameChatMessage
-} from './OffGameChatMessage';
+} from '@features/offGameMessages/models/OffGameChatMessage';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   OffGameChatParticipant,
   type IOffGameChatParticipant
-} from './OffGameChatParticipant';
+} from '@features/offGameMessages/models/OffGameChatParticipant';
 
 // OnGame Messages System (Victorian postal system)
 export {
@@ -98,14 +101,16 @@ export {
   OnGameThread,
   type IOnGameThread
 } from './OnGameThread';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   OffGameThread,
   type IOffGameThread
-} from './OffGameThread';
+} from '@features/offGameMessages/models/OffGameThread';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   OffGameMessage,
   type IOffGameMessage
-} from './OffGameMessage';
+} from '@features/offGameMessages/models/OffGameMessage';
 export {
   MessageBackup,
   type IMessageBackup
