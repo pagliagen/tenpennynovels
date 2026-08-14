@@ -1,4 +1,3 @@
-DELETE /admin/bots/:localAiBotId
 DELETE /admin/cdn/:type/:entityId/:filename
 DELETE /admin/characters/:characterId
 DELETE /admin/characters/:characterId/ban
@@ -46,9 +45,6 @@ DELETE /game/sessions/others/all
 DELETE /game/tickets/notifications/:id
 GET /admin/analytics/dashboard
 GET /admin/analytics/health
-GET /admin/bots/:localAiBotId/detail
-GET /admin/bots/:localAiBotId/memories/:characterId
-GET /admin/bots/list
 GET /admin/cdn/:type/:entityId
 GET /admin/character-sessions
 GET /admin/character-sessions/character/:characterId
@@ -95,8 +91,6 @@ GET /admin/housing/districts
 GET /admin/housing/properties
 GET /admin/housing/reports
 GET /admin/housing/stats
-GET /admin/image-gen/active
-GET /admin/image-gen/health
 GET /admin/items
 GET /admin/items/:itemId
 GET /admin/items/stats
@@ -258,7 +252,6 @@ GET /game/items/search
 GET /game/locations
 GET /game/locations/:locationId
 GET /game/locations/:locationId/access
-GET /game/locations/:locationId/bot-details
 GET /game/locations/:locationId/occupants
 GET /game/locations/:locationId/pngs
 GET /game/locations/root
@@ -283,7 +276,6 @@ GET /game/ongame-threads/:id
 GET /game/presence
 GET /game/relationships
 GET /game/relationships/types
-GET /game/sessions/:sessionId
 GET /game/sessions/active
 GET /game/sessions/current
 GET /game/sessions/history
@@ -319,15 +311,11 @@ PATCH /admin/users/:userId/permissions
 PATCH /game/characters/:characterId/fake-pngs/:fakeId
 PATCH /game/characters/:characterId/inventory/:inventoryItemId/equip
 PATCH /game/chats/:actionId
-PATCH /game/locations/:locationId/bot-enabled
 PATCH /game/locations/:locationId/occupant-tag
 PATCH /game/offgame-chats/:id/name
 PATCH /game/ongame-messages/:id/read
-PATCH /game/sessions/:sessionId
 POST /admin/analytics/aggregate/:date
 POST /admin/analytics/cleanup
-POST /admin/bots/:localAiBotId/confirm
-POST /admin/bots/generate
 POST /admin/cdn/upload
 POST /admin/character-sessions/cleanup
 POST /admin/characters/:characterId/approve
@@ -358,7 +346,6 @@ POST /admin/forum/bulk
 POST /admin/forum/delivery/manual
 POST /admin/housing/evictions
 POST /admin/housing/properties
-POST /admin/image-gen/generate/:entityType/:entityId
 POST /admin/items
 POST /admin/items/bulk
 POST /admin/locations
@@ -441,13 +428,10 @@ POST /game/characters/:characterId/progression/grant
 POST /game/characters/:characterId/progression/skills/:skillId/improve
 POST /game/characters/:characterId/select
 POST /game/characters/:characterId/submit
-POST /game/characters/bot
-POST /game/characters/bot/complete
 POST /game/characters/set-location
 POST /game/chat/moderation-actions/:actionId/appeal
 POST /game/chat/report-message
 POST /game/chats
-POST /game/chats/bot
 POST /game/chats/confrontation-attack
 POST /game/chats/confrontation-reaction
 POST /game/chats/force-confrontation-outcome
@@ -478,16 +462,8 @@ POST /game/offgame-threads/:id/typing
 POST /game/ongame-messages
 POST /game/presence/leave
 POST /game/relationships
-POST /game/sessions/:sessionId/complete-bot-turn
 POST /game/tickets
 POST /game/tickets/:id/messages
-POST /game/webhooks/bot-response
-POST /webhooks/ai/image-gen/callback
-POST /webhooks/bot-response
-PUT /admin/bots/:characterId/sync
-PUT /admin/bots/:localAiBotId/location
-PUT /admin/bots/:localAiBotId/refine
-PUT /admin/bots/:localAiBotId/update
 PUT /admin/character-sessions/:sessionId/invalidate
 PUT /admin/character-sessions/character/:characterId/invalidate-all
 PUT /admin/chat/moderation-actions/:actionId/resolve-appeal
