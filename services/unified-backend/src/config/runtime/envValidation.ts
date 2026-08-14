@@ -23,10 +23,6 @@ export function validateEnvironment(): EnvValidationResult {
     if (!appConfig.services.aiGateway.apiKey) missing.push('AI_GATEWAY_API_KEY');
     if (!appConfig.services.aiGateway.hmacSecret) missing.push('AI_GATEWAY_HMAC_SECRET');
     if (!appConfig.services.aiGateway.webhookSecret) missing.push('AI_GATEWAY_WEBHOOK_SECRET');
-    // Non bloccante: il sistema bot (botai/character-gen) non è attivo in produzione.
-    // Gli endpoint che ne hanno bisogno (CharacterController) già rispondono 500
-    // SYSTEM_BOT_NOT_CONFIGURED al momento dell'uso, non serve bloccare l'avvio del server.
-    if (!appConfig.systemBotUserId) warnings.push('SYSTEM_BOT_USER_ID non impostato — endpoint bot-correlati risponderanno 500 se chiamati');
   } else {
     if (appConfig.db.redisUrl === 'redis://localhost:6379') {
       warnings.push('REDIS_URL non impostato, uso default locale');

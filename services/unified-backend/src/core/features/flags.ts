@@ -2,8 +2,8 @@
  * Stato acceso/spento di una feature, sopra ConfigurationService (cache
  * Redis + invalidazione via pub/sub già esistenti, vedi
  * shared/services/ConfigurationService.ts). Generalizza il pattern
- * ad-hoc già presente due volte nel codebase (bot_management_enabled,
- * keeper_qa_enabled — vedi modules/admin/controllers/SystemConfigController.ts).
+ * ad-hoc già presente nel codebase (keeper_qa_enabled — vedi
+ * modules/admin/controllers/SystemConfigController.ts).
  *
  * Fail-closed per costruzione: qualunque ambiguità (key sconosciuta,
  * valore mancante, errore Redis) risolve a "spenta". Una feature

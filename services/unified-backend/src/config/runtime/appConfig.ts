@@ -102,7 +102,6 @@ export const appConfig = {
   },
 
   bcryptRounds: isProduction ? 12 : 4,
-  systemBotUserId: process.env.SYSTEM_BOT_USER_ID,
 
   /** Output dir for landing sitemap. Docker: SITEMAP_OUTPUT_DIR volume. Dev: monorepo apps/landing/public. */
   sitemapOutputDir:
