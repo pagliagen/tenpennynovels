@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { CharacterSessionController } from '../controllers/CharacterSessionController';
-import { SessionManagementController } from '../controllers/SessionManagementController';
 import { AuthMiddleware } from '../middleware/auth';
 import { requireGamePermission } from '../middleware/gamePermissions';
 
@@ -62,40 +61,6 @@ router.delete('/others/all',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:session:invalidate-others'),
   CharacterSessionController.invalidateAllOtherSessions
-);
-
-// ========================================================================
-// BOT SESSION MANAGEMENT (merged from sessionManagementRoutes.ts)
-// ========================================================================
-
-/**
- * @route GET /sessions/:sessionId
- * @desc Get session details for AI gateway
- * @access AI_GATEWAY_WEBHOOK_SECRET required
- */
-router.get('/:sessionId',
-  AuthMiddleware.requireAIGatewayAuth,
-  SessionManagementController.getSession
-);
-
-/**
- * @route POST /sessions/:sessionId/complete-bot-turn
- * @desc Complete bot turn in session
- * @access AI_GATEWAY_WEBHOOK_SECRET required
- */
-router.post('/:sessionId/complete-bot-turn',
-  AuthMiddleware.requireAIGatewayAuth,
-  SessionManagementController.completeBotTurn
-);
-
-/**
- * @route PATCH /sessions/:sessionId
- * @desc Update session (AI gateway callback)
- * @access AI_GATEWAY_WEBHOOK_SECRET required
- */
-router.patch('/:sessionId',
-  AuthMiddleware.requireAIGatewayAuth,
-  SessionManagementController.updateSession
 );
 
 export default router;

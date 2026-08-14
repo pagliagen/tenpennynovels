@@ -71,7 +71,4 @@ router.delete('/:locationId/clear',
   ChatController.clearChat
 );
 
-// Bot integration (requires AI_GATEWAY_WEBHOOK_SECRET)
-router.post('/bot', ChatController.createBotMessage);
-
 export default router;

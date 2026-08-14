@@ -19,7 +19,6 @@ import { locationPropertyRoutes } from './locationPropertyRoutes';
 import websocketEventRoutes from './websocketEvents';
 import characterCreationRoutes from './characterCreation';
 import characterGenConfigRoutes from './characterGenConfig';
-import webhookRoutes from './webhooks';
 import apiDocsRoute from '@shared/routes/ApiDocsRoute';
 
 const router = Router();
@@ -54,7 +53,6 @@ router.use('/sessions', sessionRoutes);
 router.use('/character-creation-config', characterCreationRoutes); // Public character creation config
 router.use('/character-gen', characterGenConfigRoutes); // Character generation service config (no auth)
 router.use('/', websocketEventRoutes);
-router.use('/webhooks', webhookRoutes);
 router.use('/', apiDocsRoute);
 
 export default router;

@@ -157,19 +157,4 @@ router.delete('/block-notes/:notesId',
   CharacterNotesController.deleteNotes
 );
 
-// Bot-only endpoints (API key auth, no JWT)
-// Bot action endpoint REMOVED - moved to /chats/bot (see routes/chats.ts)
-
-router.get('/locations/:locationId/bot-details',
-  locationsReadLimiter,
-  AuthMiddleware.requireAIGatewayAuth,
-  LocationController.getBotLocationDetails
-);
-
-router.patch('/locations/:locationId/bot-enabled',
-  locationsWriteLimiter,
-  AuthMiddleware.requireAIGatewayAuth,
-  LocationController.updateBotEnabled
-);
-
 export default router;

@@ -19,8 +19,6 @@ import authRoutes from '@modules/auth/routes/auth';
 import gameRoutes from '@modules/game/routes';
 import characterGenConfigRoutes from '@modules/game/routes/characterGenConfig';
 import adminRoutes from '@modules/admin/routes';
-import { webhookRoutes } from '@modules/admin/routes/webhookRoutes';
-import inboundWebhookRoutes from './routes/webhooks';
 
 const app: Application = express();
 
@@ -105,12 +103,6 @@ app.get('/health', (req, res) => {
     requestId: res.locals.requestId
   });
 });
-
-// ===== Webhook Routes (before admin auth middleware) =====
-app.use('/webhooks', webhookRoutes);
-
-// ===== Inbound Webhook Routes (from internal services — auth via Bearer secret) =====
-app.use('/webhooks', inboundWebhookRoutes);
 
 // ===== Module Routes =====
 app.use('/auth', authRoutes);
