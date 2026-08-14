@@ -296,7 +296,8 @@ export class CharacterApprovalController {
       
       // Use local and shared models with proper imports
       const { Character } = await import('@database/models/Character');
-      const { Item } = await import('@database/models/Item');
+      // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature oggetti (Fase 6.4) fino al consolidamento del core (Fase 7)
+      const { Item } = await import('@features/oggetti/models/Item');
       // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7)
       const { Occupation } = await import('@features/occupazioni/models/Occupation');
       const { User } = await import('@database/models/User');
