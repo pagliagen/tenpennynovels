@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { Character, Location, Skill, Item, Occupation, User, OffGameChat, OffGameChatMessage, OffGameChatParticipant, CharacterFinances } from '@database/models';
+import { Character, Location, Skill, Item, Occupation, User, CharacterFinances } from '@database/models';
+import { OffGameChatMessage, OffGameChatParticipant } from '@features/offGameMessages/api';
 import { ApiResponse, DiceResult } from '../types/game';
 import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';

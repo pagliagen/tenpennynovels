@@ -2,7 +2,9 @@ import { Request, Response } from 'express';
 import { ChatModerationAction } from '@database/models/ChatModerationAction';
 import { MessageReport } from '@database/models/MessageReport';
 import { OnGameMessage } from '@database/models/OnGameMessage';
-import { OffGameChatMessage } from '@database/models/OffGameChatMessage';
+// boundary-allow: ChatModerationController è infrastruttura di moderazione condivisa
+// fra location/onGame/offGame, resta fuori dal perimetro della feature offGameMessages.
+import { OffGameChatMessage } from '@features/offGameMessages/api';
 import { Character } from '@database/models/Character';
 import { logger } from '../logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';

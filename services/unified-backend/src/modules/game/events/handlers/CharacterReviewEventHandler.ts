@@ -144,7 +144,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
   ): Promise<void> {
     try {
       // ✅ Import service directly (same backend, no HTTP needed)
-      const { OffGameChatService } = await import('../../services/OffGameChatService');
+      const { OffGameChatService } = await import('@features/offGameMessages/api');
 
       // 1. Create or get existing direct chat
       const chat = await OffGameChatService.createOrGetDirectChat({

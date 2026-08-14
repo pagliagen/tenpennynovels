@@ -1,9 +1,11 @@
 import mongoose from 'mongoose';
 import { OnGameMessage } from '@database/models/OnGameMessage';
-import { OffGameMessage } from '@database/models/OffGameMessage';
 import { Character } from '@database/models/Character';
 import { OnGameThreadService } from './OnGameThreadService';
-import { OffGameThreadService } from './OffGameThreadService';
+// boundary-allow: MessageService è infrastruttura condivisa fra il sistema
+// postale onGame (core) e la feature offGameMessages — vedi
+// features/offGameMessages/manifest.ts per il dettaglio del debito.
+import { OffGameMessage, OffGameThreadService } from '@features/offGameMessages/api';
 import { MessageBackupService } from './MessageBackupService';
 import { logger } from '@shared/utils/logger';
 import { redis } from '@config/runtime/redis';
