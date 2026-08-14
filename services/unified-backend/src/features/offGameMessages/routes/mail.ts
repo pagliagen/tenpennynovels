@@ -22,6 +22,24 @@ const readLimiter = rateLimit({
   }
 });
 
+// Le 3 route distruttive avevano già AdminAuthMiddleware.sensitiveOperationLimit()
+// (Redis, 10/ora) ma CodeQL non lo riconosce come rate limiting — la sua analisi
+// statica cerca specificamente il pattern express-rate-limit. Questo limiter si
+// aggiunge, non sostituisce: prima linea di difesa economica riconosciuta da
+// CodeQL, il controllo Redis più severo resta a valle.
+const destructiveLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+  handler: (_req, res) => {
+    res.status(429).json({
+      result: false,
+      error: 'Troppe richieste, riprova più tardi.',
+      code: 'MAIL_RATE_LIMIT_EXCEEDED'
+    });
+  }
+});
+
 // ==============================
 // OffGame Mail Routes
 // ==============================
@@ -36,12 +54,12 @@ router.get('/offgame/stats', readLimiter, OffGameMailController.getStats);
 router.get('/offgame/:id', readLimiter, OffGameMailController.getMessage);
 
 // Hard delete OffGame message (permanent)
-router.delete('/offgame/:id/hard', AdminAuthMiddleware.sensitiveOperationLimit(), OffGameMailController.hardDelete);
+router.delete('/offgame/:id/hard', destructiveLimiter, AdminAuthMiddleware.sensitiveOperationLimit(), OffGameMailController.hardDelete);
 
 // Soft delete OffGame message
-router.post('/offgame/:id/soft-delete', AdminAuthMiddleware.sensitiveOperationLimit(), OffGameMailController.softDelete);
+router.post('/offgame/:id/soft-delete', destructiveLimiter, AdminAuthMiddleware.sensitiveOperationLimit(), OffGameMailController.softDelete);
 
 // Bulk delete OffGame messages
-router.post('/offgame/bulk-delete', AdminAuthMiddleware.sensitiveOperationLimit(), OffGameMailController.bulkDelete);
+router.post('/offgame/bulk-delete', destructiveLimiter, AdminAuthMiddleware.sensitiveOperationLimit(), OffGameMailController.bulkDelete);
 
 export default router;
