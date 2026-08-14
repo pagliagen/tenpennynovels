@@ -10,7 +10,8 @@
  * 3. Unarmed combat (no weapon found)
  */
 
-import { Character, CharacterInventory, Item } from '@database/models';
+import { Character } from '@database/models';
+import { CharacterInventory, Item } from '@features/oggetti/api';
 import { redis } from '@config/runtime/redis';
 import { logger } from '../logger';
 

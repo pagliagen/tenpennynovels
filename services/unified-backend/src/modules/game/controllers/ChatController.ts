@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { Chat, ChatBackup, GamingSession, Location, Character, SkillConfrontation, CombatEncounter, Skill, Item } from '@database/models';
+import { Chat, ChatBackup, GamingSession, Location, Character, SkillConfrontation, CombatEncounter, Skill } from '@database/models';
 import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '@shared/utils/apiResponse';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { redis } from '@config/runtime/redis';
 import { escapeRegex } from '@shared/utils/validation';
 import { EmbeddingService } from '@features/documenti/api';
+import { Item } from '@features/oggetti/api';
 
 import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees } from '../utils/successDegrees';
 import { calculateSocialConflict, getDefensiveSkill } from '../utils/socialConflicts';

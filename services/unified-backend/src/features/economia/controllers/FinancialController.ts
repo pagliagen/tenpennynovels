@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CharacterFinances } from '@database/models';
+import { CharacterFinances } from '../models/CharacterFinances';
 import { logger } from '@modules/game/logger';
 import { CreditLineResetService } from '../services/CreditLineResetService';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';

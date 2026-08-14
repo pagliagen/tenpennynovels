@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { CharacterFinances, Service } from '@database/models';
+import { CharacterFinances } from '../models/CharacterFinances';
+import { Service } from '../models/Service';
 import { logger } from '@modules/game/logger';
 import { errorResponse, successResponse, getRequestId } from '@shared/utils/apiResponse';
 import { removeExpiredCancelledServices } from '../services/serviceCancellationCleanup';

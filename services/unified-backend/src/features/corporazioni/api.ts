@@ -18,6 +18,15 @@ export async function getMemberCorporationIds(characterId: string): Promise<Type
   return Corporation.find({ 'members.characterId': new Types.ObjectId(characterId) }).distinct('_id');
 }
 
+// Usata da modules/game/controllers/CharacterSocialController.ts (GET
+// /characters/:characterId/corporations) — sostituisce l'import diretto del
+// model, stessa query/projection di prima dello spostamento fuori dal barrel.
+export async function getCorporationsForCharacter(characterId: string) {
+  return Corporation.find({
+    'members.characterId': characterId
+  }).select('name description type membershipType isRecruiting members');
+}
+
 // --- Wrapper per la feature oggetti (Fase 6.4, dependsOn: ['corporazioni']) ---
 // ShopController.restockShop legge/scrive il tesoro corporativo senza importare
 // il model Corporation direttamente.

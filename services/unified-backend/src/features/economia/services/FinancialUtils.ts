@@ -1,4 +1,4 @@
-import { SocialClassConfig } from '@database/models';
+import { SocialClassConfig } from '../models/SocialClassConfig';
 import { SocialClass } from '@shared/types/socialClass';
 import { logger } from '@modules/game/logger';
 

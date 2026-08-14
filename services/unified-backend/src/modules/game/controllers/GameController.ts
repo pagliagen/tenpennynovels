@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
-import { Character, Location, Skill, Item, Occupation, User, CharacterFinances } from '@database/models';
+import { Character, Location, Skill, User } from '@database/models';
 import { OffGameChatMessage, OffGameChatParticipant } from '@features/offGameMessages/api';
+import { Item } from '@features/oggetti/api';
+import { Occupation } from '@features/occupazioni/api';
+// boundary-allow: economia espone solo wrapper (mai il model CharacterFinances nudo, decisione Fase 6.3) — query dirette non coperte da wrapper esistenti
+import { CharacterFinances } from '@features/economia/models/CharacterFinances';
 import { ApiResponse, DiceResult } from '../types/game';
 import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';

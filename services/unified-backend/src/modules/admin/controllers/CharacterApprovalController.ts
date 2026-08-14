@@ -759,7 +759,13 @@ export class CharacterApprovalController {
    * write the same schema shape (cash/bankDeposit/creditLine — not a made-up shape).
    */
   private static async buildInitialFinances(characterId: any, finanzaSkill: number) {
-    const { CharacterFinances, SocialClassConfig } = await import('@database/models');
+    // economia espone solo wrapper (mai il model nudo, decisione Fase 6.3) —
+    // questo metodo legge/scrive con query dirette non coperte da nessuna
+    // wrapper esistente.
+    // boundary-allow: vedi commento sopra
+    const { CharacterFinances } = await import('@features/economia/models/CharacterFinances');
+    // boundary-allow: vedi commento sopra
+    const { SocialClassConfig } = await import('@features/economia/models/SocialClassConfig');
 
     const socialClassConfig = await SocialClassConfig.findOne({
       minFinanceSkill: { $lte: finanzaSkill },
@@ -1413,7 +1419,9 @@ export class CharacterApprovalController {
         return;
       }
 
-      const { Character, Occupation } = await import('@database/models');
+      const { Character } = await import('@database/models');
+      // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7)
+      const { Occupation } = await import('@features/occupazioni/models/Occupation');
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       if (!auditInfo) {
         res.status(401).json(errorResponse(

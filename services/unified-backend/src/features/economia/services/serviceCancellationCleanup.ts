@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { CharacterFinances } from '@database/models';
+import { CharacterFinances } from '../models/CharacterFinances';
 import { logger } from '@shared/utils/logger';
 
 /**

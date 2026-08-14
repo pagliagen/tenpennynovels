@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CharacterFinances } from '@database/models';
+import { CharacterFinances } from '../models/CharacterFinances';
 import { FinancialUtils } from '../services/FinancialUtils';
 import { AdminAuthMiddleware } from '@modules/admin/middleware/adminAuth';
 import { logger } from '@modules/admin/utils/logger';

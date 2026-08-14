@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import { Types, Error as MongooseError } from 'mongoose';
-import { Character, Occupation, Skill } from '@database/models';
+import { Character, Skill } from '@database/models';
 import type { ICharacter } from '@database/models/Character';
+import { Occupation } from '@features/occupazioni/api';
+import { Item, CharacterInventory } from '@features/oggetti/api';
 import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '@shared/utils/apiResponse';
 
@@ -31,8 +33,6 @@ export class CharacterController {
     characterId: unknown,
     startingEquipmentIds: unknown[]
   ): Promise<Array<{ _id: string; id: string; itemId: string; name: string; description: string; category: string; quantity: number }>> {
-    const { Item, CharacterInventory } = require('../../../database/models');
-
     const inventory = await CharacterInventory.findOne({ characterId }).lean();
     const inventoryEntries = (inventory?.items || []).filter((entry: any) => entry.isVisible !== false);
 
@@ -295,7 +295,6 @@ export class CharacterController {
 
       // Aggiungi il nome dell'occupazione e professional skills se presente
       if (character.occupation) {
-        const { Occupation, Skill } = require('../../../database/models');
         let occupation = null;
         
         // Verifica se l'occupazione è un ObjectId valido o una stringa
@@ -480,7 +479,6 @@ export class CharacterController {
       }
 
       if (character.occupation) {
-        const { Occupation, Skill } = require('../../../database/models');
         let occupation = await Occupation.findById(character.occupation).catch(() => null);
         if (!occupation && typeof character.occupation === 'string') {
           occupation = await Occupation.findOne({ name: character.occupation });
@@ -496,7 +494,6 @@ export class CharacterController {
       }
 
       if (characterJson.equipment?.length > 0) {
-        const { Item } = require('../../../database/models');
         const equipmentItems = await Item.find({ _id: { $in: characterJson.equipment } });
         characterJson.equipment = equipmentItems.map((item: any) => ({
           id: item._id.toString(),
