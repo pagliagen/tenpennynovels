@@ -1,5 +1,5 @@
 import { HydratedDocument } from 'mongoose';
-import { Chat } from '@database/models';
+import { Chat } from '@core/chat/models/Chat';
 import { ChatScene, type IChatScene } from '../models/ChatScene';
 import { CharacterChatScene } from '../models/CharacterChatScene';
 import { logger } from '@modules/game/logger';

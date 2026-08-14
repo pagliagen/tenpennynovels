@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { MessageBackup } from '@database/models/MessageBackup';
+import { MessageBackup } from '@core/chat/models/MessageBackup';
 import { logger } from '@shared/utils/logger';
 
 /**

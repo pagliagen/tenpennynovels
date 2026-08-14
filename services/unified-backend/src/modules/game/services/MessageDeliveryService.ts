@@ -1,4 +1,4 @@
-import { OnGameMessage } from '@database/models/OnGameMessage';
+import { OnGameMessage } from '@core/chat/models/OnGameMessage';
 import { MessageService } from './MessageService';
 import { logger } from '@shared/utils/logger';
 

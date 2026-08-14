@@ -12,7 +12,7 @@ import { logger } from '../utils/logger';
 import { Types } from 'mongoose';
 import { User } from '@core/auth/models/User';
 import { Character } from '@core/character/models/Character';
-import { Chat } from '@database/models';
+import { Chat } from '@core/chat/models/Chat';
 import type { UserCharacter } from '../types/management';
 import type { SocialClass } from '@shared/types/socialClass';
 import { redis } from '@config/runtime/redis';

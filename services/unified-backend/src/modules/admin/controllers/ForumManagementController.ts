@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { OnGameMessage } from '@database/models/OnGameMessage';
+import { OnGameMessage } from '@core/chat/models/OnGameMessage';
 import { Character } from '@core/character/models/Character';
 import { Location } from '@core/location/models/Location';
 import { logger } from '../utils/logger';

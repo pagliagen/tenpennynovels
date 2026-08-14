@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { Character } from '@core/character/models/Character';
 import { Location } from '@core/location/models/Location';
 import { checkLocationAccess } from '@core/location/services/checkLocationAccess';
-import { ChatBackup } from '@database/models';
+import { ChatBackup } from '@core/chat/models/ChatBackup';
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';
