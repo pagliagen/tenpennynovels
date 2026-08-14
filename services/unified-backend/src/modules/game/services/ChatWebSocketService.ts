@@ -26,8 +26,6 @@ import type {
   MessageDeletedPayload,
   ChatClearedParams,
   ChatClearedPayload,
-  TurnAdvancedParams,
-  TurnAdvancedPayload,
   PartialMessageParams,
 } from './ChatWebSocketService.types';
 
@@ -108,7 +106,6 @@ export class ChatWebSocketService {
    * Used by:
    * - createMessage() - New message created
    * - updateMessage() - Message edited (use emitMessageUpdated alias)
-   * - createBotMessage() - Bot message created
    *
    * @param params - Message creation parameters
    *
@@ -231,47 +228,6 @@ export class ChatWebSocketService {
   }
 
   /**
-   * Emit turn advanced event
-   *
-   * Notifies all clients in location room that the turn has advanced to next character.
-   * Frontend expects: { locationId, sessionId, currentCharacterId, currentCharacterName, isBot, turnIndex }
-   *
-   * Used by:
-   * - createMessage() - Message created triggered turn advancement (when turn order exists)
-   *
-   * @param params - Turn advancement parameters
-   *
-   * @example
-   * ```typescript
-   * ChatWebSocketService.emitTurnAdvanced({
-   *   locationId,
-   *   sessionId: session._id.toString(),
-   *   currentCharacterId: nextTurn.currentCharacterId,
-   *   currentCharacterName: nextTurn.currentCharacterName,
-   *   isBot: nextTurn.isBot,
-   *   turnIndex: nextTurn.currentTurnIndex
-   * });
-   * ```
-   */
-  static emitTurnAdvanced(params: TurnAdvancedParams): void {
-    const io = this.getIO();
-    if (!io) return;
-
-    const roomName = this.getLocationRoom(params.locationId);
-    const payload: TurnAdvancedPayload = {
-      locationId: params.locationId,
-      sessionId: params.sessionId,
-      currentCharacterId: params.currentCharacterId,
-      currentCharacterName: params.currentCharacterName,
-      isBot: params.isBot,
-      turnIndex: params.turnIndex,
-    };
-
-    io.to(roomName).emit('turn_advanced', payload);
-    this.logEmission('turn_advanced', roomName, payload, params.debug);
-  }
-
-  /**
    * DEPRECATED: Emit partial message notification
    *
    * Sends incomplete payload (no full message object) for legacy methods.
@@ -282,7 +238,6 @@ export class ChatWebSocketService {
    *
    * Used by (legacy):
    * - createSocialConflict() - Social conflict created (line 1230)
-   * - createBotMessage() - Bot message created (line 1437)
    * - createConfrontationAttack() - Confrontation attack initiated (line 1615)
    * - handleConfrontationReaction() - Confrontation reaction processed (line 1899)
    *

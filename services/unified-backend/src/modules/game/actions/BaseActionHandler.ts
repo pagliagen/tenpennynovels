@@ -53,7 +53,6 @@ export abstract class BaseActionHandler implements IActionHandler {
       characterId: input.characterId,
       characterName: input.characterName,
       characterAvatar: input.characterAvatar,
-      isBot: false,
       isMasked: input.isMasked,
       realCharacterName: input.realCharacterName,
       content: input.content.trim(),

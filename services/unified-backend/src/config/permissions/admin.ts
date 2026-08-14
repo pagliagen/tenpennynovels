@@ -101,9 +101,6 @@ export const AdminPermissions = {
   SOCIAL_CLASSES_ACCESS: 'social_classes.access',
   SOCIAL_CLASSES_MANAGE: 'social_classes.manage',
 
-  // Image Generation (1)
-  IMAGE_GENERATION_ACCESS: 'image_generation.access',
-
   // Manager (gestore-only permission)
   MANAGER_MANAGE_USER_PERMISSIONS: 'manager.manage_user_permissions',
 
@@ -174,7 +171,6 @@ export const AdminRolePermissions: Record<string, AdminPermission[]> = {
     AdminPermissions.SKILLS_DETAIL_VIEW,
     AdminPermissions.SOCIAL_CLASSES_ACCESS,
     AdminPermissions.TICKETS_VIEW_STATS,
-    AdminPermissions.IMAGE_GENERATION_ACCESS,
   ],
 
   /**
@@ -238,7 +234,6 @@ export const AdminRolePermissions: Record<string, AdminPermission[]> = {
     AdminPermissions.SYSTEM_VIEW_LOGS,
     AdminPermissions.SYSTEM_DELETED_RECORDS,
     AdminPermissions.TICKETS_VIEW_STATS,
-    AdminPermissions.IMAGE_GENERATION_ACCESS,
   ],
 };
 

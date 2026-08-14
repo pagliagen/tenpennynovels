@@ -119,20 +119,15 @@ export class ChatMessageService {
 
     logger.debug(`[ChatMessageService.getMessages] Fetched ${actions.length} raw messages (total: ${totalCount})`);
 
-    // Check if action mode is active
-    const isActionMode = await this.isActionModeActive(locationId);
-
-    logger.debug('[ChatMessageService.getMessages] Action mode:', { isActionMode });
-
     // Filter by the remaining rules the query can't express as a simple visibility
-    // match: action-mode hidden actions, skill/stat check sender-only visibility,
-    // and the Raggirare visibleToDefenderOnly case. These are rarer and layered on
-    // top of an already-authorized 'public' document, so a residual (message-count-
+    // match: skill/stat check sender-only visibility, and the Raggirare
+    // visibleToDefenderOnly case. These are rarer and layered on top of an
+    // already-authorized 'public' document, so a residual (message-count-
     // only, never content) pagination/totalCount skew can still occur for them —
     // see the conversation notes; closing that fully means replicating this whole
     // method in query form, which we've deliberately not done.
     const filtered = actions.filter((action) =>
-      this.canSeeAction(action, character, isActionMode)
+      this.canSeeAction(action, character)
     );
 
     logger.debug(`[ChatMessageService.getMessages] ${filtered.length} messages after filtering`);

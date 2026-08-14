@@ -65,7 +65,6 @@ const SECTION_ACCESS_PREFIXES: Record<string, string[]> = {
   messaging: ['messaging.'],
   relationships: ['relationships.'],
   social_classes: ['social_classes.'],
-  image_generation: ['image_generation.'],
   manager: ['manager.'],
 };
 
@@ -88,7 +87,6 @@ const PERMISSION_NEST_SECTIONS = [
   'messaging',
   'relationships',
   'social_classes',
-  'image_generation',
   'manager',
 ];
 

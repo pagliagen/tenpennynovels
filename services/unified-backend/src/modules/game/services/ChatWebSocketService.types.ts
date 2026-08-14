@@ -95,44 +95,6 @@ export interface ChatClearedPayload {
 }
 
 /**
- * Turn advanced emission parameters
- *
- * Used by: emitTurnAdvanced()
- */
-export interface TurnAdvancedParams extends BaseEmissionParams {
-  /** Gaming session ID */
-  sessionId: string;
-  /** Character ID whose turn it is now */
-  currentCharacterId: string;
-  /** Character name whose turn it is now */
-  currentCharacterName: string;
-  /** Whether current turn belongs to a bot */
-  isBot: boolean;
-  /** Turn index in the turn order */
-  turnIndex: number;
-}
-
-/**
- * Turn advanced payload (what frontend receives)
- *
- * Frontend expects this structure in turn_advanced event
- */
-export interface TurnAdvancedPayload {
-  /** Location ID */
-  locationId: string;
-  /** Gaming session ID */
-  sessionId: string;
-  /** Character ID whose turn it is now */
-  currentCharacterId: string;
-  /** Character name whose turn it is now */
-  currentCharacterName: string;
-  /** Whether current turn belongs to a bot */
-  isBot: boolean;
-  /** Turn index in the turn order */
-  turnIndex: number;
-}
-
-/**
  * DEPRECATED: Partial message notification parameters
  *
  * Used by: emitPartialMessageNotification()

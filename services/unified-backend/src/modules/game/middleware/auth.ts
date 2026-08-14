@@ -496,7 +496,6 @@ export class AuthMiddleware {
 
   /**
    * Middleware: Validates webhook secret for AI Gateway callbacks (local-ai → unified-backend).
-   * Replaces the old requireBotApiKey.
    */
   static requireAIGatewayAuth(req: Request, res: Response, next: NextFunction): void {
     try {
@@ -540,13 +539,6 @@ export class AuthMiddleware {
       };
       res.status(500).json(response);
     }
-  }
-
-  /**
-   * @deprecated Use requireAIGatewayAuth instead
-   */
-  static requireBotApiKey(req: Request, res: Response, next: NextFunction): void {
-    return AuthMiddleware.requireAIGatewayAuth(req, res, next);
   }
 
   /**
