@@ -1,6 +1,7 @@
 import type { FeatureManifest } from '@core/features/types';
 import gameRoutes from './routes/game';
 import adminRoutes from './routes/admin';
+import { onCharacterPendingApproval } from './extensions/onCharacterPendingApproval';
 
 /**
  * A differenza di corporazioni, tickets non ha mai avuto un flag: introdotto
@@ -34,4 +35,7 @@ export const tickets: FeatureManifest = {
     { scope: 'game', path: '/', router: gameRoutes },
     { scope: 'admin', path: '/tickets', router: adminRoutes },
   ],
+  extensions: (reg) => {
+    reg.hook('character.playerStatus.pending', onCharacterPendingApproval);
+  },
 };

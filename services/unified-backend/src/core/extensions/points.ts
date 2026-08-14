@@ -46,6 +46,20 @@ export interface HookMap {
     sse: SseWriter;
     signal: AbortSignal;
   };
+
+  /**
+   * Fase 7.2 (consolidamento core). Character.ts (core) ha già salvato il
+   * documento (emesso da post('save'), non da pre('save') — il personaggio
+   * è già persistito quando l'handler gira) con playerStatus appena
+   * transitato a 'pending'. tickets si registra qui per creare il ticket
+   * character_approval + notificare lo staff, invece di un import statico
+   * di una feature dentro core.
+   */
+  'character.playerStatus.pending': {
+    characterId: string;
+    characterName: string;
+    characterAvatar?: string;
+  };
 }
 
 /**
