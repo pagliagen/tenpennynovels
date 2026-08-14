@@ -188,6 +188,13 @@ router.delete('/characters/:characterId',
   CharacterController.deleteCharacter
 );
 
+router.put('/characters/:characterId/review/:reviewId/ack',
+  charactersWriteLimiter,
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:character:update'),
+  CharacterGameplayController.acknowledgeReview
+);
+
 // Character location management
 router.post('/characters/set-location',
   charactersWriteLimiter,

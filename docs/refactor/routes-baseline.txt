@@ -505,6 +505,7 @@ PUT /game/characters/:characterId/chat-scenes/:sceneId
 PUT /game/characters/:characterId/diary-entries/:entryId
 PUT /game/characters/:characterId/encounters/:encounterId
 PUT /game/characters/:characterId/prestavolto
+PUT /game/characters/:characterId/review/:reviewId/ack
 PUT /game/corporations/:corporationId/invitations/:invitationId
 PUT /game/housing/:propertyId/guests
 PUT /game/offgame-messages/:id/read

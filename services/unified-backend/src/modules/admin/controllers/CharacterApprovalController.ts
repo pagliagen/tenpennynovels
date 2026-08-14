@@ -918,17 +918,12 @@ export class CharacterApprovalController {
         character.reviewNote = note; // Store approval note
         
         // Add to review history
-        const reviewEntry = {
+        character.addReview({
           action: 'approve',
           reviewedBy: auditInfo!.adminId,
-          reviewedByUsername: auditInfo!.adminUsername,
-          note: note,
-          reviewedAt: new Date()
-        };
-        
-        character.reviewHistory = character.reviewHistory || [];
-        character.reviewHistory.push(reviewEntry);
-        
+          note: note
+        });
+
         await character.save();
 
         logger.info('Character approved with starting items', {
@@ -957,17 +952,12 @@ export class CharacterApprovalController {
         character.reviewNote = note; // Store rejection reason (legacy field)
         
         // Add to review history
-        const reviewEntry = {
+        character.addReview({
           action: 'reject',
           reviewedBy: auditInfo!.adminId,
-          reviewedByUsername: auditInfo!.adminUsername,
-          note: note,
-          reviewedAt: new Date()
-        };
-        
-        character.reviewHistory = character.reviewHistory || [];
-        character.reviewHistory.push(reviewEntry);
-        
+          note: note
+        });
+
         await character.save();
 
         logger.info('Character rejected and returned to draft', {
@@ -1470,18 +1460,39 @@ export class CharacterApprovalController {
           character.gameplayRoles = ['player'];
           character.equipment = startingItems; // Use equipment, not inventory
 
-          // Add to review history (was missing in bulk operations)
-          const reviewEntry = {
+          // Add to review history
+          character.addReview({
             action: 'approve',
             reviewedBy: auditInfo.adminId,
-            reviewedByUsername: auditInfo.adminUsername,
-            note: 'Bulk approval',
-            reviewedAt: new Date()
-          };
-          character.reviewHistory = character.reviewHistory || [];
-          character.reviewHistory.push(reviewEntry);
+            note: 'Bulk approval'
+          });
 
           await character.save();
+
+          // Send Redis event for real-time notifications and off-game messaging
+          // (mancava nei metodi bulk — solo le azioni singole lo pubblicavano)
+          try {
+            const reviewEvent = {
+              characterId: character._id.toString(),
+              characterName: character.name || 'Unknown',
+              action: 'approve',
+              note: 'Bulk approval',
+              reviewedBy: auditInfo.adminId,
+              reviewedByUsername: auditInfo.adminUsername,
+              timestamp: new Date().toISOString(),
+              adminCookies: {
+                auth_token: req.cookies?.auth_token,
+                character_context: req.cookies?.character_context
+              }
+            };
+            await redis.getClient().publish('character:review_completed', JSON.stringify(reviewEvent));
+          } catch (redisError: unknown) {
+            logger.error('Failed to publish character review event to Redis (bulk approve)', {
+              error: redisError instanceof Error ? redisError.message : String(redisError),
+              characterId: character._id.toString()
+            });
+            // Continue execution - Redis failure shouldn't break the approval process
+          }
 
           logger.info('Character approved in bulk', {
             ...auditInfo,
@@ -1614,18 +1625,39 @@ export class CharacterApprovalController {
           character.rejectedByName = auditInfo.adminUsername;
           character.rejectionReason = reason.trim();
 
-          // Add to review history (was missing in bulk operations)
-          const reviewEntry = {
+          // Add to review history
+          character.addReview({
             action: 'reject',
             reviewedBy: auditInfo.adminId,
-            reviewedByUsername: auditInfo.adminUsername,
-            note: reason.trim(),
-            reviewedAt: new Date()
-          };
-          character.reviewHistory = character.reviewHistory || [];
-          character.reviewHistory.push(reviewEntry);
+            note: reason.trim()
+          });
 
           await character.save();
+
+          // Send Redis event for real-time notifications and off-game messaging
+          // (mancava nei metodi bulk — solo le azioni singole lo pubblicavano)
+          try {
+            const reviewEvent = {
+              characterId: character._id.toString(),
+              characterName: character.name || 'Unknown',
+              action: 'reject',
+              note: reason.trim(),
+              reviewedBy: auditInfo.adminId,
+              reviewedByUsername: auditInfo.adminUsername,
+              timestamp: new Date().toISOString(),
+              adminCookies: {
+                auth_token: req.cookies?.auth_token,
+                character_context: req.cookies?.character_context
+              }
+            };
+            await redis.getClient().publish('character:review_completed', JSON.stringify(reviewEvent));
+          } catch (redisError: unknown) {
+            logger.error('Failed to publish character review event to Redis (bulk reject)', {
+              error: redisError instanceof Error ? redisError.message : String(redisError),
+              characterId: character._id.toString()
+            });
+            // Continue execution - Redis failure shouldn't break the rejection process
+          }
 
           logger.info('Character rejected in bulk', {
             ...auditInfo,

@@ -224,6 +224,8 @@ export interface ICharacter extends Document, SoftDeleteMethods {
       equipment?: string;
     };
     priority?: 'high' | 'normal' | 'low';
+    acknowledged: boolean;
+    acknowledgedAt?: Date;
   }[];
   
   approvedBy?: Schema.Types.ObjectId;
@@ -709,7 +711,13 @@ const CharacterSchema = new Schema<ICharacter>({
     priority: {
       type: String,
       enum: ['high', 'normal', 'low']
-    }
+    },
+    acknowledged: {
+      type: Boolean,
+      required: true,
+      default: false
+    },
+    acknowledgedAt: Date
   }],
   
   approvedBy: {
@@ -789,10 +797,11 @@ CharacterSchema.methods.getLatestReview = function() {
   return this.reviewHistory.sort((a: { reviewedAt: Date }, b: { reviewedAt: Date }) => b.reviewedAt.getTime() - a.reviewedAt.getTime())[0];
 };
 
-CharacterSchema.methods.addReview = function(reviewData: Omit<ICharacter['reviewHistory'][number], 'reviewedAt'>) {
+CharacterSchema.methods.addReview = function(reviewData: Omit<ICharacter['reviewHistory'][number], 'reviewedAt' | 'acknowledged'>) {
   this.reviewHistory.push({
     ...reviewData,
-    reviewedAt: new Date()
+    reviewedAt: new Date(),
+    acknowledged: false
   });
 };
 

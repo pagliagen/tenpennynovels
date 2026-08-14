@@ -740,18 +740,36 @@ export class AuthController {
       if (character) {
         fullCharacter = await Character.findById(character.characterId)
           .select(
-            '_id name surname avatar playerStatus canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions isBanned banScope banReason bannedAt bannedUntil userId'
+            '_id name surname avatar playerStatus canAccessAdminPanel isGestore gameplayRoles characterPermissions adminPermissions isBanned banScope banReason bannedAt bannedUntil userId reviewHistory'
           )
           .lean();
 
         if (fullCharacter) {
+          // Esito di approvazione/rifiuto non ancora "visto" dal giocatore
+          // (reviewHistory sopravvive alla disconnessione — vedi
+          // core/character/models/Character.ts). Solo approve/reject:
+          // request_changes/draft non richiedono questa interstiziale.
+          const pendingReview = (fullCharacter.reviewHistory || [])
+            .filter((r: any) => !r.acknowledged && (r.action === 'approve' || r.action === 'reject'))
+            .sort((a: any, b: any) => new Date(b.reviewedAt).getTime() - new Date(a.reviewedAt).getTime())[0];
+
+          const pendingReviewNotification = pendingReview
+            ? {
+                reviewId: pendingReview._id.toString(),
+                action: pendingReview.action as 'approve' | 'reject',
+                note: pendingReview.note,
+                reviewedAt: new Date(pendingReview.reviewedAt).toISOString()
+              }
+            : null;
+
           characterData = {
             _id: fullCharacter._id.toString(),
             name: fullCharacter.name,
             surname: fullCharacter.surname,
             avatar: fullCharacter.avatar || null,
             playerStatus: fullCharacter.playerStatus,
-            isGestore: fullCharacter.isGestore || false
+            isGestore: fullCharacter.isGestore || false,
+            pendingReviewNotification
           };
 
           gamePermissions = getCharacterGamePermissions(

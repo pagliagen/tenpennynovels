@@ -260,6 +260,16 @@ export const CharacterSchema = z.object({
   gameplayRoles: z.array(z.enum(['player', 'master', 'moderatore'])).optional(),
   characterRoles: z.array(z.string()).optional(),
   characterPermissions: z.array(z.string()).optional(),
+  // Esito di approvazione/rifiuto non ancora confermato dal giocatore
+  // (null se non c'è nulla in sospeso) — calcolato server-side da
+  // GET /auth/session su Character.reviewHistory, sopravvive alla
+  // disconnessione.
+  pendingReviewNotification: z.object({
+    reviewId: MongoIdSchema,
+    action: z.enum(['approve', 'reject']),
+    note: z.string().optional(),
+    reviewedAt: z.string().datetime(),
+  }).nullable().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

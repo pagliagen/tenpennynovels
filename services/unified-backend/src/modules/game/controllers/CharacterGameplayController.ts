@@ -660,4 +660,79 @@ export class CharacterGameplayController {
       ));
     }
   }
+
+  /**
+   * PUT /characters/:characterId/review/:reviewId/ack
+   *
+   * Segna come "vista" una entry di reviewHistory (esito di approvazione/
+   * rifiuto). Per _id specifico, non "l'ultima non vista": evita di
+   * riconoscere per errore una revisione più recente arrivata fra il
+   * fetch della sessione e il click di conferma dell'utente.
+   */
+  static async acknowledgeReview(req: Request, res: Response): Promise<void> {
+    try {
+      const { characterId, reviewId } = req.params;
+      const userId = req.user!.userId;
+
+      const character = await Character.findOne({
+        _id: characterId,
+        userId: userId
+      });
+
+      if (!character) {
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const reviewEntry = character.reviewHistory?.find(
+        (r: any) => r._id.toString() === reviewId
+      );
+
+      if (!reviewEntry) {
+        res.status(404).json(errorResponse(
+          'Voce di revisione non trovata',
+          'REVIEW_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      if (!reviewEntry.acknowledged) {
+        reviewEntry.acknowledged = true;
+        reviewEntry.acknowledgedAt = new Date();
+        await character.save();
+      }
+
+      res.status(200).json(updateResponse(
+        { reviewId, acknowledged: true },
+        'Notifica confermata',
+        getRequestId(req)
+      ));
+
+    } catch (error: unknown) {
+      const err = error as Error;
+      logger.error('Acknowledge review error:', {
+        message: err.message,
+        stack: err.stack,
+        characterId: req.params.characterId,
+        reviewId: req.params.reviewId
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile confermare la notifica',
+        'ACKNOWLEDGE_REVIEW_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
 }
