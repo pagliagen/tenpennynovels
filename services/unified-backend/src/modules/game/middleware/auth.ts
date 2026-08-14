@@ -27,7 +27,10 @@ export class AuthMiddleware {
       }
 
       const jwtSecret = getJwtSecret();
-      const decoded = jwt.verify(authToken, jwtSecret) as AuthToken;
+      const decoded = jwt.verify(authToken, jwtSecret, {
+        issuer: 'tenpennynovels-auth',
+        audience: 'tenpennynovels-users'
+      }) as AuthToken;
 
       if (!decoded.userId || !decoded.username) {
         return { result: false,  error: 'Payload del token non valido' };
@@ -71,7 +74,10 @@ export class AuthMiddleware {
 
       // Verify JWT token
       const jwtSecret = getJwtSecret();
-      const decoded = jwt.verify(authToken, jwtSecret) as AuthToken;
+      const decoded = jwt.verify(authToken, jwtSecret, {
+        issuer: 'tenpennynovels-auth',
+        audience: 'tenpennynovels-users'
+      }) as AuthToken;
       
       if (!decoded.userId || !decoded.username) {
         throw new Error('Payload del token non valido');
@@ -230,7 +236,10 @@ export class AuthMiddleware {
       logger.warn('DEPRECATED: Using character_context cookie', { userId: req.user.userId });
 
       // Verify character context token
-      const decoded = jwt.verify(characterToken, getJwtSecret()) as CharacterContextToken;
+      const decoded = jwt.verify(characterToken, getJwtSecret(), {
+        issuer: 'tenpennynovels-auth',
+        audience: 'tenpennynovels-game'
+      }) as CharacterContextToken;
       
       if (!decoded.characterId || !decoded.userId) {
         throw new Error('Token contesto personaggio non valido');
@@ -472,7 +481,10 @@ export class AuthMiddleware {
       const authToken = req.cookies?.auth_token;
       
       if (authToken) {
-        const decoded = jwt.verify(authToken, getJwtSecret()) as AuthToken;
+        const decoded = jwt.verify(authToken, getJwtSecret(), {
+          issuer: 'tenpennynovels-auth',
+          audience: 'tenpennynovels-users'
+        }) as AuthToken;
         
         if (decoded.userId && decoded.username) {
           req.user = {
@@ -561,7 +573,10 @@ export class AuthMiddleware {
    */
   static decodeCharacterContext(token: string): { characterId: string; userId: string; characterName: string; sessionId: string; gameplayRoles: string[]; isGestore: boolean; playerStatus: string; characterPermissions: string[] } | null {
     try {
-      const decoded = jwt.verify(token, getJwtSecret()) as CharacterContextToken;
+      const decoded = jwt.verify(token, getJwtSecret(), {
+        issuer: 'tenpennynovels-auth',
+        audience: 'tenpennynovels-game'
+      }) as CharacterContextToken;
       if (!decoded.characterId || !decoded.userId) {
         return null;
       }
