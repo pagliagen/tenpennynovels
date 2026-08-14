@@ -18,8 +18,10 @@ router.get('/',
     try {
       const { type } = req.query;
 
+      // CWE-943: qs può trasformare ?type[$where]=x in un oggetto — typeof
+      // esplicito prima del confronto, il cast `as string` non protegge a runtime.
       const filter: any = {};
-      if (type && ['ambientazione', 'regolamento'].includes(type as string)) {
+      if (typeof type === 'string' && ['ambientazione', 'regolamento'].includes(type)) {
         filter.type = type;
       }
 
@@ -47,7 +49,9 @@ router.post('/',
     try {
       const { slug, title, type } = req.body;
 
-      if (!slug || !title || !type) {
+      // CWE-943: slug finisce in un filtro Mongoose (findOne) più sotto —
+      // deve essere una stringa, non un oggetto/operatore.
+      if (!slug || !title || !type || typeof slug !== 'string' || typeof type !== 'string') {
         res.status(400).json(errorResponse(
           'slug, title e type sono obbligatori',
           'VALIDATION_ERROR',
@@ -64,8 +68,10 @@ router.post('/',
         ));
         return;
       }
+      // Verificato dall'includes() sopra: uno dei due letterali validi.
+      const safeType = type as 'ambientazione' | 'regolamento';
 
-      const existing = await DocumentSubtype.findOne({ type, slug });
+      const existing = await DocumentSubtype.findOne({ type: safeType, slug });
       if (existing) {
         res.status(409).json(errorResponse(
           'Esiste già un subtype con questo slug per questo tipo',
@@ -76,10 +82,10 @@ router.post('/',
       }
 
       // Auto-assign order (append at end)
-      const maxOrder = await DocumentSubtype.findOne({ type }).sort({ order: -1 }).lean();
+      const maxOrder = await DocumentSubtype.findOne({ type: safeType }).sort({ order: -1 }).lean();
       const order = (maxOrder?.order ?? -1) + 1;
 
-      const subtype = await DocumentSubtype.create({ slug, title, type, order });
+      const subtype = await DocumentSubtype.create({ slug, title, type: safeType, order });
 
       logger.info(`DocumentSubtype created: ${subtype._id} (${type}/${slug})`);
 
@@ -106,6 +112,10 @@ router.patch('/:id',
       const { id } = req.params;
       const { slug, title, expandedByDefault } = req.body;
 
+      // CWE-943: slug finisce in un filtro Mongoose (findOne) più sotto —
+      // deve essere una stringa, non un oggetto/operatore.
+      const safeSlug = typeof slug === 'string' ? slug : undefined;
+
       const subtype = await DocumentSubtype.findById(id);
       if (!subtype) {
         res.status(404).json(errorResponse(
@@ -116,8 +126,8 @@ router.patch('/:id',
         return;
       }
 
-      if (slug && slug !== subtype.slug) {
-        const existing = await DocumentSubtype.findOne({ type: subtype.type, slug });
+      if (safeSlug && safeSlug !== subtype.slug) {
+        const existing = await DocumentSubtype.findOne({ type: subtype.type, slug: safeSlug });
         if (existing) {
           res.status(409).json(errorResponse(
             'Esiste già un subtype con questo slug per questo tipo',
@@ -126,15 +136,15 @@ router.patch('/:id',
           ));
           return;
         }
-        subtype.slug = slug;
+        subtype.slug = safeSlug;
       }
 
-      if (title) subtype.title = title;
+      if (typeof title === 'string' && title) subtype.title = title;
       if (typeof expandedByDefault === 'boolean') subtype.expandedByDefault = expandedByDefault;
       await subtype.save();
 
       // If slug changed, recalculate paths for all documents in this subtype
-      if (slug) {
+      if (safeSlug) {
         const docs = await Document.find({ subtypeId: subtype._id });
         for (const doc of docs) {
           doc.path = `${subtype.slug}/${doc.slug}`;

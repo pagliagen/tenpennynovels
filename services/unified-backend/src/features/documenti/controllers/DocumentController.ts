@@ -202,7 +202,10 @@ export class DocumentController {
         filter.parentId = null;
       }
 
-      if (type && ['ambientazione', 'regolamento'].includes(type as string)) {
+      // CWE-943: guardia già reale (includes() su stringhe letterali non
+      // combacia mai con un oggetto), ma typeof esplicito rimuove
+      // l'ambiguità del cast `as string` per l'analisi statica.
+      if (typeof type === 'string' && ['ambientazione', 'regolamento'].includes(type)) {
         filter.type = type;
       }
 
@@ -349,7 +352,10 @@ export class DocumentController {
       }
 
       // Optional type filter
-      if (type && ['ambientazione', 'regolamento'].includes(type as string)) {
+      // CWE-943: guardia già reale (includes() su stringhe letterali non
+      // combacia mai con un oggetto), ma typeof esplicito rimuove
+      // l'ambiguità del cast `as string` per l'analisi statica.
+      if (typeof type === 'string' && ['ambientazione', 'regolamento'].includes(type)) {
         filter.type = type;
       }
 

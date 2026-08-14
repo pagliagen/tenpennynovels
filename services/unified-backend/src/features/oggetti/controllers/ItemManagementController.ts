@@ -17,10 +17,14 @@ export class ItemManagementController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 25;
-      const category = req.query.category as string;
-      const isPublic = req.query.isPublic as string;
-      const isAdminOnly = req.query.isAdminOnly as string;
-      const search = req.query.search as string;
+      // CWE-943: `as string` è solo un cast a compile-time — a runtime
+      // req.query.category può essere un oggetto (?category[$where]=...,
+      // qs lo trasforma), e finirebbe diretto nel filtro Mongo. Guardia
+      // typeof reale invece del cast.
+      const category = typeof req.query.category === 'string' ? req.query.category : undefined;
+      const isPublic = typeof req.query.isPublic === 'string' ? req.query.isPublic : undefined;
+      const isAdminOnly = typeof req.query.isAdminOnly === 'string' ? req.query.isAdminOnly : undefined;
+      const search = typeof req.query.search === 'string' ? req.query.search : undefined;
 
       // Build query
       const query: any = {};
@@ -29,7 +33,7 @@ export class ItemManagementController {
       if (isAdminOnly !== undefined) query.isAdminOnly = isAdminOnly === 'true';
 
       if (search) {
-        const escapedSearch = escapeRegex(search as string);
+        const escapedSearch = escapeRegex(search);
         query.$or = [
           { name: { $regex: escapedSearch, $options: 'i' } },
           { description: { $regex: escapedSearch, $options: 'i' } },
@@ -391,6 +395,14 @@ export class ItemManagementController {
       const itemId = req.params.itemId;
       const { reason, ...updateData } = req.body;
 
+      // CWE-943: updateData va passato così com'è a findByIdAndUpdate senza
+      // wrapping esplicito in $set — una chiave root come "$set"/"$unset"/
+      // "$where" nel body verrebbe interpretata come vero operatore Mongo
+      // invece che come campo. Rimosse prima dell'update.
+      for (const key of Object.keys(updateData)) {
+        if (key.startsWith('$')) delete updateData[key];
+      }
+
       if (!reason || reason.trim().length === 0) {
         res.status(400).json(errorResponse(
           'Il motivo dell\'aggiornamento è richiesto',
@@ -580,22 +592,58 @@ export class ItemManagementController {
         return;
       }
 
+      // CWE-943: itemIds finisce dentro $in (filtro), i campi di data
+      // finiscono come valori di $set (update) — entrambi da req.body senza
+      // controllo di tipo. itemIds deve essere un array di stringhe valide,
+      // non un oggetto/operatore Mongo; i campi di data devono combaciare
+      // col tipo atteso dallo schema.
+      if (!Array.isArray(itemIds) || itemIds.length === 0 || !itemIds.every((id) => typeof id === 'string')) {
+        res.status(400).json(errorResponse(
+          'itemIds deve essere un array di ID validi',
+          'INVALID_ITEM_IDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       let result;
       switch (operation) {
         case 'set_public':
+          if (typeof data?.isPublic !== 'boolean') {
+            res.status(400).json(errorResponse(
+              'isPublic deve essere un booleano',
+              'INVALID_BULK_DATA',
+              undefined,
+              400,
+              getRequestId(req)
+            ));
+            return;
+          }
           result = await Item.updateMany(
             { _id: { $in: itemIds } },
             { isPublic: data.isPublic }
           );
           break;
         case 'set_admin_only':
+          if (typeof data?.isAdminOnly !== 'boolean') {
+            res.status(400).json(errorResponse(
+              'isAdminOnly deve essere un booleano',
+              'INVALID_BULK_DATA',
+              undefined,
+              400,
+              getRequestId(req)
+            ));
+            return;
+          }
           result = await Item.updateMany(
             { _id: { $in: itemIds } },
             { isAdminOnly: data.isAdminOnly }
           );
           break;
         case 'update_category':
-          if (!Object.values(ItemCategory).includes(data.category)) {
+          if (typeof data?.category !== 'string' || !Object.values(ItemCategory).includes(data.category as ItemCategory)) {
             res.status(400).json(errorResponse(
               'Categoria non valida',
               'INVALID_CATEGORY',
@@ -610,12 +658,24 @@ export class ItemManagementController {
             { category: data.category }
           );
           break;
-        case 'update_price':
+        case 'update_price': {
+          const safeBasePrice = typeof data?.basePrice === 'number' ? data.basePrice : Number(data?.basePrice);
+          if (!Number.isFinite(safeBasePrice) || safeBasePrice < 0) {
+            res.status(400).json(errorResponse(
+              'basePrice deve essere un numero valido',
+              'INVALID_BULK_DATA',
+              undefined,
+              400,
+              getRequestId(req)
+            ));
+            return;
+          }
           result = await Item.updateMany(
             { _id: { $in: itemIds } },
-            { basePrice: data.basePrice }
+            { basePrice: safeBasePrice }
           );
           break;
+        }
         default:
           res.status(400).json(errorResponse(
             'Operazione bulk non valida',

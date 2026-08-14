@@ -6,6 +6,10 @@ import { escapeRegex } from '@shared/utils/validation';
 import { logger } from '@modules/game/logger';
 import { successResponse, errorResponse, listResponse, getRequestId } from '@shared/utils/apiResponse';
 
+// CWE-943: sortBy è usato come chiave d'oggetto in più metodi di questa
+// classe — allowlist condivisa invece di accettare qualunque stringa
+// (evita anche path tipo __proto__).
+const SORTABLE_FIELDS = new Set(['name', 'category', 'basePrice', 'createdAt']);
 
 export class ItemController {
 
@@ -66,9 +70,7 @@ export class ItemController {
         ];
       }
 
-      // Build sort — sortBy è usato come chiave d'oggetto: allowlist esplicita
-      // invece di accettare qualunque stringa (evita anche path tipo __proto__).
-      const SORTABLE_FIELDS = new Set(['name', 'category', 'basePrice', 'createdAt']);
+      // Build sort
       const safeSortBy = typeof sortBy === 'string' && SORTABLE_FIELDS.has(sortBy) ? sortBy : 'name';
       const sort: any = {};
       sort[safeSortBy] = sortOrder === 'desc' ? -1 : 1;
@@ -366,6 +368,9 @@ export class ItemController {
       const { locationId } = req.params;
       const { category, sortBy = 'name', sortOrder = 'asc' } = req.query;
 
+      // CWE-943: vedi guardia di tipo in getAvailableItems.
+      const safeCategory = typeof category === 'string' ? category : undefined;
+
       // Verify location exists
       const location = await Location.findById(locationId);
       if (!location) {
@@ -388,11 +393,12 @@ export class ItemController {
         ]
       };
 
-      if (category) filter.category = category;
+      if (safeCategory) filter.category = safeCategory;
 
       // Build sort
+      const safeSortBy = typeof sortBy === 'string' && SORTABLE_FIELDS.has(sortBy) ? sortBy : 'name';
       const sort: any = {};
-      sort[sortBy as string] = sortOrder === 'desc' ? -1 : 1;
+      sort[safeSortBy] = sortOrder === 'desc' ? -1 : 1;
 
       const items = await Item.find(filter).sort(sort);
 
@@ -474,13 +480,16 @@ export class ItemController {
         return;
       }
 
+      // CWE-943: vedi guardia di tipo in getAvailableItems.
+      const safeCategory = typeof category === 'string' ? category : undefined;
+
       const filter: any = {
         isAdminOnly: { $ne: true },
         $or: [{ isPublic: true }, { availableLocations: { $exists: true, $ne: [] } }],
         $text: { $search: query.trim() }
       };
 
-      if (category) filter.category = category;
+      if (safeCategory) filter.category = safeCategory;
       if (maxPrice) filter.basePrice = { $lte: Number(maxPrice) };
 
       const items = await Item.find(filter, { score: { $meta: 'textScore' } })

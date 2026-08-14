@@ -10,7 +10,10 @@ export class OccupationController {
   static async getAvailableOccupations(req: Request, res: Response): Promise<void> {
     try {
       const characterId = req.character!.characterId;
-      const { category } = req.query;
+      // CWE-943: category da req.query senza controllo di tipo finirebbe
+      // diretto nel filtro Mongo (?category[$where]=... → oggetto, non
+      // stringa, con qs).
+      const category = typeof req.query.category === 'string' ? req.query.category : undefined;
 
       // Get character for eligibility checks
       const character = await Character.findById(characterId);
