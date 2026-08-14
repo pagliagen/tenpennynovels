@@ -1,9 +1,20 @@
 import { Router } from 'express';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { AuthMiddleware } from '@modules/game/middleware/auth';
 import { TicketController } from '../controllers/TicketController';
 import { TicketNotificationController } from '../controllers/TicketNotificationController';
 
 const router = Router();
+
+// CodeQL (js/missing-rate-limiting): nessun limiter express-rate-limit
+// riconoscibile su queste route — il limiter globale applicato in
+// app.ts/bootstrapFeatures non è tracciabile staticamente fin qui.
+const routeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+});
+router.use(routeLimiter);
 
 // Ticket routes - tutti richiedono autenticazione character (dual-cookie)
 // Solo personaggi APPROVED possono creare ticket (verificato nel controller)

@@ -1,8 +1,18 @@
 import express from 'express';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { CorporationManagementController } from '../controllers/CorporationManagementController';
 import { AdminAuthMiddleware } from '@modules/admin/middleware/adminAuth';
 
 const router = express.Router();
+
+// CodeQL (js/missing-rate-limiting): limiter generico prima ancora
+// dell'auth check, per proteggere anche quest'ultimo da un flood.
+const routeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+});
+router.use(routeLimiter);
 
 // Apply admin authentication middleware to all routes
 router.use(AdminAuthMiddleware.requireAdminAccess);

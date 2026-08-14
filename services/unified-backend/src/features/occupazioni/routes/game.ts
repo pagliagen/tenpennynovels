@@ -1,9 +1,19 @@
 import { Router } from 'express';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { OccupationController } from '../controllers/OccupationController';
 import { AuthMiddleware } from '@modules/game/middleware/auth';
 import { requireGamePermission } from '@modules/game/middleware/gamePermissions';
 
 const router = Router();
+
+// CodeQL (js/missing-rate-limiting): limiter generico prima ancora
+// dell'auth check, per proteggere anche quest'ultimo da un flood.
+const routeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+});
+router.use(routeLimiter);
 
 /**
  * @route GET /occupations

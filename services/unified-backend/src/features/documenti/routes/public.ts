@@ -53,6 +53,7 @@ router.get('/:type/:path', publicLimiter, AuthMiddleware.optionalAuth, DocumentC
 
 // List user favorites
 router.get('/favorites',
+  publicLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:documents:favorites:read'),
   DocumentController.getFavorites
@@ -60,6 +61,7 @@ router.get('/favorites',
 
 // Toggle favorite (nested path)
 router.post('/:type/:category/:slug/favorite',
+  publicLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:documents:favorites:toggle'),
   (req, res) => {
@@ -70,6 +72,7 @@ router.post('/:type/:category/:slug/favorite',
 
 // Toggle favorite (single-level path)
 router.post('/:type/:path/favorite',
+  publicLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:documents:favorites:toggle'),
   DocumentController.toggleFavorite

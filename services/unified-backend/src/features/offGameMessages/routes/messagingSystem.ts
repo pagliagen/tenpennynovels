@@ -16,7 +16,17 @@ const destructiveLimiter = rateLimit({
   keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip ?? ''),
 });
 
+// CodeQL (js/missing-rate-limiting): le route GET (dashboard/stats/cleanup)
+// non avevano alcun limiter, solo quelle distruttive sopra. Limiter
+// generico su tutto il router, prima ancora dell'auth check.
+const readLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+});
+
 // All messaging system routes require admin access
+router.use(readLimiter);
 router.use(AdminAuthMiddleware.requireAdminAccess);
 
 // Chat listing and statistics routes

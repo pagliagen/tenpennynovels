@@ -283,24 +283,22 @@ export class OccupationManagementController {
   static async updateOccupation(req: Request<{ occupationId: string }>, res: Response): Promise<void> {
     try {
       const occupationId = req.params.occupationId;
-      const { reason, ...rawUpdateData } = req.body;
+      const { reason, name, description, category, contacts, earnings, requiredSkillSlots, bonusSkills, image, isActive } = req.body;
 
-      // CWE-943: una chiave root come "$set"/"$unset"/"$where" nel body
-      // verrebbe interpretata come vero operatore Mongo invece che come
-      // campo. Rifiutata esplicitamente (400) invece di essere ripulita in
-      // place — l'update passato a findByIdAndUpdate è un oggetto nuovo,
-      // mai lo stesso riferimento del body ricevuto.
-      if (Object.keys(rawUpdateData).some((key) => key.startsWith('$'))) {
-        res.status(400).json(errorResponse(
-          'Campo di aggiornamento non valido',
-          'INVALID_UPDATE_FIELD',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-      const updateData: Record<string, unknown> = { ...rawUpdateData };
+      // CWE-943: allowlist esplicita invece di spalmare req.body — un
+      // oggetto con chiave "$set"/"$where" a livello root verrebbe
+      // interpretato come vero operatore Mongo. Ogni campo è copiato
+      // solo se del tipo atteso, mai passato così com'è.
+      const updateData: Record<string, unknown> = {};
+      if (typeof name === 'string') updateData.name = name;
+      if (typeof description === 'string') updateData.description = description;
+      if (typeof category === 'string') updateData.category = category;
+      if (typeof contacts === 'string') updateData.contacts = contacts;
+      if (typeof earnings === 'string') updateData.earnings = earnings;
+      if (Array.isArray(requiredSkillSlots)) updateData.requiredSkillSlots = requiredSkillSlots;
+      if (Array.isArray(bonusSkills)) updateData.bonusSkills = bonusSkills;
+      if (typeof image === 'string') updateData.image = image;
+      if (typeof isActive === 'boolean') updateData.isActive = isActive;
 
       if (!reason || reason.trim().length === 0) {
         res.status(400).json(errorResponse(

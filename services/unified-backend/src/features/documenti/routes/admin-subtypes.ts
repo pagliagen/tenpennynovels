@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { AdminAuthMiddleware } from '@modules/admin/middleware/adminAuth';
 import DocumentSubtype from '../models/DocumentSubtype';
 import Document from '../models/Document';
@@ -6,6 +7,15 @@ import { logger } from '@modules/admin/utils/logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
 const router = Router();
+
+// CodeQL (js/missing-rate-limiting): limiter generico prima ancora
+// dell'auth check, per proteggere anche quest'ultimo da un flood.
+const routeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+});
+router.use(routeLimiter);
 
 router.use(AdminAuthMiddleware.requireAdminAccess);
 

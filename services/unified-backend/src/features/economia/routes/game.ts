@@ -71,12 +71,14 @@ router.post('/economy/admin/force-service-renewal',
 
 // Administrative endpoints (require admin permissions)
 router.post('/economy/admin/reset-credit',
+  servicesWriteLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:admin:economy:reset-credit'),
   FinancialController.adminResetCredit
 );
 
 router.get('/economy/admin/status',
+  servicesReadLimiter,
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:admin:economy:status'),
   FinancialController.getSystemStatus

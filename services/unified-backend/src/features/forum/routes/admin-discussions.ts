@@ -1,9 +1,19 @@
 import { Router } from 'express';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { ForumDiscussionManagementController } from '../controllers/ForumDiscussionManagementController';
 import { AdminAuthMiddleware } from '@modules/admin/middleware/adminAuth';
 import { requireViewPermission } from '@modules/admin/utils/permissions';
 
 const router = Router();
+
+// CodeQL (js/missing-rate-limiting): limiter generico prima ancora
+// dell'auth check, per proteggere anche quest'ultimo da un flood.
+const routeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+});
+router.use(routeLimiter);
 
 router.use(AdminAuthMiddleware.requireAdminAccess);
 

@@ -393,24 +393,30 @@ export class ItemManagementController {
   static async updateItem(req: Request<{ itemId: string }>, res: Response): Promise<void> {
     try {
       const itemId = req.params.itemId;
-      const { reason, ...rawUpdateData } = req.body;
+      const {
+        reason, name, description, category, subcategory, imageUrl,
+        isPublic, isAdminOnly, availableLocations, basePrice,
+        properties, financialSettings, shopSettings
+      } = req.body;
 
-      // CWE-943: una chiave root come "$set"/"$unset"/"$where" nel body
-      // verrebbe interpretata come vero operatore Mongo invece che come
-      // campo. Rifiutata esplicitamente (400) invece di essere ripulita in
-      // place — l'update passato a findByIdAndUpdate è un oggetto nuovo,
-      // mai lo stesso riferimento del body ricevuto.
-      if (Object.keys(rawUpdateData).some((key) => key.startsWith('$'))) {
-        res.status(400).json(errorResponse(
-          'Campo di aggiornamento non valido',
-          'INVALID_UPDATE_FIELD',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-      const updateData: Record<string, unknown> = { ...rawUpdateData };
+      // CWE-943: allowlist esplicita (rispecchia UpdateItemData del
+      // frontend management) invece di spalmare req.body — un oggetto con
+      // chiave "$set"/"$where" a livello root verrebbe interpretato come
+      // vero operatore Mongo. Ogni campo è copiato solo se del tipo
+      // atteso, mai passato così com'è.
+      const updateData: Record<string, unknown> = {};
+      if (typeof name === 'string') updateData.name = name;
+      if (typeof description === 'string') updateData.description = description;
+      if (typeof category === 'string') updateData.category = category;
+      if (typeof subcategory === 'string') updateData.subcategory = subcategory;
+      if (typeof imageUrl === 'string') updateData.imageUrl = imageUrl;
+      if (typeof isPublic === 'boolean') updateData.isPublic = isPublic;
+      if (typeof isAdminOnly === 'boolean') updateData.isAdminOnly = isAdminOnly;
+      if (Array.isArray(availableLocations)) updateData.availableLocations = availableLocations;
+      if (typeof basePrice === 'number') updateData.basePrice = basePrice;
+      if (properties && typeof properties === 'object' && !Array.isArray(properties)) updateData.properties = properties;
+      if (financialSettings && typeof financialSettings === 'object' && !Array.isArray(financialSettings)) updateData.financialSettings = financialSettings;
+      if (shopSettings && typeof shopSettings === 'object' && !Array.isArray(shopSettings)) updateData.shopSettings = shopSettings;
 
       if (!reason || reason.trim().length === 0) {
         res.status(400).json(errorResponse(

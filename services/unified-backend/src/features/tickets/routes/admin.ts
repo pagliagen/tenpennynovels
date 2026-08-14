@@ -1,9 +1,19 @@
 import { Router } from 'express';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { TicketManagementController } from '../controllers/TicketManagementController';
 import { TicketDashboardController } from '../controllers/TicketDashboardController';
 import { AdminAuthMiddleware } from '@modules/admin/middleware/adminAuth';
 
 const router = Router();
+
+// CodeQL (js/missing-rate-limiting): limiter generico prima ancora
+// dell'auth check, per proteggere anche quest'ultimo da un flood.
+const routeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
+});
+router.use(routeLimiter);
 
 // Apply admin authentication to all ticket management routes
 router.use(AdminAuthMiddleware.requireAdminAccess);
