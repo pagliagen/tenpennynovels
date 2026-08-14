@@ -8,8 +8,7 @@ export { db } from '../connection';
 // Character: spostato in core/character/models/ (Fase 7.2)
 export { Skill, SKILL_CATEGORY_LABELS, type ISkill } from './Skill';
 
-// Location System
-export { Location, type ILocation } from './Location';
+// Location: spostata in core/location/models/ (Fase 7.3)
 export { Chat, type IChat } from './Chat';
 export { ChatBackup } from './ChatBackup';
 export { CharacterNotes, type ICharacterNotes } from './CharacterNotes';
@@ -115,7 +114,7 @@ export { DeletedRecord, type IDeletedRecord } from './DeletedRecord';
 // della feature cambia ancora.
 import { registerSoftDeleteModel } from '../plugins/softDeleteRegistry';
 registerSoftDeleteModel('characters', () => require('@core/character/models/Character').Character, 'name');
-registerSoftDeleteModel('locations', () => require('./Location').Location, 'name');
+registerSoftDeleteModel('locations', () => require('@core/location/models/Location').Location, 'name');
 // boundary-allow: registro require()-based, non visto da check-boundaries.ts
 registerSoftDeleteModel('items', () => require('@features/oggetti/models/Item').Item, 'name');
 // boundary-allow: registro require()-based, non visto da check-boundaries.ts
