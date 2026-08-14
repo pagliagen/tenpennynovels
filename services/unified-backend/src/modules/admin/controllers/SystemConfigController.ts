@@ -445,7 +445,7 @@ export class SystemConfigController {
       // Dynamic imports to avoid circular dependencies
       const { User } = await import('@core/auth/models/User');
       const { Character } = await import('@core/character/models/Character');
-      const { Location } = await import('@database/models/Location');
+      const { Location } = await import('@core/location/models/Location');
 
       // Calculate date ranges
       const now = new Date();

@@ -271,7 +271,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
         try {
           // Import models (dynamic import for performance)
           const { Character } = await import('@core/character/models/Character');
-          const { Location } = await import('@database/models');
+          const { Location } = await import('@core/location/models/Location');
 
           // Clear character's currentLocation
           await Character.findByIdAndUpdate(character.characterId, {

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Item } from '../models/Item';
-import { Location } from '@database/models/Location';
+import { Location } from '@core/location/models/Location';
 import { Character } from '@core/character/models/Character';
 import { escapeRegex } from '@shared/utils/validation';
 import { logger } from '@modules/game/logger';

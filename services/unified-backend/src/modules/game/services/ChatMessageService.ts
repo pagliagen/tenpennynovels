@@ -17,7 +17,8 @@ import type { EnrichedChatMessage, GetMessagesParams } from '../transformers/typ
 import { MessageTransformer } from '../transformers/MessageTransformer';
 import { MessageContext } from '../transformers/MessageContext';
 import { Character } from '@core/character/models/Character';
-import { ChatBackup, Location, GamingSession } from '@database/models';
+import { Location } from '@core/location/models/Location';
+import { ChatBackup, GamingSession } from '@database/models';
 import { ActionRouter } from '../actions/ActionRouter';
 import { ActionInput } from '../actions/types';
 import { logger } from '@shared/utils/logger';

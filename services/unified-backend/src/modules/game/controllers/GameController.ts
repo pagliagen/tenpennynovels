@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Character } from '@core/character/models/Character';
-import { Location, Skill } from '@database/models';
+import { Location } from '@core/location/models/Location';
+import { Skill } from '@database/models';
 import { User } from '@core/auth/models/User';
 import { OffGameChatMessage, OffGameChatParticipant } from '@features/offGameMessages/api';
 import { Item } from '@features/oggetti/api';

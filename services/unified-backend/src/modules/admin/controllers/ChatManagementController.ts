@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Chat } from '@database/models/Chat';
-import { Location } from '@database/models/Location';
+import { Location } from '@core/location/models/Location';
 import { Character } from '@core/character/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';

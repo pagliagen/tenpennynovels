@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { Character } from '@core/character/models/Character';
-import { Chat, ChatBackup, GamingSession, Location, SkillConfrontation, CombatEncounter, Skill } from '@database/models';
+import { Location } from '@core/location/models/Location';
+import { Chat, ChatBackup, GamingSession, SkillConfrontation, CombatEncounter, Skill } from '@database/models';
 import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '@shared/utils/apiResponse';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
@@ -247,7 +248,6 @@ export class ChatController {
       }
 
       // Fetch location
-      const Location = require('../../../database/models').Location;
       const location = await Location.findById(locationId);
 
       // ===== SESSION MANAGEMENT =====

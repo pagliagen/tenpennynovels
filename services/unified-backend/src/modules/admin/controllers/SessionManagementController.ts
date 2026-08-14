@@ -3,7 +3,7 @@ import { GamingSession } from '@database/models/GamingSession';
 import { SessionManagement } from '@database/models/SessionManagement';
 import { SessionTemplate } from '@database/models/SessionTemplate';
 import { Character } from '@core/character/models/Character';
-import { Location } from '@database/models/Location';
+import { Location } from '@core/location/models/Location';
 import { logger } from '../utils/logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';

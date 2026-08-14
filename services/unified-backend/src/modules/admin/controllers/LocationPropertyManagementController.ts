@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { LocationProperty, Location, db } from '@database/models';
+import { Location } from '@core/location/models/Location';
+import { LocationProperty, db } from '@database/models';
 // boundary-allow: economia espone solo wrapper (mai il model CharacterFinances nudo, decisione Fase 6.3) — query dirette non coperte da wrapper esistenti
 import { CharacterFinances } from '@features/economia/models/CharacterFinances';
 import { logger } from '../utils/logger';

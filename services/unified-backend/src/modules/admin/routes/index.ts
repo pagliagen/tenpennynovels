@@ -22,7 +22,8 @@ import { auditLogger } from '../utils/auditLogger';
 import { AuthUtils } from '../utils/auth';
 import { User } from '@core/auth/models/User';
 import { Character } from '@core/character/models/Character';
-import { Location, db } from '@database/models';
+import { Location } from '@core/location/models/Location';
+import { db } from '@database/models';
 import { logger } from '../utils/logger';
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 
