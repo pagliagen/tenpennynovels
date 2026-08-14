@@ -15,79 +15,11 @@ export { Skill, SKILL_CATEGORY_LABELS, type ISkill } from './Skill';
 export { Location, type ILocation } from './Location';
 export { Chat, type IChat } from './Chat';
 export { ChatBackup } from './ChatBackup';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ChatScene, type IChatScene } from '@features/fineSessione/models/ChatScene';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { CharacterChatScene, type ICharacterChatScene } from '@features/fineSessione/models/CharacterChatScene';
 export { CharacterNotes, type ICharacterNotes } from './CharacterNotes';
 
 // Combat & Confrontation System (TiroContrapposto)
 export { SkillConfrontation, type ISkillConfrontation } from './SkillConfrontation';
 export { CombatEncounter, type ICombatEncounter } from './CombatEncounter';
-
-// Corporation System
-// Deprecato: il model vive ora in features/corporazioni/models/Corporation.ts
-// (Fase 4 del refactor layer→feature). Shim di compatibilità per chi importa
-// ancora dal barrel — CharacterSocialController.ts (ShopController.ts, ex
-// EconomyController.ts, dalla Fase 6.4 usa features/corporazioni/api invece
-// del barrel).
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  Corporation,
-  CorporationMembershipRequest,
-  CorporationInvitation,
-  type ICorporation,
-  type ICorporationMembershipRequest,
-  type ICorporationInvitation
-} from '@features/corporazioni/models/Corporation';
-
-// Item and Shop System
-// Deprecato: i model vivono ora in features/oggetti/models/Item.ts (Fase 6.4 del
-// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  Item,
-  CharacterInventory,
-  Shop,
-  ShopItem,
-  type IItem,
-  type ICharacterInventory,
-  type IShop,
-  type IShopItem,
-  ItemCategory,
-  ITEM_CATEGORY_LABELS
-} from '@features/oggetti/models/Item';
-
-// Continuative Services System (VC-budget subscriptions: servitù, comunicazioni, trasporti, sicurezza)
-// Deprecato: il model vive ora in features/economia/models/ (Fase 6.3 del
-// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  Service,
-  type IService,
-  ServiceCategory
-} from '@features/economia/models/Service';
-
-// OffGame Chat System (LEGACY - Group chats with admin roles)
-// NOTE: This is the ORIGINAL system that coexists with the NEW OffGameThread system
-// LEGACY system: Supports groups, admins, configurable retention
-// NEW system: Simple 1-to-1 threads (see below)
-// Both systems are in production during gradual migration
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  OffGameChat,
-  type IOffGameChat
-} from '@features/offGameMessages/models/OffGameChat';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  OffGameChatMessage,
-  type IOffGameChatMessage
-} from '@features/offGameMessages/models/OffGameChatMessage';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  OffGameChatParticipant,
-  type IOffGameChatParticipant
-} from '@features/offGameMessages/models/OffGameChatParticipant';
 
 // OnGame Messages System (Victorian postal system)
 export {
@@ -101,16 +33,6 @@ export {
   OnGameThread,
   type IOnGameThread
 } from './OnGameThread';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  OffGameThread,
-  type IOffGameThread
-} from '@features/offGameMessages/models/OffGameThread';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  OffGameMessage,
-  type IOffGameMessage
-} from '@features/offGameMessages/models/OffGameMessage';
 export {
   MessageBackup,
   type IMessageBackup
@@ -127,52 +49,6 @@ export {
   type ICharacterRelationProposal,
   type ICharacterRelationAction
 } from './CharacterRelation';
-
-// Occupation System
-// Deprecato: i model vivono ora in features/occupazioni/models/ (Fase 6.2 del
-// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  Occupation,
-  CharacterOccupationHistory,
-  OccupationCategory,
-  type IOccupation,
-  type ICharacterOccupationHistory
-} from '@features/occupazioni/models/Occupation';
-
-// Ticketing System
-// Deprecato: i model vivono ora in features/tickets/models/ (Fase 6.1 del
-// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  Ticket,
-  type ITicket
-} from '@features/tickets/models/Ticket';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  TicketMessage,
-  type ITicketMessage
-} from '@features/tickets/models/TicketMessage';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  TicketNotification,
-  type TicketNotificationType,
-  type ITicketNotification
-} from '@features/tickets/models/TicketNotification';
-
-// Financial System
-// Deprecato: i model vivono ora in features/economia/models/ (Fase 6.3 del
-// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  SocialClassConfig,
-  type ISocialClassConfig
-} from '@features/economia/models/SocialClassConfig';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  CharacterFinances,
-  type ICharacterFinances
-} from '@features/economia/models/CharacterFinances';
 
 // Location Property System
 export {
@@ -230,68 +106,26 @@ export { MessageReport, type IMessageReport } from './MessageReport';
 export { UserReport, type IUserReport } from './UserReport';
 export { ModerationAlert, type IModerationAlert } from './ModerationAlert';
 
-// Knowledge Base System (Documents + SubTypes)
-// Deprecato: i model vivono ora in features/documenti/models/ (Fase 6.5 del
-// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  default as DocumentSubtype,
-  type IDocumentSubtype,
-  type DocumentType
-} from '@features/documenti/models/DocumentSubtype';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  default as Document,
-  type IDocument
-} from '@features/documenti/models/Document';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export {
-  default as DocumentChunk,
-  type IDocumentChunk
-} from '@features/documenti/models/DocumentChunk';
-
-// Forum System
-// Deprecato: i model vivono ora in features/forum/models/ (Fase 6.6 del
-// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumCategory, type IForumCategory } from '@features/forum/models/ForumCategory';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumTopic, type IForumTopic } from '@features/forum/models/ForumTopic';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumTopicPermissionOverride, type IForumTopicPermissionOverride, type ForumPermissionDecision, type ForumTopicPermissionOverrides } from '@features/forum/models/ForumTopicPermissionOverride';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumDiscussion, type IForumDiscussion } from '@features/forum/models/ForumDiscussion';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumPost, type IForumPost } from '@features/forum/models/ForumPost';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumTopicFavorite, type IForumTopicFavorite } from '@features/forum/models/ForumTopicFavorite';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumDiscussionFavorite, type IForumDiscussionFavorite } from '@features/forum/models/ForumDiscussionFavorite';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumDiscussionSubscription, type IForumDiscussionSubscription } from '@features/forum/models/ForumDiscussionSubscription';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumBookmark, BookmarkItemType, type IForumBookmark } from '@features/forum/models/ForumBookmark';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumNotification, ForumNotificationType, type IForumNotification } from '@features/forum/models/ForumNotification';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumCharacterPreference, type IForumCharacterPreference, type ForumReplyOrder } from '@features/forum/models/ForumCharacterPreference';
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
-export { ForumTopicReadState, type IForumTopicReadState } from '@features/forum/models/ForumTopicReadState';
-
 // Deleted Records Archive
 export { DeletedRecord, type IDeletedRecord } from './DeletedRecord';
 
 // Soft Delete Registry - register all soft-deletable models
+//
+// I model delle feature migrate (oggetti, documenti, occupazioni, economia)
+// restano qui sotto con un require() diretto verso features/<nome>/models/
+// — non uno shim in via di rimozione, ma un'annotazione permanente:
+// check-boundaries.ts non vede require(), va aggiornata a mano se il path
+// della feature cambia ancora.
 import { registerSoftDeleteModel } from '../plugins/softDeleteRegistry';
 registerSoftDeleteModel('characters', () => require('./Character').Character, 'name');
 registerSoftDeleteModel('locations', () => require('./Location').Location, 'name');
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora
+// boundary-allow: registro require()-based, non visto da check-boundaries.ts
 registerSoftDeleteModel('items', () => require('@features/oggetti/models/Item').Item, 'name');
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora
+// boundary-allow: registro require()-based, non visto da check-boundaries.ts
 registerSoftDeleteModel('documents', () => require('@features/documenti/models/Document').default, 'title');
 registerSoftDeleteModel('users', () => require('./User').User, 'username');
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora
+// boundary-allow: registro require()-based, non visto da check-boundaries.ts
 registerSoftDeleteModel('occupations', () => require('@features/occupazioni/models/Occupation').Occupation, 'name');
 registerSoftDeleteModel('skills', () => require('./Skill').Skill, 'name');
-// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora
+// boundary-allow: registro require()-based, non visto da check-boundaries.ts
 registerSoftDeleteModel('socialclassconfigs', () => require('@features/economia/models/SocialClassConfig').SocialClassConfig, 'label');
