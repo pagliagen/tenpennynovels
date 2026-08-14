@@ -654,13 +654,14 @@ Una feature per PR. **Mai due feature in volo contemporaneamente.** Ordine decis
 | # | Feature | Perimetro indicativo | Note |
 |---|---|---|---|
 | 1 | `tickets` | ~16 file, ~6100 righe | **fatta** (Fase 6.1) — stima iniziale errata ("3 file, banale"), perimetro reale vicino a corporazioni |
-| 2 | `occupazioni` | piccolo | |
-| 3 | `oggetti` + `economia` | medio | valutare se sono una feature o due |
-| 4 | `documenti` | medio | già quasi isolato, `dependsOn: ['bibliotecario']` no — l'inverso |
-| 5 | `forum` | 5 controller admin | il più duplicato sull'asse admin |
-| 6 | `fineSessione` | piccolo, già isolato | `ChatScene`, `CharacterChatScene`, `ChatSceneService` — segmentazione narrativa sopra al trasporto chat (core), proprio model e proprio service già oggi. Ordine rispetto a `offGameMessages` non vincolante, messa prima per rischio minore — default, non richiesta esplicita |
-| 7 | `offGameMessages` | da valutare | `OffGameChat` (legacy), `OffGameThread`, `OffGameMessage` — meta-comunicazione fuori fiction, mancava dalla lista originaria |
-| 8 | `bot` | vedi §4.2 | **out of scope rispetto al progetto, resta per ultima** — riportato in fondo il 2026-08-13 (era stato spostato dopo forum quando dipendeva dall'ordine con `luoghi`, ora che `luoghi` è core quella ragione non si applica più) |
+| 2 | `occupazioni` | ~9 file | **fatta** (Fase 6.2) — intrecciata con la creazione personaggio (core), niente flag, `characterCreationUtils.ts`/`CharacterCreationController.ts` restano fuori come debito dichiarato |
+| 3 | `economia` | medio — `CharacterFinances`, `SocialClassConfig`, `Service` + `FinancialController`/`ServicesController`/`SocialClassManagementController`/`CharacterFinancesManagementController` | va prima di `oggetti`: l'acquisto in negozio deve controllare i fondi, `oggetti` dichiara `dependsOn: ['economia']` |
+| 4 | `oggetti` | medio — `Item`/`CharacterInventory`/`Shop`/`ShopItem` + `ItemController`/`CharacterInventoryActionsController`/`ItemManagementController` | `EconomyController.ts`/`economy.ts` vanno spezzati fra economia (Financial/Services) e oggetti (shop-purchase: `getGeneralStore`/`purchaseItem`/`getShopItems`/`restockShop`). Model `Shop`: zero controller CRUD in tutto il repo, si sposta comunque verbatim (stesso file di Item.ts) |
+| 5 | `documenti` | medio | già quasi isolato, `dependsOn: ['bibliotecario']` no — l'inverso |
+| 6 | `forum` | 5 controller admin | il più duplicato sull'asse admin |
+| 7 | `fineSessione` | piccolo, già isolato | `ChatScene`, `CharacterChatScene`, `ChatSceneService` — segmentazione narrativa sopra al trasporto chat (core), proprio model e proprio service già oggi. Ordine rispetto a `offGameMessages` non vincolante, messa prima per rischio minore — default, non richiesta esplicita |
+| 8 | `offGameMessages` | da valutare | `OffGameChat` (legacy), `OffGameThread`, `OffGameMessage` — meta-comunicazione fuori fiction, mancava dalla lista originaria |
+| 9 | `bot` | vedi §4.2 | **out of scope rispetto al progetto, resta per ultima** — riportato in fondo il 2026-08-13 (era stato spostato dopo forum quando dipendeva dall'ordine con `luoghi`, ora che `luoghi` è core quella ragione non si applica più) |
 
 `luoghi` e `chat` (il trasporto) **rimossi dalla tabella**: riclassificati come core il 2026-08-13, vedi §3.2 — non si migrano più come feature.
 
