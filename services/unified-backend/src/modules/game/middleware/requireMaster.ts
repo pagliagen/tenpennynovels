@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Character } from '@database/models';
+import { Character } from '@core/character/models/Character';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { logger } from '../logger';
 import { errorResponse, getRequestId } from '@shared/utils/apiResponse';

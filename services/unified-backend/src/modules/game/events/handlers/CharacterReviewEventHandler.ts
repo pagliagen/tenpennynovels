@@ -72,8 +72,8 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
     reviewedByUsername: string
   ): Promise<void> {
     try {
-      const { Character } = await import('@database/models/Character');
-      const { User } = await import('@database/models/User');
+      const { Character } = await import('@core/character/models/Character');
+      const { User } = await import('@core/auth/models/User');
 
       // Find the reviewed character
       const targetCharacter = await Character.findById(characterId).populate('userId');
@@ -144,7 +144,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
   ): Promise<void> {
     try {
       // ✅ Import service directly (same backend, no HTTP needed)
-      const { OffGameChatService } = await import('../../services/OffGameChatService');
+      const { OffGameChatService } = await import('@features/offGameMessages/api');
 
       // 1. Create or get existing direct chat
       const chat = await OffGameChatService.createOrGetDirectChat({
@@ -222,7 +222,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
     note?: string
   ): Promise<void> {
     try {
-      const { Character } = await import('@database/models/Character');
+      const { Character } = await import('@core/character/models/Character');
 
       // Get updated character to find the user
       const character = await Character.findById(characterId).populate('userId');

@@ -139,7 +139,6 @@ export interface Character {
   // Current game state
   currentLocation: string; // Location ID
   isActive: boolean; // Currently selected character
-  isBot: boolean; // Indica se il personaggio è un bot AI-controlled
 
   // Timestamps
   createdAt: Date;

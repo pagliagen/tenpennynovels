@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { CharacterDiaryEntry } from '@database/models/CharacterDiaryEntry';
 import { CharacterEncounterNote } from '@database/models/CharacterEncounterNote';
 import { GamingSession } from '@database/models/GamingSession';
-import { Chat } from '@database/models/Chat';
+import { Chat } from '@core/chat/models/Chat';
 import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
 

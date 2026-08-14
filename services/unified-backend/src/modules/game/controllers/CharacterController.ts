@@ -1,23 +1,25 @@
 import { Request, Response } from 'express';
 import { Types, Error as MongooseError } from 'mongoose';
-import { Character, Occupation, Skill } from '@database/models';
-import type { ICharacter } from '@database/models/Character';
+import { Character, type ICharacter } from '@core/character/models/Character';
+import { Skill } from '@database/models';
+import { Occupation } from '@features/occupazioni/api';
+import { Item, CharacterInventory } from '@features/oggetti/api';
 import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, updateResponse, deleteResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { CharacterVisibilityFilter } from '@shared/utils/characterVisibility';
 import { escapeRegex, translateMongooseError } from '@shared/utils/validation';
 import { canReadOthersPrivate } from '@config/permissions';
-import { FinancialUtils } from '../utils/financialUtils';
+// boundary-allow: debito dichiarato, CharacterController.ts resta fuori dalla feature economia (Fase 6.3) fino al consolidamento del core (Fase 7)
+import { FinancialUtils } from '@features/economia/services/FinancialUtils';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
-import { appConfig } from '@config/runtime';
 
 /**
  * CharacterController
  *
  * ✅ SPRINT 2 REFACTORING: Consolidation of CharacterController god object (1964 lines)
  *
- * Handles all character CRUD operations, retrieval, updates, and bot character creation.
+ * Handles all character CRUD operations, retrieval, and updates.
  * This is the CLEAN version replacing the monolite CharacterController.
  */
 export class CharacterController {
@@ -31,8 +33,6 @@ export class CharacterController {
     characterId: unknown,
     startingEquipmentIds: unknown[]
   ): Promise<Array<{ _id: string; id: string; itemId: string; name: string; description: string; category: string; quantity: number }>> {
-    const { Item, CharacterInventory } = require('../../../database/models');
-
     const inventory = await CharacterInventory.findOne({ characterId }).lean();
     const inventoryEntries = (inventory?.items || []).filter((entry: any) => entry.isVisible !== false);
 
@@ -237,266 +237,6 @@ export class CharacterController {
     }
   }
 
-  // ========================================================================
-  // BOT CHARACTER CREATION
-  // ========================================================================
-
-  /**
-   * POST /characters/bot/create
-   * Create bot character (basic)
-   */
-  static async createBotCharacter(req: Request, res: Response): Promise<void> {
-    try {
-      const {
-        name,
-        surname,
-        physicalDescription,
-        publicDescription,
-        privateDescription,
-        background,
-        stats,
-        gender = 'male',
-        bot_id
-      } = req.body;
-
-      // Validate required fields
-      if (!name || !bot_id) {
-        res.status(400).json(errorResponse(
-          'name and bot_id are required',
-          'MISSING_REQUIRED_FIELDS',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Get system bot user ID
-      const systemBotUserId = appConfig.systemBotUserId;
-      if (!systemBotUserId) {
-        res.status(500).json(errorResponse(
-          'SYSTEM_BOT_USER_ID not configured',
-          'SYSTEM_BOT_NOT_CONFIGURED',
-          undefined,
-          500,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Prepare default stats if not provided
-      const defaultStats = {
-        strength: 50,
-        constitution: 50,
-        size: 50,
-        dexterity: 50,
-        appearance: 50,
-        intelligence: 50,
-        power: 50,
-        education: 50
-      };
-
-      const characterStats = stats || defaultStats;
-
-      // Calculate derived stats
-      const configService = CharacterCreationConfigService.getInstance();
-      const config = await configService.loadConfig();
-      const { calculateAllDerivedStats } = await import('@shared/services/CharacterCreationConfigService');
-      const derived = calculateAllDerivedStats(characterStats, config);
-
-      // Create bot character with preapproved status
-      const character = await Character.create({
-        name,
-        surname: surname || '',
-        age: 30, // Default for bots
-        apparentAge: 30,
-        physicalDescription: physicalDescription || 'Un personaggio misterioso',
-        birthPlace: 'London',
-        publicDescription: publicDescription || 'Un personaggio non giocante',
-        privateDescription: privateDescription || 'Personaggio bot gestito da AI',
-        gender,
-        userId: systemBotUserId,
-        playerStatus: 'approved', // Preapproved
-        gameplayRoles: ['player'],
-        bot_id, // Link to bot in botai database
-        stats: characterStats,
-        derived,
-        skills: new Map(),
-        background: background || {},
-        equipment: [],
-        isActive: false,
-        lastActive: new Date(),
-        approvedBy: systemBotUserId,
-        approvedAt: new Date()
-      });
-
-      logger.info(`Bot character created: ${character._id} (${character.name}) for bot_id ${bot_id}`);
-
-      res.status(201).json(createResponse(
-        { characterId: character._id.toString() },
-        'Bot character created successfully',
-        getRequestId(req)
-      ));
-
-    } catch (error: unknown) {
-      logger.error('Create bot character error:', error);
-      res.status(500).json(errorResponse(
-        'Failed to create bot character',
-        'BOT_CHARACTER_CREATE_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * POST /characters/bot/complete
-   * Create COMPLETE bot character with full stats, skills, occupation, background
-   */
-  static async createCompleteBotCharacter(req: Request, res: Response): Promise<void> {
-    try {
-      const {
-        name,
-        surname,
-        bot_id,
-        stats,
-        skills,
-        occupation,
-        background,
-        demographics,
-        gender = 'male',
-        campaign_id
-      } = req.body;
-
-      // Validate required fields
-      if (!name || !bot_id || !stats || !skills || !occupation) {
-        res.status(400).json(errorResponse(
-          'name, bot_id, stats, skills, and occupation are required',
-          'MISSING_REQUIRED_FIELDS',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Get system bot user ID
-      const systemBotUserId = appConfig.systemBotUserId;
-      if (!systemBotUserId) {
-        res.status(500).json(errorResponse(
-          'SYSTEM_BOT_USER_ID not configured',
-          'SYSTEM_BOT_NOT_CONFIGURED',
-          undefined,
-          500,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      logger.info(`[CreateCompleteBot] Creating complete bot character: ${name}`);
-      logger.info(`[CreateCompleteBot] Stats total: ${Object.values(stats).reduce((sum: number, val: any) => sum + val, 0)}`);
-      logger.info(`[CreateCompleteBot] Skills count: ${Object.keys(skills).length}`);
-      logger.info(`[CreateCompleteBot] Occupation: ${occupation.name}`);
-
-      // Calculate derived stats
-      const configService = CharacterCreationConfigService.getInstance();
-      const config = await configService.loadConfig();
-      const { calculateAllDerivedStats } = await import('@shared/services/CharacterCreationConfigService');
-      const derived = calculateAllDerivedStats(stats, config);
-
-      // Convert skills map to Map object with full breakdown
-      const skillsMap = new Map();
-      for (const [skillName, breakdown] of Object.entries(skills)) {
-        const skillBreakdown = breakdown as Record<string, unknown>;
-        skillsMap.set(skillName, {
-          total: skillBreakdown.total,
-          base: skillBreakdown.base,
-          requiredBonus: skillBreakdown.requiredBonus || 0,
-          manualPoints: skillBreakdown.manualPoints || 0,
-          occupationBonus: skillBreakdown.occupationBonus || 0,
-          category: skillBreakdown.category
-        });
-      }
-
-      logger.info(`[CreateCompleteBot] Skills map created with ${skillsMap.size} skills`);
-
-      // Prepare occupation reference
-      let occupationRef;
-      if (occupation._id) {
-        occupationRef = {
-          _id: occupation._id,
-          name: occupation.name
-        };
-      }
-
-      // Prepare complete background
-      const completeBackground = background || {};
-
-      // Prepare demographics with defaults
-      const age = demographics?.age || 30;
-      const height = demographics?.height || '170 cm';
-      const weight = demographics?.weight || '70 kg';
-      const eyeColor = demographics?.eyeColor || 'brown';
-      const hairColor = demographics?.hairColor || 'brown';
-      const physicalDescription = demographics?.physicalDescription || 'Un personaggio misterioso';
-      const publicDescription = demographics?.publicDescription || physicalDescription;
-      const privateDescription = demographics?.privateDescription || 'Personaggio bot gestito da AI';
-
-      // Create complete bot character
-      const character = await Character.create({
-        name,
-        surname: surname || '',
-        age,
-        apparentAge: age,
-        height,
-        weight,
-        eyeColor,
-        hairColor,
-        physicalDescription,
-        birthPlace: 'London',
-        publicDescription,
-        privateDescription,
-        gender,
-        userId: systemBotUserId,
-        playerStatus: 'approved', // Preapproved
-        gameplayRoles: ['player'],
-        bot_id, // Link to bot in botai database
-        stats,
-        derived,
-        skills: skillsMap,
-        currentOccupation: occupationRef,
-        background: completeBackground,
-        equipment: [],
-        isActive: false,
-        lastActive: new Date(),
-        approvedBy: systemBotUserId,
-        approvedAt: new Date(),
-        campaign_id: campaign_id || undefined
-      });
-
-      logger.info(`[CreateCompleteBot] ✅ Complete bot character created successfully: ${character._id} (${character.name})`);
-      logger.info(`[CreateCompleteBot] Stats total: ${Object.values(character.stats).reduce((sum: number, val: any) => sum + val, 0)}`);
-      logger.info(`[CreateCompleteBot] Skills count: ${character.skills.size}`);
-      logger.info(`[CreateCompleteBot] Occupation: ${character.currentOccupation?.name || 'None'}`);
-
-      res.status(201).json(createResponse(
-        { characterId: character._id.toString() },
-        'Complete bot character created successfully',
-        getRequestId(req)
-      ));
-
-    } catch (error: unknown) {
-      logger.error('[CreateCompleteBot] Error:', error);
-      res.status(500).json(errorResponse(
-        'Failed to create complete bot character',
-        'COMPLETE_BOT_CHARACTER_CREATE_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
   static async getCharacter(req: Request, res: Response): Promise<void> {
     try {
       const { characterId } = req.params;
@@ -555,7 +295,6 @@ export class CharacterController {
 
       // Aggiungi il nome dell'occupazione e professional skills se presente
       if (character.occupation) {
-        const { Occupation, Skill } = require('../../../database/models');
         let occupation = null;
         
         // Verifica se l'occupazione è un ObjectId valido o una stringa
@@ -740,7 +479,6 @@ export class CharacterController {
       }
 
       if (character.occupation) {
-        const { Occupation, Skill } = require('../../../database/models');
         let occupation = await Occupation.findById(character.occupation).catch(() => null);
         if (!occupation && typeof character.occupation === 'string') {
           occupation = await Occupation.findOne({ name: character.occupation });
@@ -756,7 +494,6 @@ export class CharacterController {
       }
 
       if (characterJson.equipment?.length > 0) {
-        const { Item } = require('../../../database/models');
         const equipmentItems = await Item.find({ _id: { $in: characterJson.equipment } });
         characterJson.equipment = equipmentItems.map((item: any) => ({
           id: item._id.toString(),

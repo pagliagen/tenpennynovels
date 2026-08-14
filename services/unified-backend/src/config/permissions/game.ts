@@ -78,7 +78,6 @@ export const GamePermissions = {
   // Chat
   CHAT_SEND: 'game:chat:send',
   CHAT_WHISPER: 'game:chat:whisper',
-  CHAT_OFFGAME: 'game:chat:offgame',
   CHAT_DICE: 'game:chat:dice',
   CHAT_SOCIAL_CLASH: 'game:chat:social-clash',
   CHAT_READ: 'game:chat:read',
@@ -242,7 +241,6 @@ export const GameRolePermissions: Record<string, GamePermission[]> = {
     GamePermissions.ENVIRONMENT_READ,
     GamePermissions.PRESENCE_READ,
     GamePermissions.LOCATIONS_LIST,
-    GamePermissions.OFFGAME_CHAT_LIST,
     GamePermissions.POSTAL_READ,
     GamePermissions.POSTAL_TYPES,
     GamePermissions.POSTAL_THREADS,
@@ -267,7 +265,6 @@ export const GameRolePermissions: Record<string, GamePermission[]> = {
     GamePermissions.BLOCK_NOTES_DELETE,
     GamePermissions.CHAT_SEND,
     GamePermissions.CHAT_WHISPER,
-    GamePermissions.CHAT_OFFGAME,
     GamePermissions.CHAT_DICE,
     GamePermissions.CHAT_SOCIAL_CLASH,
     GamePermissions.CHAT_SOCIAL_CONFLICTS,

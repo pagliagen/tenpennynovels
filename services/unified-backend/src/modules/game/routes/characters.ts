@@ -188,6 +188,13 @@ router.delete('/characters/:characterId',
   CharacterController.deleteCharacter
 );
 
+router.put('/characters/:characterId/review/:reviewId/ack',
+  charactersWriteLimiter,
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:character:update'),
+  CharacterGameplayController.acknowledgeReview
+);
+
 // Character location management
 router.post('/characters/set-location',
   charactersWriteLimiter,
@@ -228,19 +235,6 @@ router.get('/occupations/:occupationId/check-prerequisites',
 
 // Character creation configuration moved to /modules/game/routes/characterCreation.ts
 // REMOVED DUPLICATE: router.get('/character-creation-config', ...)
-
-// AI gateway callback endpoints
-router.post('/characters/bot',
-  charactersWriteLimiter,
-  AuthMiddleware.requireAIGatewayAuth,
-  CharacterController.createBotCharacter
-);
-
-router.post('/characters/bot/complete',
-  charactersWriteLimiter,
-  AuthMiddleware.requireAIGatewayAuth,
-  CharacterController.createCompleteBotCharacter
-);
 
 // Fake PNG management (PNG Light system)
 router.get('/characters/:characterId/fake-pngs',

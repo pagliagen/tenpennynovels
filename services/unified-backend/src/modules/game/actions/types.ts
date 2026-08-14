@@ -77,7 +77,6 @@ export interface ActionData {
   characterName: string;
   characterSurname?: string;
   characterAvatar?: string;
-  isBot: boolean;
   isMasked: boolean;
   realCharacterName?: string;
   content: string;

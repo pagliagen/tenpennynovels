@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { Chat } from '@database/models/Chat';
-import { Location } from '@database/models/Location';
-import { Character } from '@database/models/Character';
+import { Chat } from '@core/chat/models/Chat';
+import { Location } from '@core/location/models/Location';
+import { Character } from '@core/character/models/Character';
 import { logger } from '../utils/logger';
 import { auditLogger } from '../utils/auditLogger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';

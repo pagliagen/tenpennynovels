@@ -27,7 +27,10 @@ export class AuthMiddleware {
       }
 
       const jwtSecret = getJwtSecret();
-      const decoded = jwt.verify(authToken, jwtSecret) as AuthToken;
+      const decoded = jwt.verify(authToken, jwtSecret, {
+        issuer: 'tenpennynovels-auth',
+        audience: 'tenpennynovels-users'
+      }) as AuthToken;
 
       if (!decoded.userId || !decoded.username) {
         return { result: false,  error: 'Payload del token non valido' };
@@ -71,7 +74,10 @@ export class AuthMiddleware {
 
       // Verify JWT token
       const jwtSecret = getJwtSecret();
-      const decoded = jwt.verify(authToken, jwtSecret) as AuthToken;
+      const decoded = jwt.verify(authToken, jwtSecret, {
+        issuer: 'tenpennynovels-auth',
+        audience: 'tenpennynovels-users'
+      }) as AuthToken;
       
       if (!decoded.userId || !decoded.username) {
         throw new Error('Payload del token non valido');
@@ -125,7 +131,7 @@ export class AuthMiddleware {
       if (sessionId) {
         try {
           // Import SessionStore dynamically to avoid circular dependency
-          const { SessionStore } = await import('@modules/auth/services/SessionStore');
+          const { SessionStore } = await import('@core/auth/services/SessionStore');
           const session = await SessionStore.getSession(sessionId);
 
           if (!session) {
@@ -158,7 +164,7 @@ export class AuthMiddleware {
           }
 
           // Populate req.character from session
-          const { Character } = await import('@database/models');
+          const { Character } = await import('@core/character/models/Character');
           const character = await Character.findById(session.characterId);
 
           if (!character) {
@@ -230,7 +236,10 @@ export class AuthMiddleware {
       logger.warn('DEPRECATED: Using character_context cookie', { userId: req.user.userId });
 
       // Verify character context token
-      const decoded = jwt.verify(characterToken, getJwtSecret()) as CharacterContextToken;
+      const decoded = jwt.verify(characterToken, getJwtSecret(), {
+        issuer: 'tenpennynovels-auth',
+        audience: 'tenpennynovels-game'
+      }) as CharacterContextToken;
       
       if (!decoded.characterId || !decoded.userId) {
         throw new Error('Token contesto personaggio non valido');
@@ -290,7 +299,7 @@ export class AuthMiddleware {
         
         try {
           // Import here to avoid circular dependency
-          const { Character } = await import('@database/models');
+          const { Character } = await import('@core/character/models/Character');
 
           // Verify character exists and belongs to user
           const character = await Character.findOne({
@@ -472,7 +481,10 @@ export class AuthMiddleware {
       const authToken = req.cookies?.auth_token;
       
       if (authToken) {
-        const decoded = jwt.verify(authToken, getJwtSecret()) as AuthToken;
+        const decoded = jwt.verify(authToken, getJwtSecret(), {
+          issuer: 'tenpennynovels-auth',
+          audience: 'tenpennynovels-users'
+        }) as AuthToken;
         
         if (decoded.userId && decoded.username) {
           req.user = {
@@ -496,7 +508,6 @@ export class AuthMiddleware {
 
   /**
    * Middleware: Validates webhook secret for AI Gateway callbacks (local-ai → unified-backend).
-   * Replaces the old requireBotApiKey.
    */
   static requireAIGatewayAuth(req: Request, res: Response, next: NextFunction): void {
     try {
@@ -543,13 +554,6 @@ export class AuthMiddleware {
   }
 
   /**
-   * @deprecated Use requireAIGatewayAuth instead
-   */
-  static requireBotApiKey(req: Request, res: Response, next: NextFunction): void {
-    return AuthMiddleware.requireAIGatewayAuth(req, res, next);
-  }
-
-  /**
    * Utility: Extract character ownership from request
    * Used for ownership checks in controllers
    */
@@ -569,7 +573,10 @@ export class AuthMiddleware {
    */
   static decodeCharacterContext(token: string): { characterId: string; userId: string; characterName: string; sessionId: string; gameplayRoles: string[]; isGestore: boolean; playerStatus: string; characterPermissions: string[] } | null {
     try {
-      const decoded = jwt.verify(token, getJwtSecret()) as CharacterContextToken;
+      const decoded = jwt.verify(token, getJwtSecret(), {
+        issuer: 'tenpennynovels-auth',
+        audience: 'tenpennynovels-game'
+      }) as CharacterContextToken;
       if (!decoded.characterId || !decoded.userId) {
         return null;
       }

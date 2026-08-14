@@ -81,8 +81,8 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
       if (sessionId) {
         try {
           // Import SessionStore and Character dynamically
-          const { SessionStore } = await import('../../../modules/auth/services/SessionStore');
-          const { Character } = await import('@database/models');
+          const { SessionStore } = await import('@core/auth/services/SessionStore');
+          const { Character } = await import('@core/character/models/Character');
 
           // Lookup Redis session
           const session = await SessionStore.getSession(sessionId);
@@ -200,7 +200,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
     // Query DB to check if user has an admin character that should join staff room.
     if (!character && !isStaff) {
       try {
-        const { Character } = await import('@database/models');
+        const { Character } = await import('@core/character/models/Character');
         const adminChar = await Character.findOne({
           userId: user.userId,
           canAccessAdminPanel: true
@@ -270,7 +270,8 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
         // This ensures DB stays in sync with Socket.IO rooms
         try {
           // Import models (dynamic import for performance)
-          const { Character, Location } = await import('@database/models');
+          const { Character } = await import('@core/character/models/Character');
+          const { Location } = await import('@core/location/models/Location');
 
           // Clear character's currentLocation
           await Character.findByIdAndUpdate(character.characterId, {

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Skill } from '@database/models/Skill';
-import { Character, SkillBreakdown } from '@database/models/Character';
+import { Character, SkillBreakdown } from '@core/character/models/Character';
 import { logger } from '../logger';
 import {
   translateCategory,

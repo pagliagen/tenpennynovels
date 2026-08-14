@@ -1,6 +1,6 @@
 import cron from 'node-cron';
-import { Character } from '../database/models/Character';
-import { Location } from '../database/models/Location';
+import { Character } from '@core/character/models/Character';
+import { Location } from '@core/location/models/Location';
 import { logger } from '../modules/game/logger';
 import { getSocketIO } from '../modules/game/websocket/socketInstance';
 import { Types } from 'mongoose';

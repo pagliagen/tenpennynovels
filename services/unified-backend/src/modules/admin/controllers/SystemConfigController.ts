@@ -18,19 +18,15 @@ export class SystemConfigController {
    */
   static async getFeatureFlags(req: Request, res: Response): Promise<void> {
     try {
-      const { ConfigurationService } = await import('@shared/services/ConfigurationService');
-      const configService = new ConfigurationService(redis.getClient(), logger);
+      // keeperQaEnabled: fonte unica ora è FeatureFlagService, non più una
+      // lettura ad-hoc — stessa chiave di risposta di sempre, per non
+      // rompere apps/management/src/store/featureFlagsStore.ts.
+      const { FeatureFlagService } = await import('@core/features/flags');
 
-      const [botManagementEnabled, keeperQaEnabled] = await Promise.all([
-        configService.getConfig('bot_management_enabled'),
-        configService.getConfig('keeper_qa_enabled'),
-      ]);
+      const keeperQaEnabled = await FeatureFlagService.isEnabled('bibliotecario');
 
       res.json(successResponse(
-        {
-          botManagementEnabled: botManagementEnabled ?? false,
-          keeperQaEnabled: keeperQaEnabled ?? false,
-        },
+        { keeperQaEnabled },
         undefined,
         getRequestId(req)
       ));
@@ -40,7 +36,7 @@ export class SystemConfigController {
       });
       // Fail-closed: se qualcosa va storto, le feature restano nascoste
       res.json(successResponse(
-        { botManagementEnabled: false, keeperQaEnabled: false },
+        { keeperQaEnabled: false },
         undefined,
         getRequestId(req)
       ));
@@ -447,9 +443,9 @@ export class SystemConfigController {
   static async getSystemStats(req: Request, res: Response): Promise<void> {
     try {
       // Dynamic imports to avoid circular dependencies
-      const { User } = await import('@database/models/User');
-      const { Character } = await import('@database/models/Character');
-      const { Location } = await import('@database/models/Location');
+      const { User } = await import('@core/auth/models/User');
+      const { Character } = await import('@core/character/models/Character');
+      const { Location } = await import('@core/location/models/Location');
 
       // Calculate date ranges
       const now = new Date();
@@ -600,7 +596,7 @@ export class SystemConfigController {
 
       // Dynamic imports to avoid circular dependencies
       const { BroadcastMessage } = await import('@database/models/BroadcastMessage');
-      const { User } = await import('@database/models/User');
+      const { User } = await import('@core/auth/models/User');
 
       // Calculate target count based on audience
       let targetCount = 0;
@@ -613,7 +609,7 @@ export class SystemConfigController {
         targetCount = await User.countDocuments({ isOnline: true });
       } else if (targetAudience === 'role_specific' && targetRoles.length > 0) {
         // Count users with specific character roles
-        const { Character } = await import('@database/models/Character');
+        const { Character } = await import('@core/character/models/Character');
         const characters = await Character.find({
           state: 'APPROVED',
           gameplayRoles: { $in: targetRoles }

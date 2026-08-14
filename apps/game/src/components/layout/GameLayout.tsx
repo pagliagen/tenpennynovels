@@ -36,6 +36,7 @@ import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/GameLayout.module.scss';
 import type { AuthSessionApiResponse, CharacterBanSessionPayload } from '@/types/authSession';
 
+import { CharacterReviewOutcomeModal } from '../character/CharacterReviewOutcomeModal';
 import { ConnectionStatus } from '../connection/ConnectionStatus';
 import { ForumModal } from '../forum/ForumModal';
 import { PresenceModal } from '../presence/PresenceModal';
@@ -179,6 +180,24 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
     if (router.pathname === '/character-banned') return;
     void router.replace('/character-banned');
   }, [selectedCharacter, characterBan, router]);
+
+  /**
+   * Esito approvazione/rifiuto non ancora confermato: sopravvive alla
+   * disconnessione (viene da reviewHistory via /auth/session), quindi
+   * compare anche al primo login dopo l'esito, non solo se si era online
+   * al momento dell'evento WebSocket. Stato locale separato dallo store
+   * così la modale si chiude subito dopo l'ack, senza aspettare un
+   * secondo refreshSession().
+   */
+  const [activeReviewNotification, setActiveReviewNotification] = useState<
+    NonNullable<typeof selectedCharacter>['pendingReviewNotification'] | null
+  >(null);
+
+  useEffect(() => {
+    if (selectedCharacter?.pendingReviewNotification) {
+      setActiveReviewNotification(selectedCharacter.pendingReviewNotification);
+    }
+  }, [selectedCharacter?.pendingReviewNotification]);
 
   /**
    * Initialize locationStore on mount
@@ -542,6 +561,18 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
       {/* Presence Modal - Side drawer */}
       <PresenceModal />
+
+      {/* Esito approvazione/rifiuto personaggio non ancora confermato */}
+      {activeReviewNotification && selectedCharacter && (
+        <CharacterReviewOutcomeModal
+          characterId={selectedCharacter._id}
+          notification={activeReviewNotification}
+          onAcknowledged={() => {
+            setActiveReviewNotification(null);
+            void refreshSession();
+          }}
+        />
+      )}
 
       {/* Mobile Tab Bar - sotto MOBILE_SHELL_BREAKPOINT: Presenti | Game | Bacheca */}
       {isMobileShell && <MobileTabBar unreadForumCount={forumUnreadSummary?.count ?? 0} />}

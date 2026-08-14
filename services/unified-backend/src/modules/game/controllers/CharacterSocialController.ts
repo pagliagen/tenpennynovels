@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { Character, Corporation } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { getCorporationsForCharacter } from '@features/corporazioni/api';
 import { logger } from '../logger';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId } from '@shared/utils/apiResponse';
@@ -40,9 +41,7 @@ export class CharacterSocialController {
       }
 
       // Find corporations where this character is a member
-      const corporations = await Corporation.find({
-        'members.characterId': characterId
-      }).select('name description type membershipType isRecruiting members');
+      const corporations = await getCorporationsForCharacter(characterId);
 
       // Extract character's membership info for each corporation
       const characterCorporations = corporations.map(corp => {

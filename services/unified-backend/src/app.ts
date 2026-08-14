@@ -11,16 +11,14 @@ import { responseMiddleware } from '@shared/middleware/responseMiddleware';
 import { errorHandler, notFoundHandler } from '@shared/middleware/errorHandler';
 import { httpLoggerStream, logger } from '@shared/utils/logger';
 import { appConfig } from '@config/runtime';
+import { bootstrapFeatures } from '@core/features/bootstrap';
+import { FEATURES } from '@features/index';
 
 // Import module routes
-import authRoutes from '@modules/auth/routes/auth';
+import authRoutes from '@core/auth/routes/auth';
 import gameRoutes from '@modules/game/routes';
 import characterGenConfigRoutes from '@modules/game/routes/characterGenConfig';
 import adminRoutes from '@modules/admin/routes';
-import documentsRoutes from '@modules/documents/routes';
-import forumRoutes from '@modules/forum/routes/forum';
-import { webhookRoutes } from '@modules/admin/routes/webhookRoutes';
-import inboundWebhookRoutes from './routes/webhooks';
 
 const app: Application = express();
 
@@ -106,19 +104,17 @@ app.get('/health', (req, res) => {
   });
 });
 
-// ===== Webhook Routes (before admin auth middleware) =====
-app.use('/webhooks', webhookRoutes);
-
-// ===== Inbound Webhook Routes (from internal services — auth via Bearer secret) =====
-app.use('/webhooks', inboundWebhookRoutes);
-
 // ===== Module Routes =====
 app.use('/auth', authRoutes);
-app.use('/documents', documentsRoutes);  // Documents module (public)
-app.use('/forum', forumRoutes);
 app.use('/character-gen', characterGenConfigRoutes);  // Character Gen config (PUBLIC - no auth)
 app.use('/game', gameRoutes);
 app.use('/admin', adminRoutes);
+
+// ===== Feature Routes =====
+// Sincrona: un errore di configurazione (es. chiave feature duplicata)
+// deve far fallire l'avvio qui, non diventare un unhandledRejection
+// silenzioso. Vedi core/features/bootstrap.ts per il dettaglio.
+bootstrapFeatures(app, FEATURES);
 
 // ===== 404 Handler (DOPO tutte le route) =====
 app.use(notFoundHandler);

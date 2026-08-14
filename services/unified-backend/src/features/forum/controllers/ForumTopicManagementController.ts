@@ -1,0 +1,384 @@
+import { Request, Response } from 'express';
+import mongoose from 'mongoose';
+import slugify from 'slugify';
+import { ForumTopic } from '../models/ForumTopic';
+import { ForumCategory } from '../models/ForumCategory';
+import { ForumDiscussion } from '../models/ForumDiscussion';
+import { ForumPost } from '../models/ForumPost';
+import { AdminAuthMiddleware } from '@modules/admin/middleware/adminAuth';
+import { logger } from '@modules/admin/utils/logger';
+import { errorResponse, listResponse, createResponse, updateResponse, getRequestId, deleteResponse } from '@shared/utils/apiResponse';
+
+import { escapeRegex } from '@shared/utils/validation';
+
+function createSlug(title: string): string {
+  return slugify(title, { lower: true, strict: true, locale: 'it' });
+}
+
+export class ForumTopicManagementController {
+
+  /**
+   * GET /admin/forum-topics
+   */
+  static async getTopics(req: Request, res: Response): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 25;
+      const search = req.query.search as string;
+      const sortBy = (req.query.sortBy as string) || 'sortOrder';
+      const sortOrder = (req.query.sortOrder as string) === 'desc' ? -1 : 1;
+      const isVisible = req.query.isVisible as string;
+      const isLocked = req.query.isLocked as string;
+
+      const filter: Record<string, unknown> = {};
+      if (search) {
+        const escapedSearch = escapeRegex(search as string);
+        filter.$or = [
+          { title: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } },
+          { slug: { $regex: escapedSearch, $options: 'i' } },
+        ];
+      }
+      if (isVisible === 'true' || isVisible === 'false') filter.isVisible = isVisible === 'true';
+      if (isLocked === 'true' || isLocked === 'false') filter.isLocked = isLocked === 'true';
+
+      const [topics, total] = await Promise.all([
+        ForumTopic.find(filter)
+          .sort({ [sortBy]: sortOrder })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .lean(),
+        ForumTopic.countDocuments(filter),
+      ]);
+
+      const pagination = {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        pageSize: limit,
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPreviousPage: page > 1,
+      };
+
+      res.json(listResponse(
+        topics.map(t => ({
+          _id: t._id,
+          slug: t.slug,
+          title: t.title,
+          description: t.description,
+          sortOrder: t.sortOrder,
+          accessRules: t.accessRules,
+          isVisible: t.isVisible,
+          isLocked: t.isLocked,
+          isPinned: t.isPinned,
+          discussionCount: t.discussionCount,
+          postCount: t.postCount,
+          lastPostAt: t.lastPostAt,
+          lastPostBy: t.lastPostBy,
+          createdAt: t.createdAt,
+          createdBy: t.createdBy,
+          color: t.color,
+          moderatorIds: t.moderatorIds,
+          categoryId: t.categoryId,
+          categorySlug: t.categorySlug,
+          accessRulesOverride: t.accessRulesOverride,
+          mode: t.mode,
+        })),
+        pagination,
+        undefined,
+        getRequestId(req),
+      ));
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      logger.info('Admin viewed forum topics list', {
+        ...auditInfo,
+        filters: { search, isVisible, isLocked },
+        currentPage: page,
+        pageSize: limit,
+        totalResults: total,
+      });
+    } catch (error: unknown) {
+      logger.error('Error fetching forum topics:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare gli argomenti del forum',
+        'FETCH_FORUM_TOPICS_ERROR',
+        undefined,
+        500,
+        getRequestId(req),
+      ));
+    }
+  }
+
+  /**
+   * GET /admin/forum-topics/:topicId
+   */
+  static async getTopicDetails(req: Request, res: Response): Promise<void> {
+    try {
+      const topicId = Array.isArray(req.params.topicId) ? req.params.topicId[0] : req.params.topicId;
+
+      if (!topicId || !mongoose.Types.ObjectId.isValid(topicId)) {
+        res.status(400).json({ success: false, error: 'ID argomento non valido', code: 'INVALID_TOPIC_ID' });
+        return;
+      }
+
+      const topic = await ForumTopic.findById(topicId).lean();
+      if (!topic) {
+        res.status(404).json({ success: false, error: 'Argomento non trovato', code: 'TOPIC_NOT_FOUND' });
+        return;
+      }
+
+      res.json({ success: true, data: topic });
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      logger.info('Admin viewed forum topic details', { ...auditInfo, topicId });
+    } catch (error: unknown) {
+      logger.error('Error fetching forum topic details:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json(errorResponse(
+        'Impossibile recuperare i dettagli dell\'argomento',
+        'FETCH_FORUM_TOPIC_ERROR',
+        undefined,
+        500,
+        getRequestId(req),
+      ));
+    }
+  }
+
+  /**
+   * POST /admin/forum-topics
+   */
+  static async createTopic(req: Request, res: Response): Promise<void> {
+    try {
+      const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, moderatorIds, categoryId, accessRulesOverride, mode } = req.body;
+
+      if (!title || title.trim().length < 3) {
+        res.status(400).json({ success: false, error: 'Il titolo deve avere almeno 3 caratteri', code: 'VALIDATION_ERROR' });
+        return;
+      }
+
+      const slug = createSlug(title);
+      const existing = await ForumTopic.findOne({ slug });
+      if (existing) {
+        res.status(409).json({ success: false, error: 'Esiste già un argomento con questo titolo', code: 'DUPLICATE_TOPIC' });
+        return;
+      }
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      const topic = await ForumTopic.create({
+        slug,
+        title: title.trim(),
+        description: description?.trim(),
+        sortOrder: sortOrder ?? 0,
+        accessRules: Array.isArray(accessRules) && accessRules.length > 0 ? accessRules : [{ type: 'public' }],
+        isVisible: isVisible ?? true,
+        isLocked: isLocked ?? false,
+        isPinned: isPinned ?? false,
+        color,
+        moderatorIds: Array.isArray(moderatorIds) ? moderatorIds.filter((id: string) => mongoose.Types.ObjectId.isValid(id)) : [],
+        categoryId: categoryId && mongoose.Types.ObjectId.isValid(categoryId) ? new mongoose.Types.ObjectId(categoryId) : undefined,
+        accessRulesOverride: accessRulesOverride ?? false,
+        mode: mode === 'ON' ? 'ON' : 'OFF',
+        discussionCount: 0,
+        postCount: 0,
+        createdAt: new Date(),
+        createdBy: {
+          characterId: new mongoose.Types.ObjectId(auditInfo?.adminId || 'system'),
+          characterName: auditInfo?.adminCharacterName || auditInfo?.adminUsername || 'Admin',
+        },
+      });
+
+      if (topic.categoryId) {
+        const category = await ForumCategory.findById(topic.categoryId).select('slug').lean();
+        if (category) {
+          await ForumTopic.updateOne({ _id: topic._id }, { $set: { categorySlug: category.slug } });
+        }
+      }
+
+      res.status(201).json(createResponse(
+        {
+          _id: topic._id,
+          slug: topic.slug,
+          title: topic.title,
+        },
+        'Argomento creato con successo',
+        getRequestId(req),
+      ));
+
+      logger.info('Admin created forum topic', { ...auditInfo, topicId: topic._id, slug: topic.slug });
+    } catch (error: unknown) {
+      logger.error('Error creating forum topic:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json(errorResponse(
+        'Impossibile creare l\'argomento',
+        'CREATE_FORUM_TOPIC_ERROR',
+        undefined,
+        500,
+        getRequestId(req),
+      ));
+    }
+  }
+
+  /**
+   * PUT /admin/forum-topics/:topicId
+   */
+  static async updateTopic(req: Request, res: Response): Promise<void> {
+    try {
+      const topicId = Array.isArray(req.params.topicId) ? req.params.topicId[0] : req.params.topicId;
+      const { title, description, sortOrder, accessRules, isVisible, isLocked, isPinned, color, moderatorIds, categoryId, accessRulesOverride, mode } = req.body;
+
+      if (!topicId || !mongoose.Types.ObjectId.isValid(topicId)) {
+        res.status(400).json({ success: false, error: 'ID argomento non valido', code: 'INVALID_TOPIC_ID' });
+        return;
+      }
+
+      const topic = await ForumTopic.findById(topicId);
+      if (!topic) {
+        res.status(404).json({ success: false, error: 'Argomento non trovato', code: 'TOPIC_NOT_FOUND' });
+        return;
+      }
+
+      const update: Record<string, unknown> = {};
+      if (title !== undefined) {
+        const trimmedTitle = title.trim();
+        if (trimmedTitle.length < 3) {
+          res.status(400).json({ success: false, error: 'Il titolo deve avere almeno 3 caratteri', code: 'VALIDATION_ERROR' });
+          return;
+        }
+        update.title = trimmedTitle;
+        const newSlug = createSlug(trimmedTitle);
+        if (newSlug !== topic.slug) {
+          const slugExists = await ForumTopic.findOne({ slug: newSlug, _id: { $ne: topic._id } });
+          if (slugExists) {
+            res.status(409).json({ success: false, error: 'Esiste già un argomento con questo titolo', code: 'DUPLICATE_SLUG' });
+            return;
+          }
+          update.slug = newSlug;
+        }
+      }
+      if (description !== undefined) update.description = description?.trim();
+      if (sortOrder !== undefined) update.sortOrder = sortOrder;
+      if (accessRules !== undefined) update.accessRules = accessRules;
+      if (isVisible !== undefined) update.isVisible = isVisible;
+      if (isLocked !== undefined) update.isLocked = isLocked;
+      if (isPinned !== undefined) update.isPinned = isPinned;
+      if (color !== undefined) update.color = color;
+      if (moderatorIds !== undefined) {
+        update.moderatorIds = Array.isArray(moderatorIds)
+          ? moderatorIds.filter((id: string) => mongoose.Types.ObjectId.isValid(id))
+          : [];
+      }
+      if (accessRulesOverride !== undefined) update.accessRulesOverride = !!accessRulesOverride;
+      if (mode !== undefined) update.mode = mode === 'ON' ? 'ON' : 'OFF';
+      if (categoryId !== undefined) {
+        if (categoryId === null || categoryId === '') {
+          update.categoryId = null;
+          update.categorySlug = null;
+        } else if (mongoose.Types.ObjectId.isValid(categoryId)) {
+          const category = await ForumCategory.findById(categoryId).select('slug').lean();
+          if (!category) {
+            res.status(400).json({ success: false, error: 'Categoria non trovata', code: 'CATEGORY_NOT_FOUND' });
+            return;
+          }
+          update.categoryId = category._id;
+          update.categorySlug = category.slug;
+        }
+      }
+
+      const updated = await ForumTopic.findByIdAndUpdate(topicId, { $set: update }, { new: true }).lean();
+
+      if (!updated) {
+        res.status(404).json({ success: false, error: 'Argomento non trovato dopo aggiornamento', code: 'TOPIC_NOT_FOUND' });
+        return;
+      }
+
+      res.json(updateResponse(
+        {
+          _id: updated._id,
+          slug: updated.slug,
+          title: updated.title,
+        },
+        'Argomento aggiornato con successo',
+        getRequestId(req),
+      ));
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      logger.info('Admin updated forum topic', { ...auditInfo, topicId, changes: Object.keys(update) });
+    } catch (error: unknown) {
+      logger.error('Error updating forum topic:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json(errorResponse(
+        'Impossibile aggiornare l\'argomento',
+        'UPDATE_FORUM_TOPIC_ERROR',
+        undefined,
+        500,
+        getRequestId(req),
+      ));
+    }
+  }
+
+  /**
+   * DELETE /admin/forum-topics/:topicId
+   */
+  static async deleteTopic(req: Request, res: Response): Promise<void> {
+    try {
+      const topicId = Array.isArray(req.params.topicId) ? req.params.topicId[0] : req.params.topicId;
+
+      if (!topicId || !mongoose.Types.ObjectId.isValid(topicId)) {
+        res.status(400).json({ success: false, error: 'ID argomento non valido', code: 'INVALID_TOPIC_ID' });
+        return;
+      }
+
+      const topic = await ForumTopic.findById(topicId);
+      if (!topic) {
+        res.status(404).json({ success: false, error: 'Argomento non trovato', code: 'TOPIC_NOT_FOUND' });
+        return;
+      }
+
+      const [posts, discussions] = await Promise.all([
+        ForumPost.find({ topicId: topic._id }).select('_id').lean(),
+        ForumDiscussion.find({ topicId: topic._id }).select('_id').lean(),
+      ]);
+
+      try {
+        const { publishForumPostDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+        await Promise.allSettled(posts.map(p => publishForumPostDeletedEvent(p._id.toString())));
+      } catch {
+        // Non-blocking
+      }
+
+      await Promise.all([
+        ForumPost.deleteMany({ topicId: topic._id }),
+        ForumDiscussion.deleteMany({ topicId: topic._id }),
+        ForumTopic.deleteOne({ _id: topic._id }),
+      ]);
+
+      res.json(deleteResponse('Argomento e tutto il contenuto associato eliminati con successo', getRequestId(req)));
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      logger.info('Admin deleted forum topic', {
+        ...auditInfo,
+        topicId,
+        slug: topic.slug,
+        deletedDiscussions: discussions.length,
+        deletedPosts: posts.length,
+      });
+    } catch (error: unknown) {
+      logger.error('Error deleting forum topic:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      res.status(500).json(errorResponse(
+        'Impossibile eliminare l\'argomento',
+        'DELETE_FORUM_TOPIC_ERROR',
+        undefined,
+        500,
+        getRequestId(req),
+      ));
+    }
+  }
+}

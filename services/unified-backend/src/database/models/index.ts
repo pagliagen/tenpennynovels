@@ -3,99 +3,18 @@
 // Database connection manager
 export { db } from '../connection';
 
-// User and Authentication
-export { User, type IUser } from './User';
-export { CharacterSession, type ICharacterSession } from './CharacterSession';
+// User and Authentication: spostati in core/auth/models/ (Fase 7.1)
 
-// Character System
-export { Character, type ICharacter } from './Character';
+// Character: spostato in core/character/models/ (Fase 7.2)
 export { Skill, SKILL_CATEGORY_LABELS, type ISkill } from './Skill';
 
-// Location System
-export { Location, type ILocation } from './Location';
-export { Chat, type IChat } from './Chat';
-export { ChatBackup } from './ChatBackup';
-export { ChatScene, type IChatScene } from './ChatScene';
-export { CharacterChatScene, type ICharacterChatScene } from './CharacterChatScene';
+// Location: spostata in core/location/models/ (Fase 7.3)
+// Chat, ChatBackup, OnGameMessage, OnGameThread, MessageBackup: spostati in core/chat/models/ (Fase 7.4)
 export { CharacterNotes, type ICharacterNotes } from './CharacterNotes';
 
 // Combat & Confrontation System (TiroContrapposto)
 export { SkillConfrontation, type ISkillConfrontation } from './SkillConfrontation';
 export { CombatEncounter, type ICombatEncounter } from './CombatEncounter';
-
-// Corporation System
-export { 
-  Corporation, 
-  CorporationMembershipRequest,
-  CorporationInvitation,
-  type ICorporation,
-  type ICorporationMembershipRequest,
-  type ICorporationInvitation 
-} from './Corporation';
-
-// Item and Shop System
-export { 
-  Item, 
-  CharacterInventory,
-  Shop,
-  ShopItem,
-  type IItem,
-  type ICharacterInventory,
-  type IShop,
-  type IShopItem,
-  ItemCategory,
-  ITEM_CATEGORY_LABELS
-} from './Item';
-
-// Continuative Services System (VC-budget subscriptions: servitù, comunicazioni, trasporti, sicurezza)
-export {
-  Service,
-  type IService,
-  ServiceCategory
-} from './Service';
-
-// OffGame Chat System (LEGACY - Group chats with admin roles)
-// NOTE: This is the ORIGINAL system that coexists with the NEW OffGameThread system
-// LEGACY system: Supports groups, admins, configurable retention
-// NEW system: Simple 1-to-1 threads (see below)
-// Both systems are in production during gradual migration
-export {
-  OffGameChat,
-  type IOffGameChat
-} from './OffGameChat';
-export {
-  OffGameChatMessage,
-  type IOffGameChatMessage
-} from './OffGameChatMessage';
-export {
-  OffGameChatParticipant,
-  type IOffGameChatParticipant
-} from './OffGameChatParticipant';
-
-// OnGame Messages System (Victorian postal system)
-export {
-  OnGameMessage,
-  type IOnGameMessage
-} from './OnGameMessage';
-// NOTE: OnGameMessageView model removed - view logic moved to controllers in new architecture
-
-// New Dual Messaging Architecture (Thread-based)
-export {
-  OnGameThread,
-  type IOnGameThread
-} from './OnGameThread';
-export {
-  OffGameThread,
-  type IOffGameThread
-} from './OffGameThread';
-export {
-  OffGameMessage,
-  type IOffGameMessage
-} from './OffGameMessage';
-export {
-  MessageBackup,
-  type IMessageBackup
-} from './MessageBackup';
 
 // Relationship System
 export {
@@ -108,40 +27,6 @@ export {
   type ICharacterRelationProposal,
   type ICharacterRelationAction
 } from './CharacterRelation';
-
-// Occupation System
-export {
-  Occupation,
-  CharacterOccupationHistory,
-  OccupationCategory,
-  type IOccupation,
-  type ICharacterOccupationHistory
-} from './Occupation';
-
-// Ticketing System
-export {
-  Ticket,
-  type ITicket
-} from './Ticket';
-export {
-  TicketMessage,
-  type ITicketMessage
-} from './TicketMessage';
-export {
-  TicketNotification,
-  type TicketNotificationType,
-  type ITicketNotification
-} from './TicketNotification';
-
-// Financial System
-export {
-  SocialClassConfig,
-  type ISocialClassConfig
-} from './SocialClassConfig';
-export {
-  CharacterFinances,
-  type ICharacterFinances
-} from './CharacterFinances';
 
 // Location Property System
 export {
@@ -199,45 +84,26 @@ export { MessageReport, type IMessageReport } from './MessageReport';
 export { UserReport, type IUserReport } from './UserReport';
 export { ModerationAlert, type IModerationAlert } from './ModerationAlert';
 
-// Knowledge Base System (Documents + SubTypes)
-export {
-  default as DocumentSubtype,
-  type IDocumentSubtype,
-  type DocumentType
-} from './DocumentSubtype';
-export {
-  default as Document,
-  type IDocument
-} from './Document';
-export {
-  default as DocumentChunk,
-  type IDocumentChunk
-} from './DocumentChunk';
-
-// Forum System
-export { ForumCategory, type IForumCategory } from './ForumCategory';
-export { ForumTopic, type IForumTopic } from './ForumTopic';
-export { ForumTopicPermissionOverride, type IForumTopicPermissionOverride, type ForumPermissionDecision, type ForumTopicPermissionOverrides } from './ForumTopicPermissionOverride';
-export { ForumDiscussion, type IForumDiscussion } from './ForumDiscussion';
-export { ForumPost, type IForumPost } from './ForumPost';
-export { ForumTopicFavorite, type IForumTopicFavorite } from './ForumTopicFavorite';
-export { ForumDiscussionFavorite, type IForumDiscussionFavorite } from './ForumDiscussionFavorite';
-export { ForumDiscussionSubscription, type IForumDiscussionSubscription } from './ForumDiscussionSubscription';
-export { ForumBookmark, BookmarkItemType, type IForumBookmark } from './ForumBookmark';
-export { ForumNotification, ForumNotificationType, type IForumNotification } from './ForumNotification';
-export { ForumCharacterPreference, type IForumCharacterPreference, type ForumReplyOrder } from './ForumCharacterPreference';
-export { ForumTopicReadState, type IForumTopicReadState } from './ForumTopicReadState';
-
 // Deleted Records Archive
 export { DeletedRecord, type IDeletedRecord } from './DeletedRecord';
 
 // Soft Delete Registry - register all soft-deletable models
+//
+// I model delle feature migrate (oggetti, documenti, occupazioni, economia)
+// restano qui sotto con un require() diretto verso features/<nome>/models/
+// — non uno shim in via di rimozione, ma un'annotazione permanente:
+// check-boundaries.ts non vede require(), va aggiornata a mano se il path
+// della feature cambia ancora.
 import { registerSoftDeleteModel } from '../plugins/softDeleteRegistry';
-registerSoftDeleteModel('characters', () => require('./Character').Character, 'name');
-registerSoftDeleteModel('locations', () => require('./Location').Location, 'name');
-registerSoftDeleteModel('items', () => require('./Item').Item, 'name');
-registerSoftDeleteModel('documents', () => require('./Document').default, 'title');
-registerSoftDeleteModel('users', () => require('./User').User, 'username');
-registerSoftDeleteModel('occupations', () => require('./Occupation').Occupation, 'name');
+registerSoftDeleteModel('characters', () => require('@core/character/models/Character').Character, 'name');
+registerSoftDeleteModel('locations', () => require('@core/location/models/Location').Location, 'name');
+// boundary-allow: registro require()-based, non visto da check-boundaries.ts
+registerSoftDeleteModel('items', () => require('@features/oggetti/models/Item').Item, 'name');
+// boundary-allow: registro require()-based, non visto da check-boundaries.ts
+registerSoftDeleteModel('documents', () => require('@features/documenti/models/Document').default, 'title');
+registerSoftDeleteModel('users', () => require('@core/auth/models/User').User, 'username');
+// boundary-allow: registro require()-based, non visto da check-boundaries.ts
+registerSoftDeleteModel('occupations', () => require('@features/occupazioni/models/Occupation').Occupation, 'name');
 registerSoftDeleteModel('skills', () => require('./Skill').Skill, 'name');
-registerSoftDeleteModel('socialclassconfigs', () => require('./SocialClassConfig').SocialClassConfig, 'label');
+// boundary-allow: registro require()-based, non visto da check-boundaries.ts
+registerSoftDeleteModel('socialclassconfigs', () => require('@features/economia/models/SocialClassConfig').SocialClassConfig, 'label');

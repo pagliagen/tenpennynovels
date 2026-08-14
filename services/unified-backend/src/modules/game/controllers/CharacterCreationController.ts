@@ -10,7 +10,8 @@
 
 import { Request, Response } from 'express';
 import { CharacterCreationConfigService } from '@shared/services/CharacterCreationConfigService';
-import { Occupation } from '@database/models/Occupation';
+// boundary-allow: debito dichiarato, CharacterCreationController.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7) — è l'endpoint realmente usato dal wizard di creazione personaggio
+import { Occupation } from '@features/occupazioni/models/Occupation';
 import { Skill } from '@database/models/Skill';
 import { logger } from '@shared/utils/logger';
 

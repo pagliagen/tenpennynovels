@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
 import { ChatModerationAction } from '@database/models/ChatModerationAction';
 import { MessageReport } from '@database/models/MessageReport';
-import { OnGameMessage } from '@database/models/OnGameMessage';
-import { OffGameChatMessage } from '@database/models/OffGameChatMessage';
-import { Character } from '@database/models/Character';
-import { User } from '@database/models/User';
+import { OnGameMessage } from '@core/chat/models/OnGameMessage';
+// boundary-allow: ChatModerationController è infrastruttura di moderazione condivisa
+// fra location/onGame/offGame, resta fuori dal perimetro della feature offGameMessages.
+import { OffGameChatMessage } from '@features/offGameMessages/api';
+import { Character } from '@core/character/models/Character';
+import { User } from '@core/auth/models/User';
 import { logger } from '../utils/logger';
 import { redis } from '@config/runtime/redis';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';

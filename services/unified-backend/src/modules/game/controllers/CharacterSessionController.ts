@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CharacterSession } from '@database/models/CharacterSession';
+import { CharacterSession } from '@core/auth/models/CharacterSession';
 import { logger } from '../logger';
 import { AuthUtils } from '../middleware/auth';
 import { auditLogger } from '@modules/admin/utils/auditLogger';

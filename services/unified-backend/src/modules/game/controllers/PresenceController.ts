@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { Character } from '../../../database/models/Character';
-import { Location } from '../../../database/models/Location';
+import { Character } from '@core/character/models/Character';
+import { Location } from '@core/location/models/Location';
 import { logger } from '../logger';
 import { getSocketIO } from '../websocket/socketInstance';
 
@@ -27,7 +27,7 @@ export class PresenceController {
   static async leave(req: Request, res: Response): Promise<void> {
     try {
       // Import SessionStore dynamically
-      const { SessionStore } = await import('../../../modules/auth/services/SessionStore');
+      const { SessionStore } = await import('@core/auth/services/SessionStore');
 
       // 1. Read sessionId from header OR body (sendBeacon sends in body)
       const sessionId = (req.headers['x-session-id'] as string) || req.body?.sessionId;

@@ -53,6 +53,12 @@ interface SessionCharacter {
   avatar: string | null;
   playerStatus: string;
   isGestore: boolean;
+  pendingReviewNotification?: {
+    reviewId: string;
+    action: 'approve' | 'reject';
+    note?: string;
+    reviewedAt: string;
+  } | null;
 }
 
 /**
@@ -168,8 +174,9 @@ export function useAuth(): UseAuthReturn {
         useAuthStore.setState({ isAuthenticated: true });
 
         // Set selected character if available
-        // NOTE: Backend returns only 6 fields (_id, name, surname, avatar, playerStatus, isGestore)
-        // but Character type has many more required fields. This is safe because:
+        // NOTE: Backend returns only 7 fields (_id, name, surname, avatar, playerStatus,
+        // isGestore, pendingReviewNotification) but Character type has many more required
+        // fields. This is safe because:
         // 1. UI only uses these 6 fields from session validation
         // 2. Full character data is loaded separately by game components when needed
         if (character) {

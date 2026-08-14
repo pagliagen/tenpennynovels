@@ -6,6 +6,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
+    "experimentalDecorators": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -17,6 +18,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
+      "@core/*": ["./src/core/*"],
+      "@features/*": ["./src/features/*"],
       "@shared/*": ["./src/shared/*"],
       "@modules/*": ["./src/modules/*"],
       "@database/*": ["./src/database/*"],
@@ -28,5 +31,5 @@
     "types": ["node"]
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts", "**/*.old.ts", "**/*.backup.ts"]
+  "exclude": ["**/node_modules", "dist", "**/*.test.ts", "**/*.spec.ts", "**/*.old.ts", "**/*.backup.ts"]
 }

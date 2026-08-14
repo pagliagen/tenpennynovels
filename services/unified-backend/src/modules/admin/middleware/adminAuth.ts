@@ -63,7 +63,7 @@ export class AdminAuthMiddleware {
 
       if (sessionId) {
         try {
-          const { SessionStore } = await import('@modules/auth/services/SessionStore');
+          const { SessionStore } = await import('@core/auth/services/SessionStore');
           const session = await SessionStore.getSession(sessionId);
 
           if (session && session.userId === decoded.userId) {
@@ -108,7 +108,7 @@ export class AdminAuthMiddleware {
 
         // Load character and set admin roles
         if (finalCharacterId) {
-            const { Character } = require('@database/models/Character');
+            const { Character } = require('@core/character/models/Character');
             const { gameplayRolesToAdminRoles } = require('@config/permissions');
 
             try {

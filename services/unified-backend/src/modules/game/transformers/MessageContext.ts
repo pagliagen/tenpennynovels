@@ -15,7 +15,9 @@
  * @since 2.2.0
  */
 
-import { Character, Skill, Item } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { Skill } from '@database/models';
+import { Item } from '@features/oggetti/api';
 import { logger } from '@shared/utils/logger';
 
 /**

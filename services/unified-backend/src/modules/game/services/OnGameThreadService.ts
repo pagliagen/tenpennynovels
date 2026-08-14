@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { OnGameThread } from '@database/models/OnGameThread';
+import { OnGameThread } from '@core/chat/models/OnGameThread';
 import { logger } from '@shared/utils/logger';
 
 /**

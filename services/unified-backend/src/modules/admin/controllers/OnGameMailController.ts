@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { OnGameMessage } from '@database/models/OnGameMessage';
+import { OnGameMessage } from '@core/chat/models/OnGameMessage';
 import { successResponse, errorResponse } from '@shared/utils/apiResponse';
 import { logger } from '@shared/utils/logger';
 
@@ -239,7 +239,7 @@ export class OnGameMailController {
       }
 
       // Update thread if this was last message
-      const OnGameThread = (await import('@database/models')).OnGameThread;
+      const OnGameThread = (await import('@core/chat/models/OnGameThread')).OnGameThread;
       const remainingMessages = await OnGameMessage.countDocuments({
         onGameThreadId: message.onGameThreadId
       });

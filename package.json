@@ -67,6 +67,7 @@
     "typecheck:unified": "cd services/unified-backend && npm run type-check",
     "typecheck:embeddings": "cd services/embeddings-worker && npm run type-check",
     "typecheck:backends": "npm run typecheck:gateway && npm run typecheck:unified && npm run typecheck:embeddings",
+    "lint:boundaries:unified": "cd services/unified-backend && npm run lint:boundaries",
     "prepare": "husky"
   },
   "workspaces": [],

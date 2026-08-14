@@ -1,6 +1,7 @@
-import { Character, Occupation, Skill } from '@database/models';
-import { ICharacter, SkillBreakdown } from '@database/models/Character';
-import { IOccupation } from '@database/models/Occupation';
+import { Character, ICharacter, SkillBreakdown } from '@core/character/models/Character';
+import { Skill } from '@database/models';
+// boundary-allow: debito dichiarato, characterCreationUtils.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7)
+import { Occupation, IOccupation } from '@features/occupazioni/models/Occupation';
 import { CharacterCreationConfig, calculateStatFormula } from '@shared/services/CharacterCreationConfigService';
 import { logger } from '../logger';
 

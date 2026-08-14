@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import multer from 'multer';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { CDNService } from '../../admin/services/CDNService';
 import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';

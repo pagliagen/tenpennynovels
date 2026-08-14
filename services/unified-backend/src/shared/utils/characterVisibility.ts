@@ -12,7 +12,6 @@ const SYSTEM_PUBLIC_FIELDS: (keyof Character)[] = [
   'visibleMarks',
   'currentLocation',
   'isActive',
-  'isBot',
   'playerStatus',
   'createdAt',
   'updatedAt',

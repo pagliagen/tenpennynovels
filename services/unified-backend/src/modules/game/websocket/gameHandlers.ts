@@ -1,7 +1,7 @@
 import { Socket, Server as SocketIOServer } from 'socket.io';
 import { logger } from '../logger';
-import { Character } from '../../../database/models/Character';
-import { Location } from '../../../database/models/Location';
+import { Character } from '@core/character/models/Character';
+import { Location } from '@core/location/models/Location';
 
 /**
  * Setup general game-related WebSocket handlers

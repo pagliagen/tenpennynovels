@@ -23,7 +23,7 @@
  */
 
 import mongoose from 'mongoose';
-import { Character } from '../database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { SystemConfiguration } from '../database/models/SystemConfiguration';
 import { logger } from '@shared/utils/logger';
 import { appConfig } from '@config/runtime';

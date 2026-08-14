@@ -25,7 +25,7 @@ export async function resolveAdminCharacterSelectionContext(
 
   if (sessionId) {
     try {
-      const { SessionStore } = await import('@modules/auth/services/SessionStore');
+      const { SessionStore } = await import('@core/auth/services/SessionStore');
       const session = await SessionStore.getSession(sessionId);
       if (session && session.userId === userId) {
         return { characterId: session.characterId, characterRoles: [] };
@@ -65,7 +65,6 @@ const SECTION_ACCESS_PREFIXES: Record<string, string[]> = {
   messaging: ['messaging.'],
   relationships: ['relationships.'],
   social_classes: ['social_classes.'],
-  image_generation: ['image_generation.'],
   manager: ['manager.'],
 };
 
@@ -88,7 +87,6 @@ const PERMISSION_NEST_SECTIONS = [
   'messaging',
   'relationships',
   'social_classes',
-  'image_generation',
   'manager',
 ];
 
@@ -400,7 +398,8 @@ export function requireAccess(section: string) {
     }
 
     try {
-      const { User, Character } = await import('@database/models');
+      const { User } = await import('@core/auth/models/User');
+      const { Character } = await import('@core/character/models/Character');
 
       const dbUser = await User.findById(user.userId);
       if (!dbUser) {
@@ -471,7 +470,8 @@ export function requireViewPermission(permission: AdminPermission) {
     }
 
     try {
-      const { User, Character } = await import('@database/models');
+      const { User } = await import('@core/auth/models/User');
+      const { Character } = await import('@core/character/models/Character');
 
       const dbUser = await User.findById(user.userId);
       if (!dbUser) {

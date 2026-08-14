@@ -1,5 +1,6 @@
-import { Location, Character } from '@database/models';
-import type { ILocationPosition } from '@database/models/Location';
+import { Location, type ILocationPosition } from '@core/location/models/Location';
+import { Character } from '@core/character/models/Character';
+import { checkLocationAccess } from '@core/location/services/checkLocationAccess';
 import { logger } from '../logger';
 
 export interface AccessibleLocation {
@@ -65,40 +66,6 @@ export interface GlobalPresence {
 
 export class LocationService {
   /**
-   * Check if a character has access to a specific location
-   */
-  private static async checkLocationAccess(location: any, character: any): Promise<boolean> {
-    // Handle missing settings (legacy locations)
-    if (!location.settings) {
-      return true; // Legacy locations are considered public and visible
-    }
-
-    // Public locations
-    if (!location.settings.private && location.settings.visible) return true;
-
-    // Private locations
-    if (location.settings.private) {
-      if (location.access?.ownerType === 'character' && location.access?.ownerId?.toString() === character.id) return true;
-      
-      // Check character-specific access
-      if (location.access?.characterAccess) {
-        const access = location.access.characterAccess.find((a: any) => a.characterId.toString() === character.id);
-        if (access) {
-          // Check if access is expired
-          if (access.duration === 'temporary' && access.expiresAt && new Date() > access.expiresAt) {
-            return false;
-          }
-          return access.permissions.includes('view');
-        }
-      }
-
-      // Corporation membership - feature not yet implemented
-    }
-
-    return false;
-  }
-
-  /**
    * Get all accessible locations for a character with occupants data
    */
   static async getAccessibleLocations(characterId: string): Promise<AccessibleLocation[]> {
@@ -126,7 +93,7 @@ export class LocationService {
       const accessibleLocations: AccessibleLocation[] = [];
 
       for (const location of allLocations) {
-        const hasAccess = await LocationService.checkLocationAccess(location, character);
+        const hasAccess = await checkLocationAccess(location, character);
         if (hasAccess) {
           accessibleLocations.push({
             _id: location._id.toString(),

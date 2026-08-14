@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
-import { Character, Location, ChatBackup } from '@database/models';
+import { Character } from '@core/character/models/Character';
+import { Location } from '@core/location/models/Location';
+import { checkLocationAccess } from '@core/location/services/checkLocationAccess';
+import { ChatBackup } from '@core/chat/models/ChatBackup';
 import { ApiResponse } from '../types/game';
 import { logger } from '../logger';
 import { LocationService } from '../services/LocationService';
@@ -168,7 +171,7 @@ export class LocationController {
       }
 
       // Check access permissions
-      const hasAccess = await LocationController.checkLocationAccess(location, character);
+      const hasAccess = await checkLocationAccess(location, character);
       
       if (!hasAccess) {
         // Return 404 instead of 403 to prevent information disclosure
@@ -329,7 +332,7 @@ export class LocationController {
       }
 
       // Check access permissions
-      const hasAccess = await LocationController.checkLocationAccess(location, character);
+      const hasAccess = await checkLocationAccess(location, character);
       
       if (!hasAccess) {
         res.status(403).json(errorResponse(
@@ -871,145 +874,6 @@ export class LocationController {
   }
 
   /**
-   * GET /game/locations/:locationId/bot-details
-   * Get location details for bot (bot API only - no JWT required)
-   */
-  static async getBotLocationDetails(req: Request<{ locationId: string }>, res: Response): Promise<void> {
-    try {
-      const { locationId } = req.params;
-
-      const location = await Location.findById(locationId)
-        .select('name description district locationLevel settings bot_enabled');
-
-      if (!location) {
-        res.status(404).json(errorResponse(
-          'Location non trovata',
-          'LOCATION_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      res.json(successResponse({
-        _id: location._id,
-        name: location.name,
-        description: location.description,
-        district: location.district,
-        locationLevel: location.locationLevel,
-        bot_enabled: location.bot_enabled
-      }, undefined, getRequestId(req)));
-    } catch (error: unknown) {
-      logger.error('[LocationController] Error fetching bot location details:', error);
-      res.status(500).json(errorResponse(
-        'Failed to fetch location details',
-        'FETCH_LOCATION_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * PATCH /game/locations/:locationId/bot-enabled
-   * Enable/disable bot for location (bot API only - no JWT required)
-   */
-  static async updateBotEnabled(req: Request<{ locationId: string }>, res: Response): Promise<void> {
-    try {
-      const { locationId } = req.params;
-      const { bot_enabled } = req.body;
-
-      if (typeof bot_enabled !== 'boolean') {
-        res.status(400).json(errorResponse(
-          'bot_enabled must be a boolean',
-          'INVALID_INPUT',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      const location = await Location.findByIdAndUpdate(
-        locationId,
-        { bot_enabled },
-        { returnDocument: 'after' }
-      );
-
-      if (!location) {
-        res.status(404).json(errorResponse(
-          'Location non trovata',
-          'LOCATION_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      logger.info(`[LocationController] Updated bot_enabled=${bot_enabled} for location ${location.name}`);
-
-      res.json(successResponse({
-        locationId: location._id,
-        bot_enabled: location.bot_enabled
-      }, undefined, getRequestId(req)));
-    } catch (error: unknown) {
-      logger.error('[LocationController] Error updating bot_enabled:', error);
-      res.status(500).json(errorResponse(
-        'Failed to update bot_enabled',
-        'UPDATE_BOT_ENABLED_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * Check if character has access to location
-   */
-  private static async checkLocationAccess(location: any, character: any): Promise<boolean> {
-    // Location must be visible first
-    if (!location.settings.visible) {
-      return false;
-    }
-
-    // Public locations are accessible to all
-    if (!location.settings.private) {
-      return true;
-    }
-
-    // Private locations access control
-    if (location.settings.private) {
-      // Check if character is the owner
-      if (location.access?.ownerId?.toString() === character.id) {
-        return true;
-      }
-      
-      // Check character-specific access
-      if (location.access?.characterAccess) {
-        const access = location.access.characterAccess.find((a: any) => a.characterId.toString() === character.id);
-        if (access) {
-          // Check if access is expired
-          if (access.duration === 'temporary' && access.expiresAt && new Date() > access.expiresAt) {
-            return false;
-          }
-          return access.permissions.includes('view');
-        }
-      }
-      
-      // Corporation access - feature not yet implemented
-      if (location.access?.corporationAccess) {
-        // Skipped until corporations feature is developed
-      }
-    }
-
-    return false;
-  }
-
-  /**
    * Get detailed access information for a location
    */
   /**
@@ -1158,7 +1022,7 @@ export class LocationController {
   }
 
   private static async getAccessInfo(location: any, character: any): Promise<any> {
-    const hasAccess = await LocationController.checkLocationAccess(location, character);
+    const hasAccess = await checkLocationAccess(location, character);
     
     if (!hasAccess) {
       return { hasAccess: false };

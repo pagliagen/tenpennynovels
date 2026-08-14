@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { CharacterRelation, CharacterRelationType } from '@database/models/CharacterRelation';
-import { Character } from '@database/models/Character';
+import { Character } from '@core/character/models/Character';
 import { logger } from '../logger';
 import { AuthUtils } from '../middleware/auth';
 import { auditLogger } from '@modules/admin/utils/auditLogger';

@@ -1,0 +1,59 @@
+@use '../../variables' as *;
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.outcome {
+  font-family: $font-heading;
+  font-size: 20px;
+  color: $text-primary;
+  margin: 0;
+
+  &.approved {
+    color: $gold;
+  }
+
+  &.rejected {
+    color: $text-secondary;
+  }
+}
+
+.noteLabel {
+  margin: 0;
+  font-size: 13px;
+  color: $text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.note {
+  margin: 0;
+  padding: $spacing-md;
+  background: $gold-10;
+  border: 1px solid $gold-30;
+  border-radius: $radius-md;
+  color: $text-primary;
+  white-space: pre-wrap;
+}
+
+.primaryButton {
+  padding: $spacing-sm $spacing-xl;
+  background: $gold-50;
+  border: 1px solid $gold;
+  border-radius: $radius-md;
+  color: $text-primary;
+  font-family: $font-heading;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: $gold-70;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

@@ -10,7 +10,8 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import Document from '@database/models/Document';
+// boundary-allow: debito dichiarato, SitemapService.ts resta fuori dalla feature documenti (Fase 6.5) fino al consolidamento del core (Fase 7)
+import Document from '@features/documenti/models/Document';
 import { logger } from '@shared/utils/logger';
 import { appConfig } from '@config/runtime';
 

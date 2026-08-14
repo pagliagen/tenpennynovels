@@ -9,7 +9,7 @@ import { CharacterNotesController } from '../controllers/CharacterNotesControlle
 
 const router = Router();
 
-// Rate limiters — mirrors the convention in modules/forum/routes/forum.ts.
+// Rate limiters — mirrors the convention in features/forum/routes/game.ts.
 // The api-gateway also applies a 300 req/min fallback across all of /game,
 // but unified-backend's own routes should each state per-route intent
 // rather than relying solely on that upstream default.
@@ -155,21 +155,6 @@ router.delete('/block-notes/:notesId',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:block-notes:delete'),
   CharacterNotesController.deleteNotes
-);
-
-// Bot-only endpoints (API key auth, no JWT)
-// Bot action endpoint REMOVED - moved to /chats/bot (see routes/chats.ts)
-
-router.get('/locations/:locationId/bot-details',
-  locationsReadLimiter,
-  AuthMiddleware.requireAIGatewayAuth,
-  LocationController.getBotLocationDetails
-);
-
-router.patch('/locations/:locationId/bot-enabled',
-  locationsWriteLimiter,
-  AuthMiddleware.requireAIGatewayAuth,
-  LocationController.updateBotEnabled
 );
 
 export default router;

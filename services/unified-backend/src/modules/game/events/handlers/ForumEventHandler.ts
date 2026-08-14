@@ -2,8 +2,8 @@
  * Forum Event Handler
  *
  * Handles forum realtime events published to Redis channel 'forum:events'
- * (see modules/forum/controllers/ForumController.ts and
- * modules/forum/services/NotificationService.ts for publishers).
+ * (see features/forum/controllers/ForumController.ts and
+ * features/forum/services/NotificationService.ts for publishers).
  *
  * discussion_created/post_created are broadcast globally (io.emit) - like
  * global_presence_update, there's no per-topic room to join client-side yet,

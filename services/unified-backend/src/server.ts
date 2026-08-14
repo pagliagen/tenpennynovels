@@ -83,18 +83,26 @@ async function startServer(): Promise<void> {
     await setupRedisAdapter();
 
     // Initialize Email Service
-    const { EmailService } = await import('@modules/auth/services/EmailService');
+    const { EmailService } = await import('@core/auth/services/EmailService');
     EmailService.initialize();
     logger.info('✅ Email service initialized');
 
     // Initialize Notification Service with WebSocket
-    const { NotificationService } = await import('@shared/services/NotificationService');
+    const { NotificationService } = await import('@features/tickets/api');
     NotificationService.initialize(io);
     logger.info('✅ Notification service initialized');
 
     // Start Sitemap CRON Job (daily at 03:00 + immediate on boot)
     await import('./cron/sitemapGeneration');
     logger.info('✅ Sitemap CRON job started');
+
+    // Start Session Cleanup Job (ogni 30 minuti, ripulisce CharacterSession
+    // scadute — collection Mongo di audit-trail legacy che prima cresceva
+    // senza limiti perché il job non era mai avviato. start() attende
+    // internamente la connessione DB, può partire subito dopo db.connect())
+    const { SessionCleanupJob } = await import('@core/auth/jobs/sessionCleanup');
+    await SessionCleanupJob.start();
+    logger.info('✅ Session cleanup job started');
 
     // Start Presence Cleanup CRON Job (every 5 minutes, feature flag controlled)
     if (appConfig.features.presenceCleanup) {
@@ -104,7 +112,7 @@ async function startServer(): Promise<void> {
 
     // Start Scene Closing CRON Job (every 5 minutes, feature flag controlled)
     if (appConfig.features.sceneClosing) {
-      await import('./cron/sceneClosing');
+      await import('@features/fineSessione/api');
       logger.info('✅ Scene closing CRON job started');
     }
 
@@ -117,7 +125,7 @@ async function startServer(): Promise<void> {
     logger.info('✅ Message backup cleanup CRON job started');
 
     // Start Service Cancellation Cleanup CRON Job (daily at midnight, Europe/London)
-    await import('@modules/game/jobs/serviceCancellationCleanup');
+    await import('@features/economia/api');
     logger.info('✅ Service cancellation cleanup CRON job started');
 
     // Start HTTP server

@@ -11,7 +11,6 @@ export const REDIS_CHANNELS = {
   EMBEDDING_DOCUMENT_UPDATED: 'embedding:document:updated',
   EMBEDDING_DOCUMENT_CHUNK_CREATED: 'embedding:document_chunk:created',
   EMBEDDING_CHAT_CREATED: 'embedding:chat:created',
-  EMBEDDING_BOT_MEMORY_CREATED: 'embedding:bot_memory:created',
 } as const;
 
 export type RedisChannel = typeof REDIS_CHANNELS[keyof typeof REDIS_CHANNELS];
@@ -66,22 +65,9 @@ export interface ChatEmbeddingEvent extends BaseEmbeddingEvent {
 }
 
 /**
- * BotMemory embedding event
- * Published when a bot memory is created
- */
-export interface BotMemoryEmbeddingEvent extends BaseEmbeddingEvent {
-  memoryId: string;
-  botId: string;
-  locationId: string;
-  content: string;
-  participants: string[];
-  type: 'conversation' | 'event' | 'observation';
-}
-
-/**
  * Union type for all embedding events
  */
-export type EmbeddingEvent = DocumentEmbeddingEvent | DocumentChunkEmbeddingEvent | ChatEmbeddingEvent | BotMemoryEmbeddingEvent;
+export type EmbeddingEvent = DocumentEmbeddingEvent | DocumentChunkEmbeddingEvent | ChatEmbeddingEvent;
 
 /**
  * Helper to check event type
@@ -96,8 +82,4 @@ export function isDocumentChunkEmbeddingEvent(event: EmbeddingEvent): event is D
 
 export function isChatEmbeddingEvent(event: EmbeddingEvent): event is ChatEmbeddingEvent {
   return 'chatId' in event;
-}
-
-export function isBotMemoryEmbeddingEvent(event: EmbeddingEvent): event is BotMemoryEmbeddingEvent {
-  return 'memoryId' in event;
 }
