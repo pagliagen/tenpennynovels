@@ -8,5 +8,6 @@ import { bibliotecario } from './bibliotecario/manifest';
 import { corporazioni } from './corporazioni/manifest';
 import { tickets } from './tickets/manifest';
 import { occupazioni } from './occupazioni/manifest';
+import { economia } from './economia/manifest';
 
-export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni, tickets, occupazioni];
+export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni, tickets, occupazioni, economia];

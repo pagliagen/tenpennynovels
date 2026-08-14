@@ -3,12 +3,14 @@ import rateLimit from 'express-rate-limit';
 import { AuthMiddleware } from '../middleware/auth';
 import { requireGamePermission } from '../middleware/gamePermissions';
 import { EconomyController } from '../controllers/EconomyController';
-import { FinancialController } from '../controllers/FinancialController';
-import { ServicesController } from '../controllers/ServicesController';
 
 const router = Router();
 
-// Rate limiting for continuative-services routes (same style as locations.ts)
+// Rate limiting for shop routes (same style as locations.ts)
+// Copia propria: prima condivisa con le route continuative-services/financial,
+// spostate in features/economia/routes/game.ts (Fase 6.3) — shop e servizi
+// continuativi non condividono più lo stesso budget di rate-limit (stessi
+// parametri, contatori indipendenti).
 const servicesReadLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 120,
@@ -58,55 +60,6 @@ router.post('/economy/general-store/:itemId/purchase',
   AuthMiddleware.requireCharacterAuth,
   requireGamePermission('game:shops:purchase'),
   EconomyController.purchaseItem
-);
-
-// ========================================================================
-// CONTINUATIVE SERVICES (servitù, comunicazioni, trasporti, sicurezza)
-// ========================================================================
-
-router.get('/economy/services',
-  servicesReadLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:economy:services:read'),
-  ServicesController.getServices
-);
-
-router.post('/economy/services/:serviceId/subscribe',
-  servicesWriteLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:economy:services:subscribe'),
-  ServicesController.subscribeService
-);
-
-router.post('/economy/services/:serviceId/unsubscribe',
-  servicesWriteLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:economy:services:subscribe'),
-  ServicesController.unsubscribeService
-);
-
-router.post('/economy/admin/force-service-renewal',
-  servicesWriteLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:admin:economy:services:renew'),
-  ServicesController.adminForceRenewal
-);
-
-// ========================================================================
-// FINANCIAL OPERATIONS (merged from finances.ts)
-// ========================================================================
-
-// Administrative endpoints (require admin permissions)
-router.post('/economy/admin/reset-credit',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:admin:economy:reset-credit'),
-  FinancialController.adminResetCredit
-);
-
-router.get('/economy/admin/status',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:admin:economy:status'),
-  FinancialController.getSystemStatus
 );
 
 export default router;

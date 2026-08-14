@@ -52,11 +52,14 @@ export {
 } from './Item';
 
 // Continuative Services System (VC-budget subscriptions: servitù, comunicazioni, trasporti, sicurezza)
+// Deprecato: il model vive ora in features/economia/models/ (Fase 6.3 del
+// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   Service,
   type IService,
   ServiceCategory
-} from './Service';
+} from '@features/economia/models/Service';
 
 // OffGame Chat System (LEGACY - Group chats with admin roles)
 // NOTE: This is the ORIGINAL system that coexists with the NEW OffGameThread system
@@ -146,14 +149,18 @@ export {
 } from '@features/tickets/models/TicketNotification';
 
 // Financial System
+// Deprecato: i model vivono ora in features/economia/models/ (Fase 6.3 del
+// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   SocialClassConfig,
   type ISocialClassConfig
-} from './SocialClassConfig';
+} from '@features/economia/models/SocialClassConfig';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   CharacterFinances,
   type ICharacterFinances
-} from './CharacterFinances';
+} from '@features/economia/models/CharacterFinances';
 
 // Location Property System
 export {
@@ -253,4 +260,5 @@ registerSoftDeleteModel('users', () => require('./User').User, 'username');
 // boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora
 registerSoftDeleteModel('occupations', () => require('@features/occupazioni/models/Occupation').Occupation, 'name');
 registerSoftDeleteModel('skills', () => require('./Skill').Skill, 'name');
-registerSoftDeleteModel('socialclassconfigs', () => require('./SocialClassConfig').SocialClassConfig, 'label');
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora
+registerSoftDeleteModel('socialclassconfigs', () => require('@features/economia/models/SocialClassConfig').SocialClassConfig, 'label');
