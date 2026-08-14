@@ -5,8 +5,7 @@ export { db } from '../connection';
 
 // User and Authentication: spostati in core/auth/models/ (Fase 7.1)
 
-// Character System
-export { Character, type ICharacter } from './Character';
+// Character: spostato in core/character/models/ (Fase 7.2)
 export { Skill, SKILL_CATEGORY_LABELS, type ISkill } from './Skill';
 
 // Location System
@@ -115,7 +114,7 @@ export { DeletedRecord, type IDeletedRecord } from './DeletedRecord';
 // check-boundaries.ts non vede require(), va aggiornata a mano se il path
 // della feature cambia ancora.
 import { registerSoftDeleteModel } from '../plugins/softDeleteRegistry';
-registerSoftDeleteModel('characters', () => require('./Character').Character, 'name');
+registerSoftDeleteModel('characters', () => require('@core/character/models/Character').Character, 'name');
 registerSoftDeleteModel('locations', () => require('./Location').Location, 'name');
 // boundary-allow: registro require()-based, non visto da check-boundaries.ts
 registerSoftDeleteModel('items', () => require('@features/oggetti/models/Item').Item, 'name');
