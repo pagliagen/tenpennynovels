@@ -1,7 +1,7 @@
 import { HydratedDocument } from 'mongoose';
 import { Chat, ChatScene, CharacterChatScene, IChatScene } from '@database/models';
 import { logger } from '../logger';
-import { EmbeddingService } from '@modules/documents/services/EmbeddingService';
+import { EmbeddingService } from '@features/documenti/api';
 
 /**
  * Segmenta la chat "standard" di una location in scene narrative per

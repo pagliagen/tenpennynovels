@@ -16,7 +16,7 @@ import { ForumNotification } from '@database/models/ForumNotification';
 import { Character } from '@database/models/Character';
 import { NotificationService } from '../services/NotificationService';
 import { escapeRegex } from '@shared/utils/validation';
-import { EmbeddingService } from '@modules/documents/services/EmbeddingService';
+import { EmbeddingService } from '@features/documenti/api';
 import { logger } from '@shared/utils/logger';
 import { AdminPermissions, hasAdminPermission, type AdminPermission } from '@config/permissions/admin';
 import {

@@ -6,7 +6,7 @@ import { successResponse, errorResponse, createResponse, listResponse, getReques
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { redis } from '@config/runtime/redis';
 import { escapeRegex } from '@shared/utils/validation';
-import { EmbeddingService } from '@modules/documents/services/EmbeddingService';
+import { EmbeddingService } from '@features/documenti/api';
 
 import { calculateSuccessDegree, getSuccessDegreeLabel, compareSuccessDegrees } from '../utils/successDegrees';
 import { calculateSocialConflict, getDefensiveSkill } from '../utils/socialConflicts';

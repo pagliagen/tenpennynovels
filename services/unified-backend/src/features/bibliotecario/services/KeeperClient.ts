@@ -1,7 +1,7 @@
 /**
  * KeeperClient — proxy verso embeddings-worker per le chiamate RAG
  * ("Bibliotecario") only. Le operazioni di ricerca pura (embedding,
- * semantic search) restano in modules/documents/services/EmbeddingService.ts:
+ * semantic search) restano in features/documenti/services/EmbeddingService.ts:
  * quelle servono alla ricerca anche a bibliotecario spento, queste no.
  *
  * Portato da EmbeddingService.ts (Fase 2 del refactor, vedi
