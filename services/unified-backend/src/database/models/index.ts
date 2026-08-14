@@ -224,19 +224,24 @@ export { UserReport, type IUserReport } from './UserReport';
 export { ModerationAlert, type IModerationAlert } from './ModerationAlert';
 
 // Knowledge Base System (Documents + SubTypes)
+// Deprecato: i model vivono ora in features/documenti/models/ (Fase 6.5 del
+// refactor layer→feature). Shim di compatibilità per chi importa ancora dal barrel.
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   default as DocumentSubtype,
   type IDocumentSubtype,
   type DocumentType
-} from './DocumentSubtype';
+} from '@features/documenti/models/DocumentSubtype';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   default as Document,
   type IDocument
-} from './Document';
+} from '@features/documenti/models/Document';
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6
 export {
   default as DocumentChunk,
   type IDocumentChunk
-} from './DocumentChunk';
+} from '@features/documenti/models/DocumentChunk';
 
 // Forum System
 export { ForumCategory, type IForumCategory } from './ForumCategory';
@@ -261,7 +266,8 @@ registerSoftDeleteModel('characters', () => require('./Character').Character, 'n
 registerSoftDeleteModel('locations', () => require('./Location').Location, 'name');
 // boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora
 registerSoftDeleteModel('items', () => require('@features/oggetti/models/Item').Item, 'name');
-registerSoftDeleteModel('documents', () => require('./Document').default, 'title');
+// boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora
+registerSoftDeleteModel('documents', () => require('@features/documenti/models/Document').default, 'title');
 registerSoftDeleteModel('users', () => require('./User').User, 'username');
 // boundary-allow: shim di migrazione previsto dal piano, rimosso alla Fase 6 — require() non è visto da check-boundaries.ts, aggiornare a mano se il path cambia ancora
 registerSoftDeleteModel('occupations', () => require('@features/occupazioni/models/Occupation').Occupation, 'name');
