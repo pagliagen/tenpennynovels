@@ -9,7 +9,6 @@ export interface IChat extends Document {
   characterName: string;
   characterSurname?: string;
   characterAvatar?: string;
-  isBot: boolean;
 
   // PNG Light masking
   isMasked: boolean;
@@ -170,12 +169,6 @@ export const ChatSchema = new Schema<IChat>({
     trim: true,
     maxlength: 500
   },
-  isBot: {
-    type: Boolean,
-    default: false,
-    required: true
-  },
-
   // PNG Light masking
   isMasked: {
     type: Boolean,

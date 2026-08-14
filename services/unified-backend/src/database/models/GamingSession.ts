@@ -62,22 +62,6 @@ export interface IGamingSession extends Document {
   // Status
   status: 'planned' | 'active' | 'completed' | 'cancelled' | 'postponed';
   
-  // Turn-based / action-mode fields (used by TurnManager and ChatController)
-  turnOrder?: Schema.Types.ObjectId[]; // Order of turns
-  actionModeActive?: boolean; // Whether action mode is currently active
-  actionModeEndsAt?: Date; // When action mode ends
-
-  // Turn-based system fields
-  currentTurnIndex?: number; // Current turn index in turnOrder (0-based)
-  turnPhase?: 'player' | 'bot' | 'waiting'; // Current phase of turn
-  lastTurnAt?: Date; // Timestamp of last turn advancement
-  botCharacterId?: Schema.Types.ObjectId; // ID of bot character in turn order
-  botTurnsPending?: number; // Number of bot turns waiting to be completed
-
-  // Bot AI integration
-  botDisabledForSession?: boolean; // If true, bot won't respond for this session (connection failed)
-  botTagAssignments?: { [tag: string]: string }; // Maps tag to assigned bot ID (one bot per tag/subchat)
-
   // Admin oversight
   requiresReview?: boolean;
   reviewedBy?: Schema.Types.ObjectId;
@@ -235,50 +219,6 @@ const GamingSessionSchema = new Schema<IGamingSession>({
     default: 'planned'
   },
   
-  // Turn-based / action-mode fields
-  turnOrder: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Character'
-  }],
-  actionModeActive: {
-    type: Boolean,
-    default: false
-  },
-  actionModeEndsAt: Date,
-
-  // Turn-based system fields
-  currentTurnIndex: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  turnPhase: {
-    type: String,
-    enum: ['player', 'bot', 'waiting'],
-    default: 'player'
-  },
-  lastTurnAt: Date,
-  botCharacterId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Character'
-  },
-  botTurnsPending: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-
-  // Bot AI integration
-  botDisabledForSession: {
-    type: Boolean,
-    default: false
-  },
-  botTagAssignments: {
-    type: Map,
-    of: String,
-    default: {}
-  },
-
   requiresReview: {
     type: Boolean,
     default: false
