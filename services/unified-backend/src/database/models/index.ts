@@ -9,30 +9,12 @@ export { db } from '../connection';
 export { Skill, SKILL_CATEGORY_LABELS, type ISkill } from './Skill';
 
 // Location: spostata in core/location/models/ (Fase 7.3)
-export { Chat, type IChat } from './Chat';
-export { ChatBackup } from './ChatBackup';
+// Chat, ChatBackup, OnGameMessage, OnGameThread, MessageBackup: spostati in core/chat/models/ (Fase 7.4)
 export { CharacterNotes, type ICharacterNotes } from './CharacterNotes';
 
 // Combat & Confrontation System (TiroContrapposto)
 export { SkillConfrontation, type ISkillConfrontation } from './SkillConfrontation';
 export { CombatEncounter, type ICombatEncounter } from './CombatEncounter';
-
-// OnGame Messages System (Victorian postal system)
-export {
-  OnGameMessage,
-  type IOnGameMessage
-} from './OnGameMessage';
-// NOTE: OnGameMessageView model removed - view logic moved to controllers in new architecture
-
-// New Dual Messaging Architecture (Thread-based)
-export {
-  OnGameThread,
-  type IOnGameThread
-} from './OnGameThread';
-export {
-  MessageBackup,
-  type IMessageBackup
-} from './MessageBackup';
 
 // Relationship System
 export {
