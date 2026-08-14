@@ -525,6 +525,19 @@ export class ShopController {
       const { itemId, quantity, payFromTreasury } = req.body;
       const characterId = req.character!.characterId;
 
+      // CWE-943: itemId da req.body finisce nel filtro ShopItem.findOne —
+      // deve essere una stringa, non un oggetto/operatore Mongo.
+      if (typeof itemId !== 'string') {
+        res.status(400).json(errorResponse(
+          'itemId non valido',
+          'INVALID_ITEM_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       // Bug preesistente preservato esattamente, trovato in test E2E su Docker
       // (Fase 6.4): Character non ha un campo/virtual "corporations" nello
       // schema — .populate('corporations') lancia sempre StrictPopulateError

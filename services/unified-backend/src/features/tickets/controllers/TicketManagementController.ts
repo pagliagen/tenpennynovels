@@ -72,16 +72,19 @@ export class TicketManagementController {
       const sortBy = req.query.sortBy as string || 'createdAt';
       const sortOrder = req.query.sortOrder as string || 'desc';
 
-      // Extract filters
+      // CWE-943: `as string` è solo un cast a compile-time — a runtime un
+      // client può mandare ?status[$where]=x (qs lo trasforma in oggetto) e
+      // quell'oggetto finirebbe diretto nel filtro Mongo sotto. Guardia
+      // typeof reale per ogni campo prima di usarlo come valore di filtro.
       const filters: TicketFilters = {
-        status: req.query.status as string,
-        priority: req.query.priority as string,
-        category: req.query.category as string,
-        department: req.query.department as string,
-        assignedTo: req.query.assignedTo as string,
-        search: req.query.search as string,
-        dateFrom: req.query.dateFrom as string,
-        dateTo: req.query.dateTo as string,
+        status: typeof req.query.status === 'string' ? req.query.status : undefined,
+        priority: typeof req.query.priority === 'string' ? req.query.priority : undefined,
+        category: typeof req.query.category === 'string' ? req.query.category : undefined,
+        department: typeof req.query.department === 'string' ? req.query.department : undefined,
+        assignedTo: typeof req.query.assignedTo === 'string' ? req.query.assignedTo : undefined,
+        search: typeof req.query.search === 'string' ? req.query.search : undefined,
+        dateFrom: typeof req.query.dateFrom === 'string' ? req.query.dateFrom : undefined,
+        dateTo: typeof req.query.dateTo === 'string' ? req.query.dateTo : undefined,
         escalated: req.query.escalated === 'true'
       };
 
@@ -265,7 +268,8 @@ export class TicketManagementController {
 
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 25;
-      const status = req.query.status as string;
+      // CWE-943: vedi guardia di tipo in getAllTickets.
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
 
       // Build query for assigned tickets
       const query: any = { assignedTo: new mongoose.Types.ObjectId(adminUserId) };
@@ -407,7 +411,8 @@ export class TicketManagementController {
 
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 25;
-      const status = req.query.status as string;
+      // CWE-943: vedi guardia di tipo in getAllTickets.
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
 
       // Build query for department tickets
       const query: any = { department: { $in: accessibleDepartments } };
@@ -558,7 +563,11 @@ export class TicketManagementController {
 
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = parseInt(req.query.pageSize as string) || 25;
-      const status = req.query.status as string;
+      // CWE-943: vedi guardia di tipo in getAllTickets. targetDepartment è
+      // un req.params (sempre stringa, Express non lo trasforma mai in
+      // oggetto) ed è già validato contro DEPARTMENT_ROLES_MAPPING sopra —
+      // nessuna guardia aggiuntiva necessaria lì.
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
 
       // Build query for specific department tickets
       const query: any = { department: targetDepartment };
@@ -938,7 +947,13 @@ export class TicketManagementController {
         return;
       }
 
-      if (!assignmentData.assignedTo || !assignmentData.assignedToName) {
+      // CWE-943: assignmentData è req.body non validato a runtime — il tipo
+      // TicketAssignment è solo compile-time. Un assignedTo non-stringa
+      // finirebbe in new mongoose.Types.ObjectId(...) sotto.
+      if (
+        !assignmentData.assignedTo || typeof assignmentData.assignedTo !== 'string' ||
+        !assignmentData.assignedToName || typeof assignmentData.assignedToName !== 'string'
+      ) {
         res.status(400).json(errorResponse(
           'Assignment details required',
           'ASSIGNMENT_DETAILS_REQUIRED',

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Ticket } from '../models/Ticket';
 import { User } from '@core/auth/models/User';
 import { NotificationService } from '../services/NotificationService';
@@ -259,7 +260,12 @@ export class TicketDashboardController {
     try {
       const { ticketIds, toStaffId } = req.body;
 
-      if (!Array.isArray(ticketIds) || ticketIds.length === 0) {
+      // CWE-943: req.body non validato a runtime. ticketIds finisce in un
+      // filtro $in, toStaffId in User.findById — un client potrebbe passare
+      // un oggetto (es. {"$ne": null}) invece di un ID, bypassando il
+      // lookup per identità. Entrambi validati come stringhe reali prima
+      // dell'uso, toStaffId anche come ObjectId valido.
+      if (!Array.isArray(ticketIds) || ticketIds.length === 0 || !ticketIds.every((id) => typeof id === 'string')) {
         res.status(400).json(errorResponse(
           'ticketIds array è obbligatorio',
           'VALIDATION_ERROR',
@@ -270,7 +276,7 @@ export class TicketDashboardController {
         return;
       }
 
-      if (!toStaffId) {
+      if (!toStaffId || typeof toStaffId !== 'string' || !mongoose.Types.ObjectId.isValid(toStaffId)) {
         res.status(400).json(errorResponse(
           'toStaffId è obbligatorio',
           'VALIDATION_ERROR',

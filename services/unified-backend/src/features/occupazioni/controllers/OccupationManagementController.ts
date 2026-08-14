@@ -17,16 +17,20 @@ export class OccupationManagementController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 25;
-      const category = req.query.category as string;
-      const isActive = req.query.isActive as string;
-      const search = req.query.search as string;
+      // CWE-943: `as string` è solo un cast a compile-time — a runtime
+      // req.query.category può essere un oggetto (?category[$where]=...,
+      // qs lo trasforma), e finirebbe diretto nel filtro Mongo. Guardia
+      // typeof reale invece del cast.
+      const category = typeof req.query.category === 'string' ? req.query.category : undefined;
+      const isActive = typeof req.query.isActive === 'string' ? req.query.isActive : undefined;
+      const search = typeof req.query.search === 'string' ? req.query.search : undefined;
 
       // Build query
       const query: any = {};
       if (category && category !== 'all') query.category = category;
       if (isActive !== undefined) query.isActive = isActive === 'true';
       if (search) {
-        const escapedSearch = escapeRegex(search as string);
+        const escapedSearch = escapeRegex(search);
         query.$or = [
           { name: { $regex: escapedSearch, $options: 'i' } },
           { description: { $regex: escapedSearch, $options: 'i' } }
@@ -281,6 +285,14 @@ export class OccupationManagementController {
       const occupationId = req.params.occupationId;
       const { reason, ...updateData } = req.body;
 
+      // CWE-943: updateData va passato così com'è a findByIdAndUpdate senza
+      // wrapping esplicito in $set — una chiave root come "$set"/"$unset"/
+      // "$where" nel body verrebbe interpretata come vero operatore Mongo
+      // invece che come campo. Rimosse prima dell'update.
+      for (const key of Object.keys(updateData)) {
+        if (key.startsWith('$')) delete updateData[key];
+      }
+
       if (!reason || reason.trim().length === 0) {
         res.status(400).json(errorResponse(
           'Il motivo dell\'aggiornamento è richiesto',
@@ -454,6 +466,21 @@ export class OccupationManagementController {
         return;
       }
 
+      // CWE-943: occupationIds finisce dentro $in (filtro), data.category
+      // finisce come valore di $set (update) — entrambi da req.body senza
+      // controllo di tipo. occupationIds deve essere un array di stringhe,
+      // non un oggetto/operatore Mongo; data.category deve essere stringa.
+      if (!Array.isArray(occupationIds) || occupationIds.length === 0 || !occupationIds.every((id) => typeof id === 'string')) {
+        res.status(400).json(errorResponse(
+          'occupationIds deve essere un array di ID validi',
+          'INVALID_OCCUPATION_IDS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       let result;
       switch (operation) {
         case 'activate':
@@ -469,6 +496,16 @@ export class OccupationManagementController {
           );
           break;
         case 'update_category':
+          if (typeof data?.category !== 'string') {
+            res.status(400).json(errorResponse(
+              'Categoria non valida',
+              'INVALID_CATEGORY',
+              undefined,
+              400,
+              getRequestId(req)
+            ));
+            return;
+          }
           result = await Occupation.updateMany(
             { _id: { $in: occupationIds } },
             { category: data.category }

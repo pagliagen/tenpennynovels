@@ -560,7 +560,9 @@ export class DocumentManagementController {
     try {
       const { title, slug, type, subtypeId, parentId, contentDelta, isDraft, visible, isPublic, tags, order } = req.body;
 
-      if (!title || !slug || !type || !subtypeId) {
+      // CWE-943: slug finisce in un filtro Mongoose (findOne) più sotto —
+      // deve essere una stringa, non un oggetto/operatore.
+      if (!title || !slug || !type || !subtypeId || typeof slug !== 'string' || typeof type !== 'string') {
         res.status(400).json(errorResponse(
           'Titolo, slug, type e subtypeId sono obbligatori',
           'VALIDATION_ERROR', undefined, 400, getRequestId(req)

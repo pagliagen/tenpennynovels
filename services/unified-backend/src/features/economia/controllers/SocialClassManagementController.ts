@@ -860,8 +860,11 @@ export class SocialClassManagementController {
       }
 
       // Validate the input
+      // CWE-943: socialClassId finisce come primo argomento di
+      // findByIdAndUpdate (diventa il filtro { _id: socialClassId }) — deve
+      // essere una stringa, non un oggetto/operatore Mongo.
       for (const order of classOrders) {
-        if (!order.socialClassId || typeof order.displayOrder !== 'number') {
+        if (!order.socialClassId || typeof order.socialClassId !== 'string' || typeof order.displayOrder !== 'number') {
           res.status(400).json(errorResponse(
             'Each class order must have socialClassId and displayOrder',
             'INVALID_CLASS_ORDER',

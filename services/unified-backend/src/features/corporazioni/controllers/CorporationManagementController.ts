@@ -311,7 +311,10 @@ export class CorporationManagementController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
-      const corporationId = req.query.corporationId as string;
+      // CWE-943: `as string` è solo un cast a compile-time — a runtime
+      // req.query.corporationId può essere un oggetto (?corporationId[$where]=...,
+      // qs lo trasforma), e finirebbe diretto nel filtro Mongo. Guardia typeof reale.
+      const corporationId = typeof req.query.corporationId === 'string' ? req.query.corporationId : undefined;
 
       const skip = (page - 1) * limit;
 
@@ -790,7 +793,12 @@ export class CorporationManagementController {
       const { name, description, type, membershipType, maxMembers } = req.body;
 
       // Validate required fields
-      if (!name || !description || !type) {
+      // CWE-943: name arriva da un body JSON, non da query-string — un client
+      // può mandare direttamente {"name": {"$regex": ".*"}} come oggetto.
+      // Mongoose non lo rifiuta in un filtro find (è un operatore Mongo
+      // valido su un path String), quindi va richiesta esplicitamente una
+      // stringa prima di usarlo in findOne.
+      if (!name || typeof name !== 'string' || !description || !type) {
         res.status(400).json(errorResponse(
           'Campi obbligatori mancanti: name, description, type',
           'MISSING_REQUIRED_FIELDS',
@@ -1323,7 +1331,9 @@ export class CorporationManagementController {
     try {
       const { operation, corporationIds, ...operationData } = req.body;
 
-      if (!operation || !corporationIds || !Array.isArray(corporationIds)) {
+      // CWE-943: ogni elemento di corporationIds finisce in Corporation.findById()
+      // — deve essere garantito stringa prima, non solo che l'array esista.
+      if (!operation || !corporationIds || !Array.isArray(corporationIds) || !corporationIds.every((id) => typeof id === 'string')) {
         res.status(400).json(errorResponse(
           'Campi obbligatori mancanti: operation, corporationIds',
           'MISSING_BULK_OPERATION_DATA',

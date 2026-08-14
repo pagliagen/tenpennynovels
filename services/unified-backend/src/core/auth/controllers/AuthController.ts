@@ -394,6 +394,19 @@ export class AuthController {
       const { characterId } = req.body;
       const userId = req.user!.userId;
 
+      // CWE-943: characterId da req.body finisce nel filtro come _id — deve
+      // essere una stringa, non un oggetto/operatore Mongo (es. {$ne:null}
+      // selezionerebbe un personaggio arbitrario tra quelli dell'utente,
+      // invece di quello richiesto esplicitamente).
+      if (typeof characterId !== 'string') {
+        res.status(400).json(errorResponse(
+          'ID personaggio non valido',
+          'INVALID_CHARACTER_ID',
+          undefined,
+          400));
+        return;
+      }
+
       // Find character and verify ownership
       const character = await Character.findOne({
         _id: characterId,

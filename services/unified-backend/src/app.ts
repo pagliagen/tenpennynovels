@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { requestIdMiddleware } from '@shared/middleware/requestId';
 import { normalizeQueryParams } from '@shared/middleware/normalizeQueryParams';
 import { maintenanceModeMiddleware } from '@shared/middleware/maintenanceMode';
@@ -104,7 +105,37 @@ app.get('/health', (req, res) => {
   });
 });
 
+// ===== Rate Limiting Globale =====
+// CodeQL (js/missing-rate-limiting) analizza ogni handler singolarmente e
+// segnala "missing" ovunque non trovi un middleware express-rate-limit
+// esplicito nella catena — non riconosce i controlli Redis-based già
+// esistenti (AdminAuthMiddleware.sensitiveOperationLimit()) né il rate
+// limiting a monte dell'api-gateway. Risultato: ~250 alert sparsi su
+// quasi ogni file di routes del service, non isolabili singolarmente.
+// Limiter generico qui, montato prima di tutte le route applicative,
+// copre l'intera superficie in un solo punto: soddisfa CodeQL ovunque e
+// fornisce una difesa reale contro un flood puro. I limiter più stretti
+// già presenti per-route (read/write/destructive, spesso più severi)
+// restano invariati e si applicano IN AGGIUNTA a questo, non al suo posto.
+// /health resta escluso: polling legittimo e frequente da Docker/PM2/LB.
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip ?? ''),
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      error: 'Troppe richieste, riprova più tardi.',
+      code: 'GLOBAL_RATE_LIMIT_EXCEEDED',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // ===== Module Routes =====
+app.use(globalLimiter);
 app.use('/auth', authRoutes);
 app.use('/character-gen', characterGenConfigRoutes);  // Character Gen config (PUBLIC - no auth)
 app.use('/game', gameRoutes);

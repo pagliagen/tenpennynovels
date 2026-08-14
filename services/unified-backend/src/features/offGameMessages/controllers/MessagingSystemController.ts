@@ -35,6 +35,12 @@ export class MessagingSystemController {
       const limitNum = parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
+      // CWE-943: type/search/sortBy da req.query finiscono nel filtro/sort
+      // Mongo — con qs, ?type[$ne]=x diventa un oggetto invece di una
+      // stringa. Guardia di tipo reale prima di usarli.
+      const safeType = typeof type === 'string' ? type : 'all';
+      const safeSearch = typeof search === 'string' ? search : '';
+
       // Build filter query
       const filter: any = {};
 
@@ -46,13 +52,13 @@ export class MessagingSystemController {
       }
 
       // Filter by type
-      if (type !== 'all') {
-        filter.type = type;
+      if (safeType !== 'all') {
+        filter.type = safeType;
       }
 
       // Search in name
-      if (search) {
-        const escapedSearch = escapeRegex(search as string);
+      if (safeSearch) {
+        const escapedSearch = escapeRegex(safeSearch);
         filter.$or = [
           { name: { $regex: escapedSearch, $options: 'i' } }
         ];
@@ -73,9 +79,11 @@ export class MessagingSystemController {
         ]
       };
 
-      // Sort configuration
+      // Sort configuration — allowlist esplicita, sortBy usato come chiave d'oggetto
+      const SORTABLE_FIELDS = new Set(['lastActivity', 'name', 'type', 'createdAt']);
+      const safeSortBy = typeof sortBy === 'string' && SORTABLE_FIELDS.has(sortBy) ? sortBy : 'lastActivity';
       const sort: any = {};
-      sort[sortBy as string] = sortOrder === 'asc' ? 1 : -1;
+      sort[safeSortBy] = sortOrder === 'asc' ? 1 : -1;
 
       // Execute queries in parallel
       const [chats, total] = await Promise.all([
@@ -692,7 +700,9 @@ export class MessagingSystemController {
     try {
       const { operation, targetType, targetIds, reason, data } = req.body;
 
-      if (!operation || !targetType || !targetIds || !Array.isArray(targetIds)) {
+      // CWE-943: targetIds finisce dentro $in — deve essere un array di
+      // stringhe, non un oggetto/operatore Mongo.
+      if (!operation || !targetType || !targetIds || !Array.isArray(targetIds) || !targetIds.every((id) => typeof id === 'string')) {
         res.status(400).json(errorResponse(
           'Operation, targetType, and targetIds are required',
           'MISSING_BULK_OPERATION_DATA',
@@ -744,8 +754,9 @@ export class MessagingSystemController {
             affectedCount = result[0].modifiedCount;
             break;
 
-          case 'update_retention':
-            if (!data?.messageRetentionDays) {
+          case 'update_retention': {
+            const retentionDays = Number(data?.messageRetentionDays);
+            if (!data?.messageRetentionDays || !Number.isFinite(retentionDays) || retentionDays <= 0) {
               res.status(400).json(errorResponse(
                 'messageRetentionDays is required for retention update',
                 'MESSAGE_RETENTION_DAYS_REQUIRED',
@@ -757,10 +768,11 @@ export class MessagingSystemController {
             }
             result = await OffGameChat.updateMany(
               { _id: { $in: targetIds } },
-              { messageRetentionDays: data.messageRetentionDays }
+              { messageRetentionDays: retentionDays }
             );
             affectedCount = result.modifiedCount;
             break;
+          }
 
           default:
             res.status(400).json(errorResponse(
