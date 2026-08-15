@@ -441,6 +441,72 @@
   margin-top: 1rem;
 }
 
+.utilityPopupBodyLeft {
+  text-align: left;
+}
+
+.optionGroupLabel {
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-family: 'Playfair Display', serif;
+  color: var(--color-text-primary);
+  opacity: 0.85;
+}
+
+.optionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optionCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: var(--color-accent);
+    background: rgba(184, 134, 11, 0.08);
+  }
+
+  input[type='radio'] {
+    margin-top: 3px;
+    accent-color: var(--color-accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  &:has(input:checked) {
+    border-color: var(--color-accent);
+    background: rgba(184, 134, 11, 0.12);
+  }
+}
+
+.optionCardText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+
+  strong {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    color: var(--color-text-primary);
+  }
+
+  span {
+    font-size: 13px;
+    opacity: 0.75;
+    line-height: 1.4;
+    font-family: inherit;
+  }
+}
+
 /* ========================================
    RESPONSIVE
    ======================================== */

@@ -7,16 +7,71 @@
  * @since 2.0.0
  */
 
-.messageList {
+// Sizing lives on the wrapper, not on .messageList itself. A flex item's
+// default min-height is auto, which stops it shrinking below its content
+// size - .messageList would grow past .chatContainer instead of scrolling
+// internally (the ancestor .bodyContainer would scroll instead - wrong
+// element, so the JS auto-scroll in MessageList.tsx becomes a no-op).
+// Absolutely positioning .messageList inside a sized, position:relative
+// wrapper sidesteps that whole class of bug: absolutely positioned content
+// never contributes to the wrapper's intrinsic size, so min-height:0 on the
+// wrapper is all that's needed. The wrapper also anchors .newMessagesButton.
+.messageListWrapper {
   flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.messageList {
+  position: absolute;
+  inset: 0;
   overflow-y: auto;
-  overflow-x: hidden; 
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
 
   /* Victorian scrollbar */
   @include victorian-scrollbar;
+}
+
+.newMessagesButton {
+  position: absolute;
+  bottom: $spacing-md;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: 4px $spacing-md;
+  background: rgba(20, 12, 6, 0.92); // solid-ish dark, not the translucent $gold-*/$brown-* scale below (those are too faint to read as text/fill here)
+  color: $parchment;
+  border: 1px solid $gold;
+  border-radius: $radius-lg;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  font-family: $font-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  z-index: 10;
+  animation: newMessagesPop 0.15s ease;
+
+  &:hover {
+    border-color: $gold-80;
+  }
+}
+
+@keyframes newMessagesPop {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 /* Loading state */

@@ -31,6 +31,19 @@ import { UI_CONFIG } from '@/constants/config';
 export type Theme = 'victorian' | 'dark' | 'light';
 
 /**
+ * Chat Auto-Scroll Mode
+ *
+ * Controls what happens when a new chat message arrives while the user
+ * has scrolled up to read older messages:
+ * - 'button': stay put, show a "new messages" indicator to jump down manually
+ * - 'force': always scroll to the new message, even mid-read
+ *
+ * @typedef {'button' | 'force'} ChatAutoScrollMode
+ * @since 2.2.0
+ */
+export type ChatAutoScrollMode = 'button' | 'force';
+
+/**
  * Modal State Type
  *
  * Tracks open/closed state of application modals.
@@ -95,6 +108,9 @@ interface UIState {
 
   /** Global loading state (e.g., for full-page loading) */
   isLoading: boolean;
+
+  /** Chat auto-scroll behavior when reading older messages (see ChatAutoScrollMode) */
+  chatAutoScrollMode: ChatAutoScrollMode;
 }
 
 /**
@@ -180,6 +196,14 @@ interface UIActions {
    * @returns {void}
    */
   setLoading: (loading: boolean) => void;
+
+  /**
+   * Set chat auto-scroll mode
+   *
+   * @param {ChatAutoScrollMode} mode - 'button' or 'force'
+   * @returns {void}
+   */
+  setChatAutoScrollMode: (mode: ChatAutoScrollMode) => void;
 }
 
 /**
@@ -238,6 +262,7 @@ export const useUIStore = create<UIStore>()(
       },
       toasts: [],
       isLoading: false,
+      chatAutoScrollMode: 'button',
 
       /**
        * Set application theme
@@ -398,6 +423,18 @@ export const useUIStore = create<UIStore>()(
       setLoading: (loading) => {
         set({ isLoading: loading });
       },
+
+      /**
+       * Set chat auto-scroll mode
+       *
+       * @function setChatAutoScrollMode
+       * @param {ChatAutoScrollMode} mode - 'button' or 'force'
+       * @returns {void}
+       * @since 2.2.0
+       */
+      setChatAutoScrollMode: (mode) => {
+        set({ chatAutoScrollMode: mode });
+      },
     }),
     {
       name: 'tpn_ui_state', // localStorage key
@@ -405,6 +442,7 @@ export const useUIStore = create<UIStore>()(
         // Only persist these fields
         theme: state.theme,
         sidebarCollapsed: state.sidebarCollapsed,
+        chatAutoScrollMode: state.chatAutoScrollMode,
       }),
       onRehydrateStorage: () => (state) => {
         // Apply theme after hydration
@@ -440,4 +478,7 @@ export const uiSelectors = {
 
   /** Select loading state */
   isLoading: (state: UIStore) => state.isLoading,
+
+  /** Select chat auto-scroll mode */
+  chatAutoScrollMode: (state: UIStore) => state.chatAutoScrollMode,
 } as const;

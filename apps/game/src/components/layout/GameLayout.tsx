@@ -32,6 +32,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useForumStore } from '@/store/forumStore';
 import { useGameStateStore } from '@/store/gameStateStore';
 import { useLocationStore } from '@/store/locationStore';
+import { uiSelectors, useUIStore } from '@/store/uiStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/GameLayout.module.scss';
 import type { AuthSessionApiResponse, CharacterBanSessionPayload } from '@/types/authSession';
@@ -75,6 +76,10 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const [showAudioPopup, setShowAudioPopup] = useState(false);
   const [showChatPopup, setShowChatPopup] = useState(false);
   const [showLocationInfo, setShowLocationInfo] = useState(false);
+
+  // Chat auto-scroll preference (Opzioni Chat popup)
+  const chatAutoScrollMode = useUIStore(uiSelectors.chatAutoScrollMode);
+  const setChatAutoScrollMode = useUIStore((state) => state.setChatAutoScrollMode);
 
   // Sidebar responsive: sotto COMPACT_LAYOUT_BREAKPOINT non c'è più spazio per la
   // colonna fissa (325px sidebar + 1024px mainContent = 1349px richiesti) - diventa
@@ -628,11 +633,38 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
                 ✕
               </button>
             </div>
-            <div className={styles.utilityPopupBody}>
-              <p>QUI CI SARANNO LE OPZIONI CHAT</p>
-              <p className={styles.utilityPopupPlaceholderNote}>
-                (Placeholder - da implementare)
-              </p>
+            <div className={`${styles.utilityPopupBody} ${styles.utilityPopupBodyLeft}`}>
+              <div className={styles.optionGroupLabel}>
+                Quando arriva un nuovo messaggio mentre stai rileggendo la chat più in alto:
+              </div>
+              <div className={styles.optionGroup} role="radiogroup" aria-label="Comportamento auto-scroll chat">
+                <label className={styles.optionCard}>
+                  <input
+                    type="radio"
+                    name="chatAutoScrollMode"
+                    value="button"
+                    checked={chatAutoScrollMode === 'button'}
+                    onChange={() => setChatAutoScrollMode('button')}
+                  />
+                  <span className={styles.optionCardText}>
+                    <strong>Mostra un pulsante &quot;Nuovi messaggi&quot;</strong>
+                    <span>Resti dove sei a leggere; un pulsante in fondo alla chat ti avvisa e ti riporta giù con un click.</span>
+                  </span>
+                </label>
+                <label className={styles.optionCard}>
+                  <input
+                    type="radio"
+                    name="chatAutoScrollMode"
+                    value="force"
+                    checked={chatAutoScrollMode === 'force'}
+                    onChange={() => setChatAutoScrollMode('force')}
+                  />
+                  <span className={styles.optionCardText}>
+                    <strong>Scorri sempre in fondo</strong>
+                    <span>Ogni nuovo messaggio ti riporta subito in fondo alla chat, anche se stavi leggendo più in alto.</span>
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
         </div>

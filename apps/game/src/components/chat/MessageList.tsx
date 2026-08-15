@@ -13,6 +13,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useChatCurrentPosition } from '@/store/chatStore';
+import { uiSelectors, useUIStore } from '@/store/uiStore';
 import styles from '@/styles/components/chat/MessageList.module.scss';
 import type { ChatMessage } from '@/types/chat';
 
@@ -137,9 +138,14 @@ export function MessageList({ messages, isLoading, currentCharacterId, isMaster 
   const listRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef(messages.length);
   const currentPosition = useChatCurrentPosition();
+  const autoScrollMode = useUIStore(uiSelectors.chatAutoScrollMode);
 
   // Track if user is near bottom (for smart auto-scroll)
   const [isNearBottom, setIsNearBottom] = useState(true);
+
+  // 'button' mode only: new message arrived while reading higher up - show
+  // a jump-to-bottom indicator instead of silently doing nothing
+  const [hasNewMessages, setHasNewMessages] = useState(false);
 
   /**
    * Check if scroll position is near bottom
@@ -168,16 +174,35 @@ export function MessageList({ messages, isLoading, currentCharacterId, isMaster 
 
   /**
    * Handle scroll event (update isNearBottom state)
+   *
+   * Also clears the "new messages" indicator once the user scrolls back
+   * down themselves, without waiting for another message to arrive.
    */
   const handleScroll = () => {
-    setIsNearBottom(checkIfNearBottom());
+    const nearBottom = checkIfNearBottom();
+    setIsNearBottom(nearBottom);
+    if (nearBottom) {
+      setHasNewMessages(false);
+    }
   };
 
   /**
-   * Smart Auto-Scroll on new messages
+   * Jump to bottom (user clicked the "new messages" indicator)
+   */
+  const handleJumpToNewMessages = () => {
+    scrollToBottom('smooth');
+    setHasNewMessages(false);
+  };
+
+  /**
+   * Auto-Scroll on new messages
    *
-   * Only auto-scroll if user was already near bottom (following conversation).
-   * If user scrolled up, do NOT auto-scroll (let them read old messages).
+   * Behavior depends on the user's "Opzioni Chat" preference
+   * (uiStore.chatAutoScrollMode):
+   * - 'force': always scroll to the new message, even mid-read
+   * - 'button' (default): only auto-scroll if already near bottom
+   *   (following conversation); otherwise surface a "new messages"
+   *   indicator instead of silently doing nothing.
    */
   useEffect(() => {
     const messageCount = messages.length;
@@ -185,19 +210,19 @@ export function MessageList({ messages, isLoading, currentCharacterId, isMaster 
 
     // Check if new message added
     if (messageCount > prevMessageCount) {
-      // New message arrived
-      if (isNearBottom) {
-        // User was near bottom → auto-scroll
+      if (autoScrollMode === 'force' || isNearBottom) {
         scrollToBottom('smooth');
+        setHasNewMessages(false);
       } else {
         // User scrolled up → do NOT auto-scroll (would lose reading position)
-        logger.info('📜 New message arrived, but user scrolled up - not auto-scrolling');
+        setHasNewMessages(true);
+        logger.info('📜 New message arrived, but user scrolled up - showing indicator instead of auto-scrolling');
       }
     }
 
     // Update prev count
     prevMessageCountRef.current = messageCount;
-  }, [messages.length, isNearBottom]);
+  }, [messages.length, isNearBottom, autoScrollMode]);
 
   /**
    * Initial scroll to bottom on first load
@@ -212,10 +237,12 @@ export function MessageList({ messages, isLoading, currentCharacterId, isMaster 
   // Loading state
   if (isLoading) {
     return (
-      <div className={styles.messageList}>
-        <div className={styles.loadingState}>
-          <div className={styles.loadingSpinner} role="status" aria-label="Loading messages" />
-          <p>Caricamento messaggi...</p>
+      <div className={styles.messageListWrapper}>
+        <div className={styles.messageList}>
+          <div className={styles.loadingState}>
+            <div className={styles.loadingSpinner} role="status" aria-label="Loading messages" />
+            <p>Caricamento messaggi...</p>
+          </div>
         </div>
       </div>
     );
@@ -224,10 +251,12 @@ export function MessageList({ messages, isLoading, currentCharacterId, isMaster 
   // Empty state
   if (messages.length === 0) {
     return (
-      <div className={styles.messageList}>
-        <div className={styles.messageListEmpty}>
-          <p>Nessun messaggio nella chat.</p>
-          <p>Inizia la conversazione!</p>
+      <div className={styles.messageListWrapper}>
+        <div className={styles.messageList}>
+          <div className={styles.messageListEmpty}>
+            <p>Nessun messaggio nella chat.</p>
+            <p>Inizia la conversazione!</p>
+          </div>
         </div>
       </div>
     );
@@ -235,26 +264,38 @@ export function MessageList({ messages, isLoading, currentCharacterId, isMaster 
 
   // Message list
   return (
-    <div
-      ref={listRef}
-      className={styles.messageList}
-      onScroll={handleScroll}
-      role="log"
-      aria-live="polite"
-      aria-relevant="additions"
-    >
-      {messages
-        .filter((message) => {
-          // Filter out messages not visible to current character
-          if (!currentCharacterId) return true; // Show all if no character context
-          return isMessageVisible(message, currentCharacterId, isMaster);
-        })
-        .map((message) => {
-          // Calculate if message should be dimmed based on current position
-          const isDimmed = shouldDimMessage(message, currentPosition);
+    <div className={styles.messageListWrapper}>
+      <div
+        ref={listRef}
+        className={styles.messageList}
+        onScroll={handleScroll}
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+      >
+        {messages
+          .filter((message) => {
+            // Filter out messages not visible to current character
+            if (!currentCharacterId) return true; // Show all if no character context
+            return isMessageVisible(message, currentCharacterId, isMaster);
+          })
+          .map((message) => {
+            // Calculate if message should be dimmed based on current position
+            const isDimmed = shouldDimMessage(message, currentPosition);
 
-          return <MessageItem key={message._id} message={message} isDimmed={isDimmed} />;
-        })}
+            return <MessageItem key={message._id} message={message} isDimmed={isDimmed} />;
+          })}
+      </div>
+
+      {autoScrollMode === 'button' && hasNewMessages && (
+        <button
+          type="button"
+          className={styles.newMessagesButton}
+          onClick={handleJumpToNewMessages}
+        >
+          ↓ Nuovi messaggi
+        </button>
+      )}
     </div>
   );
 }
