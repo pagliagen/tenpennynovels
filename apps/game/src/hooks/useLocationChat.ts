@@ -116,7 +116,7 @@ export function useLocationChat(
   const { selectedCharacter } = useAuthStore();
 
   // WebSocket context (single-reception-point pattern)
-  const { socket, onLocationEvent, setCurrentLocationId } = useWebSocket();
+  const { socket, onLocationEvent, onConnectionEvent, setCurrentLocationId } = useWebSocket();
 
   // Typing timeout ref
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -169,6 +169,34 @@ export function useLocationChat(
       logger.info(`🚪 Left location room: ${locationId}`);
     };
   }, [socket, locationId]);
+
+  /**
+   * Rejoin WebSocket Room on Reconnect
+   *
+   * The socket instance persists across reconnects (see WebSocketContext),
+   * so the join effect above only fires once per mount and never re-runs
+   * when the underlying connection drops and comes back. Server-side,
+   * Socket.IO rooms don't survive a disconnect - after any reconnect
+   * (network blip, backgrounded tab, server restart) this client silently
+   * falls out of `location_${locationId}` and stops receiving
+   * `location_message_notification` events, including for its own actions,
+   * until the page is manually reloaded. Mirrors the pattern already used
+   * in usePresence.ts for re-initializing after reconnect.
+   */
+  useEffect(() => {
+    if (!socket || !locationId) {
+      return;
+    }
+
+    const unsubscribe = onConnectionEvent((event) => {
+      if (event.type === 'reconnected') {
+        logger.info(`🔄 WebSocket reconnected - rejoining location room: ${locationId}`);
+        socket.emit('join_location', locationId);
+      }
+    });
+
+    return unsubscribe;
+  }, [socket, locationId, onConnectionEvent]);
 
   /**
    * Subscribe to WebSocket: New Messages
