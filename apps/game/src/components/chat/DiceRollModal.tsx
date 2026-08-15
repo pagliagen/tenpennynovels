@@ -11,6 +11,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 
 import styles from '@/styles/components/chat/DiceRollModal.module.scss';
 
@@ -47,7 +48,7 @@ interface DiceRollModalProps {
 export function DiceRollModal({
   onRoll,
   onClose,
-}: DiceRollModalProps): JSX.Element {
+}: DiceRollModalProps): JSX.Element | null {
   const [diceType, setDiceType] = useState<DiceType>(100);
   const [diceCount, setDiceCount] = useState<number>(1);
   const [modifier, setModifier] = useState<number>(0);
@@ -123,7 +124,9 @@ export function DiceRollModal({
 
   const canRoll = diceType && diceCount >= 1 && diceCount <= 20 && modifier >= -99 && modifier <= 99;
 
-  return (
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
     <div className={styles.modalOverlay} onClick={onClose} onKeyDown={handleKeyDown}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
@@ -257,6 +260,7 @@ export function DiceRollModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

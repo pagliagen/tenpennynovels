@@ -11,6 +11,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import styles from '@/styles/components/chat/SkillStatRollModal.module.scss';
 
@@ -55,7 +56,7 @@ export function SkillStatRollModal({
   stats = {},
   onRoll,
   onClose,
-}: SkillStatRollModalProps): JSX.Element {
+}: SkillStatRollModalProps): JSX.Element | null {
   const [activeTab, setActiveTab] = useState<'skills' | 'stats'>('skills');
   const [selectedSkill, setSelectedSkill] = useState('');
   const [selectedStat, setSelectedStat] = useState('');
@@ -87,7 +88,9 @@ export function SkillStatRollModal({
   const statsArray = Object.entries(stats);
   const canRoll = (activeTab === 'skills' && selectedSkill) || (activeTab === 'stats' && selectedStat);
 
-  return (
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
@@ -221,6 +224,7 @@ export function SkillStatRollModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

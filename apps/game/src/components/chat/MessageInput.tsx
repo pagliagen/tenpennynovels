@@ -16,6 +16,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 
 import { fakePngApi } from '@/lib/api/fakePng';
 import { locationPngApi } from '@/lib/api/locationPng';
@@ -771,7 +772,7 @@ export function MessageInput({
       )}
 
       {/* Pending Reaction Confirmation Modal */}
-      {showPendingReactionModal && (
+      {showPendingReactionModal && typeof window !== 'undefined' && createPortal(
         <div className={styles.modalOverlay} onClick={() => setShowPendingReactionModal(false)}>
           <div className={styles.confirmModal} onClick={(e) => e.stopPropagation()}>
             <h3>Reazione Pendente</h3>
@@ -794,7 +795,8 @@ export function MessageInput({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

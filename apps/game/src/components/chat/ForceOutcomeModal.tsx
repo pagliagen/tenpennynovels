@@ -10,6 +10,7 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { locationChatsApi } from '@/lib/api/locationChats';
 import styles from '@/styles/components/chat/ForceOutcomeModal.module.scss';
@@ -39,7 +40,7 @@ export function ForceOutcomeModal({
   defenderName,
   onClose,
   onSuccess,
-}: ForceOutcomeModalProps) {
+}: ForceOutcomeModalProps): JSX.Element | null {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,7 +64,9 @@ export function ForceOutcomeModal({
     }
   };
 
-  return (
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
@@ -105,6 +108,7 @@ export function ForceOutcomeModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

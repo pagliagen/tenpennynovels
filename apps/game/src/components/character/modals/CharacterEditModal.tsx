@@ -11,6 +11,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 import styles from '@/styles/components/character/CharacterEditModal.module.scss';
 
@@ -48,6 +49,7 @@ export function CharacterEditModal({
   onClose,
 }: CharacterEditModalProps): JSX.Element | null {
   if (!isOpen) return null;
+  if (typeof window === 'undefined') return null;
 
   /**
    * Handle overlay click (close modal)
@@ -68,7 +70,7 @@ export function CharacterEditModal({
     }
   };
 
-  return (
+  return createPortal(
     <div
       className={styles.modalOverlay}
       onClick={handleOverlayClick}
@@ -96,6 +98,7 @@ export function CharacterEditModal({
         {/* Body (form content) */}
         <div className={styles.modalBody}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

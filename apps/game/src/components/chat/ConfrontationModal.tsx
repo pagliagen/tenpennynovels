@@ -13,6 +13,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 
 import { locationChatsApi } from '@/lib/api/locationChats';
 import styles from '@/styles/components/chat/ConfrontationModal.module.scss';
@@ -53,7 +54,7 @@ export function ConfrontationModal({
   currentPosition,
   onClose,
   onSuccess,
-}: ConfrontationModalProps) {
+}: ConfrontationModalProps): JSX.Element | null {
   const [step, setStep] = useState<WizardStep>(1);
   const [selectedType, setSelectedType] = useState<ConfrontationType | null>(null);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
@@ -138,7 +139,9 @@ export function ConfrontationModal({
     setError(null);
   };
 
-  return (
+  if (typeof window === 'undefined') return null;
+
+  return createPortal(
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
@@ -279,6 +282,7 @@ export function ConfrontationModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
