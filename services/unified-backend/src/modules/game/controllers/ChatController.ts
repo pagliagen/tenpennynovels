@@ -406,6 +406,7 @@ export class ChatController {
           diceSpec,
           skillId,
           statName,
+          itemId,
           position: position || undefined,
           isHidden: shouldHide,
           sessionId,
