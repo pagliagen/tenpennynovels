@@ -143,3 +143,73 @@ Rispondi in ${lang}.`;
     },
   };
 }
+
+interface EnrichResult {
+  enrichment: string | null;
+  metadata: { model: string; tokensUsed: number };
+}
+
+// Sentinella richiesta al modello per il caso "questa fonte non aggiunge
+// nulla di nuovo": più affidabile di un campo booleano separato che
+// costringerebbe a un secondo giro o a un JSON strutturato per una risposta
+// che deve restare un singolo blocco di testo libero.
+const NOTHING_NEW_MARKER = 'NIENTE_DI_NUOVO';
+
+/**
+ * Arricchimento progressivo (Bibliotecario): dato che il giocatore ha già
+ * ricevuto `previousAnswer` (la risposta iniziale più gli arricchimenti già
+ * mandati), genera un blocco breve con SOLO ciò che questa fonte aggiunge di
+ * nuovo — non un'altra risposta completa alla domanda. Usata da
+ * bibliotecario/extensions/searchStream.ts in un loop rank-per-rank: una
+ * chiamata per fonte, non un'unica chiamata con tutto il contesto insieme
+ * (quella resta askWithContext, usata solo per il rank più alto).
+ */
+export async function enrichAnswer(
+  question: string,
+  previousAnswer: string,
+  chunk: ContextChunk,
+  locale: string = 'it',
+  maxTokens: number = config.qa.maxEnrichmentTokens
+): Promise<EnrichResult> {
+  const lang = locale === 'it' ? 'italiano' : 'English';
+  const content = truncateAtBoundary(chunk.content || '', config.qa.maxChunkChars);
+
+  const systemPrompt = `Sei il Bibliotecario, l'assistente esperto di un gioco di ruolo play-by-chat ambientato nell'epoca vittoriana (Londra, 1885-1895).
+Hai già risposto alla domanda del giocatore. Ora hai trovato un'altra fonte pertinente: il tuo compito è dire SOLO le informazioni nuove che questa fonte aggiunge, non ripetere quanto già detto.
+Scrivi 1-3 frasi brevi, fluide, come se fosse conoscenza tua: MAI dire "il documento", "nel contesto", "questa fonte" o simili.
+Se questa fonte non contiene nulla di rilevante che non sia già coperto dalla risposta già data, rispondi ESATTAMENTE con: ${NOTHING_NEW_MARKER}
+Rispondi in ${lang}.`;
+
+  const userMessage = `Domanda del giocatore: ${question}
+
+Risposta già data al giocatore:
+${previousAnswer}
+
+Fonte aggiuntiva da valutare:
+${chunk.heading}
+${content}`;
+
+  const startMs = Date.now();
+  const { text, tokensUsed, metrics } = await ollamaChat.chat(systemPrompt, userMessage, maxTokens);
+  const elapsed = Date.now() - startMs;
+
+  const cleaned = text.replace(/\[\d+\]/g, '').replace(/  +/g, ' ').trim();
+  const isNothingNew = cleaned.toUpperCase().includes(NOTHING_NEW_MARKER);
+
+  logger.info('RAG enrichment generated', {
+    elapsedMs: elapsed,
+    tokensUsed,
+    heading: chunk.heading,
+    isNothingNew,
+    promptTokens: metrics.promptTokens,
+    answerTokens: metrics.answerTokens,
+  });
+
+  return {
+    enrichment: isNothingNew ? null : cleaned,
+    metadata: {
+      model: config.services.ollama.model,
+      tokensUsed,
+    },
+  };
+}

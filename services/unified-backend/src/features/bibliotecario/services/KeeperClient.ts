@@ -24,6 +24,13 @@ interface KeeperAnswer {
   error?: string;
 }
 
+interface KeeperEnrichment {
+  success: boolean;
+  enrichment?: string | null;
+  metadata?: { model: string; tokensUsed: number };
+  error?: string;
+}
+
 export class KeeperClient {
   // Ollama availability è cachata brevemente: più domande nella stessa
   // finestra non devono ripetere un ping live a embeddings-worker /health
@@ -78,6 +85,37 @@ export class KeeperClient {
       return await response.json() as KeeperAnswer;
     } catch (error: unknown) {
       logger.error(`[KeeperClient] Error in ask: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
+    }
+  }
+
+  /**
+   * Arricchimento progressivo via embeddings-worker /ask/enrich: una fonte
+   * alla volta, non l'intero contesto insieme (quello è ask()). Usata dal
+   * loop rank-per-rank in extensions/searchStream.ts.
+   */
+  static async enrich(payload: {
+    question: string;
+    previousAnswer: string;
+    chunk: ContextChunk;
+    options?: { maxTokens?: number; locale?: string };
+  }): Promise<KeeperEnrichment | null> {
+    try {
+      const response = await fetch(`${EMBEDDINGS_SERVICE_URL}/ask/enrich`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(30000)
+      });
+
+      if (!response.ok) {
+        logger.error(`[KeeperClient] /ask/enrich error: ${response.status}`);
+        return null;
+      }
+
+      return await response.json() as KeeperEnrichment;
+    } catch (error: unknown) {
+      logger.error(`[KeeperClient] Error in enrich: ${error instanceof Error ? error.message : String(error)}`);
       return null;
     }
   }

@@ -11,7 +11,7 @@ import { config, DocumentType } from '../config';
 import { logger } from '../utils/logger';
 import { validateTextLength, validateSearchParams } from '../utils/validation';
 import { checkOllamaHealth } from '../services/qa/OllamaChat';
-import { askWithContext } from '../services/qa/RAGPipeline';
+import { askWithContext, enrichAnswer } from '../services/qa/RAGPipeline';
 import { extractKeywords } from '../services/qa/AnswerEvaluator';
 import { extractInsight } from '../services/qa/DocumentInsightExtractor';
 import { classifySceneContinuation } from '../services/qa/SceneClassifier';
@@ -217,6 +217,44 @@ export class EmbeddingsHttpServer {
         res.json({ success: true, ...result });
       } catch (error: any) {
         logger.error('Error in /ask endpoint', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+      }
+    });
+
+    /**
+     * RAG progressive enrichment (Bibliotecario): dato che il giocatore ha
+     * già ricevuto previousAnswer, genera SOLO ciò che chunk aggiunge di
+     * nuovo — una chiamata per fonte, usata dal loop rank-per-rank lato
+     * unified-backend (bibliotecario/extensions/searchStream.ts), non da
+     * /ask che risponde con tutto il contesto insieme in una volta sola.
+     * POST /ask/enrich
+     * Body: { question: string, previousAnswer: string, chunk: {heading, content, source?}, options?: {maxTokens?, locale?} }
+     */
+    this.app.post('/ask/enrich', async (req: Request, res: Response) => {
+      try {
+        const { question, previousAnswer, chunk, options } = req.body;
+
+        if (!question || typeof question !== 'string') {
+          return res.status(400).json({ success: false, error: 'Missing or invalid question parameter' });
+        }
+        if (!previousAnswer || typeof previousAnswer !== 'string') {
+          return res.status(400).json({ success: false, error: 'Missing or invalid previousAnswer parameter' });
+        }
+        if (!chunk || typeof chunk !== 'object' || typeof chunk.content !== 'string') {
+          return res.status(400).json({ success: false, error: 'Missing or invalid chunk parameter' });
+        }
+
+        const result = await enrichAnswer(
+          question,
+          previousAnswer,
+          chunk,
+          options?.locale || 'it',
+          options?.maxTokens || config.qa.maxEnrichmentTokens
+        );
+
+        res.json({ success: true, ...result });
+      } catch (error: any) {
+        logger.error('Error in /ask/enrich endpoint', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
       }
     });
