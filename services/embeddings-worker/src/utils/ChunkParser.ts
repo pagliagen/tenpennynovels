@@ -214,3 +214,62 @@ function generateSlug(text: string): string {
     remove: /[*+~.()'"!:@]/g
   });
 }
+
+/** Un pezzo di ParsedChunk dopo lo split per lunghezza: stesso heading/slug dei fratelli, indice di posizione. */
+export interface ChunkPiece extends ParsedChunk {
+  splitIndex: number;
+  splitTotal: number;
+}
+
+/**
+ * Spezza `content` in pezzi che stanno entro `maxChars`, tagliando a un
+ * confine di paragrafo/frase quando possibile. A differenza di un troncamento
+ * (che scarta il resto), qui il ciclo continua finché tutto `content` è stato
+ * distribuito in qualche pezzo: nessun contenuto va perso, va solo diviso.
+ */
+function splitContentByBoundary(content: string, maxChars: number): string[] {
+  if (content.length <= maxChars) return [content];
+
+  const pieces: string[] = [];
+  let remaining = content;
+
+  while (remaining.length > maxChars) {
+    const window = remaining.slice(0, maxChars);
+    let cut = Math.max(window.lastIndexOf('\n\n'), window.lastIndexOf('. '));
+    if (cut < maxChars * 0.5) {
+      cut = window.lastIndexOf(' ');
+    }
+    if (cut <= 0) cut = maxChars - 1; // nessun confine decente: taglio secco
+
+    pieces.push(remaining.slice(0, cut + 1).trim());
+    remaining = remaining.slice(cut + 1);
+  }
+
+  if (remaining.trim()) pieces.push(remaining.trim());
+  return pieces;
+}
+
+/**
+ * Se `chunk.content` supera `maxContentChars` (budget residuo dopo aver
+ * sottratto title+heading dal limite del subprocess Python, vedi
+ * config.embeddings.maxTextChars), lo spezza in più pezzi che condividono
+ * `slug`— la chiave di riaggancio: chi legge (DocumentController.semanticSearch)
+ * usa `{documentId, slug}` per recuperare TUTTI i pezzi e ricomporre la
+ * sezione intera, indipendentemente da quale pezzo abbia fatto match nella
+ * ricerca vettoriale. Se il chunk sta già nel budget, ritorna un singolo
+ * pezzo con splitIndex 0 / splitTotal 1 — comportamento invariato per la
+ * quasi totalità dei chunk.
+ */
+export function splitOversizedChunk(chunk: ParsedChunk, maxContentChars: number): ChunkPiece[] {
+  if (chunk.content.length <= maxContentChars) {
+    return [{ ...chunk, splitIndex: 0, splitTotal: 1 }];
+  }
+
+  const pieces = splitContentByBoundary(chunk.content, maxContentChars);
+  return pieces.map((content, splitIndex) => ({
+    ...chunk,
+    content,
+    splitIndex,
+    splitTotal: pieces.length,
+  }));
+}

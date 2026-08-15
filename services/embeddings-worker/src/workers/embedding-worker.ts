@@ -33,7 +33,7 @@ import {
 } from '../types/events';
 import { PythonEmbeddingService, ModerationResult } from '../services/PythonEmbeddingService';
 import { DLQService } from '../services/DLQService';
-import { parseChunks, ParsedChunk } from '../utils/ChunkParser';
+import { parseChunks, ParsedChunk, ChunkPiece, splitOversizedChunk } from '../utils/ChunkParser';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 import {
@@ -541,6 +541,21 @@ export class EmbeddingWorker {
   }
 
   /**
+   * UUID deterministico da una stringa arbitraria (MD5 produce esattamente 32
+   * hex, la stessa lunghezza richiesta dal formato dash-separato di
+   * objectIdToUUID sopra). Usato per i point ID dei chunk documento: stesso
+   * input (documentId+slug+splitIndex) → stesso point ID, quindi un
+   * re-embed/retry fa upsert sul punto esistente invece di crearne uno nuovo
+   * — a differenza di crypto.randomUUID() (usato altrove in questo file per
+   * eventi che non vengono mai ri-processati sullo stesso ID, es. chat/forum),
+   * che qui produrrebbe un punto orfano ad ogni tentativo.
+   */
+  private stableUUID(input: string): string {
+    const hex = crypto.createHash('md5').update(input).digest('hex');
+    return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20,32)}`;
+  }
+
+  /**
    * Handle document embedding event
    */
   private async handleDocumentEvent(event: DocumentEmbeddingEvent): Promise<void> {
@@ -561,11 +576,26 @@ export class EmbeddingWorker {
         return;
       }
 
-      // ✅ Process each chunk: generate embedding + save to DB/Qdrant/ElasticSearch
+      // Spezza le sezioni troppo lunghe per il subprocess Python (vedi
+      // config.embeddings.maxTextChars) PRIMA di generare l'embedding: senza
+      // questo il chunk viene rifiutato in blocco e finisce in DLQ dopo 3
+      // retry, perdendo l'intera sezione dalla ricerca. Il budget sottrae
+      // title+heading+separatori, che fanno parte del testo effettivamente
+      // mandato al Python (vedi chunkText sotto).
+      const pieces: ChunkPiece[] = chunks.flatMap((chunk) => {
+        const overhead = event.title.length + chunk.heading.length + 3; // "\n" + "\n\n"
+        const maxContentChars = Math.max(500, config.embeddings.maxTextChars - overhead - 100);
+        return splitOversizedChunk(chunk, maxContentChars);
+      });
+      if (pieces.length > chunks.length) {
+        logger.info(`   ✂️  ${chunks.length} sezioni espanse in ${pieces.length} pezzi (split per lunghezza)`);
+      }
+
+      // ✅ Process each piece: generate embedding + save to DB/Qdrant/ElasticSearch
       let processedChunks = 0;
       const errors: Error[] = [];
 
-      for (const chunk of chunks) {
+      for (const chunk of pieces) {
         try {
           const chunkText = `${event.title}\n${chunk.heading}\n\n${chunk.content}`;
 
@@ -597,21 +627,21 @@ export class EmbeddingWorker {
           }
 
           // Save chunk to MongoDB + Qdrant + ElasticSearch
-          await this.saveDocumentChunk(event.documentId, chunk, embedding, event.type);
+          await this.saveDocumentChunk(event.documentId, chunk, embedding, event.type, chunk.splitIndex, chunk.splitTotal);
           processedChunks++;
 
         } catch (chunkError) {
-          logger.error(`   ❌ Error processing chunk "${chunk.heading}":`, chunkError);
+          logger.error(`   ❌ Error processing chunk "${chunk.heading}" (split ${chunk.splitIndex + 1}/${chunk.splitTotal}):`, chunkError);
           errors.push(chunkError as Error);
         }
       }
 
       // If ANY chunk failed, throw error to trigger BullMQ retry
       if (errors.length > 0) {
-        throw new Error(`Failed to process ${errors.length}/${chunks.length} chunks. First error: ${errors[0].message}`);
+        throw new Error(`Failed to process ${errors.length}/${pieces.length} chunks. First error: ${errors[0].message}`);
       }
 
-      logger.info(`✅ Document chunked and embedded: ${event.title} (${processedChunks}/${chunks.length} chunks)`);
+      logger.info(`✅ Document chunked and embedded: ${event.title} (${processedChunks}/${pieces.length} chunks)`);
 
     } catch (error) {
       logger.error('❌ Error processing document embedding event:', error);
@@ -711,8 +741,21 @@ export class EmbeddingWorker {
         }
       }
 
-      // Note: Moderation disabled - dead code removed (event._source was always undefined)
-      const moderation: ModerationResult | null = null;
+      let moderation: ModerationResult | null = null;
+      const moderationConfig = await this.getModerationConfig();
+
+      if (moderationConfig.enabled) {
+        try {
+          moderation = await this.pythonService.moderateText(event.content);
+          logger.info(`🛡️ Moderation: ${moderation.label} (${moderation.score}) for ${event.characterName}`);
+
+          if (moderation.label === 'toxic' && moderation.score >= moderationConfig.threshold) {
+            await this.createModerationAlert(event, locationName, locationSlug, moderation);
+          }
+        } catch (moderationError) {
+          logger.error('⚠️ Moderation failed (embedding will still be saved):', moderationError);
+        }
+      }
 
       // ✅ Save embedding + moderation to DB
       await this.saveChatEmbeddingAndModeration(event.chatId, locationName, embedding, moderation);
@@ -1094,7 +1137,9 @@ export class EmbeddingWorker {
       ]);
 
       this.moderationConfigCache = {
-        enabled: enabledDoc?.value === true,
+        // Default attivo: assente/valore non booleano => true, non false.
+        // Solo un valore booleano esplicito (incluso false) sovrascrive il default.
+        enabled: typeof enabledDoc?.value === 'boolean' ? enabledDoc.value : true,
         threshold: typeof thresholdDoc?.value === 'number' ? thresholdDoc.value : 0.7
       };
       this.moderationConfigCacheTime = now;
@@ -1350,23 +1395,36 @@ export class EmbeddingWorker {
     documentId: string,
     chunk: ParsedChunk,
     embedding: number[],
-    documentType: 'ambientazione' | 'regolamento' | 'lore'
+    documentType: 'ambientazione' | 'regolamento' | 'lore',
+    splitIndex: number = 0,
+    splitTotal: number = 1
   ): Promise<void> {
     const db = mongoose.connection.db;
     if (!db) {
       throw new Error('MongoDB connection not available');
     }
 
-    // Generate IDs
-    const chunkId = crypto.randomUUID();
-    const pointId = crypto.randomUUID();
+    // ID deterministici da (documentId, slug, splitIndex): un retry di Bull o
+    // un re-embed dopo modifica del documento sovrascrive lo stesso punto
+    // invece di crearne uno nuovo. Con crypto.randomUUID() (comportamento
+    // precedente) ogni tentativo produceva un punto orfano che nessuna query
+    // successiva cancellava mai — vedi incidente 2026-08-15, Qdrant/ES a 3818
+    // punti contro 453 chunk reali in Mongo.
+    const chunkKey = `${documentId}:${chunk.slug}:${splitIndex}`;
+    const chunkId = chunkKey;
+    const pointId = this.stableUUID(chunkKey);
 
     // ✅ Save chunk to MongoDB documentchunks collection
+    // Chiave di upsert include splitIndex: una sezione spezzata in più pezzi
+    // (splitTotal > 1) deve produrre più righe distinte, non sovrascriversi
+    // a vicenda. slug+documentId restano la chiave di RIAGGANCIO per il
+    // retrieval (DocumentController.semanticSearch ricompone i fratelli).
     try {
       await db.collection('documentchunks').updateOne(
         {
           documentId,
-          slug: chunk.slug
+          slug: chunk.slug,
+          splitIndex
         },
         {
           $set: {
@@ -1378,6 +1436,8 @@ export class EmbeddingWorker {
             headingLevel: chunk.headingLevel,
             parentSlug: chunk.parentSlug,
             order: chunk.order,
+            splitIndex,
+            splitTotal,
             isActive: true,
             embeddingModel: config.embeddings.model,
             lastUpdated: new Date()
@@ -1404,6 +1464,8 @@ export class EmbeddingWorker {
           documentType,
           headingLevel: chunk.headingLevel,
           parentSlug: chunk.parentSlug,
+          splitIndex,
+          splitTotal,
           isActive: true,
           order: chunk.order
         }
@@ -1424,6 +1486,8 @@ export class EmbeddingWorker {
           documentType,
           headingLevel: chunk.headingLevel,
           parentSlug: chunk.parentSlug,
+          splitIndex,
+          splitTotal,
           isActive: true,
           order: chunk.order
         }

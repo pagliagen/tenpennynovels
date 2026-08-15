@@ -56,6 +56,9 @@ export const config = {
     maxAnswerTokens: parseInt(process.env.QA_MAX_ANSWER_TOKENS || '250', 10),
     maxContextChars: parseInt(process.env.QA_MAX_CONTEXT_CHARS || '6000', 10),
     maxChunkChars: parseInt(process.env.QA_MAX_CHUNK_CHARS || '1500', 10),
+    // Arricchimento progressivo (Bibliotecario): risposta più breve della
+    // principale, è un'aggiunta puntuale non un altro paragrafo completo.
+    maxEnrichmentTokens: parseInt(process.env.QA_MAX_ENRICHMENT_TOKENS || '150', 10),
   },
 
   // HTTP server
@@ -75,6 +78,11 @@ export const config = {
     model: 'paraphrase-multilingual-MiniLM-L12-v2',
     dimensions: 384,
     cacheTTL: 3600, // 1 hour
+    // Deve combaciare con MAX_TEXT_LENGTH in python/embedding_server.py:
+    // oltre questa soglia il subprocess Python rifiuta il testo (nessun
+    // troncamento). embedding-worker.ts spezza i chunk di sezione (H2/H3)
+    // troppo lunghi PRIMA di arrivare qui, per non perdere contenuto.
+    maxTextChars: parseInt(process.env.EMBEDDING_MAX_TEXT_CHARS || '10000', 10),
   },
 
   // Moderation constants
