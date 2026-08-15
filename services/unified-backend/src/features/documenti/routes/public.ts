@@ -9,7 +9,6 @@ import { Router, Request } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { DocumentController } from '../controllers/DocumentController';
 import { AuthMiddleware } from '@modules/game/middleware/auth';
-import { requireGamePermission } from '@modules/game/middleware/gamePermissions';
 
 const router = Router();
 
@@ -52,18 +51,21 @@ router.get('/:type/:path', publicLimiter, AuthMiddleware.optionalAuth, DocumentC
 // ========== AUTHENTICATED ROUTES ==========
 
 // List user favorites
+// Feature a livello account (DocumentController usa solo req.user, mai
+// req.character): requireCharacterAuth + requireGamePermission richiedevano
+// un personaggio/sessione di gioco per una feature che non ne ha bisogno,
+// rompendo la chiamata da apps/documents quando non c'è un sessionId di
+// gioco attivo (NO_CHARACTER_CONTEXT anche per un utente autenticato).
 router.get('/favorites',
   publicLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:documents:favorites:read'),
+  AuthMiddleware.requireUserAuth,
   DocumentController.getFavorites
 );
 
 // Toggle favorite (nested path)
 router.post('/:type/:category/:slug/favorite',
   publicLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:documents:favorites:toggle'),
+  AuthMiddleware.requireUserAuth,
   (req, res) => {
     (req.params as Record<string, string>).path = `${req.params.category}/${req.params.slug}`;
     return DocumentController.toggleFavorite(req as Request<{ type: string; path: string }>, res);
@@ -73,8 +75,7 @@ router.post('/:type/:category/:slug/favorite',
 // Toggle favorite (single-level path)
 router.post('/:type/:path/favorite',
   publicLimiter,
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:documents:favorites:toggle'),
+  AuthMiddleware.requireUserAuth,
   DocumentController.toggleFavorite
 );
 
