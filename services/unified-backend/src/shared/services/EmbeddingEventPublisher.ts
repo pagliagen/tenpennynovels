@@ -36,6 +36,9 @@ export async function publishDocumentEvent(
     _id: string;
     title: string;
     content: string;
+    // Tiptap Delta JSON, non tipizzato in tutto il repo (vedi IDocument.contentDelta
+    // in models/Document.ts) — stesso any, non uno nuovo introdotto qui.
+    contentDelta: any;
     type: 'ambientazione' | 'approfondimenti' | 'regolamento';
   }
 ): Promise<void> {
@@ -50,6 +53,11 @@ export async function publishDocumentEvent(
       documentId: document._id.toString(),
       title: document.title,
       content: document.content,
+      // Senza questo campo embeddings-worker.handleDocumentEvent() esce subito
+      // (nessun contentDelta => nessun chunking, solo un warning in log): era
+      // il caso reale finché questo campo non veniva inviato — vedi incidente
+      // 2026-08-15, ogni salvataggio da CMS non aggiornava l'indice di ricerca.
+      contentDelta: document.contentDelta,
       type: document.type
     };
 

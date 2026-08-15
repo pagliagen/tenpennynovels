@@ -215,6 +215,7 @@ DocumentSchema.post('save', async function(doc) {
       _id: doc._id.toString(),
       title: doc.title,
       content: doc.content || '',
+      contentDelta: doc.contentDelta,
       type: doc.type
     });
   } catch (error) {

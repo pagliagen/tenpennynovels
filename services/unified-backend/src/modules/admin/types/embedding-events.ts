@@ -32,6 +32,7 @@ export interface DocumentEmbeddingEvent extends BaseEmbeddingEvent {
   documentId: string;
   title: string;
   content: string;
+  contentDelta?: any;
   type: 'ambientazione' | 'regolamento' | 'lore';
 }
 
