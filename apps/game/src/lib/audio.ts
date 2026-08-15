@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { useUIStore } from '@/store/uiStore';
 /**
  * Audio notification utilities
  * Plays notification sounds for in-game events
@@ -6,16 +7,18 @@ import { logger } from '@/lib/logger';
 
 /**
  * Play notification sound
- * Uses audio files in /public/audio/
+ *
+ * Uses whichever file the user picked in Opzioni Chat (uiStore.chatNotificationSound,
+ * one of the two files in /public/audio/, or 'none' to stay silent).
  */
 export function playNotificationSound(volume: number = 0.5): void {
-  try {
-    // Random between 001 and 002
-    const soundFile = Math.random() > 0.5
-      ? '/audio/new-notification-001.mp3'
-      : '/audio/new-notification-002.mp3';
+  const sound = useUIStore.getState().chatNotificationSound;
+  if (sound === 'none') {
+    return;
+  }
 
-    const audio = new Audio(soundFile);
+  try {
+    const audio = new Audio(`/audio/${sound}.mp3`);
     audio.volume = volume;
     audio.play().catch(err => {
       logger.warn('Failed to play notification sound:', { err });

@@ -451,6 +451,10 @@
   font-family: 'Playfair Display', serif;
   color: var(--color-text-primary);
   opacity: 0.85;
+
+  .optionGroup + & {
+    margin-top: 28px;
+  }
 }
 
 .optionGroup {
@@ -487,7 +491,32 @@
   }
 }
 
+.optionPreviewButton {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(184, 134, 11, 0.15);
+  border: 1px solid rgba(184, 134, 11, 0.4);
+  border-radius: 50%;
+  color: var(--color-accent);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(184, 134, 11, 0.3);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
 .optionCardText {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;

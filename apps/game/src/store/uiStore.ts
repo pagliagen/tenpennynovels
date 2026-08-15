@@ -44,6 +44,18 @@ export type Theme = 'victorian' | 'dark' | 'light';
 export type ChatAutoScrollMode = 'button' | 'force';
 
 /**
+ * Chat Notification Sound
+ *
+ * Which sound (if any) plays via playNotificationSound() (see lib/audio.ts)
+ * for new chat/ticket/forum notifications. One of the two files in
+ * public/audio/, or 'none' to mute it.
+ *
+ * @typedef {'new-notification-001' | 'new-notification-002' | 'none'} ChatNotificationSound
+ * @since 2.2.0
+ */
+export type ChatNotificationSound = 'new-notification-001' | 'new-notification-002' | 'none';
+
+/**
  * Modal State Type
  *
  * Tracks open/closed state of application modals.
@@ -111,6 +123,9 @@ interface UIState {
 
   /** Chat auto-scroll behavior when reading older messages (see ChatAutoScrollMode) */
   chatAutoScrollMode: ChatAutoScrollMode;
+
+  /** Sound played by playNotificationSound() for new messages from others (see ChatNotificationSound) */
+  chatNotificationSound: ChatNotificationSound;
 }
 
 /**
@@ -204,6 +219,14 @@ interface UIActions {
    * @returns {void}
    */
   setChatAutoScrollMode: (mode: ChatAutoScrollMode) => void;
+
+  /**
+   * Set chat notification sound
+   *
+   * @param {ChatNotificationSound} sound - one of the two files, or 'none'
+   * @returns {void}
+   */
+  setChatNotificationSound: (sound: ChatNotificationSound) => void;
 }
 
 /**
@@ -263,6 +286,7 @@ export const useUIStore = create<UIStore>()(
       toasts: [],
       isLoading: false,
       chatAutoScrollMode: 'button',
+      chatNotificationSound: 'new-notification-001',
 
       /**
        * Set application theme
@@ -435,6 +459,18 @@ export const useUIStore = create<UIStore>()(
       setChatAutoScrollMode: (mode) => {
         set({ chatAutoScrollMode: mode });
       },
+
+      /**
+       * Set chat notification sound
+       *
+       * @function setChatNotificationSound
+       * @param {ChatNotificationSound} sound - one of the two files, or 'none'
+       * @returns {void}
+       * @since 2.2.0
+       */
+      setChatNotificationSound: (sound) => {
+        set({ chatNotificationSound: sound });
+      },
     }),
     {
       name: 'tpn_ui_state', // localStorage key
@@ -443,6 +479,7 @@ export const useUIStore = create<UIStore>()(
         theme: state.theme,
         sidebarCollapsed: state.sidebarCollapsed,
         chatAutoScrollMode: state.chatAutoScrollMode,
+        chatNotificationSound: state.chatNotificationSound,
       }),
       onRehydrateStorage: () => (state) => {
         // Apply theme after hydration
@@ -481,4 +518,7 @@ export const uiSelectors = {
 
   /** Select chat auto-scroll mode */
   chatAutoScrollMode: (state: UIStore) => state.chatAutoScrollMode,
+
+  /** Select chat notification sound */
+  chatNotificationSound: (state: UIStore) => state.chatNotificationSound,
 } as const;

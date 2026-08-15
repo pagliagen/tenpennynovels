@@ -81,6 +81,21 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   const chatAutoScrollMode = useUIStore(uiSelectors.chatAutoScrollMode);
   const setChatAutoScrollMode = useUIStore((state) => state.setChatAutoScrollMode);
 
+  // Chat notification sound preference (Opzioni Chat popup)
+  const chatNotificationSound = useUIStore(uiSelectors.chatNotificationSound);
+  const setChatNotificationSound = useUIStore((state) => state.setChatNotificationSound);
+
+  /**
+   * Preview a notification sound (Opzioni Chat popup)
+   */
+  const handlePreviewSound = useCallback((sound: 'new-notification-001' | 'new-notification-002') => {
+    const audio = new Audio(`/audio/${sound}.mp3`);
+    audio.volume = 0.5;
+    audio.play().catch((error) => {
+      logger.warn('[GameLayout] Failed to preview notification sound:', { error });
+    });
+  }, []);
+
   // Sidebar responsive: sotto COMPACT_LAYOUT_BREAKPOINT non c'è più spazio per la
   // colonna fissa (325px sidebar + 1024px mainContent = 1349px richiesti) - diventa
   // un drawer a comparsa invece di stare sempre nel flusso. Stessa soglia usata da
@@ -662,6 +677,70 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
                   <span className={styles.optionCardText}>
                     <strong>Scorri sempre in fondo</strong>
                     <span>Ogni nuovo messaggio ti riporta subito in fondo alla chat, anche se stavi leggendo più in alto.</span>
+                  </span>
+                </label>
+              </div>
+
+              <div className={styles.optionGroupLabel}>
+                Suono quando arriva un messaggio da un altro personaggio:
+              </div>
+              <div className={styles.optionGroup} role="radiogroup" aria-label="Suono notifica chat">
+                <label className={styles.optionCard}>
+                  <input
+                    type="radio"
+                    name="chatNotificationSound"
+                    value="new-notification-001"
+                    checked={chatNotificationSound === 'new-notification-001'}
+                    onChange={() => setChatNotificationSound('new-notification-001')}
+                  />
+                  <span className={styles.optionCardText}>
+                    <strong>Suono 1</strong>
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.optionPreviewButton}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePreviewSound('new-notification-001');
+                    }}
+                    aria-label="Ascolta Suono 1"
+                  >
+                    ▶
+                  </button>
+                </label>
+                <label className={styles.optionCard}>
+                  <input
+                    type="radio"
+                    name="chatNotificationSound"
+                    value="new-notification-002"
+                    checked={chatNotificationSound === 'new-notification-002'}
+                    onChange={() => setChatNotificationSound('new-notification-002')}
+                  />
+                  <span className={styles.optionCardText}>
+                    <strong>Suono 2</strong>
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.optionPreviewButton}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePreviewSound('new-notification-002');
+                    }}
+                    aria-label="Ascolta Suono 2"
+                  >
+                    ▶
+                  </button>
+                </label>
+                <label className={styles.optionCard}>
+                  <input
+                    type="radio"
+                    name="chatNotificationSound"
+                    value="none"
+                    checked={chatNotificationSound === 'none'}
+                    onChange={() => setChatNotificationSound('none')}
+                  />
+                  <span className={styles.optionCardText}>
+                    <strong>Nessun suono</strong>
                   </span>
                 </label>
               </div>

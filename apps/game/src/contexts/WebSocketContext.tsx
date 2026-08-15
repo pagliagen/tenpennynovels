@@ -426,8 +426,11 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
         }
 
         if (shouldNotify) {
-          // Play audio notification
-          playNotificationSound();
+          // Play audio notification - never for your own message (e.g. a whisper
+          // you sent notifies you as sender too, see the visibility check above)
+          if (message.characterId !== character._id) {
+            playNotificationSound();
+          }
 
           // Show clickable toast that navigates to the location chat
           useUIStore.getState().addToast({
