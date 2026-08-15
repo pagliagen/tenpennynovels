@@ -4,6 +4,7 @@ import { ChatScene, type IChatScene } from '../models/ChatScene';
 import { CharacterChatScene } from '../models/CharacterChatScene';
 import { logger } from '@modules/game/logger';
 import { EmbeddingService } from '@features/documenti/api';
+import { FeatureFlagService } from '@core/features/flags';
 
 /**
  * Segmenta la chat "standard" di una location in scene narrative per
@@ -74,7 +75,13 @@ export class ChatSceneService {
     }
 
     // Unico ramo IA: personaggio nuovo, una scena è già aperta in questa location.
-    const continuesOpenScene = await ChatSceneService.classifyContinuation(openScene, characterName, content);
+    // Flag fineSessioneAi spento => nessuna chiamata AI, si tratta subito come
+    // indipendente: stesso fallback già usato oggi per errore/timeout (vedi
+    // il catch di classifyContinuation), raggiunto qui per una via diversa.
+    const aiEnabled = await FeatureFlagService.isEnabled('fineSessioneAi');
+    const continuesOpenScene = aiEnabled
+      ? await ChatSceneService.classifyContinuation(openScene, characterName, content)
+      : false;
 
     if (continuesOpenScene) {
       openScene.lastActivityAt = timestamp;

@@ -7,11 +7,21 @@ import gameRoutes from './routes/game';
  * indipendente rilevato via IA), fork in copie personali per personaggio
  * con titolo/riassunto generati via AI.
  *
- * Niente flag manifest: il cron di chiusura è gestito da
- * `appConfig.features.sceneClosing`, un flag statico letto da config/runtime
- * (non il meccanismo SystemConfiguration/Redis usato da FeatureManifest.flag)
- * — due meccanismi distinti, non unificati in questa fase. Il gate resta in
- * server.ts, invariato.
+ * Niente flag manifest sulla feature base: il cron di chiusura per timeout
+ * è gestito da `appConfig.features.sceneClosing`, un flag statico letto da
+ * config/runtime (non il meccanismo SystemConfiguration/Redis usato da
+ * FeatureManifest.flag) — deve girare sempre, non è disattivabile a runtime.
+ * Il gate resta in server.ts, invariato.
+ *
+ * La sola componente AI (classificazione continua/indipendente in
+ * ChatSceneService.classifyContinuation, chiamata da handleStandardMessage)
+ * è invece disattivabile: vedi il manifest `fineSessioneAi` sotto, flag
+ * separato risolto tramite FeatureFlagService (stesso meccanismo di
+ * `bibliotecario`). Se spenta, un personaggio nuovo chiude sempre subito la
+ * scena aperta — lo stesso comportamento già usato oggi in caso di
+ * errore/timeout della classificazione (vedi il catch in
+ * classifyContinuation): nessun branch nuovo, solo lo stesso fallback
+ * raggiunto per una via diversa.
  *
  * dependsOn: ['documenti'] — ChatSceneService.ts usa EmbeddingService da
  * @features/documenti/api per summarizeScene/classifySceneContinuation, i
@@ -38,4 +48,24 @@ export const fineSessione: FeatureManifest = {
   routes: [
     { scope: 'game', path: '/', router: gameRoutes },
   ],
+};
+
+/**
+ * Manifest solo-flag, niente routes/extensions: esiste unicamente per dare
+ * a FeatureFlagService una entry risolvibile per la classificazione AI di
+ * ChatSceneService (chiamata diretta, non un extension point — la feature
+ * `fineSessione` non passa da ExtensionRegistry). Stesso pattern di
+ * `bibliotecario`, chiave e configKey distinti dalla feature base apposta
+ * perché non deve gatare le route di fineSessione né il cron.
+ */
+export const fineSessioneAi: FeatureManifest = {
+  key: 'fineSessioneAi',
+  title: 'Fine sessione — classificazione AI',
+  description: 'Classificazione AI (continua/indipendente) di un nuovo personaggio in una scena già aperta',
+  flag: {
+    configKey: 'scene_narrative_ai_enabled',
+    section: 'ai_features',
+    default: true,
+    label: 'Fine sessione: classificazione AI continuità narrativa',
+  },
 };
