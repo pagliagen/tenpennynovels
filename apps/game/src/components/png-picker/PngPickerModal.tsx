@@ -23,6 +23,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { Modal } from '@/components/shared/Modal';
 import { fakePngApi } from '@/lib/api/fakePng';
 import { locationPngApi } from '@/lib/api/locationPng';
 import styles from '@/styles/components/fake-png/FakePngManager.module.scss';
@@ -213,41 +214,40 @@ export function PngPickerModal({
 
   if (viewMode === 'creating-fake' || viewMode === 'editing-fake') {
     return (
-      <div className={styles.modal} onClick={onClose}>
-        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-          <h2>{viewMode === 'creating-fake' ? 'Crea PNG del personaggio' : 'Modifica PNG del personaggio'}</h2>
-          <FakePngForm
-            characterId={characterId}
-            initialData={editingFake || undefined}
-            onSubmit={(data) => {
-              if (editingFake) {
-                handleUpdateFake(editingFake._id, data);
-              } else {
-                handleCreateFake(data);
-              }
-            }}
-            onCancel={() => {
-              setEditingFake(null);
-              setViewMode('list');
-            }}
-          />
-        </div>
-      </div>
+      <Modal
+        isOpen
+        onClose={onClose}
+        title={viewMode === 'creating-fake' ? 'Crea PNG del personaggio' : 'Modifica PNG del personaggio'}
+        size="medium"
+      >
+        <FakePngForm
+          characterId={characterId}
+          initialData={editingFake || undefined}
+          onSubmit={(data) => {
+            if (editingFake) {
+              handleUpdateFake(editingFake._id, data);
+            } else {
+              handleCreateFake(data);
+            }
+          }}
+          onCancel={() => {
+            setEditingFake(null);
+            setViewMode('list');
+          }}
+        />
+      </Modal>
     );
   }
 
   if (viewMode === 'creating-location') {
     return (
-      <div className={styles.modal} onClick={onClose}>
-        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-          <h2>Crea PNG della location</h2>
-          <LocationPngForm
-            locationId={locationId}
-            onSubmit={handleCreateLocationPng}
-            onCancel={() => setViewMode('list')}
-          />
-        </div>
-      </div>
+      <Modal isOpen onClose={onClose} title="Crea PNG della location" size="medium">
+        <LocationPngForm
+          locationId={locationId}
+          onSubmit={handleCreateLocationPng}
+          onCancel={() => setViewMode('list')}
+        />
+      </Modal>
     );
   }
 
@@ -256,13 +256,8 @@ export function PngPickerModal({
   const fakeSlots = Array.from({ length: MAX_FAKE_SLOTS }, (_, i) => fakePngs[i] || null);
 
   return (
-    <div className={styles.modal} onClick={onClose}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.modalHeader}>
-          <h2>PNG</h2>
-          <button className={styles.closeButton} onClick={onClose}>✕</button>
-        </div>
-
+    <Modal isOpen onClose={onClose} title="PNG" size="medium">
+      <>
         {showTabs && (
           <div className={styles.tabs}>
             <button
@@ -290,15 +285,6 @@ export function PngPickerModal({
               </h3>
             )}
 
-            {activeFakePngId && (
-              <div className={styles.activeIndicator}>
-                <span>✓ PNG del personaggio attivo</span>
-                <button className={styles.deactivateButton} onClick={handleDeactivateFake}>
-                  Disattiva (torna reale)
-                </button>
-              </div>
-            )}
-
             {loadingFake ? (
               <p>Caricamento...</p>
             ) : fakeLoadError ? (
@@ -313,6 +299,7 @@ export function PngPickerModal({
                     fake={fake}
                     isActive={fake?._id === activeFakePngId}
                     onActivate={() => fake && handleActivateFake(fake._id)}
+                    onDeactivate={handleDeactivateFake}
                     onEdit={() => {
                       if (!fake) return;
                       setEditingFake(fake);
@@ -338,15 +325,6 @@ export function PngPickerModal({
               Personaggi rapidi (es. &quot;il barista&quot;) usabili per postare al posto del tuo
               nome/avatar in questa location. Visibili e modificabili solo da master e proprietario.
             </p>
-
-            {selectedLocationPngId && (
-              <div className={styles.activeIndicator}>
-                <span>✓ PNG di location selezionato</span>
-                <button className={styles.deactivateButton} onClick={() => onSelectLocationPng('')}>
-                  Torna a te stesso
-                </button>
-              </div>
-            )}
 
             {loadingLocation ? (
               <p>Caricamento...</p>
@@ -375,7 +353,15 @@ export function PngPickerModal({
                         {isSelected && <span className={styles.activeBadge}>✓ Selezionato</span>}
                       </div>
                       <div className={styles.slotActions}>
-                        {!isSelected && (
+                        {isSelected ? (
+                          <button
+                            className={styles.actionButton}
+                            onClick={() => onSelectLocationPng('')}
+                            title="Torna a te stesso"
+                          >
+                            ⏹
+                          </button>
+                        ) : (
                           <button
                             className={styles.actionButton}
                             onClick={() => onSelectLocationPng(png._id)}
@@ -406,7 +392,7 @@ export function PngPickerModal({
             )}
           </section>
         )}
-      </div>
-    </div>
+      </>
+    </Modal>
   );
 }

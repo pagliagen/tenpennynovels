@@ -1,43 +1,5 @@
 @use '../../variables' as *;
 
-// Modal overlay
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modalContent {
-  background: $brown-10;
-  border-radius: 8px;
-  border: 2px solid $gold-30;
-  padding: $spacing-xxl;
-  max-width: 800px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modalHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: $spacing-xl;
-
-  h2 {
-    margin: 0;
-    color: $text-primary;
-    font-family: $font-heading;
-  }
-}
-
 .tabs {
   display: flex;
   gap: $spacing-sm;
@@ -79,52 +41,6 @@
   color: $text-secondary;
   font-size: 14px;
   line-height: 1.5;
-}
-
-.closeButton {
-  background: none;
-  border: none;
-  color: $text-secondary;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-
-  &:hover {
-    color: $text-primary;
-  }
-}
-
-// Active indicator
-.activeIndicator {
-  background: rgba($gold-50, 0.1);
-  border: 1px solid $gold-30;
-  border-radius: 4px;
-  padding: $spacing-md;
-  margin-bottom: $spacing-xl;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  span {
-    color: $gold-70;
-    font-weight: 500;
-  }
-}
-
-.deactivateButton {
-  background: $brown-30;
-  border: 1px solid $brown-50;
-  color: $text-primary;
-  padding: $spacing-sm $spacing-md;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-
-  &:hover {
-    background: $brown-50;
-  }
 }
 
 // Slots grid (5 slots, 2 columns)
@@ -308,7 +224,7 @@
 .submitButton {
   background: $gold-50;
   border: 1px solid $gold-70;
-  color: $brown-10;
+  color: black;
   padding: $spacing-sm $spacing-lg;
   border-radius: 4px;
   cursor: pointer;

@@ -7,6 +7,7 @@ interface FakePngSlotProps {
   fake: FakePng | null;
   isActive: boolean;
   onActivate: () => void;
+  onDeactivate: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onCreate: () => void;
@@ -16,6 +17,7 @@ export function FakePngSlot({
   fake,
   isActive,
   onActivate,
+  onDeactivate,
   onEdit,
   onDelete,
   onCreate
@@ -49,7 +51,15 @@ export function FakePngSlot({
       </div>
 
       <div className={styles.slotActions}>
-        {!isActive && (
+        {isActive ? (
+          <button
+            className={styles.actionButton}
+            onClick={onDeactivate}
+            title="Disattiva (torna al personaggio reale)"
+          >
+            ⏹
+          </button>
+        ) : (
           <button
             className={styles.actionButton}
             onClick={onActivate}
