@@ -32,7 +32,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useForumStore } from '@/store/forumStore';
 import { useGameStateStore } from '@/store/gameStateStore';
 import { useLocationStore } from '@/store/locationStore';
-import { uiSelectors, useUIStore } from '@/store/uiStore';
+import { CHAT_NOTIFICATION_SOUND_FILES, uiSelectors, useUIStore } from '@/store/uiStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
 import styles from '@/styles/components/GameLayout.module.scss';
 import type { AuthSessionApiResponse, CharacterBanSessionPayload } from '@/types/authSession';
@@ -66,6 +66,13 @@ interface GameLayoutProps {
   children: ReactNode;
 }
 
+type ChatNotificationSoundFile = (typeof CHAT_NOTIFICATION_SOUND_FILES)[number];
+
+/** Friendly label for each notification sound file, in file order */
+const CHAT_NOTIFICATION_SOUND_LABELS: Record<ChatNotificationSoundFile, string> = Object.fromEntries(
+  CHAT_NOTIFICATION_SOUND_FILES.map((file, i) => [file, `Suono ${i + 1}`])
+) as Record<ChatNotificationSoundFile, string>;
+
 /**
  * Layout di gioco con shell UI, stato globale e sottoscrizioni real-time dove servono.
  */
@@ -88,7 +95,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
   /**
    * Preview a notification sound (Opzioni Chat popup)
    */
-  const handlePreviewSound = useCallback((sound: 'new-notification-001' | 'new-notification-002') => {
+  const handlePreviewSound = useCallback((sound: ChatNotificationSoundFile) => {
     const audio = new Audio(`/audio/${sound}.mp3`);
     audio.volume = 0.5;
     audio.play().catch((error) => {
@@ -685,52 +692,31 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
                 Suono quando arriva un messaggio da un altro personaggio:
               </div>
               <div className={styles.optionGroup} role="radiogroup" aria-label="Suono notifica chat">
-                <label className={styles.optionCard}>
-                  <input
-                    type="radio"
-                    name="chatNotificationSound"
-                    value="new-notification-001"
-                    checked={chatNotificationSound === 'new-notification-001'}
-                    onChange={() => setChatNotificationSound('new-notification-001')}
-                  />
-                  <span className={styles.optionCardText}>
-                    <strong>Suono 1</strong>
-                  </span>
-                  <button
-                    type="button"
-                    className={styles.optionPreviewButton}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePreviewSound('new-notification-001');
-                    }}
-                    aria-label="Ascolta Suono 1"
-                  >
-                    ▶
-                  </button>
-                </label>
-                <label className={styles.optionCard}>
-                  <input
-                    type="radio"
-                    name="chatNotificationSound"
-                    value="new-notification-002"
-                    checked={chatNotificationSound === 'new-notification-002'}
-                    onChange={() => setChatNotificationSound('new-notification-002')}
-                  />
-                  <span className={styles.optionCardText}>
-                    <strong>Suono 2</strong>
-                  </span>
-                  <button
-                    type="button"
-                    className={styles.optionPreviewButton}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePreviewSound('new-notification-002');
-                    }}
-                    aria-label="Ascolta Suono 2"
-                  >
-                    ▶
-                  </button>
-                </label>
+                {CHAT_NOTIFICATION_SOUND_FILES.map((file) => (
+                  <label key={file} className={styles.optionCard}>
+                    <input
+                      type="radio"
+                      name="chatNotificationSound"
+                      value={file}
+                      checked={chatNotificationSound === file}
+                      onChange={() => setChatNotificationSound(file)}
+                    />
+                    <span className={styles.optionCardText}>
+                      <strong>{CHAT_NOTIFICATION_SOUND_LABELS[file]}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.optionPreviewButton}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePreviewSound(file);
+                      }}
+                      aria-label={`Ascolta ${CHAT_NOTIFICATION_SOUND_LABELS[file]}`}
+                    >
+                      ▶
+                    </button>
+                  </label>
+                ))}
                 <label className={styles.optionCard}>
                   <input
                     type="radio"

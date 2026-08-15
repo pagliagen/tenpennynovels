@@ -44,16 +44,34 @@ export type Theme = 'victorian' | 'dark' | 'light';
 export type ChatAutoScrollMode = 'button' | 'force';
 
 /**
+ * Chat Notification Sound Files
+ *
+ * Basenames (no extension) of the notification sounds in public/audio/.
+ * Single source of truth for both playNotificationSound() (lib/audio.ts)
+ * and the picker in Opzioni Chat (GameLayout.tsx) - add a file here to
+ * make it selectable.
+ *
+ * @since 2.2.0
+ */
+export const CHAT_NOTIFICATION_SOUND_FILES = [
+  'new-notification-001',
+  'new-notification-002',
+  'new-notification-003',
+  'new-notification-004',
+  'new-notification-005',
+] as const;
+
+/**
  * Chat Notification Sound
  *
  * Which sound (if any) plays via playNotificationSound() (see lib/audio.ts)
- * for new chat/ticket/forum notifications. One of the two files in
- * public/audio/, or 'none' to mute it.
+ * for new chat/ticket/forum notifications. One of CHAT_NOTIFICATION_SOUND_FILES,
+ * or 'none' to mute it.
  *
- * @typedef {'new-notification-001' | 'new-notification-002' | 'none'} ChatNotificationSound
+ * @typedef {typeof CHAT_NOTIFICATION_SOUND_FILES[number] | 'none'} ChatNotificationSound
  * @since 2.2.0
  */
-export type ChatNotificationSound = 'new-notification-001' | 'new-notification-002' | 'none';
+export type ChatNotificationSound = typeof CHAT_NOTIFICATION_SOUND_FILES[number] | 'none';
 
 /**
  * Modal State Type
