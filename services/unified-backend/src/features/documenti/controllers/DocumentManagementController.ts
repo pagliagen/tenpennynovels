@@ -5,8 +5,6 @@ import DocumentSubtype from '../models/DocumentSubtype';
 import { logger } from '@modules/admin/utils/logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
-import { DocumentChunkService } from '../services/DocumentChunkService';
-import jwt from 'jsonwebtoken';
 import { appConfig } from '@config/runtime';
 import { aiGatewayClient } from '@modules/game/services/AIGatewayClient';
 import { Types } from 'mongoose';
@@ -232,26 +230,13 @@ export class DocumentManagementController {
 
       logger.info(`Document ${id} updated`, { updates });
 
-      if (updates.contentDelta) {
-        try {
-          const authToken = req.cookies?.auth_token;
-          if (authToken) {
-            const decoded = jwt.verify(authToken, appConfig.jwt.secret!) as { userId: string; username?: string };
-            const chunkService = new DocumentChunkService();
-            const result = await chunkService.regenerateChunksForDocument(
-              id, updates.contentDelta, document.type, decoded.userId, decoded.username || 'Unknown'
-            );
-
-            if (result.success) {
-              logger.info(`[ChunkSync] Chunks regenerated: ${result.chunksCreated} created, ${result.chunksDeactivated} deactivated (v${result.newVersion})`);
-            } else {
-              logger.error(`[ChunkSync] Chunk regeneration failed: ${result.error}`);
-            }
-          }
-        } catch (chunkError: any) {
-          logger.error('[ChunkSync] Chunk regeneration failed (non-fatal):', chunkError);
-        }
-      }
+      // Il post('save') hook di Document.ts pubblica già l'evento di embedding
+      // (chunking + re-embed completo via embeddings-worker) per qualunque
+      // modifica, contentDelta incluso: non serve rigenerare i chunk qui.
+      // Rimosso il secondo giro via DocumentChunkService (schema incompatibile
+      // con quello letto da semanticSearch — documentId ObjectId invece di
+      // string, nessun campo chunkId — produceva solo embedding fantasma mai
+      // risolvibili in lettura, vedi incidente 2026-08-15).
 
       res.json(successResponse(document, undefined, getRequestId(req)));
     } catch (error: any) {
@@ -259,65 +244,6 @@ export class DocumentManagementController {
       res.status(500).json(errorResponse(
         error.message || 'Errore aggiornamento documento',
         'UPDATE_DOCUMENT_ERROR', undefined, 500, getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * Regenerate chunks for a document
-   * POST /admin/documents/:id/regenerate-chunks
-   */
-  static async regenerateChunks(req: Request, res: Response): Promise<void> {
-    try {
-      const id = req.params.id as string;
-
-      if (!isValidObjectId(id)) {
-        res.status(400).json(errorResponse(
-          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
-        ));
-        return;
-      }
-
-      const document = await Document.findById(id);
-      if (!document) {
-        res.status(404).json(errorResponse(
-          'Documento non trovato', 'DOCUMENT_NOT_FOUND', undefined, 404, getRequestId(req)
-        ));
-        return;
-      }
-
-      const authToken = req.cookies?.auth_token;
-      if (!authToken) {
-        res.status(401).json(errorResponse(
-          'Token di autenticazione mancante', 'NO_AUTH_TOKEN', undefined, 401, getRequestId(req)
-        ));
-        return;
-      }
-
-      const decoded = jwt.verify(authToken, appConfig.jwt.secret!) as { userId: string; username?: string };
-
-      const chunkService = new DocumentChunkService();
-      const result = await chunkService.regenerateChunksForDocument(
-        id, document.contentDelta, document.type, decoded.userId, decoded.username || 'Unknown'
-      );
-
-      if (result.success) {
-        logger.info(`[ManualSync] Document ${id}: ${result.chunksCreated} chunks created (v${result.newVersion})`);
-        res.json(successResponse(
-          { chunksCreated: result.chunksCreated, chunksDeactivated: result.chunksDeactivated, newVersion: result.newVersion },
-          undefined, getRequestId(req)
-        ));
-      } else {
-        res.status(500).json(errorResponse(
-          result.error || 'Errore durante la rigenerazione dei chunks',
-          'CHUNK_REGEN_ERROR', undefined, 500, getRequestId(req)
-        ));
-      }
-    } catch (error: any) {
-      logger.error('[ManualSync] Error regenerating chunks:', error);
-      res.status(500).json(errorResponse(
-        error.message || 'Errore durante la rigenerazione dei chunks',
-        'CHUNK_REGEN_ERROR', undefined, 500, getRequestId(req)
       ));
     }
   }

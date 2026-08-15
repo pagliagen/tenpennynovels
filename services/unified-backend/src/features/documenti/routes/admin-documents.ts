@@ -92,14 +92,6 @@ router.patch('/:id/toggle-draft',
   DocumentManagementController.toggleDocumentDraft
 );
 
-// Manually regenerate chunks
-router.post('/:id/regenerate-chunks',
-  AdminAuthMiddleware.requireGranularPermission('documents.update'),
-  AdminAuthMiddleware.logAdminAction('document.regenerate_chunks', 'document_management'),
-  autoLogOutcome,
-  DocumentManagementController.regenerateChunks
-);
-
 // Regenerate SEO description via AI gateway
 router.post('/:id/regenerate-seo',
   AdminAuthMiddleware.requireGranularPermission('documents.update'),
