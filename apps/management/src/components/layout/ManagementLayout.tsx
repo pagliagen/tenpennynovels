@@ -39,7 +39,7 @@ export function ManagementLayout({ children }: ManagementLayoutProps): React.Rea
     if (!isLoading && !isAuthenticated) {
       // CRITICAL: Login gestito da apps/landing
       const landingUrl = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:4000';
-      window.location.href = `${landingUrl}/auth/login`;
+      window.location.href = `${landingUrl}`;
     }
   }, [isLoading, isAuthenticated]);
 

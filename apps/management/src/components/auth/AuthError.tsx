@@ -76,7 +76,7 @@ export function AuthError({ type, message }: AuthErrorProps): JSX.Element {
         <button
           type="button"
           onClick={() => {
-            window.location.href = `${landingUrl}/auth/login`;
+            window.location.href = `${landingUrl}`;
           }}
           className={styles.loginButton}
         >

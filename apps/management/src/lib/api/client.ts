@@ -75,7 +75,7 @@ apiClient.interceptors.response.use(
     // CRITICAL: Login è gestito da apps/landing, non nel management
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        window.location.href = `${API_CONFIG.LANDING_URL}/auth/login`;
+        window.location.href = `${API_CONFIG.LANDING_URL}`;
       }
     }
 
