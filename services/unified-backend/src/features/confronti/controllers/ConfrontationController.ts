@@ -241,12 +241,39 @@ export class ConfrontationController {
         return;
       }
 
+      // locationId must be a plain ObjectId string — reject query objects (e.g. { $ne: null })
+      // before it's used as a filter value below (NoSQL injection guard, stesso pattern di
+      // messageId/attackSkill in questo stesso file)
+      if (typeof locationId !== 'string' || !Types.ObjectId.isValid(locationId)) {
+        res.status(400).json(errorResponse(
+          'locationId non valido',
+          'INVALID_LOCATION_ID',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
       // attackSkill must be a plain string — reject query objects (e.g. { $ne: null })
       // before it's used as a filter value anywhere below (NoSQL injection guard)
       if (typeof attackSkill !== 'string') {
         res.status(400).json(errorResponse(
           'attackSkill non valido',
           'INVALID_ATTACK_SKILL',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      // defenderId must be a plain ObjectId string — reject query objects (e.g. { $ne: null })
+      // before it's used as a filter value below (NoSQL injection guard)
+      if (typeof defenderId !== 'string' || !Types.ObjectId.isValid(defenderId)) {
+        res.status(400).json(errorResponse(
+          'defenderId non valido',
+          'INVALID_DEFENDER_ID',
           undefined,
           400,
           getRequestId(req)
