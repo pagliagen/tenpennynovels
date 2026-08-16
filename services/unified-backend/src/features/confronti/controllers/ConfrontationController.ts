@@ -71,7 +71,6 @@ export class ConfrontationController {
       outcome: _outcome,
       defenseSkill: _defenseSkill,
       messageForDefender: _messageForDefender,
-      revealsFullMessage: _revealsFullMessage,
       ...masked
     } = confrontation;
     return masked;
@@ -458,21 +457,15 @@ export class ConfrontationController {
 
         // Testo di rivelazione per il difensore, specifico di Raggirare
         // (narrativa della bugia) — non generalizzabile senza sapere cosa
-        // dovrebbe dire una futura skill diversa. Per le prime due soglie
-        // (hard/extreme/critical E normal) il preambolo termina con ":" e
-        // revealsFullMessage segnala al frontend di andare a capo e
-        // renderizzare l'azione RP (message.content) come un'action
-        // standard (MessageContent), non una citazione inline — il testo
-        // non è duplicato qui, è già in messageData.content sotto. Solo
-        // la soglia più bassa ("istinto") resta testo puro, nessuna
-        // rivelazione.
+        // dovrebbe dire una futura skill diversa. Il preambolo per le
+        // prime due soglie termina con ":" perché il frontend lo mostra
+        // sopra message.content (già presente nello stesso messaggio, non
+        // duplicato qui) — vedi CombatActionMessage.tsx.
         if (attackSkill === 'Raggirare' && !attackerWins) {
           if (defenseDegree === 'hard' || defenseDegree === 'extreme' || defenseDegree === 'critical') {
             confrontationData.messageForDefender = `${attackerCharacter.name} sta evidentemente cercando di nasconderti qualcosa quando dice:`;
-            confrontationData.revealsFullMessage = true;
           } else if (defenseDegree === 'normal') {
             confrontationData.messageForDefender = `Ti rendi conto che ${attackerCharacter.name} ti sta nascondendo qualcosa.`;
-            confrontationData.revealsFullMessage = true;
           } else {
             confrontationData.messageForDefender = `L'istinto ti dice di non fidarti del tutto delle parole di ${attackerCharacter.name}.`;
           }

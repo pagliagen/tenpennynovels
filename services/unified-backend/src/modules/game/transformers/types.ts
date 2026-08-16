@@ -174,9 +174,6 @@ export interface EnrichedConfrontation {
   // (mascherato in ConfrontationEnricher/maskConfrontationForAttacker, stessa
   // condizione di attackRoll/defenseRoll/ecc.).
   messageForDefender?: string;
-  // true solo per le soglie che devono mostrare l'azione RP (message.content)
-  // sotto il preambolo, resa dal frontend come un'action standard.
-  revealsFullMessage?: boolean;
   visibleToDefenderOnly?: boolean;
 }
 

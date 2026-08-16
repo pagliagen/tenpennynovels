@@ -132,10 +132,6 @@ export interface IChat extends Document {
 
     // For Raggirare (Phase 3)
     messageForDefender?: string;
-    // true solo per le soglie che devono mostrare l'azione RP (message.content)
-    // sotto il preambolo, resa dal frontend come un'action standard invece
-    // che citata inline in messageForDefender.
-    revealsFullMessage?: boolean;
     visibleToDefenderOnly?: boolean;
   };
 
@@ -355,7 +351,6 @@ export const ChatSchema = new Schema<IChat>({
     isCriticalDamage: Boolean,
     damageFormula: String,
     messageForDefender: String,
-    revealsFullMessage: Boolean,
     visibleToDefenderOnly: Boolean
   },
 

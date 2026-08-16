@@ -120,9 +120,6 @@ export interface ConfrontationPayload {
 
   // For Raggirare (Phase 3)
   messageForDefender?: string;
-  // true = mostra message.content sotto messageForDefender, reso come
-  // un'action standard (via MessageContent), non citato inline nel testo.
-  revealsFullMessage?: boolean;
   visibleToDefenderOnly?: boolean;
 }
 

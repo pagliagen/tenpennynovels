@@ -16,7 +16,6 @@ import type { ChatMessage } from '@/types/chat';
 
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
 import { MessageAvatar } from '../MessageAvatar';
-import { MessageContent } from '../MessageContent';
 import { MessageEditableContent } from '../MessageEditableContent';
 import { MessageFooter } from '../MessageFooter';
 import { MessageMenu } from '../MessageMenu';
@@ -118,23 +117,19 @@ export function CombatActionMessage({ message, currentCharacterId }: CombatActio
             />
           ) : (
             <>
-              {message.content && <div className={styles.messageContent}>{message.content}</div>}
-
               {/* Raggirare: rivelazione per il difensore, integrata in questo
                   stesso messaggio — il backend la manda solo al difensore
-                  (e al master), mai all'attaccante. Quando revealsFullMessage
-                  è true, l'azione RP va a capo sotto il preambolo, resa come
-                  un'action standard (MessageContent), non citata inline. */}
+                  (e al master), mai all'attaccante. Renderizzata SOPRA
+                  message.content: il preambolo introduce l'azione RP che
+                  segue subito sotto (stesso .messageContent già mostrato
+                  a chiunque, non duplicato). */}
               {confrontation?.messageForDefender && (
                 <div className={styles.messageForDefender}>
                   <div>{confrontation.messageForDefender}</div>
-                  {confrontation.revealsFullMessage && (
-                    <div className={styles.messageForDefenderAction}>
-                      <MessageContent content={message.content} />
-                    </div>
-                  )}
                 </div>
               )}
+
+              {message.content && <div className={styles.messageContent}>{message.content}</div>}
 
               {/* Confrontation result display */}
               {confrontation && confrontation.phase === 'result' && confrontation.hiddenResultForAttacker && confrontation.attackRoll === undefined && (

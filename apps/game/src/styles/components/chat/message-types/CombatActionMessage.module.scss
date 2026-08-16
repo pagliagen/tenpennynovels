@@ -34,20 +34,6 @@
   font-size: 14px;
 }
 
-/* Azione RP sotto il preambolo (revealsFullMessage): stesso look di
-   un'action standard (.messageContent in MessageCard.module.scss), non
-   italico — distinta dal preambolo narrativo sopra. */
-.messageForDefenderAction {
-  margin-top: 8px;
-  color: #a9aa9b;
-  font-family: 'Bahnschrift SemiLight', serif;
-  font-style: normal;
-  font-size: 14px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
 /* Confrontation result container */
 .confrontationResult {
   margin-top: 16px;
