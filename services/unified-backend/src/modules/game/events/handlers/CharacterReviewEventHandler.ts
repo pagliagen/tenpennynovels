@@ -27,11 +27,12 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
 
       logger.info('[CharacterReviewEventHandler] Received character review event:', event);
 
-      const { characterId, characterName, action, note, reviewedByUsername } = event as {
+      const { characterId, characterName, action, note, reviewedBy, reviewedByUsername } = event as {
         characterId?: string;
         characterName?: string;
         action?: string;
         note?: string;
+        reviewedBy?: string;
         reviewedByUsername?: string;
       };
 
@@ -50,6 +51,16 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
       if (actionTyped) {
         await this.sendCharacterReviewMessage(characterId, characterName ?? '', actionTyped, note ?? '', reviewedByUsername);
         await this.notifyCharacterStatusChange(characterId, characterName ?? '', actionTyped, note ?? '');
+
+        const { applyCharacterReviewOutcome } = await import('@features/tickets/api');
+        await applyCharacterReviewOutcome({
+          characterId,
+          characterName: characterName ?? '',
+          action: actionTyped,
+          note: note ?? '',
+          reviewedBy: reviewedBy ?? '',
+          reviewedByUsername
+        });
       }
 
     } catch (error: unknown) {

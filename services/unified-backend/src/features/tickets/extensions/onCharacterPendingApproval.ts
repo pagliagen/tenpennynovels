@@ -26,7 +26,14 @@ export async function onCharacterPendingApproval(ctx: HookMap['character.playerS
       status: { $nin: ['closed'] }
     });
 
-    if (existingTicket) return;
+    // Reinvio dopo un rigetto: il ticket esistente torna in coda invece di
+    // restare invisibile finche' uno staff non lo tocca a mano.
+    if (existingTicket) {
+      existingTicket.status = 'open';
+      existingTicket.lastActivityAt = new Date();
+      await existingTicket.save();
+      return;
+    }
 
     const ticket = await Ticket.create({
       title: `Richiesta Approvazione: ${characterName}`,

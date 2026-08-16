@@ -1415,17 +1415,23 @@ export class TicketManagementController {
         });
       }
 
-      // Publish WebSocket event
+      // Publish WebSocket event (forma piatta: TicketEventHandler.handleTicketClosed
+      // legge createdBy/title/closedAt/finalMessage a livello radice, non annidati)
       await redis.publish('ticket:events', JSON.stringify({
         eventType: 'ticket_closed',
         ticketId: ticket!._id.toString(),
-        ticketTitle: ticket!.title,
+        ticketNumber: ticket!._id.toString().slice(-6).toUpperCase(),
+        title: ticket!.title,
         department: ticket!.department,
+        createdBy: { id: ticket!.createdBy.toString() },
         resolution: closureData.resolution,
         closedBy: {
           id: req.user?.userId,
           name: req.user?.username
-        }
+        },
+        closedAt: ticket!.closedAt!.toISOString(),
+        finalMessage: closureData.resolution,
+        timestamp: new Date().toISOString()
       }));
 
       logger.info('Ticket closed', {
@@ -1559,22 +1565,26 @@ export class TicketManagementController {
       await ticket!.save();
 
       // Publish WebSocket event (only if not internal message)
+      // Forma piatta: TicketEventHandler.handleTicketMessage legge
+      // sender/content/createdBy.id a livello radice, non annidati sotto "message"
       if (!isInternal) {
         await redis.publish('ticket:events', JSON.stringify({
           eventType: 'ticket_message',
           ticketId: ticket!._id.toString(),
+          ticketNumber: ticket!._id.toString().slice(-6).toUpperCase(),
           ticketTitle: ticket!.title,
           department: ticket!.department,
-          message: {
-            id: message._id.toString(),
-            content: content,
-            sender: {
-              type: 'staff',
-              id: req.user?.userId,
-              name: req.user?.username
-            },
-            isInternal: false
-          }
+          createdBy: { id: ticket!.createdBy.toString() },
+          messageId: message._id.toString(),
+          content: content,
+          sender: {
+            type: 'staff',
+            id: req.user?.userId,
+            name: req.user?.username
+          },
+          isInternal: false,
+          sentAt: message.sentAt.toISOString(),
+          timestamp: new Date().toISOString()
         }));
       }
 
