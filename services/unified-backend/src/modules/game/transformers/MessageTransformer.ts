@@ -105,9 +105,11 @@ export class MessageTransformer {
     if (action.targetCharacters && action.targetCharacters.length > 0) {
       enriched.targetCharacters = action.targetCharacters;
     }
-    // hiddenContent (e.g. the Raggirare lie text) is master-only, never shown to players —
-    // same convention as editHistory above.
-    if (action.hiddenContent && context.isViewerMaster) {
+    // hiddenContent (the Raggirare true-feelings annotation) is visible to the
+    // master and to the character who wrote it (the attacker already knows
+    // their own lie — this is just a UI reminder icon+tooltip for them), never
+    // to the defender: seeing it would spoil the hidden roll outright.
+    if (action.hiddenContent && (context.isViewerMaster || context.viewerCharacterId === action.characterId)) {
       enriched.hiddenContent = action.hiddenContent;
     }
 

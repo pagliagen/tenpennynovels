@@ -70,6 +70,7 @@ export class ConfrontationController {
       defenseSuccessLevel: _defenseSuccessLevel,
       outcome: _outcome,
       defenseSkill: _defenseSkill,
+      messageForDefender: _messageForDefender,
       ...masked
     } = confrontation;
     return masked;
@@ -120,14 +121,15 @@ export class ConfrontationController {
       // already masks per-viewer; the live WebSocket push must do the same instead of
       // sending the raw saved document to every recipient room:
       // - attacker: confrontation masked (Raggirare hides the outcome from its own
-      //   author), hiddenContent never included (master-only, see below)
+      //   author), hiddenContent included (their own lie's true-feelings annotation —
+      //   a UI reminder, not new information to them)
       // - defender/other targets: confrontation in full (they're allowed to see the
-      //   true outcome), hiddenContent still never included
-      // - staff (master): confrontation in full + hiddenContent (the actual lie text)
+      //   true outcome), hiddenContent never included (would spoil the hidden roll)
+      // - staff (master): confrontation in full + hiddenContent
       const attackerId = savedMessage.confrontation?.attackerCharacterId;
       const playerConfrontation = ConfrontationController.maskConfrontationForAttacker(savedMessage.confrontation);
 
-      const attackerMessage = { ...baseChatMessage, confrontation: playerConfrontation };
+      const attackerMessage = { ...baseChatMessage, confrontation: playerConfrontation, hiddenContent: savedMessage.hiddenContent || undefined };
       const otherTargetsMessage = { ...baseChatMessage, confrontation: savedMessage.confrontation || undefined };
       const staffMessage = { ...baseChatMessage, confrontation: savedMessage.confrontation || undefined, hiddenContent: savedMessage.hiddenContent || undefined };
 
@@ -827,6 +829,31 @@ export class ConfrontationController {
           'confrontation.outcome': attackerWins ? 'attacker_wins' : 'defender_wins'
         };
 
+        // Reveal text for the defender, integral part of THIS message (not a
+        // separate one) — same position/read-state/timestamp as the lie it's
+        // revealing something about. Never the attacker's own view: masked out
+        // in maskConfrontationForAttacker (WS push) and
+        // ConfrontationEnricher.maskConfrontationForViewer (GET path), same
+        // condition as the rest of the hidden roll result.
+        if (!attackerWins) {
+          let messageForDefender = '';
+
+          // Y has hard/extreme/critical success → full message with lie text
+          if (defenseDegree === 'hard' || defenseDegree === 'extreme' || defenseDegree === 'critical') {
+            messageForDefender = `${attackerCharacter.name} sta evidentemente cercando di nasconderti qualcosa quando dice: "${originalContent}"`;
+          }
+          // Y has normal success → partial message
+          else if (defenseDegree === 'normal') {
+            messageForDefender = `Ti rendi conto che ${attackerCharacter.name} ti sta nascondendo qualcosa.`;
+          }
+          // Y has failure/fumble BUT X failed worse → basic message
+          else {
+            messageForDefender = `L'istinto ti dice di non fidarti del tutto delle parole di ${attackerCharacter.name}.`;
+          }
+
+          updateFields['confrontation.messageForDefender'] = messageForDefender;
+        }
+
         const updated: any = await Chat.findOneAndUpdate(
           { _id: messageId, actionType: 'confrontation_reaction_request' },
           { $set: updateFields, $unset: { 'confrontation.availableDefenseSkills': '' } },
@@ -839,79 +866,12 @@ export class ConfrontationController {
           { $set: { status: 'completed', 'currentTurn.status': 'resolved', 'currentTurn.defenseSkill': defenseSkillName } }
         );
 
-        // Emit update for main message
-        const io = getSocketIO();
+        // Emit update for main message — routes messageForDefender to the
+        // defender+staff rooms only, never the attacker's (see
+        // emitConfrontationMessage's per-recipient payload split).
         await ConfrontationController.emitConfrontationMessage(req, updated);
 
-        // CREATE DEFENDER MESSAGE (only if defender wins/tie)
         if (!attackerWins) {
-          let defenderMessage = '';
-
-          // Y has hard/extreme/critical success → full message with lie text
-          if (defenseDegree === 'hard' || defenseDegree === 'extreme' || defenseDegree === 'critical') {
-            defenderMessage = `${attackerCharacter.name} sta evidentemente cercando di nasconderti qualcosa quando dice: "${originalContent}"`;
-          }
-          // Y has normal success → partial message
-          else if (defenseDegree === 'normal') {
-            defenderMessage = `Ti rendi conto che ${attackerCharacter.name} ti sta nascondendo qualcosa.`;
-          }
-          // Y has failure/fumble BUT X failed worse → basic message
-          else {
-            defenderMessage = `L'istinto ti dice di non fidarti del tutto delle parole di ${attackerCharacter.name}.`;
-          }
-
-          // Create whisper message for defender
-          const defenderRevealMessage = await Chat.create({
-            actionType: 'social_confrontation',
-            characterId: character.characterId,
-            characterName: character.characterName,
-            content: defenderMessage,
-            locationId: message.locationId,
-            position: message.position || undefined,
-            visibility: 'whisper',
-            targetCharacters: [message.confrontation.defenderCharacterId],
-            characterRoles: ['master'], // Visible to defender + master
-            timestamp: new Date(),
-            confrontation: {
-              type: 'social',
-              phase: 'result',
-              attackerCharacterId: message.confrontation.attackerCharacterId,
-              defenderCharacterId: message.confrontation.defenderCharacterId,
-              attackSkill: 'Raggirare',
-              defenseSkill: defenseSkillName,
-              attackRoll,
-              defenseRoll,
-              attackSuccessLevel: attackDegree,
-              defenseSuccessLevel: defenseDegree,
-              outcome: 'defender_wins'
-            }
-          });
-
-          // Live delivery to the defender + master — without this the reveal
-          // only appears on the next GET (refresh / next action), same
-          // sender+targets+staff routing as every other whisper broadcast.
-          if (io) {
-            io.to([
-              `character_${message.confrontation.defenderCharacterId}`,
-              'staff',
-            ]).emit('location_message_notification', {
-              message: {
-                _id: defenderRevealMessage._id.toString(),
-                actionType: defenderRevealMessage.actionType,
-                characterId: defenderRevealMessage.characterId,
-                characterName: defenderRevealMessage.characterName,
-                content: defenderRevealMessage.content,
-                locationId: defenderRevealMessage.locationId,
-                position: defenderRevealMessage.position || undefined,
-                visibility: defenderRevealMessage.visibility,
-                targetCharacters: defenderRevealMessage.targetCharacters,
-                confrontation: defenderRevealMessage.confrontation,
-                timestamp: defenderRevealMessage.timestamp.toISOString(),
-              },
-              locationId: message.locationId,
-            });
-          }
-
           logger.info(`Raggirare detected: ${defenderCharacter.name} received message (${defenseDegree})`);
         } else {
           logger.info(`Raggirare succeeded: ${defenderCharacter.name} did not detect the lie`);

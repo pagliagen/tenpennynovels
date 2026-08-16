@@ -69,6 +69,14 @@ export function CombatActionMessage({ message, currentCharacterId }: CombatActio
           characterId={message.characterId}
         />
         <span className={styles.characterName}>{message.characterName}</span>
+        {/* Raggirare: la bugia vera (hiddenContent), il backend la manda solo a
+            master + autore — chiunque altro riceve il campo assente, niente da
+            nascondere lato client (regola 4). */}
+        {message.hiddenContent && (
+          <span className={styles.hiddenLieIcon} title={message.hiddenContent} aria-label="Bugia (Raggirare)">
+            🎭
+          </span>
+        )}
         <time className={styles.messageTimestamp}>{interactions.formattedTime}</time>
       </div>
 
@@ -110,6 +118,13 @@ export function CombatActionMessage({ message, currentCharacterId }: CombatActio
           ) : (
             <>
               {message.content && <div className={styles.messageContent}>{message.content}</div>}
+
+              {/* Raggirare: rivelazione per il difensore, integrata in questo
+                  stesso messaggio — il backend la manda solo al difensore
+                  (e al master), mai all'attaccante. */}
+              {confrontation?.messageForDefender && (
+                <div className={styles.messageForDefender}>{confrontation.messageForDefender}</div>
+              )}
 
               {/* Confrontation result display */}
               {confrontation && confrontation.phase === 'result' && confrontation.hiddenResultForAttacker && confrontation.attackRoll === undefined && (

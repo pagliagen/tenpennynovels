@@ -59,6 +59,7 @@ export class ConfrontationEnricher implements IMessageEnricher {
       defenseSuccessLevel: _defenseSuccessLevel,
       outcome: _outcome,
       defenseSkill: _defenseSkill,
+      messageForDefender: _messageForDefender,
       ...masked
     } = confrontation;
 

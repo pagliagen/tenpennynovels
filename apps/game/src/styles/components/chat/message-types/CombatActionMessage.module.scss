@@ -8,6 +8,32 @@
 
 @use '../MessageCard.module.scss';
 
+/* Raggirare: icona sotto l'avatar, visibile solo a master + autore della bugia
+   (hiddenContent gia' filtrato lato backend, vedi MessageTransformer/emitConfrontationMessage) */
+.hiddenLieIcon {
+  cursor: help;
+  font-size: 14px;
+  opacity: 0.75;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+/* Raggirare: rivelazione visibile solo al difensore (o master), integrata nello
+   stesso messaggio invece che in uno separato */
+.messageForDefender {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: rgba(106, 27, 154, 0.12);
+  border-radius: $radius-md;
+  border: 2px solid rgba(106, 27, 154, 0.35);
+  color: #d8bfe0;
+  font-family: 'Georgia Pro', Georgia, serif;
+  font-style: italic;
+  font-size: 14px;
+}
+
 /* Confrontation result container */
 .confrontationResult {
   margin-top: 16px;

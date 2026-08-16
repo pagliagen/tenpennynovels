@@ -169,6 +169,10 @@ export interface EnrichedConfrontation {
   isCriticalDamage?: boolean;
   damageFormula?: string;
 
+  // Raggirare (Empatia rileva la bugia): testo di rivelazione, integrato in
+  // questo stesso messaggio invece che in uno separato. Mai per l'attaccante
+  // (mascherato in ConfrontationEnricher/maskConfrontationForAttacker, stessa
+  // condizione di attackRoll/defenseRoll/ecc.).
   messageForDefender?: string;
   visibleToDefenderOnly?: boolean;
 }
