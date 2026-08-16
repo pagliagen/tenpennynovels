@@ -10,22 +10,14 @@
 'use client';
 
 import Head from 'next/head';
-import { useRouter } from 'next/router';
-import { useEffect } from 'react';
 
 import { DebugPage } from '@/components/debug/DebugPage';
 import { GameLayout } from '@/components/layout/GameLayout';
+import LocationsPage from './locations';
 
 const IS_DEV = process.env.NODE_ENV === 'development';
 
 export default function HomePage(): JSX.Element {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!IS_DEV) {
-      router.replace('/locations');
-    }
-  }, [router]);
 
   return (
     <>
@@ -37,9 +29,7 @@ export default function HomePage(): JSX.Element {
         />
       </Head>
 
-      <GameLayout>
-        {IS_DEV ? <DebugPage /> : null}
-      </GameLayout>
+      {IS_DEV ? <GameLayout><DebugPage /></GameLayout> : <LocationsPage />}
     </>
   );
-}
+} 
