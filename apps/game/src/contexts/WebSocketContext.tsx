@@ -390,20 +390,18 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
      */
 
     socket.on('location_message_notification', (data) => {
-      // Handle cross-location notifications (toast + audio for messages in other locations)
-      if (data.locationId && currentLocationIdRef.current && data.locationId !== currentLocationIdRef.current) {
-        const message = data.message;
-        const character = selectedCharacter;
+      const message = data.message;
+      const character = selectedCharacter;
+      // Was cross-location-only ("in altra location"): audio never fired for a new
+      // message in the location you're actually viewing, which is exactly when an
+      // audio cue matters most (e.g. tab not focused). Sound now fires for both;
+      // the toast stays cross-location-only (redundant otherwise: you already see
+      // the message appear live in the open chat pane).
+      const isSameLocation = !!(data.locationId && currentLocationIdRef.current && data.locationId === currentLocationIdRef.current);
+      const isCrossLocation = !!(data.locationId && currentLocationIdRef.current && data.locationId !== currentLocationIdRef.current);
 
-        if (!message || !character) {
-          // Skip if no message or character
-          locationCallbacksRef.current.forEach((callback) =>
-            callback({ type: 'location_message_notification', data })
-          );
-          return;
-        }
-
-        // Determine if character should see this message based on visibility
+      if ((isSameLocation || isCrossLocation) && message && character) {
+        // Determine if character should be notified based on visibility
         let shouldNotify = false;
         let toastMessage = '';
 
@@ -425,27 +423,27 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
           toastMessage = `${message.characterName} ha scritto in ${data.locationName || 'altra chat'}`;
         }
 
-        if (shouldNotify) {
-          // Play audio notification - never for your own message (e.g. a whisper
-          // you sent notifies you as sender too, see the visibility check above)
-          if (message.characterId !== character._id) {
-            playNotificationSound();
-          }
+        if (shouldNotify && message.characterId !== character._id) {
+          // Never for your own message (e.g. a whisper you sent notifies you as
+          // sender too, see the visibility check above)
+          playNotificationSound();
 
-          // Show clickable toast that navigates to the location chat
-          useUIStore.getState().addToast({
-            type: 'info',
-            message: toastMessage,
-            duration: 6000,
-            onClick: () => {
-              // Navigation will be handled by ToastContainer which has access to router
-              if (typeof window !== 'undefined' && data.locationSlug) {
-                window.location.href = `/locations/${data.locationSlug}/chat`;
-              } else if (typeof window !== 'undefined' && data.locationId) {
-                window.location.href = `/locations/${data.locationId}/chat`;
-              }
-            },
-          });
+          if (isCrossLocation) {
+            // Show clickable toast that navigates to the location chat
+            useUIStore.getState().addToast({
+              type: 'info',
+              message: toastMessage,
+              duration: 6000,
+              onClick: () => {
+                // Navigation will be handled by ToastContainer which has access to router
+                if (typeof window !== 'undefined' && data.locationSlug) {
+                  window.location.href = `/locations/${data.locationSlug}/chat`;
+                } else if (typeof window !== 'undefined' && data.locationId) {
+                  window.location.href = `/locations/${data.locationId}/chat`;
+                }
+              },
+            });
+          }
         }
       }
 
