@@ -25,6 +25,16 @@ export function TicketPanelContent() {
 
   const { data: tickets = [], isLoading, error } = useUserTickets(statusFilter);
 
+  // If creating a new ticket, show the inline create form
+  if (showCreateModal) {
+    return (
+      <CreateTicketModal
+        variant="inline"
+        onClose={() => setShowCreateModal(false)}
+      />
+    );
+  }
+
   // If ticket selected, show thread view
   if (currentTicketId) {
     return (
@@ -105,11 +115,6 @@ export function TicketPanelContent() {
           </div>
         )}
       </div>
-
-      {/* Create Modal */}
-      {showCreateModal && (
-        <CreateTicketModal onClose={() => setShowCreateModal(false)} />
-      )}
     </div>
   );
 }

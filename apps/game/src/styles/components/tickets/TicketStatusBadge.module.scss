@@ -1,3 +1,12 @@
+/**
+ * Ticket Status Badge Styles
+ *
+ * Victorian aesthetic matching Window/OnGameMail: dark chips with a
+ * colored border/text per stato, leggibili su sfondo scuro.
+ *
+ * @module styles/components/tickets/TicketStatusBadge
+ */
+
 .badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;
@@ -6,34 +15,36 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  border: 1px solid transparent;
+  background: rgba(20, 20, 20, 0.6);
 }
 
 .open {
-  color: #10b981;
-  background-color: #d1fae5;
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.5);
 }
 
 .assigned {
-  color: #3b82f6;
-  background-color: #dbeafe;
+  color: #ffd700;
+  border-color: rgba(255, 149, 0, 0.5);
 }
 
 .in_progress {
-  color: #f59e0b;
-  background-color: #fef3c7;
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.5);
 }
 
 .waiting_user {
-  color: #ef4444;
-  background-color: #fee2e2;
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 .closed {
-  color: #6b7280;
-  background-color: #f3f4f6;
+  color: #999;
+  border-color: rgba(153, 153, 153, 0.4);
 }
 
 .reopened {
-  color: #8b5cf6;
-  background-color: #ede9fe;
+  color: #c4b5fd;
+  border-color: rgba(139, 92, 246, 0.5);
 }

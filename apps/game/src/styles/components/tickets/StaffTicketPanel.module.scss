@@ -1,18 +1,36 @@
+@use '../../variables' as *;
+
+/**
+ * Staff Ticket Panel Styles
+ *
+ * Victorian aesthetic matching Window/OnGameMail: gold (#ff9500), dark
+ * backgrounds, serif fonts.
+ *
+ * @module styles/components/tickets/StaffTicketPanel
+ */
+
 .root {
   padding: 1.5rem;
   height: 100%;
   display: flex;
   flex-direction: column;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #e8e0d5;
+  background: rgba(20, 20, 20, 0.98);
+  box-sizing: border-box;
 }
 
 .headerBlock {
   margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
 .panelTitle {
   font-size: 1.5rem;
   font-weight: bold;
   margin: 0 0 1rem;
+  color: #ffe4b5;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 .filterRow {
@@ -22,43 +40,70 @@
 
 .filterBtn {
   padding: 0.5rem 1rem;
-  background-color: transparent;
-  color: #6b7280;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  background: rgba(40, 30, 20, 0.6);
+  color: #ccc;
+  border: 1px solid rgba(139, 69, 19, 0.6);
+  border-radius: 4px;
+  font-family: inherit;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(255, 149, 0, 0.8);
+    color: #ffe4b5;
+  }
 }
 
 .filterBtnActive {
   padding: 0.5rem 1rem;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 0.375rem;
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95), rgba(184, 134, 11, 0.95));
+  color: #ffe4b5;
+  border: 1px solid rgba(255, 149, 0, 0.8);
+  border-radius: 4px;
+  font-family: inherit;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .listScroll {
   flex: 1;
   overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(40, 30, 20, 0.5);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(139, 69, 19, 0.8);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 149, 0, 0.4);
+
+    &:hover {
+      background: rgba(184, 134, 11, 0.9);
+    }
+  }
 }
 
 .stateMessage {
   text-align: center;
   padding: 2rem;
-  color: #6b7280;
+  color: #999;
+  font-style: italic;
 }
 
 .stateError {
   text-align: center;
   padding: 2rem;
-  color: #ef4444;
+  color: #fca5a5;
 }
 
 .ticketList {
@@ -70,25 +115,26 @@
 .tipBox {
   margin-top: 1rem;
   padding: 1rem;
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
+  background: rgba(40, 30, 20, 0.6);
+  border: 1px solid rgba(139, 69, 19, 0.5);
+  border-radius: $radius-md;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #ccc;
+  flex-shrink: 0;
 }
 
 .card {
   padding: 1rem;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
+  background: rgba(40, 30, 20, 0.6);
+  border: 1px solid rgba(139, 69, 19, 0.5);
+  border-radius: $radius-md;
   cursor: pointer;
-  transition:
-    box-shadow 0.2s,
-    transform 0.2s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
 
   &:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: rgba(60, 40, 20, 0.8);
+    border-color: rgba(255, 149, 0, 0.7);
+    box-shadow: 0 2px 8px rgba(255, 149, 0, 0.2);
     transform: translateY(-1px);
   }
 }
@@ -104,6 +150,7 @@
   font-size: 1rem;
   font-weight: 600;
   margin: 0;
+  color: #ffe4b5;
 }
 
 .unreadBadge {
@@ -124,16 +171,18 @@
 
 .categoryChip {
   padding: 0.25rem 0.75rem;
-  background-color: #f3f4f6;
+  background: rgba(20, 20, 20, 0.6);
+  border: 1px solid rgba(139, 69, 19, 0.5);
   border-radius: 9999px;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #ccc;
 }
 
 .priorityHigh {
   padding: 0.25rem 0.75rem;
-  background-color: #fee2e2;
-  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -141,7 +190,7 @@
 
 .cardMeta {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #999;
 }
 
 .metaAssigned {

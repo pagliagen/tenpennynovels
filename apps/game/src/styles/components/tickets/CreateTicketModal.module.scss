@@ -1,7 +1,22 @@
+@use '../../variables' as *;
+
+/**
+ * Create Ticket Modal/Form Styles
+ *
+ * Victorian aesthetic matching Window/OnGameMail: gold (#ff9500), dark
+ * backgrounds, serif fonts.
+ *
+ * @module styles/components/tickets/CreateTicketModal
+ */
+
+$field-bg: rgba(20, 20, 20, 0.8);
+$field-border: rgba(139, 69, 19, 0.6);
+
+// Variante 'overlay': dialog fluttuante con scrim (BackgroundTab, DiarioTab)
 .overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,22 +24,103 @@
 }
 
 .dialog {
-  background-color: white;
-  border-radius: 0.5rem;
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.98), rgba(40, 30, 20, 0.98));
+  border: 2px solid rgba(255, 149, 0, 0.8);
+  border-radius: 8px;
   padding: 2rem;
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 149, 0, 0.3);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #e8e0d5;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(40, 30, 20, 0.5);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(139, 69, 19, 0.8);
+    border-radius: 4px;
+  }
 }
 
-.title {
+.dialogTitle {
   font-size: 1.5rem;
   font-weight: bold;
   margin: 0 0 1.5rem;
+  color: #ffe4b5;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+// Variante 'inline': incorporata in TicketPanelContent, nessun overlay
+.root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #e8e0d5;
+  background: rgba(20, 20, 20, 0.98);
+}
+
+.header {
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95), rgba(184, 134, 11, 0.95));
+  border-bottom: 2px solid rgba(255, 149, 0, 0.6);
+  flex-shrink: 0;
+}
+
+.backBtn {
+  padding: 0.5rem 0;
+  background: transparent;
+  border: none;
+  color: #ffd700;
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.formArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(40, 30, 20, 0.5);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(139, 69, 19, 0.8);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 149, 0, 0.4);
+
+    &:hover {
+      background: rgba(184, 134, 11, 0.9);
+    }
+  }
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin: 0.5rem 0 0;
+  color: #ffe4b5;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 .field {
@@ -40,19 +136,19 @@
   font-size: 0.875rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #374151;
+  color: #ffd700;
 }
 
 .hint {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #999;
   margin-top: 0.25rem;
   margin-bottom: 0;
 }
 
 .hintRight {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: #999;
   margin-top: 0.25rem;
   margin-bottom: 0;
   text-align: right;
@@ -60,7 +156,8 @@
 
 .loadingText {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #999;
+  font-style: italic;
 }
 
 .input,
@@ -68,11 +165,34 @@
 .textarea {
   width: 100%;
   padding: 0.625rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  background: $field-bg;
+  border: 1px solid $field-border;
+  border-radius: 4px;
+  color: #e8e0d5;
+  font-family: inherit;
   font-size: 0.875rem;
-  background-color: white;
   box-sizing: border-box;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: rgba(255, 149, 0, 0.8);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: rgba(255, 149, 0, 1);
+    box-shadow: 0 0 8px rgba(255, 149, 0, 0.3);
+  }
+
+  &::placeholder {
+    color: #666;
+    font-style: italic;
+  }
+}
+
+.select option {
+  background: #1a1a1a;
+  color: #e8e0d5;
 }
 
 .textarea {
@@ -89,13 +209,21 @@
 
 .btnSecondary {
   padding: 0.625rem 1.25rem;
-  background-color: transparent;
-  color: #6b7280;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
+  background: rgba(60, 40, 20, 0.8);
+  color: #ccc;
+  border: 1px solid rgba(139, 69, 19, 0.6);
+  border-radius: 4px;
+  font-family: inherit;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: rgba(80, 50, 30, 0.9);
+    border-color: rgba(255, 149, 0, 0.8);
+    color: #ffe4b5;
+  }
 
   &:disabled {
     cursor: not-allowed;
@@ -105,16 +233,27 @@
 
 .btnPrimary {
   padding: 0.625rem 1.25rem;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 0.375rem;
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95), rgba(184, 134, 11, 0.95));
+  border: 1px solid rgba(255, 149, 0, 0.8);
+  color: #ffe4b5;
+  border-radius: 4px;
+  font-family: inherit;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(184, 134, 11, 0.95), rgba(139, 69, 19, 0.95));
+    box-shadow: 0 0 12px rgba(255, 149, 0, 0.5);
+    transform: translateY(-1px);
+  }
 
   &:disabled {
-    background-color: #9ca3af;
+    background: rgba(80, 80, 80, 0.5);
+    border-color: rgba(139, 69, 19, 0.3);
+    color: #999;
     cursor: not-allowed;
   }
 }

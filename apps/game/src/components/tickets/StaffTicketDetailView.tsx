@@ -9,11 +9,10 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/router';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 
-import { useTicketMessages } from '@/hooks/useTickets';
 import { api } from '@/lib/api/client';
+import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/tickets/StaffTicketDetailView.module.scss';
 
 import { TicketStatusBadge } from './TicketStatusBadge';
@@ -29,18 +28,23 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
   const [replyContent, setReplyContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-  const router = useRouter();
+  const currentUserId = useAuthStore((state) => state.user?._id);
 
-  const { data: messages = [], isLoading } = useTicketMessages(ticketId);
-
-  // Fetch ticket details
-  const { data: ticket } = useQuery({
+  // Dettagli + messaggi in un'unica chiamata: GET /admin/tickets/:id/messages
+  // non esiste, e /game/tickets/:id/messages (uso precedente, useTicketMessages)
+  // e' l'endpoint del giocatore con controllo ownership (createdBy===personaggio
+  // loggato) - fallisce sempre per un ticket non proprio, cioe' quasi sempre
+  // per lo staff. GET /admin/tickets/:id (getTicketDetails) restituisce gia'
+  // { ticket, messages } senza quel vincolo.
+  const { data, isLoading } = useQuery({
     queryKey: ['tickets', 'staff', ticketId],
     queryFn: async () => {
-      const response = await api.get<{ ticket: any }>(`/admin/tickets/${ticketId}`);
-      return response.ticket;
+      const response = await api.get<{ ticket: any; messages: any[] }>(`/admin/tickets/${ticketId}`);
+      return response;
     }
   });
+  const ticket = data?.ticket;
+  const messages = useMemo(() => data?.messages ?? [], [data?.messages]);
 
   // Reply mutation
   const replyMutation = useMutation({
@@ -48,16 +52,20 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
       return await api.post<{ message: any }>(`/admin/tickets/${ticketId}/messages`, { content });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tickets', ticketId, 'messages'] });
+      queryClient.invalidateQueries({ queryKey: ['tickets', 'staff', ticketId] });
       queryClient.invalidateQueries({ queryKey: ['tickets', 'staff'] });
       setReplyContent('');
     }
   });
 
   // Take ticket mutation
+  // PUT /admin/tickets/:id/assign richiede assignedTo+assignedToName (nessuno
+  // shorthand assignToMe): l'endpoint corretto per l'auto-assegnazione e'
+  // POST /admin/tickets/:id/take (TicketDashboardController.takeTicket),
+  // senza body - assegna a req.user.userId.
   const takeMutation = useMutation({
     mutationFn: async () => {
-      return await api.put<{ ticket: any }>(`/admin/tickets/${ticketId}/assign`, { assignToMe: true });
+      return await api.post<{ ticket: any }>(`/admin/tickets/${ticketId}/take`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets', 'staff', ticketId] });
@@ -89,11 +97,16 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
   };
 
   const handleGoToCharacterPending = () => {
-    router.push('/characters/character-pending');
+    // /characters/character-pending vive in apps/management, non in
+    // apps/game: router.push (SPA, stesso dominio) qui darebbe sempre 404.
+    const managementUrl = process.env.NEXT_PUBLIC_MANAGEMENT_URL || '';
+    window.open(`${managementUrl}/characters/character-pending`, '_blank', 'noopener,noreferrer');
   };
 
   const canReply = ticket && ticket.status !== 'closed';
-  const isAssignedToMe = ticket?.assignedTo?.isMe;
+  // GET /admin/tickets/:id (getTicketDetails) restituisce assignedTo:{id,name},
+  // nessun campo isMe: va calcolato qui confrontando con lo user loggato.
+  const isAssignedToMe = !!ticket?.assignedTo && ticket.assignedTo.id === currentUserId;
   const isUnassigned = !ticket?.assignedTo;
   const isCharacterApproval = ticket?.category === 'character_approval';
 
@@ -140,7 +153,7 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
             </div>
 
             <div className={styles.metaLine}>
-              Da: {ticket.createdBy?.characterName || 'N/A'}
+              Da: {ticket.createdBy?.name || 'N/A'}
               {' • '}
               Creato il {new Date(ticket.createdAt).toLocaleString('it-IT')}
               {ticket.assignedTo && (
@@ -168,7 +181,7 @@ export function StaffTicketDetailView({ ticketId, onBack }: StaffTicketDetailVie
         )}
 
         {!isLoading && messages.map((message) => (
-          <MessageBubble key={message._id} message={message} />
+          <MessageBubble key={message.id} message={message} />
         ))}
 
         <div ref={messagesEndRef} />

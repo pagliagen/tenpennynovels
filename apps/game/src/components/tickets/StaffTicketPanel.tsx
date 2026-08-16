@@ -178,7 +178,7 @@ function StaffTicketCard({ ticket, onClick }: StaffTicketCardProps) {
       </div>
 
       <div className={styles.cardMeta}>
-        Da: {ticket.createdBy?.characterName || 'N/A'}
+        Da: {ticket.createdBy?.name || 'N/A'}
         {' • '}
         {new Date(ticket.createdAt).toLocaleDateString('it-IT', {
           day: '2-digit',

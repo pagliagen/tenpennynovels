@@ -10,7 +10,9 @@
 
 'use client';
 
+import { StaffTicketPanel } from '@/components/tickets/StaffTicketPanel';
 import { TicketPanelContent } from '@/components/tickets/TicketPanelContent';
+import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/windows/UtilityContent.module.scss';
 import { WindowData } from '@/types/window-manager';
 
@@ -43,6 +45,9 @@ interface UtilityContentProps {
  * @since 2.0.0
  */
 export function UtilityContent({ utilityName, data }: UtilityContentProps): JSX.Element {
+  // Stesso permesso gia' usato per il ramo master della chat (ChatContainer.tsx)
+  const isStaff = useAuthStore((state) => state.hasGamePermission('game:chat:master-action'));
+
   // Route based on utilityName
   switch (utilityName) {
     case 'character-directory':
@@ -52,7 +57,7 @@ export function UtilityContent({ utilityName, data }: UtilityContentProps): JSX.
       return <CharacterFaceClaimContent />;
 
     case 'tickets':
-      return <TicketPanelContent />;
+      return isStaff ? <StaffTicketPanel /> : <TicketPanelContent />;
 
     case 'market':
       return <MarketContent />;
