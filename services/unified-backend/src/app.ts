@@ -13,6 +13,7 @@ import { errorHandler, notFoundHandler } from '@shared/middleware/errorHandler';
 import { httpLoggerStream, logger } from '@shared/utils/logger';
 import { appConfig } from '@config/runtime';
 import { bootstrapFeatures } from '@core/features/bootstrap';
+import { registerCoreActionTypes } from '@core/chat/actionTypes/coreActionTypes';
 import { FEATURES } from '@features/index';
 
 // Import module routes
@@ -129,6 +130,9 @@ app.use('/auth', authRoutes);
 app.use('/character-gen', characterGenConfigRoutes);  // Character Gen config (PUBLIC - no auth)
 app.use('/game', gameRoutes);
 app.use('/admin', adminRoutes);
+
+// ===== Chat ActionType registry: i 6 tipi fissi, prima di qualunque feature =====
+registerCoreActionTypes();
 
 // ===== Feature Routes =====
 // Sincrona: un errore di configurazione (es. chiave feature duplicata)
