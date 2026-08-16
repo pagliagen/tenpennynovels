@@ -257,17 +257,8 @@
   height: 100vh;
   overflow: hidden;
   width: 100%;
-  min-width: 1024px;
-
-  @media (min-width: 1600px) {
-    flex: 1;
-  }
-  @media (min-width: 1260px) and (max-width: 1599px) {
-    flex: 1;
-  }
-  @media (min-width: 1024px) and (max-width: 1149px) {
-    flex: 1;
-  }
+  min-width: 1024px; 
+  flex: 1; 
 
   // Sotto MOBILE_SHELL_BREAKPOINT (useIsCompactLayout.ts) il floor da 1024px
   // sparisce: la struttura cambia (shell mobile a 3 pannelli, MobileTabBar),
@@ -275,7 +266,6 @@
   // delle tre media query sopra copre sotto i 1024px), senza sarebbe 0px di
   // larghezza - invisibile ma senza scroll orizzontale, quindi silenzioso.
   @media (max-width: 1023px) {
-    flex: 1;
     min-width: 0;
   }
 }
