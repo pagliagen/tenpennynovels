@@ -27,11 +27,17 @@ export class ActionTypeRegistry {
     return [...this.byKey.values()];
   }
 
-  /** Fail-closed: chiave sconosciuta o feature disattivata → false, mai un throw. */
+  /**
+   * Fail-closed: chiave sconosciuta → false, mai un throw. Bypass gestore
+   * centralizzato qui (era in cima a ChatController.validateActionPermission,
+   * non dentro il singolo case) — ma solo se la feature è accesa: un flag
+   * spento resta un kill-switch reale anche per un gestore.
+   */
   async canCreate(actionType: string, gameplayRoles: string[], isGestore: boolean): Promise<boolean> {
     const module = this.getByKey(actionType);
     if (!module) return false;
     if (module.featureKey && !(await FeatureFlagService.isEnabled(module.featureKey))) return false;
+    if (isGestore) return true;
     return module.canCreate(gameplayRoles, isGestore);
   }
 
@@ -41,10 +47,14 @@ export class ActionTypeRegistry {
   }
 
   /**
-   * Mai gated dal flag: disattivare una feature blocca solo la creazione di
-   * nuovi messaggi, non nasconde retroattivamente lo storico già visibile.
+   * Sync, mai gated dal flag: nessuna delle due condizioni richiede I/O —
+   * disattivare una feature blocca solo la creazione di nuovi messaggi, non
+   * nasconde retroattivamente lo storico già visibile. Sincrono di
+   * proposito: i chiamanti reali (ChatMessageService.canSeeAction) girano
+   * dentro un Array.filter(), un ritorno Promise lì costringerebbe a
+   * riscrivere il chiamante per nessun beneficio reale.
    */
-  async canSeeMessage(action: ChatActionLike, viewerCharacterId: string, isViewerMaster: boolean): Promise<boolean> {
+  canSeeMessage(action: ChatActionLike, viewerCharacterId: string, isViewerMaster: boolean): boolean {
     const module = this.getByKey(action.actionType);
     if (!module?.canSeeMessage) return true;
     return module.canSeeMessage(action, viewerCharacterId, isViewerMaster);
@@ -62,7 +72,7 @@ export class ActionTypeRegistry {
   }
 
   getAdminLabel(actionType: string): string {
-    return this.getByKey(actionType)?.adminLabel ?? 'Sconosciuto';
+    return this.getByKey(actionType)?.adminLabel ?? 'Unknown action type';
   }
 }
 

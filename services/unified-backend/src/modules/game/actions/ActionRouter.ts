@@ -10,16 +10,18 @@
 
 import { IActionHandler, ActionInput, ActionData, ChatActionType, ActionContext } from './types';
 
-// Import implemented handlers
+// Import implemented handlers — i tipi core restano locali, i tipi feature
+// arrivano dall'api.ts della rispettiva feature (features/** puo' importare
+// da modules/**, direzione sanzionata da lint:boundaries).
 import { StandardActionHandler } from './handlers/StandardActionHandler';
 import { WhisperActionHandler } from './handlers/WhisperActionHandler';
 import { OocActionHandler } from './handlers/OocActionHandler';
 import { DiceRollActionHandler } from './handlers/DiceRollActionHandler';
-import { SkillCheckActionHandler } from './handlers/SkillCheckActionHandler';
-import { StatCheckActionHandler } from './handlers/StatCheckActionHandler';
-import { ItemUseActionHandler } from './handlers/ItemUseActionHandler';
 import { MasterActionHandler } from './handlers/MasterActionHandler';
 import { ModerationActionHandler } from './handlers/ModerationActionHandler';
+import { SkillCheckActionHandler } from '@features/skillCheck/api';
+import { StatCheckActionHandler } from '@features/statCheck/api';
+import { ItemUseActionHandler } from '@features/itemUse/api';
 import { SocialConflictActionHandler } from './handlers/SocialConflictActionHandler';
 import { CombatActionHandler } from './handlers/CombatActionHandler';
 

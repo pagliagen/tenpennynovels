@@ -17,13 +17,14 @@ import type { EnrichedChatMessage, EnrichedConfrontation } from './types';
 import type { MessageContext } from './MessageContext';
 import type { IMessageEnricher } from './enrichers/IMessageEnricher';
 
-// Import enrichers
-import { SkillCheckEnricher } from './enrichers/SkillCheckEnricher';
-import { StatCheckEnricher } from './enrichers/StatCheckEnricher';
-import { ItemUseEnricher } from './enrichers/ItemUseEnricher';
+// Import enrichers — i tipi core restano locali, i tipi feature arrivano
+// dall'api.ts della rispettiva feature.
 import { WhisperEnricher } from './enrichers/WhisperEnricher';
 import { DiceRollEnricher } from './enrichers/DiceRollEnricher';
 import { BaseEnricher } from './enrichers/BaseEnricher';
+import { SkillCheckEnricher } from '@features/skillCheck/api';
+import { StatCheckEnricher } from '@features/statCheck/api';
+import { ItemUseEnricher } from '@features/itemUse/api';
 import { logger } from '@shared/utils/logger';
 
 /**

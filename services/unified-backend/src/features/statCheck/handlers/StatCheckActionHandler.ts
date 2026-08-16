@@ -11,14 +11,14 @@
  * @since 2.1.0
  */
 
-import { BaseActionHandler } from '../BaseActionHandler';
+import { BaseActionHandler } from '@modules/game/actions/BaseActionHandler';
 import {
   ActionInput,
   ActionData,
   ValidationResult,
   ActionContext,
   ChatActionType
-} from '../types';
+} from '@modules/game/actions/types';
 
 /**
  * Stat Check Action Handler

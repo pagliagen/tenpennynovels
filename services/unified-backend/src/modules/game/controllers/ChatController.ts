@@ -4,6 +4,7 @@ import { Character } from '@core/character/models/Character';
 import { Location } from '@core/location/models/Location';
 import { Chat } from '@core/chat/models/Chat';
 import { ChatBackup } from '@core/chat/models/ChatBackup';
+import { actionTypeRegistry } from '@core/chat/actionTypes/registry';
 import { GamingSession, SkillConfrontation, CombatEncounter, Skill } from '@database/models';
 import { logger } from '../logger';
 import { successResponse, errorResponse, createResponse, listResponse, getRequestId } from '@shared/utils/apiResponse';
@@ -232,7 +233,7 @@ export class ChatController {
       }
 
       // Validate action type permissions
-      const isValidAction = ChatController.validateActionPermission(
+      const isValidAction = await actionTypeRegistry.canCreate(
         actionType,
         character.gameplayRoles || [],
         character.isGestore || false
@@ -372,7 +373,7 @@ export class ChatController {
         locationId,
         sessionId, // Copy sessionId from location to action
         timestamp: new Date(),
-        visibility: visibility || ChatController.getActionVisibility(actionType),
+        visibility: visibility || actionTypeRegistry.getDefaultVisibility(actionType),
         characterRoles: character.gameplayRoles || [],
         position: position || undefined,
         isHidden: shouldHide
@@ -702,56 +703,6 @@ export class ChatController {
           getRequestId(req)
         )
       );
-    }
-  }
-
-  /**
-   * Validate if character has permission for action type
-   * Uses NEW gameplayRoles system: player, approved-player, master, moderatore
-   */
-  private static validateActionPermission(actionType: string, gameplayRoles: string[], isGestore: boolean = false): boolean {
-    // Gestore bypass (super-admin)
-    if (isGestore) return true;
-
-    switch (actionType) {
-      case 'master':
-        // Only master role can perform master actions
-        return gameplayRoles.includes('master');
-      case 'moderation':
-        // Only moderatore role can perform moderation actions
-        return gameplayRoles.includes('moderatore');
-      case 'standard':
-      case 'whisper':
-      case 'ooc':
-      case 'dice_roll':
-      case 'skill_check':
-      case 'stat_check':
-      case 'item_use':
-        // All approved players can perform standard actions
-        return gameplayRoles.includes('player') ||
-          gameplayRoles.includes('master') ||
-          gameplayRoles.includes('moderatore');
-      default:
-        return false;
-    }
-  }
-
-  /**
-   * Get visibility level for action type
-   *
-   * IMPORTANT:
-   * - master/moderation actions are PUBLIC (everyone can read)
-   * - Only masters/moderators can SEND them (permission check elsewhere)
-   */
-  private static getActionVisibility(actionType: string): 'public' | 'whisper' | 'master_only' {
-    switch (actionType) {
-      case 'whisper':
-        return 'whisper';
-      case 'master':
-      case 'moderation':
-        return 'public';  // ← FIX: Everyone can read, only masters can send
-      default:
-        return 'public';
     }
   }
 

@@ -14,5 +14,8 @@ import { documenti } from './documenti/manifest';
 import { forum } from './forum/manifest';
 import { fineSessione, fineSessioneAi } from './fineSessione/manifest';
 import { offGameMessages } from './offGameMessages/manifest';
+import { skillCheck } from './skillCheck/manifest';
+import { statCheck } from './statCheck/manifest';
+import { itemUse } from './itemUse/manifest';
 
-export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni, tickets, occupazioni, economia, oggetti, documenti, forum, fineSessione, fineSessioneAi, offGameMessages];
+export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni, tickets, occupazioni, economia, oggetti, documenti, forum, fineSessione, fineSessioneAi, offGameMessages, skillCheck, statCheck, itemUse];

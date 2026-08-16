@@ -11,9 +11,9 @@
  * @since 2.2.0
  */
 
-import type { IMessageEnricher } from './IMessageEnricher';
-import type { EnrichedChatMessage, EnrichedItemEffect } from '../types';
-import type { MessageContext } from '../MessageContext';
+import type { IMessageEnricher } from '@modules/game/transformers/enrichers/IMessageEnricher';
+import type { EnrichedChatMessage, EnrichedItemEffect } from '@modules/game/transformers/types';
+import type { MessageContext } from '@modules/game/transformers/MessageContext';
 import { logger } from '@shared/utils/logger';
 
 /**
