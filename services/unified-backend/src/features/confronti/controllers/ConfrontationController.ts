@@ -405,41 +405,101 @@ export class ConfrontationController {
         return;
       }
 
-      // ═══ SKILL USAGE TRACKING (SOCIAL ONLY, EXCLUDE RAGGIRARE) ═══
       const configService = new ConfigurationService(redis.getClient(), logger);
 
-      if (config.category === 'social' && attackSkill !== 'Raggirare') {
-        const usageLimit = await configService.getConfig('confrontation_skill_usage_limit_per_scene') as number;
+      // ═══ AUTO-RESOLVE (NO DEFENSE CHOICE TO PRESENT) ═══
+      // canDefend:false + counterSkills.length===1 = la skill di difesa è
+      // obbligata (es. Raggirare -> solo Empatia): niente popup, niente
+      // opzione "non difendersi", risoluzione immediata e tiro nascosto.
+      // Guidato dal flag di SkillConfrontation, non da un controllo
+      // hardcoded sul nome della skill — una futura skill con la stessa
+      // caratteristica eredita lo stesso comportamento senza toccare
+      // questo file.
+      const autoResolve = config.canDefend === false && config.counterSkills.length === 1;
 
-        if (usageLimit > 0) {
-          // Check if skill was already used against this target in this location
-          const existingUsage = await CombatEncounter.findOne({
-            locationId,
-            encounterType: 'social_scene',
-            status: { $ne: 'completed' },
-            'skillUsageTracking': {
-              $elemMatch: {
-                characterId: character.characterId,
-                targetCharacterId: defenderId,
-                skillName: attackSkill
-              }
-            }
-          });
+      if (autoResolve) {
+        const defenseSkillName = config.counterSkills[0].skillName;
+        let defenderValue = await ConfrontationController.getSkillValueByName(defenderCharacter, defenseSkillName);
+        if (defenderValue === 0) {
+          defenderValue = 1;
+          logger.warn(`Defender skill ${defenseSkillName} not found for character ${defenderCharacter._id}, using default value 1`);
+        }
 
-          if (existingUsage) {
-            res.status(400).json(errorResponse(
-              `Hai già usato ${attackSkill} contro ${defenderCharacter.name} in questa scena`,
-              'SKILL_USAGE_LIMIT_EXCEEDED',
-              { skill: attackSkill, limit: usageLimit },
-              400,
-              getRequestId(req)
-            ));
-            return;
+        const attackRoll = ConfrontationController.rollDice('1d100').result;
+        const defenseRoll = ConfrontationController.rollDice('1d100').result;
+        const attackDegree = calculateSuccessDegree(attackRoll, attackerValue).degree;
+        const defenseDegree = calculateSuccessDegree(defenseRoll, defenderValue).degree;
+        const comparison = compareSuccessDegrees(attackDegree, defenseDegree, attackRoll, defenseRoll);
+        const attackerWins = comparison > 0;
+
+        if (config.category !== 'social') {
+          // Nessuna skill da combattimento ha oggi counterSkills.length===1
+          // (condividono tutte COMBAT_COUNTERS, lunghezza 7): il calcolo
+          // danno non è implementato per questo ramo — se mai capitasse,
+          // meglio un warning esplicito che un silenzio inspiegabile.
+          logger.warn(`Auto-resolve confrontation for non-social category ${config.category}: damage calculation not implemented for this path`);
+        }
+
+        const confrontationData: any = {
+          type: config.category === 'social' ? 'social' : 'combat',
+          phase: 'result',
+          attackerCharacterId: character.characterId,
+          defenderCharacterId: defenderId,
+          attackSkill,
+          defenseSkill: defenseSkillName,
+          attackRoll,
+          defenseRoll,
+          attackSuccessLevel: attackDegree,
+          defenseSuccessLevel: defenseDegree,
+          outcome: attackerWins ? 'attacker_wins' : 'defender_wins',
+          hiddenResultForAttacker: true // canDefend:false è per definizione un tiro nascosto
+        };
+
+        // Testo di rivelazione per il difensore, specifico di Raggirare
+        // (narrativa della bugia) — non generalizzabile senza sapere cosa
+        // dovrebbe dire una futura skill diversa.
+        if (attackSkill === 'Raggirare' && !attackerWins) {
+          if (defenseDegree === 'hard' || defenseDegree === 'extreme' || defenseDegree === 'critical') {
+            confrontationData.messageForDefender = `${attackerCharacter.name} sta evidentemente cercando di nasconderti qualcosa quando dice: "${content.trim()}"`;
+          } else if (defenseDegree === 'normal') {
+            confrontationData.messageForDefender = `Ti rendi conto che ${attackerCharacter.name} ti sta nascondendo qualcosa.`;
+          } else {
+            confrontationData.messageForDefender = `L'istinto ti dice di non fidarti del tutto delle parole di ${attackerCharacter.name}.`;
           }
         }
+
+        const messageData: any = {
+          actionType: config.category === 'social' ? 'social_confrontation' : 'combat_action',
+          characterId: character.characterId,
+          characterName: character.characterName,
+          content: content.trim(),
+          locationId,
+          position: position || undefined,
+          visibility: 'whisper',
+          targetCharacters: [character.characterId, defenderId],
+          characterRoles: character.gameplayRoles || [],
+          timestamp: new Date(),
+          confrontation: confrontationData
+        };
+
+        if (attackSkill === 'Raggirare' && additionalMessage) {
+          messageData.hiddenContent = additionalMessage;
+        }
+
+        const message = await Chat.create(messageData);
+        await ConfrontationController.emitConfrontationMessage(req, message);
+
+        logger.info(`Confrontation auto-resolved: ${attackSkill} vs ${defenseSkillName} by ${character.characterName} (${attackerWins ? 'attacker wins' : 'defender wins'})`);
+
+        res.status(201).json(createResponse(
+          { action: message, requiresReaction: false, outcome: attackerWins ? 'success' : 'detected' },
+          'Confrontation resolved automatically',
+          getRequestId(req)
+        ));
+        return;
       }
 
-      // ═══ UNIFIED 2-PHASE FLOW (ALL CONFRONTATIONS) ═══
+      // ═══ UNIFIED 2-PHASE FLOW (ALL OTHER CONFRONTATIONS) ═══
 
       // Build availableDefenseSkills with __NO_DEFENSE__ option
       interface DefenseSkillOption {
@@ -488,13 +548,6 @@ export class ConfrontationController {
           attackSkill,
           status: 'waiting_defense'
         },
-        skillUsageTracking: encounterType === 'social_scene' ? [{
-          characterId: character.characterId,
-          targetCharacterId: defenderId,
-          skillName: attackSkill,
-          usedAt: new Date(),
-          additionalContext: additionalMessage || undefined
-        }] : [],
         turnHistory: []
       });
 
@@ -518,7 +571,7 @@ export class ConfrontationController {
           defenderCharacterId: defenderId,
           availableDefenseSkills, // Use the built array with __NO_DEFENSE__
           attackSkill,
-          hiddenResultForAttacker: attackSkill === 'Raggirare' // Attacker doesn't see rolls for Raggirare
+          hiddenResultForAttacker: !config.canDefend // Never true for Raggirare in practice (routed via autoResolve above), kept generic for the canDefend:false+length!==1 fallback case
         }
       };
 
@@ -528,8 +581,7 @@ export class ConfrontationController {
       }
 
       // CombatEncounter and Chat aren't in a transaction: if message creation
-      // fails, delete the encounter too - otherwise it's left in 'waiting_reaction'
-      // forever and silently blocks retries via the skill-usage-limit check above.
+      // fails, delete the encounter too - otherwise it's left in 'waiting_reaction' forever.
       let message;
       try {
         message = await Chat.create(messageData);
@@ -803,84 +855,6 @@ export class ConfrontationController {
       // Compare degrees to determine outcome
       const comparison = compareSuccessDegrees(attackDegree, defenseDegree, attackRoll, defenseRoll);
       const outcome = comparison > 0 ? 'hit' : 'miss';
-
-      // ═══ RAGGIRARE SPECIAL RESULT PRESENTATION ═══
-      if (attackSkill === 'Raggirare') {
-        // Attacker ALWAYS sees generic message (hiddenResultForAttacker flag)
-        // Defender receives message ONLY if they win
-
-        const attackerWins = comparison > 0;
-        const originalContent = message.content;
-
-        // Update main message with result. Stays 'whisper' (attacker + defender + master
-        // only) — Raggirare is a hidden roll, bystanders in the location must never see it.
-        // The attacker itself won't see the rolls/outcome either: MessageTransformer strips
-        // them per-viewer based on confrontation.hiddenResultForAttacker (see
-        // maskConfrontationForViewer in transformers/MessageTransformer.ts).
-        const updateFields: any = {
-          actionType: 'social_confrontation',
-          visibility: 'whisper',
-          'confrontation.phase': 'result',
-          'confrontation.defenseSkill': defenseSkillName,
-          'confrontation.attackRoll': attackRoll,
-          'confrontation.defenseRoll': defenseRoll,
-          'confrontation.attackSuccessLevel': attackDegree,
-          'confrontation.defenseSuccessLevel': defenseDegree,
-          'confrontation.outcome': attackerWins ? 'attacker_wins' : 'defender_wins'
-        };
-
-        // Reveal text for the defender, integral part of THIS message (not a
-        // separate one) — same position/read-state/timestamp as the lie it's
-        // revealing something about. Never the attacker's own view: masked out
-        // in maskConfrontationForAttacker (WS push) and
-        // ConfrontationEnricher.maskConfrontationForViewer (GET path), same
-        // condition as the rest of the hidden roll result.
-        if (!attackerWins) {
-          let messageForDefender = '';
-
-          // Y has hard/extreme/critical success → full message with lie text
-          if (defenseDegree === 'hard' || defenseDegree === 'extreme' || defenseDegree === 'critical') {
-            messageForDefender = `${attackerCharacter.name} sta evidentemente cercando di nasconderti qualcosa quando dice: "${originalContent}"`;
-          }
-          // Y has normal success → partial message
-          else if (defenseDegree === 'normal') {
-            messageForDefender = `Ti rendi conto che ${attackerCharacter.name} ti sta nascondendo qualcosa.`;
-          }
-          // Y has failure/fumble BUT X failed worse → basic message
-          else {
-            messageForDefender = `L'istinto ti dice di non fidarti del tutto delle parole di ${attackerCharacter.name}.`;
-          }
-
-          updateFields['confrontation.messageForDefender'] = messageForDefender;
-        }
-
-        const updated: any = await Chat.findOneAndUpdate(
-          { _id: messageId, actionType: 'confrontation_reaction_request' },
-          { $set: updateFields, $unset: { 'confrontation.availableDefenseSkills': '' } },
-          { new: true }
-        );
-
-        // Update encounter
-        await CombatEncounter.updateOne(
-          { _id: message.confrontation.encounterId },
-          { $set: { status: 'completed', 'currentTurn.status': 'resolved', 'currentTurn.defenseSkill': defenseSkillName } }
-        );
-
-        // Emit update for main message — routes messageForDefender to the
-        // defender+staff rooms only, never the attacker's (see
-        // emitConfrontationMessage's per-recipient payload split).
-        await ConfrontationController.emitConfrontationMessage(req, updated);
-
-        if (!attackerWins) {
-          logger.info(`Raggirare detected: ${defenderCharacter.name} received message (${defenseDegree})`);
-        } else {
-          logger.info(`Raggirare succeeded: ${defenderCharacter.name} did not detect the lie`);
-        }
-
-        logger.info(`Raggirare resolved: ${messageId} (${attackerWins ? 'attacker wins' : 'defender wins'}: ${attackDegree} vs ${defenseDegree})`);
-        res.json(createResponse({ outcome: attackerWins ? 'success' : 'detected' }, 'Raggirare risolto', getRequestId(req)));
-        return;
-      }
 
       // ═══ NORMAL CONFRONTATION: CALCULATE DAMAGE IF HIT (COMBAT ONLY) ═══
       let damageDealt = 0;

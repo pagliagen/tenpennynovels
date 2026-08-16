@@ -673,17 +673,6 @@ const ALL_CONFIGS: ConfigRecord[] = [
     isActive: true,
     metadata: { version: 1 },
   },
-  {
-    configKey: 'confrontation_skill_usage_limit_per_scene',
-    configSection: 'combat_system',
-    configType: 'number',
-    value: 1,
-    defaultValue: 1,
-    description: 'Max usi per skill sociale per scena contro stesso target (0 = illimitato, Raggirare esente)',
-    isActive: true,
-    metadata: { version: 1 },
-  },
-
   // ── ticket_system ───────────────────────────────────────────────
   // Category: character_approval
   {

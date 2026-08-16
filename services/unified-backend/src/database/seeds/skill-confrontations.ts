@@ -50,6 +50,7 @@ const SOCIAL_CONFRONTATIONS = [
     category: 'social' as const,
     counterSkills: [{ skillName: 'Autocontrollo', label: 'Autocontrollo' }],
     rollType: 'open' as const,
+    canDefend: true,
     requiresAdditionalMessage: false,
   },
   {
@@ -57,6 +58,7 @@ const SOCIAL_CONFRONTATIONS = [
     category: 'social' as const,
     counterSkills: [{ skillName: 'Tempra', label: 'Tempra' }],
     rollType: 'open' as const,
+    canDefend: true,
     requiresAdditionalMessage: false,
   },
   {
@@ -64,6 +66,7 @@ const SOCIAL_CONFRONTATIONS = [
     category: 'social' as const,
     counterSkills: [{ skillName: 'Autocontrollo', label: 'Autocontrollo' }],
     rollType: 'open' as const,
+    canDefend: true,
     requiresAdditionalMessage: false,
   },
   {
@@ -71,13 +74,19 @@ const SOCIAL_CONFRONTATIONS = [
     category: 'social' as const,
     counterSkills: [{ skillName: 'Tempra', label: 'Tempra' }],
     rollType: 'open' as const,
+    canDefend: true,
     requiresAdditionalMessage: false,
   },
   {
+    // canDefend:false + counterSkills.length===1 -> risoluzione automatica,
+    // nessun popup di scelta difesa (solo Empatia può rispondere, non c'è
+    // scelta reale da presentare), nessuna opzione "non voglio difendermi"
+    // (vedi ConfrontationController.createConfrontationAttack, ramo autoResolve).
     skillName: 'Raggirare',
     category: 'social' as const,
     counterSkills: [{ skillName: 'Empatia', label: 'Empatia' }],
     rollType: 'hidden' as const,
+    canDefend: false,
     requiresAdditionalMessage: true,
     additionalMessageLabel: 'Intenzione nascosta (cosa pensi davvero)',
   },
@@ -91,6 +100,7 @@ const SOCIAL_CONFRONTATIONS = [
     category: 'social' as const,
     counterSkills: [{ skillName: 'Raggirare', label: 'Raggirare' }],
     rollType: 'open' as const,
+    canDefend: true,
     requiresAdditionalMessage: false,
   },
 ];
@@ -106,6 +116,7 @@ const COMBAT_CONFRONTATIONS = [
   ...entry,
   counterSkills: COMBAT_COUNTERS,
   rollType: 'open' as const,
+  canDefend: true,
   requiresAdditionalMessage: false,
 }));
 

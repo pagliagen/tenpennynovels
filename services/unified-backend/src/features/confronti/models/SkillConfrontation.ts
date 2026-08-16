@@ -36,6 +36,13 @@ export interface ISkillConfrontation extends Document {
 
   rollType: 'open' | 'hidden'; // open = visible to all, hidden = Raggirare (two-phase)
 
+  // "Può difendersi?" — false + counterSkills.length===1 = risoluzione
+  // automatica (nessun popup di scelta difesa, nessuna opzione "non
+  // difendersi": la skill di difesa è obbligata). true = il popup esce
+  // sempre, anche con una sola opzione di difesa (comportamento di
+  // tutti i confronti "aperti" oggi, es. Ammaliare→Autocontrollo).
+  canDefend: boolean;
+
   requiresAdditionalMessage: boolean; // true for Raggirare (requires lie text)
   additionalMessageLabel?: string; // e.g., "Testo della bugia"
 
@@ -99,6 +106,11 @@ const SkillConfrontationSchema = new Schema<ISkillConfrontation>(
       required: true,
       enum: ['open', 'hidden'],
       default: 'open',
+    },
+    canDefend: {
+      type: Boolean,
+      required: true,
+      default: true,
     },
     requiresAdditionalMessage: {
       type: Boolean,
