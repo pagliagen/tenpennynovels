@@ -24,6 +24,8 @@ interface ConfrontationModalProps {
   occupants: Array<{ characterId: string; characterName: string }>;
   currentCharacterId: string;
   currentPosition: string | null;
+  /** Testo già scritto nella textarea principale al momento dell'apertura, per precompilare il messaggio RP. */
+  initialMessage?: string;
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -52,6 +54,7 @@ export function ConfrontationModal({
   occupants,
   currentCharacterId,
   currentPosition,
+  initialMessage,
   onClose,
   onSuccess,
 }: ConfrontationModalProps): JSX.Element | null {
@@ -59,7 +62,10 @@ export function ConfrontationModal({
   const [selectedType, setSelectedType] = useState<ConfrontationType | null>(null);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
+  // Seed una tantum dal valore all'apertura: il modale è condizionalmente
+  // montato/smontato in MessageInput.tsx, quindi useState(initialMessage)
+  // cattura correttamente il testo già scritto senza bisogno di un effect.
+  const [message, setMessage] = useState(initialMessage || '');
   const [lieText, setLieText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

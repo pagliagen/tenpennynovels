@@ -16,6 +16,7 @@ import type { ChatMessage } from '@/types/chat';
 
 import { ConfirmDeleteDialog } from '../ConfirmDeleteDialog';
 import { MessageAvatar } from '../MessageAvatar';
+import { MessageContent } from '../MessageContent';
 import { MessageEditableContent } from '../MessageEditableContent';
 import { MessageFooter } from '../MessageFooter';
 import { MessageMenu } from '../MessageMenu';
@@ -121,9 +122,18 @@ export function CombatActionMessage({ message, currentCharacterId }: CombatActio
 
               {/* Raggirare: rivelazione per il difensore, integrata in questo
                   stesso messaggio — il backend la manda solo al difensore
-                  (e al master), mai all'attaccante. */}
+                  (e al master), mai all'attaccante. Quando revealsFullMessage
+                  è true, l'azione RP va a capo sotto il preambolo, resa come
+                  un'action standard (MessageContent), non citata inline. */}
               {confrontation?.messageForDefender && (
-                <div className={styles.messageForDefender}>{confrontation.messageForDefender}</div>
+                <div className={styles.messageForDefender}>
+                  <div>{confrontation.messageForDefender}</div>
+                  {confrontation.revealsFullMessage && (
+                    <div className={styles.messageForDefenderAction}>
+                      <MessageContent content={message.content} />
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Confrontation result display */}

@@ -714,9 +714,11 @@ export function MessageInput({
           occupants={occupants}
           currentCharacterId={characterData.characterId}
           currentPosition={currentPosition}
+          initialMessage={messageInput}
           onClose={() => setIsConfrontationModalOpen(false)}
           onSuccess={() => {
             setIsConfrontationModalOpen(false);
+            setMessageInput(''); // Testo "consumato" nel messaggio RP del confronto, stesso comportamento di handleSkillStatRoll/handleDiceRoll
             // Message will appear via WebSocket
           }}
         />
