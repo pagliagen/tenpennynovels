@@ -22,8 +22,12 @@ import { ModerationActionHandler } from './handlers/ModerationActionHandler';
 import { SkillCheckActionHandler } from '@features/skillCheck/api';
 import { StatCheckActionHandler } from '@features/statCheck/api';
 import { ItemUseActionHandler } from '@features/itemUse/api';
-import { SocialConflictActionHandler } from './handlers/SocialConflictActionHandler';
-import { CombatActionHandler } from './handlers/CombatActionHandler';
+// social_confrontation/combat_action/confrontation_reaction_request non
+// passano mai da qui: solo le route dedicate di features/confronti li
+// gestiscono (vedi ConfrontationController). I vecchi handler "semplici"
+// SocialConflictActionHandler/CombatActionHandler sono stati eliminati
+// (raggiungibili solo via bypass isGestore per un gap nei permessi,
+// residuo del sistema pre-TiroContrapposto) su decisione esplicita.
 
 /**
  * Action Router
@@ -52,9 +56,7 @@ export class ActionRouter {
       new StatCheckActionHandler(this.context),
       new ItemUseActionHandler(this.context),
       new MasterActionHandler(this.context),
-      new ModerationActionHandler(this.context),
-      new SocialConflictActionHandler(this.context),
-      new CombatActionHandler(this.context)
+      new ModerationActionHandler(this.context)
     ];
 
     for (const handler of handlers) {

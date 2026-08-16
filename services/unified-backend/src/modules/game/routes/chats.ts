@@ -37,32 +37,11 @@ router.delete('/:actionId',
   ChatController.deleteMessage
 );
 
-// Social conflicts (skill-based interactions)
-router.post('/social-conflict',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:chat:social-conflicts'),
-  ChatController.createSocialConflict
-);
-
-// TiroContrapposto - Confrontation system (Phase 1)
-router.post('/confrontation-attack',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:chat:social-conflicts'), // Reuse same permission
-  ChatController.createConfrontationAttack
-);
-
-router.post('/confrontation-reaction',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:chat:social-conflicts'),
-  ChatController.handleConfrontationReaction
-);
-
-// Master controls
-router.post('/force-confrontation-outcome',
-  AuthMiddleware.requireCharacterAuth,
-  requireGamePermission('game:chat:master-action'), // Master-only permission
-  ChatController.forceConfrontationOutcome
-);
+// TiroContrapposto (confrontation-attack/-reaction/force-confrontation-outcome):
+// spostate in features/confronti/routes/game.ts, montate su questo stesso
+// prefisso da bootstrapFeatures(). /social-conflict (meccanica "Raggirare"
+// legacy) eliminata: nessun chiamante frontend, sostituita dal sistema
+// TiroContrapposto attuale.
 
 // Admin operations
 router.delete('/:locationId/clear',

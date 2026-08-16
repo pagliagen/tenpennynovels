@@ -28,7 +28,7 @@
  */
 
 import mongoose from 'mongoose';
-import { SkillConfrontation } from '../models/SkillConfrontation';
+import { SkillConfrontation } from '@features/confronti/api';
 
 const COMBAT_SKILLS = [
   'Armi da botta',

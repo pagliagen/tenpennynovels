@@ -165,15 +165,10 @@ export interface ActionContext {
   Location: any;
   Skill: any;
   Item: any;
-  SkillConfrontation: any;
-  CombatEncounter: any;
-  GamingSession: any;
 
   // Utilities
   calculateSuccessDegree: any;
   getSuccessDegreeLabel: (degree: SuccessDegree) => Promise<string>;
-  calculateSocialConflict: any;
-  getDefensiveSkill?: any;
 
   // Request metadata
   requestId: string;
