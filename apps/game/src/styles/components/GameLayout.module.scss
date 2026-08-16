@@ -39,7 +39,7 @@
   -webkit-user-select: none;
 }
 
-// Layout compatto (<1500px, vedi GameLayout.tsx isCompactLayout): la sidebar
+// Layout compatto (<1600px, vedi GameLayout.tsx isCompactLayout): la sidebar
 // esce dal flusso flex e diventa un drawer sopra il resto, con backdrop.
 .sidebarBackdrop {
   position: fixed;
@@ -259,10 +259,10 @@
   width: 100%;
   min-width: 1024px;
 
-  @media (min-width: 1500px) {
+  @media (min-width: 1600px) {
     flex: 1;
   }
-  @media (min-width: 1260px) and (max-width: 1499px) {
+  @media (min-width: 1260px) and (max-width: 1599px) {
     flex: 1;
   }
   @media (min-width: 1024px) and (max-width: 1149px) {

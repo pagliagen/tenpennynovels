@@ -29,10 +29,10 @@
     animation: slideOutToRight 0.4s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
   }
 
-  // Sotto i 1500px la sidebar collassa a drawer (vedi GameLayout.tsx
+  // Sotto i 1600px la sidebar collassa a drawer (vedi GameLayout.tsx
   // isCompactLayout) - stessa soglia qui: il 50vw non ha più senso, la
   // Bacheca prende tutto lo schermo.
-  @media (max-width: 1500px) {
+  @media (max-width: 1600px) {
     width: 100%;
     max-width: none;
   }
