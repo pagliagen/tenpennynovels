@@ -904,9 +904,18 @@ CharacterSchema.pre('save', async function(this: ICharacter) {
     );
   }
 
-  // Set submitted date when playerStatus changes to pending
-  if (this.isModified('playerStatus') && this.playerStatus === 'pending' && !this.submittedAt) {
-    this.submittedAt = new Date();
+  // Set submitted date when playerStatus changes to pending.
+  // Bug 2026-08-16: la coda del ticket-hook era condizionata a `!this.submittedAt`,
+  // ma CharacterGameplayController.submitCharacter() imposta già
+  // `character.submittedAt = new Date()` PRIMA di chiamare `.save()` — quindi
+  // qui `this.submittedAt` è SEMPRE già valorizzato e il ramo non scattava mai:
+  // nessun ticket character_approval è mai stato creato/riaperto alla
+  // sottomissione, in nessun caso. La coda del ticket-hook ora dipende solo
+  // dal transition isModified('playerStatus')+'pending', non da submittedAt.
+  if (this.isModified('playerStatus') && this.playerStatus === 'pending') {
+    if (!this.submittedAt) {
+      this.submittedAt = new Date();
+    }
     // Ticket character_approval + notifica: gestiti da tickets via extension
     // point, dopo che il documento è salvato per davvero (post('save')) —
     // vedi 'character.playerStatus.pending' in core/extensions/points.ts.
