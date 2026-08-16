@@ -51,6 +51,30 @@ export class ConfrontationController {
    * correct payload shape createMessage() already uses, including whisper-only
    * routing so reaction requests (visibility: 'whisper') don't leak to the whole room.
    */
+  /**
+   * Strip the confrontation result fields the attacker isn't entitled to see
+   * live, for Raggirare (hiddenResultForAttacker). Mirrors
+   * ConfrontationEnricher.maskConfrontationForViewer (the GET-path masking)
+   * verbatim in which fields it strips — this is the same rule, just applied
+   * to the WebSocket push instead of the read path.
+   */
+  private static maskConfrontationForAttacker(confrontation: any): any {
+    if (!confrontation) return confrontation;
+    const mustMask = confrontation.hiddenResultForAttacker && confrontation.phase === 'result';
+    if (!mustMask) return confrontation;
+
+    const {
+      attackRoll: _attackRoll,
+      defenseRoll: _defenseRoll,
+      attackSuccessLevel: _attackSuccessLevel,
+      defenseSuccessLevel: _defenseSuccessLevel,
+      outcome: _outcome,
+      defenseSkill: _defenseSkill,
+      ...masked
+    } = confrontation;
+    return masked;
+  }
+
   private static async emitConfrontationMessage(_req: Request, savedMessage: any): Promise<void> {
     // req.app.get('io') is never populated in this app (no app.set('io', ...)
     // anywhere) - the real instance lives in the getSocketIO() singleton, see
@@ -74,7 +98,7 @@ export class ConfrontationController {
       };
     }
 
-    const chatMessage = {
+    const baseChatMessage = {
       _id: savedMessage._id.toString(),
       actionType: savedMessage.actionType,
       characterId: savedMessage.characterId,
@@ -85,25 +109,46 @@ export class ConfrontationController {
       content: savedMessage.content,
       visibility: savedMessage.visibility,
       diceResult: savedMessage.diceResult || undefined,
-      confrontation: savedMessage.confrontation || undefined,
       targetCharacters: savedMessage.targetCharacters || undefined,
       whisper: whisperEnrichment,
-      hiddenContent: savedMessage.hiddenContent || undefined,
       editHistory: savedMessage.editHistory || [],
       timestamp: savedMessage.timestamp.toISOString()
     };
 
-    const notification = { message: chatMessage, locationId };
-
     if (savedMessage.visibility === 'whisper' || savedMessage.visibility === 'master_only') {
-      const recipientRooms = [
-        `character_${savedMessage.characterId}`,
-        'staff',
-        ...(savedMessage.targetCharacters || []).map((id: string) => `character_${id}`),
-      ];
-      io.to(recipientRooms).emit('location_message_notification', notification);
+      // Three payload variants — the GET path (MessageTransformer/ConfrontationEnricher)
+      // already masks per-viewer; the live WebSocket push must do the same instead of
+      // sending the raw saved document to every recipient room:
+      // - attacker: confrontation masked (Raggirare hides the outcome from its own
+      //   author), hiddenContent never included (master-only, see below)
+      // - defender/other targets: confrontation in full (they're allowed to see the
+      //   true outcome), hiddenContent still never included
+      // - staff (master): confrontation in full + hiddenContent (the actual lie text)
+      const attackerId = savedMessage.confrontation?.attackerCharacterId;
+      const playerConfrontation = ConfrontationController.maskConfrontationForAttacker(savedMessage.confrontation);
+
+      const attackerMessage = { ...baseChatMessage, confrontation: playerConfrontation };
+      const otherTargetsMessage = { ...baseChatMessage, confrontation: savedMessage.confrontation || undefined };
+      const staffMessage = { ...baseChatMessage, confrontation: savedMessage.confrontation || undefined, hiddenContent: savedMessage.hiddenContent || undefined };
+
+      const otherTargetRooms = [
+        savedMessage.characterId,
+        ...(savedMessage.targetCharacters || []),
+      ]
+        .filter((id: string) => id !== attackerId)
+        .map((id: string) => `character_${id}`);
+
+      if (attackerId) {
+        io.to(`character_${attackerId}`).emit('location_message_notification', { message: attackerMessage, locationId });
+      }
+      if (otherTargetRooms.length > 0) {
+        io.to(otherTargetRooms).emit('location_message_notification', { message: otherTargetsMessage, locationId });
+      }
+      io.to('staff').emit('location_message_notification', { message: staffMessage, locationId });
     } else {
-      io.to(roomName).emit('location_message_notification', notification);
+      // Public: rollType 'open' confrontations only (Raggirare is always 'whisper'),
+      // visible to everyone in the room including bystanders by design — no masking.
+      io.to(roomName).emit('location_message_notification', { message: { ...baseChatMessage, confrontation: savedMessage.confrontation || undefined }, locationId });
     }
   }
 
