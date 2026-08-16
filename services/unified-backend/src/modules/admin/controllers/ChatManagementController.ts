@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Chat } from '@core/chat/models/Chat';
+import { actionTypeRegistry } from '@core/chat/actionTypes/registry';
 import { Location } from '@core/location/models/Location';
 import { Character } from '@core/character/models/Character';
 import { logger } from '../utils/logger';
@@ -474,23 +475,11 @@ export class ChatManagementController {
         { $sort: { count: -1 } }
       ]);
 
-      const actionTypeDescriptions: Record<string, string> = {
-        'standard': 'Regular character actions and roleplay',
-        'master': 'Master/Game Master actions and narration',
-        'moderation': 'Moderation actions by staff',
-        'whisper': 'Private messages between characters',
-        'ooc': 'Out of character communication',
-        'dice_roll': 'Dice roll actions and results',
-        'skill_check': 'Skill check attempts and results',
-        'stat_check': 'Attribute check attempts and results',
-        'item_use': 'Item usage and effects'
-      };
-
       const formattedActionTypes = actionTypes.map(type => ({
         actionType: type._id,
         count: type.count,
         latestAction: type.latestAction,
-        description: actionTypeDescriptions[type._id] || 'Unknown action type'
+        description: actionTypeRegistry.getAdminLabel(type._id)
       }));
 
       res.json(successResponse(

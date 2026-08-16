@@ -22,6 +22,7 @@ import { ChatBackup } from '@core/chat/models/ChatBackup';
 import { GamingSession } from '@database/models';
 import { ActionRouter } from '../actions/ActionRouter';
 import { ActionInput } from '../actions/types';
+import { actionTypeRegistry } from '@core/chat/actionTypes/registry';
 import { logger } from '@shared/utils/logger';
 import { hasGamePermission, GamePermissions } from '@config/permissions';
 
@@ -215,18 +216,11 @@ export class ChatMessageService {
       return isDefender;
     }
 
-    // CRITICAL SECURITY: skill_check messages (social conflicts)
-    // Only sender and master can see skill checks
-    if (action.actionType === 'skill_check') {
-      if (isMaster) return true;
-      return action.characterId === character._id.toString();
-    }
-
-    // CRITICAL SECURITY: stat_check messages
-    // Only sender and master can see stat checks
-    if (action.actionType === 'stat_check') {
-      if (isMaster) return true;
-      return action.characterId === character._id.toString();
+    // Regola per-tipo (es. skill_check/stat_check: solo mittente+master) —
+    // vedi core/chat/actionTypes/registry.ts, registrata da ciascuna
+    // feature invece che hardcoded qui.
+    if (!actionTypeRegistry.canSeeMessage(action, character._id.toString(), isMaster)) {
+      return false;
     }
 
     // Public: everyone can see

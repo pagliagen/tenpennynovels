@@ -21,6 +21,7 @@ import { createGlobalRateLimiter } from '@shared/middleware/globalRateLimit';
 import { featureRegistry } from './registry';
 import { requireFeature } from './middleware/requireFeature';
 import { extensions } from '../extensions/registry';
+import { actionTypeRegistry } from '../chat/actionTypes/registry';
 import type { FeatureManifest, FeatureRouteMount } from './types';
 
 const SCOPE_PREFIX: Record<FeatureRouteMount['scope'], string> = {
@@ -52,6 +53,12 @@ function registerExtensions(manifest: FeatureManifest): void {
   manifest.extensions?.(extensions.createRegistrar(manifest.key));
 }
 
+function registerChatActionTypes(manifest: FeatureManifest): void {
+  for (const module of manifest.chatActionTypes ?? []) {
+    actionTypeRegistry.register({ ...module, featureKey: manifest.key });
+  }
+}
+
 async function runOnBoot(manifest: FeatureManifest): Promise<void> {
   if (!manifest.onBoot) return;
   try {
@@ -80,6 +87,7 @@ export function bootstrapFeatures(app: Application, manifests: readonly FeatureM
     featureRegistry.register(manifest);
     mountRoutes(app, manifest);
     registerExtensions(manifest);
+    registerChatActionTypes(manifest);
   }
 
   if (ordered.length > 0) {

@@ -45,14 +45,18 @@ interface MessageListProps {
  * types (e.g. confrontation_reaction_request) carry `visibility: 'whisper'`
  * while having a different actionType, and would otherwise slip through.
  *
+ * Il backend filtra già i destinatari (skill_check/stat_check via il
+ * registry di core/chat/actionTypes/, Raggirare via lo stesso meccanismo):
+ * se un messaggio arriva fin qui il personaggio ha già il diritto di
+ * vederlo — nessun ricontrollo per-actionType lato client (regola 4,
+ * .claude/rules/00-critical.md).
+ *
  * Visibility rules:
  * - 'whisper': only sender + targetCharacters + master
  * - 'master_only': master, plus targetCharacters if the master targeted an
  *   "esito riservato" to specific characters (covers actionType 'master' and
  *   'moderation' — moderation is always untargeted, so this is a no-op there)
- * - 'public' / undefined: everyone, EXCEPT:
- *   - stat_check / skill_check: only sender + master (regardless of visibility flag)
- *   - socialConflict.visibleToDefenderOnly: only the defender + master
+ * - 'public' / undefined: everyone
  *
  * @param {ChatMessage} message - Message to check
  * @param {string} currentCharacterId - Current character ID
@@ -75,16 +79,6 @@ function isMessageVisible(
 
   if (message.visibility === 'master_only') {
     // Not master (already returned above) — visible only if explicitly targeted.
-    return !!message.targetCharacters?.includes(currentCharacterId);
-  }
-
-  // Sender-only checks, independent of the visibility flag
-  if (message.actionType === 'stat_check' || message.actionType === 'skill_check') {
-    return message.characterId === currentCharacterId;
-  }
-
-  const socialConflict = (message as unknown as { socialConflict?: { visibleToDefenderOnly?: boolean } }).socialConflict;
-  if (socialConflict?.visibleToDefenderOnly) {
     return !!message.targetCharacters?.includes(currentCharacterId);
   }
 

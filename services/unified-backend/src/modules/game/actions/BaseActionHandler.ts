@@ -16,6 +16,7 @@ import {
   ActionContext,
   ChatActionType
 } from './types';
+import { actionTypeRegistry } from '@core/chat/actionTypes/registry';
 
 /**
  * Abstract base class for action handlers
@@ -67,18 +68,11 @@ export abstract class BaseActionHandler implements IActionHandler {
   }
 
   /**
-   * Get default visibility for action type
+   * Get default visibility for action type — delegato al registry
+   * (core/chat/actionTypes/), unica fonte condivisa anche da ChatController.
    */
   protected getDefaultVisibility(actionType: string): 'public' | 'whisper' | 'master_only' {
-    switch (actionType) {
-      case 'whisper':
-        return 'whisper';
-      case 'moderation':
-      case 'master':
-        return 'master_only';
-      default:
-        return 'public';
-    }
+    return actionTypeRegistry.getDefaultVisibility(actionType);
   }
 
   /**

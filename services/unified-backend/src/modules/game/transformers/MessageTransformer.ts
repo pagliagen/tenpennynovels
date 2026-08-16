@@ -13,17 +13,19 @@
  * @since 2.2.0
  */
 
-import type { EnrichedChatMessage, EnrichedConfrontation } from './types';
+import type { EnrichedChatMessage } from './types';
 import type { MessageContext } from './MessageContext';
 import type { IMessageEnricher } from './enrichers/IMessageEnricher';
 
-// Import enrichers
-import { SkillCheckEnricher } from './enrichers/SkillCheckEnricher';
-import { StatCheckEnricher } from './enrichers/StatCheckEnricher';
-import { ItemUseEnricher } from './enrichers/ItemUseEnricher';
+// Import enrichers — i tipi core restano locali, i tipi feature arrivano
+// dall'api.ts della rispettiva feature.
 import { WhisperEnricher } from './enrichers/WhisperEnricher';
 import { DiceRollEnricher } from './enrichers/DiceRollEnricher';
 import { BaseEnricher } from './enrichers/BaseEnricher';
+import { SkillCheckEnricher } from '@features/skillCheck/api';
+import { StatCheckEnricher } from '@features/statCheck/api';
+import { ItemUseEnricher } from '@features/itemUse/api';
+import { ConfrontationEnricher } from '@features/confronti/api';
 import { logger } from '@shared/utils/logger';
 
 /**
@@ -40,6 +42,7 @@ export class MessageTransformer {
       new ItemUseEnricher(),
       new WhisperEnricher(),
       new DiceRollEnricher(),
+      new ConfrontationEnricher(),
       new BaseEnricher(), // Always last
     ];
 
@@ -101,9 +104,6 @@ export class MessageTransformer {
     // to send it to them.
     if (action.targetCharacters && action.targetCharacters.length > 0) {
       enriched.targetCharacters = action.targetCharacters;
-    }
-    if (action.confrontation) {
-      enriched.confrontation = this.maskConfrontationForViewer(action.confrontation, context);
     }
     // hiddenContent (e.g. the Raggirare lie text) is master-only, never shown to players —
     // same convention as editHistory above.
@@ -191,42 +191,6 @@ export class MessageTransformer {
     logger.debug(`[MessageTransformer] Batch transformation complete: ${enriched.length} messages`);
 
     return enriched;
-  }
-
-  /**
-   * Mask confrontation result fields the viewer isn't entitled to see.
-   *
-   * Raggirare (TiroContrapposto hidden roll) sets `hiddenResultForAttacker: true`:
-   * the attacker must never learn the outcome of their own lie — not the rolls,
-   * not the success levels, not who won. Everyone else authorized to see the
-   * message (defender, master) gets the full object untouched.
-   */
-  private maskConfrontationForViewer(
-    confrontation: EnrichedConfrontation,
-    context: MessageContext
-  ): EnrichedConfrontation {
-    const viewerIsAttacker = context.viewerCharacterId === confrontation.attackerCharacterId;
-    const mustMask =
-      confrontation.hiddenResultForAttacker &&
-      confrontation.phase === 'result' &&
-      viewerIsAttacker &&
-      !context.isViewerMaster;
-
-    if (!mustMask) {
-      return confrontation;
-    }
-
-    const {
-      attackRoll: _attackRoll,
-      defenseRoll: _defenseRoll,
-      attackSuccessLevel: _attackSuccessLevel,
-      defenseSuccessLevel: _defenseSuccessLevel,
-      outcome: _outcome,
-      defenseSkill: _defenseSkill,
-      ...masked
-    } = confrontation;
-
-    return masked;
   }
 
   /**

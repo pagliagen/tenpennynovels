@@ -30,6 +30,7 @@
 
 import type { Router } from 'express';
 import type { ExtensionRegistrar } from '../extensions/registry';
+import type { ActionTypeModule } from '../chat/actionTypes/types';
 
 export type FeatureKey = string;
 
@@ -76,4 +77,6 @@ export interface FeatureManifest {
   extensions?: (registrar: ExtensionRegistrar) => void;
   /** Inizializzazione una-tantum al boot (warmup, non mounting: quello è sincrono e già fatto). */
   onBoot?: () => Promise<void>;
+  /** ActionType di chat posseduti da questa feature — vedi core/chat/actionTypes/. featureKey è stampato da bootstrapFeatures, non va valorizzato qui. */
+  chatActionTypes?: Omit<ActionTypeModule, 'featureKey'>[];
 }

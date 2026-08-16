@@ -1,10 +1,15 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import { logger } from '@shared/utils/logger';
+import { ChatActionType } from '../actionTypes/ChatActionType';
+import { actionTypeRegistry } from '../actionTypes/registry';
 
 export interface IChat extends Document {
-  actionType: 'standard' | 'master' | 'moderation' | 'whisper' | 'ooc' |
-             'dice_roll' | 'skill_check' | 'stat_check' | 'item_use' |
-             'social_confrontation' | 'combat_action' | 'confrontation_reaction_request';
+  // Template literal type, non l'enum nominale: i molti call site esistenti
+  // (query/filtri Mongoose) costruiscono il filtro con literal string
+  // ('social_confrontation', ecc.), che un enum TS nominale rifiuterebbe in
+  // assegnazione — questo tipo resta strutturalmente l'unione delle stesse
+  // 12 stringhe, solo derivato dalla fonte unica invece che riscritto a mano.
+  actionType: `${ChatActionType}`;
   characterId: string;
   characterName: string;
   characterSurname?: string;
@@ -36,6 +41,13 @@ export interface IChat extends Document {
   itemEffect?: {
     itemId: string;
     itemName: string;
+    // Popolati direttamente alla creazione (ItemUseActionHandler), non solo
+    // da ItemUseEnricher in lettura: senza questo la notifica WebSocket
+    // istantanea (che spedisce il documento cosi' come salvato, mai
+    // arricchito) mostrava il nome dell'oggetto ma non la descrizione,
+    // visibile solo al successivo fetch della cronologia via GET.
+    itemDescription?: string;
+    itemImageUrl?: string;
     description: string;
     consumedItems?: Array<{
       itemId: string;
@@ -147,9 +159,7 @@ export const ChatSchema = new Schema<IChat>({
   actionType: {
     type: String,
     required: true,
-    enum: ['standard', 'master', 'moderation', 'whisper', 'ooc',
-           'dice_roll', 'skill_check', 'stat_check', 'item_use',
-           'social_confrontation', 'combat_action', 'confrontation_reaction_request']
+    enum: Object.values(ChatActionType)
   },
   characterId: {
     type: String,
@@ -227,6 +237,8 @@ export const ChatSchema = new Schema<IChat>({
   itemEffect: {
     itemId: { type: String },
     itemName: { type: String },
+    itemDescription: { type: String },
+    itemImageUrl: { type: String },
     description: { type: String },
     consumedItems: [{
       itemId: { type: String },
@@ -522,10 +534,13 @@ ChatSchema.pre('save', function() {
   }
 });
 
-const EMBEDDING_ACTION_TYPES = new Set(['standard', 'master', 'moderation']);
-
 ChatSchema.post('save', async function(doc) {
-  if (!EMBEDDING_ACTION_TYPES.has(doc.actionType)) return;
+  // Letto ad ogni save, non cacheato a livello di modulo: al caricamento di
+  // questo file (import-time) la registrazione delle feature in app.ts non
+  // è ancora avvenuta, un Set costruito qui sopra catturerebbe un registry
+  // vuoto. Costo trascurabile (12 voci), nessun controllo flag — vedi
+  // core/chat/actionTypes/registry.ts#getEmbeddingActionTypes.
+  if (!actionTypeRegistry.getEmbeddingActionTypes().includes(doc.actionType as ChatActionType)) return;
 
   try {
     const { publishChatEvent } = await import('@shared/services/EmbeddingEventPublisher');

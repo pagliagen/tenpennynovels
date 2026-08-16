@@ -80,7 +80,7 @@ export const useAuthStore = create<AuthStore>()(
         set(initialState);
         // Redirect to landing login
         if (typeof window !== 'undefined') {
-          window.location.href = process.env.NEXT_PUBLIC_LANDING_URL + '/auth/login';
+          window.location.href = process.env.NEXT_PUBLIC_LANDING_URL || 'http://localhost:4000';
         }
       },
 

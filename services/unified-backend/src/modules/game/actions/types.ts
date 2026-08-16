@@ -12,23 +12,9 @@ import type { DiceService } from '../services/DiceService';
 import type { CharacterSkillService } from '../services/CharacterSkillService';
 import type { SuccessDegree } from '../utils/successDegrees';
 
-/**
- * Action types supported by the chat system
- */
-export enum ChatActionType {
-  STANDARD = 'standard',
-  WHISPER = 'whisper',
-  OOC = 'ooc',
-  DICE_ROLL = 'dice_roll',
-  SKILL_CHECK = 'skill_check',
-  STAT_CHECK = 'stat_check',
-  ITEM_USE = 'item_use',
-  MASTER = 'master',
-  MODERATION = 'moderation',
-  SOCIAL_CONFRONTATION = 'social_confrontation',
-  COMBAT_ACTION = 'combat_action',
-  CONFRONTATION_REACTION_REQUEST = 'confrontation_reaction_request'
-}
+/** Fonte unica: core/chat/actionTypes/ChatActionType.ts. Re-import+re-export per non toccare i molti import esistenti da './types'/'../types'. */
+import { ChatActionType } from '@core/chat/actionTypes/ChatActionType';
+export { ChatActionType };
 
 /**
  * Input data for action creation
@@ -106,6 +92,8 @@ export interface ActionData {
   itemEffect?: {
     itemId: string;
     itemName: string;
+    itemDescription?: string;
+    itemImageUrl?: string;
     description: string;
     consumedItems?: Array<{
       itemId: string;
@@ -179,15 +167,10 @@ export interface ActionContext {
   Location: any;
   Skill: any;
   Item: any;
-  SkillConfrontation: any;
-  CombatEncounter: any;
-  GamingSession: any;
 
   // Utilities
   calculateSuccessDegree: any;
   getSuccessDegreeLabel: (degree: SuccessDegree) => Promise<string>;
-  calculateSocialConflict: any;
-  getDefensiveSkill?: any;
 
   // Request metadata
   requestId: string;

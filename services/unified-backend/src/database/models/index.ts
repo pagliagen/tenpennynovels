@@ -12,9 +12,7 @@ export { Skill, SKILL_CATEGORY_LABELS, type ISkill } from './Skill';
 // Chat, ChatBackup, OnGameMessage, OnGameThread, MessageBackup: spostati in core/chat/models/ (Fase 7.4)
 export { CharacterNotes, type ICharacterNotes } from './CharacterNotes';
 
-// Combat & Confrontation System (TiroContrapposto)
-export { SkillConfrontation, type ISkillConfrontation } from './SkillConfrontation';
-export { CombatEncounter, type ICombatEncounter } from './CombatEncounter';
+// Combat & Confrontation System (TiroContrapposto): spostati in features/confronti/models/
 
 // Relationship System
 export {

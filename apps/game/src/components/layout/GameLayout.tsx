@@ -449,7 +449,7 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
       <div className={styles.gameContainer}>
         {/* ========================================
           SIDEBAR - Left side with character info
-          Sotto i 1500px non sta più inline: diventa un drawer, montato solo
+          Sotto i 1600px non sta più inline: diventa un drawer, montato solo
           quando aperto (backdrop + pannello), invece di essere sempre nel
           flusso flex.
           ======================================== */}
