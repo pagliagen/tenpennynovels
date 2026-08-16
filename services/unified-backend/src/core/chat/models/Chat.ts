@@ -41,6 +41,13 @@ export interface IChat extends Document {
   itemEffect?: {
     itemId: string;
     itemName: string;
+    // Popolati direttamente alla creazione (ItemUseActionHandler), non solo
+    // da ItemUseEnricher in lettura: senza questo la notifica WebSocket
+    // istantanea (che spedisce il documento cosi' come salvato, mai
+    // arricchito) mostrava il nome dell'oggetto ma non la descrizione,
+    // visibile solo al successivo fetch della cronologia via GET.
+    itemDescription?: string;
+    itemImageUrl?: string;
     description: string;
     consumedItems?: Array<{
       itemId: string;
@@ -230,6 +237,8 @@ export const ChatSchema = new Schema<IChat>({
   itemEffect: {
     itemId: { type: String },
     itemName: { type: String },
+    itemDescription: { type: String },
+    itemImageUrl: { type: String },
     description: { type: String },
     consumedItems: [{
       itemId: { type: String },

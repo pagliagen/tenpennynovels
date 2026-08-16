@@ -92,6 +92,8 @@ export interface ActionData {
   itemEffect?: {
     itemId: string;
     itemName: string;
+    itemDescription?: string;
+    itemImageUrl?: string;
     description: string;
     consumedItems?: Array<{
       itemId: string;

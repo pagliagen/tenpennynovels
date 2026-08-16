@@ -55,16 +55,22 @@ export class ItemUseActionHandler extends BaseActionHandler {
 
     // Fetch item details from database
     const Item = context.Item;
-    const item = await Item.findById(input.itemId).select('name description').lean();
+    const item = await Item.findById(input.itemId).select('name description imageUrl').lean();
 
     if (!item) {
       throw new Error('ITEM_NOT_FOUND'); // Should never happen (validated)
     }
 
-    // Build itemEffect object
+    // Build itemEffect object. itemDescription/itemImageUrl popolati subito
+    // qui (non solo da ItemUseEnricher in lettura): la notifica WebSocket
+    // spedisce il documento cosi' come salvato, mai arricchito — senza
+    // questo il nome dell'oggetto compariva subito ma la descrizione solo
+    // al successivo fetch della cronologia via GET.
     actionData.itemEffect = {
       itemId: input.itemId!,
       itemName: item.name,
+      itemDescription: item.description || undefined,
+      itemImageUrl: item.imageUrl || undefined,
       description: `${input.characterName} usa ${item.name}`,
       consumedItems: [],
       effects: []
