@@ -91,12 +91,17 @@ Il cookie `character_context` è **deprecato**: usare `X-Session-Id`. Flusso com
 
 **Bull queue**: concorrenza 5, 3 tentativi, backoff esponenziale da 5s. I job falliti finiscono in una **Dead Letter Queue** con flag `retryable` (errori di validazione/modello = permanenti, rete/timeout = ritentabili). Bull v3 non supporta processor tipizzati: processor generico + validazione manuale di `job.data`.
 
-**Qdrant — due regole che hanno già causato bug**:
+**Qdrant — regole che hanno già causato bug**:
 
 1. **Point ID in formato UUID**, non ObjectId MongoDB. Serve la conversione `objectIdToUUID()` (24 hex → 8-4-4-4-12). Qdrant rifiuta l'ObjectId.
 2. **L'ObjectId va nel payload**: in lettura usa `result.payload.documentId`, **non** `result.id` (che è l'UUID e non è interrogabile su MongoDB).
+3. **Point ID dei chunk documento deterministico**: `stableUUID(documentId:slug:splitIndex)` in `embedding-worker.ts`, non `crypto.randomUUID()`. Con ID casuale ogni retry BullMQ o re-embed produceva un punto orfano mai ripulito.
 
 **Incidenti 2026-02-23** — tre bug nella stessa area: ObjectId rifiutato da Qdrant; ricerca semantica che restituiva l'UUID come `documentId`; filtro per tipo che cercava la chiave `type` mentre il payload ha `documentType`. Verifica sempre che le chiavi del filtro combacino coi campi reali del payload.
+
+**Incidente 2026-08-15** — Qdrant/ElasticSearch a 3818 punti contro 453 chunk reali in MongoDB per `document_chunks`. Causa doppia: `crypto.randomUUID()` come point ID (ogni retry creava un punto nuovo invece di sovrascrivere) + nessun cleanup quando un update rinominava/rimuoveva una sezione H2/H3 (il vecchio slug restava orfano finché non arrivava un delete sull'intero documento). Fix: point ID deterministico (regola 3 sopra) + `pruneStaleChunks()` in `embedding-worker.ts`, che ad ogni evento `document created/updated`, dopo che tutte le sezioni correnti sono salvate con successo, cancella da Mongo+Qdrant+ES i chunk con chiave `(slug, splitIndex)` non più presente. `deleteDocumentEmbeddings()` ora pulisce anche `documentchunks` in MongoDB (prima restavano orfani lì, ripuliti solo su Qdrant/ES).
+
+**Chunking**: split strutturale per heading H2/H3 del Delta TipTap (non a dimensione fissa, nessuna libreria tipo LangChain, nessun overlap tra chunk), poi split per lunghezza solo se una sezione supera `config.embeddings.maxTextChars` (10000, limite hard del subprocess Python — sopra viene rifiutato, non troncato). Vedi `src/utils/ChunkParser.ts`.
 
 **Collection** (384 dimensioni, distanza cosine): `documents`, `document_chunks`, `forum_posts`, `chat_messages`.
 
@@ -105,8 +110,9 @@ Il cookie `character_context` è **deprecato**: usare `X-Session-Id`. Flusso com
 **Python**: subprocess `sentence-transformers` (`paraphrase-multilingual-MiniLM-L12-v2`), ~60s di caricamento modello all'avvio.
 
 **RAG "Bibliotecario"** — migrato qui da `local-ai/services/qa`, è una feature di produzione:
-`POST /ask` (generazione su contesto già recuperato), `POST /extract-keywords`, `POST /extract-insight`.
+`POST /ask` (generazione su contesto già recuperato), `POST /ask/enrich` (arricchimento progressivo da fonti successive, max 3 step).
 Il retrieval lo fa unified-backend via `/search`, non `/ask`.
+`/extract-keywords` e `/extract-insight` sono stati **rimossi il 2026-08-16**: nessun chiamante vivo nel repo (dead code post-refactor).
 `/health` resta gated **solo** sul subprocess Python: un Ollama down non deve marcare unhealthy il service, perché `/search` continua a funzionare. Lo stato Ollama è nel campo separato `ollama`, che unified-backend legge con cache 60s.
 
 **Dockerfile**: è `FROM python:3.12-slim`, non Node — esiste per il subprocess Python. In produzione il processo Node gira via PM2 sull'host. Non applicargli il pattern multi-stage Node.

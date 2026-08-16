@@ -12,8 +12,6 @@ import { logger } from '../utils/logger';
 import { validateTextLength, validateSearchParams } from '../utils/validation';
 import { checkOllamaHealth } from '../services/qa/OllamaChat';
 import { askWithContext, enrichAnswer } from '../services/qa/RAGPipeline';
-import { extractKeywords } from '../services/qa/AnswerEvaluator';
-import { extractInsight } from '../services/qa/DocumentInsightExtractor';
 import { classifySceneContinuation } from '../services/qa/SceneClassifier';
 import { summarizeScene } from '../services/qa/SceneSummarizer';
 
@@ -255,48 +253,6 @@ export class EmbeddingsHttpServer {
         res.json({ success: true, ...result });
       } catch (error: any) {
         logger.error('Error in /ask/enrich endpoint', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
-      }
-    });
-
-    /**
-     * Suggest follow-up search keywords from a question/answer pair
-     * POST /extract-keywords
-     * Body: { question: string, answer: string }
-     */
-    this.app.post('/extract-keywords', async (req: Request, res: Response) => {
-      try {
-        const { question, answer } = req.body;
-
-        if (!question || typeof question !== 'string' || !answer || typeof answer !== 'string') {
-          return res.status(400).json({ success: false, error: 'Missing or invalid question/answer parameter' });
-        }
-
-        const result = await extractKeywords({ question, answer });
-        res.json({ success: true, ...result });
-      } catch (error: any) {
-        logger.error('Error in /extract-keywords endpoint', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
-      }
-    });
-
-    /**
-     * Extract a new insight from a candidate document, if any
-     * POST /extract-insight
-     * Body: { question: string, existingAnswer: string, documentContent: string, documentTitle: string }
-     */
-    this.app.post('/extract-insight', async (req: Request, res: Response) => {
-      try {
-        const { question, existingAnswer, documentContent, documentTitle } = req.body;
-
-        if (!question || !existingAnswer || !documentContent || !documentTitle) {
-          return res.status(400).json({ success: false, error: 'Missing required parameters' });
-        }
-
-        const result = await extractInsight({ question, existingAnswer, documentContent, documentTitle });
-        res.json({ success: true, ...result });
-      } catch (error: any) {
-        logger.error('Error in /extract-insight endpoint', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
       }
     });

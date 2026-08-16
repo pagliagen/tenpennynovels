@@ -594,6 +594,7 @@ export class EmbeddingWorker {
       // ✅ Process each piece: generate embedding + save to DB/Qdrant/ElasticSearch
       let processedChunks = 0;
       const errors: Error[] = [];
+      const currentChunkKeys = new Set<string>();
 
       for (const chunk of pieces) {
         try {
@@ -628,6 +629,7 @@ export class EmbeddingWorker {
 
           // Save chunk to MongoDB + Qdrant + ElasticSearch
           await this.saveDocumentChunk(event.documentId, chunk, embedding, event.type, chunk.splitIndex, chunk.splitTotal);
+          currentChunkKeys.add(`${event.documentId}:${chunk.slug}:${chunk.splitIndex}`);
           processedChunks++;
 
         } catch (chunkError) {
@@ -640,6 +642,14 @@ export class EmbeddingWorker {
       if (errors.length > 0) {
         throw new Error(`Failed to process ${errors.length}/${pieces.length} chunks. First error: ${errors[0].message}`);
       }
+
+      // Tutte le sezioni correnti sono state salvate con successo: qualunque
+      // chunk esistente per questo documentId con chiave (slug, splitIndex)
+      // non presente in currentChunkKeys appartiene a una sezione rinominata
+      // o rimossa nell'ultima modifica e va ripulito, altrimenti resta
+      // orfano (visibile in ricerca) finché non arriva un delete esplicito
+      // sull'intero documento.
+      await this.pruneStaleChunks(event.documentId, currentChunkKeys);
 
       logger.info(`✅ Document chunked and embedded: ${event.title} (${processedChunks}/${pieces.length} chunks)`);
 
@@ -1578,10 +1588,70 @@ export class EmbeddingWorker {
         }
       });
 
+      // Delete from MongoDB (mancava: gli indici di ricerca venivano ripuliti
+      // ma i chunk restavano orfani in documentchunks, mai riletti da nulla
+      // ma mai ripuliti neanche loro)
+      const db = mongoose.connection.db;
+      if (db) {
+        await db.collection('documentchunks').deleteMany({ documentId });
+      }
+
       logger.info(`✅ Deleted all chunks for document ${documentId}`);
     } catch (error) {
       logger.error(`❌ Failed to delete document chunks:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Rimuove da MongoDB + Qdrant + ElasticSearch i chunk di un documento la
+   * cui chiave (documentId, slug, splitIndex) non è più tra quelle appena
+   * salvate. Va chiamato SOLO dopo che handleDocumentEvent ha rigenerato
+   * l'intera gerarchia H2/H3 con successo (currentChunkKeys deve essere
+   * completo, altrimenti si rischia di cancellare chunk validi).
+   */
+  private async pruneStaleChunks(documentId: string, currentChunkKeys: Set<string>): Promise<void> {
+    const db = mongoose.connection.db;
+    if (!db) return;
+
+    const existing = await db.collection('documentchunks')
+      .find({ documentId })
+      .project({ slug: 1, splitIndex: 1 })
+      .toArray();
+
+    const stale = existing.filter(
+      (doc) => !currentChunkKeys.has(`${documentId}:${doc.slug}:${doc.splitIndex}`)
+    );
+
+    if (stale.length === 0) return;
+
+    logger.info(`   🧹 Pruning ${stale.length} stale chunk(s) for document ${documentId} (sezioni rinominate/rimosse)`);
+
+    const staleChunkIds = stale.map((doc) => `${documentId}:${doc.slug}:${doc.splitIndex}`);
+    const stalePointIds = staleChunkIds.map((key) => this.stableUUID(key));
+
+    await db.collection('documentchunks').deleteMany({
+      _id: { $in: stale.map((doc) => doc._id) }
+    });
+
+    try {
+      await this.qdrant.delete('document_chunks', {
+        wait: true,
+        points: stalePointIds
+      });
+    } catch (error) {
+      logger.error('❌ Failed to prune stale chunks from Qdrant:', error);
+    }
+
+    try {
+      await this.elasticsearch.deleteByQuery({
+        index: `${config.services.elasticsearch.indexPrefix}_document_chunks`,
+        body: {
+          query: { terms: { chunkId: staleChunkIds } }
+        }
+      });
+    } catch (error) {
+      logger.error('❌ Failed to prune stale chunks from ElasticSearch:', error);
     }
   }
 
