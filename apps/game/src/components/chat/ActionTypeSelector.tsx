@@ -10,6 +10,7 @@
 
 'use client';
 
+import { CHAT_ACTION_TYPES } from '@/config/chatActionTypes';
 import styles from '@/styles/components/chat/ActionTypeSelector.module.scss';
 import type { ActionType } from '@/types/chat';
 
@@ -26,26 +27,6 @@ interface ActionTypeSelectorProps {
   /** Callback when action type changes */
   onActionChange: (action: ActionType) => void;
 }
-
-/**
- * Display names for action types (Italian)
- * Note: Some action types are system-generated and not selectable by users
- */
-const ACTION_DISPLAY_NAMES: Record<ActionType, string> = {
-  standard: 'Messaggio Standard',
-  whisper: 'Sussurro',
-  ooc: 'Fuori dal Gioco (OOC)',
-  dice_roll: 'Tiro Dado',
-  skill_check: 'Tiro Abilità',
-  stat_check: 'Tiro Caratteristica',
-  item_use: 'Usa Oggetto',
-  master: 'Annuncio Master',
-  moderation: 'Moderazione',
-  // System-generated (not selectable)
-  social_confrontation: '[Sistema] Conflitto Sociale',
-  combat_action: '[Sistema] Azione di Combattimento',
-  confrontation_reaction_request: '[Sistema] Richiesta Reazione',
-};
 
 /**
  * Action Type Selector Component
@@ -68,7 +49,7 @@ export function ActionTypeSelector({
     >
       {availableActions.map((action) => (
         <option key={action} value={action}>
-          {ACTION_DISPLAY_NAMES[action]}
+          {CHAT_ACTION_TYPES[action].dropdownLabel}
         </option>
       ))}
     </select>

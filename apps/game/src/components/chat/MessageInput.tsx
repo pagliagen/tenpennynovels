@@ -20,6 +20,7 @@ import { createPortal } from 'react-dom';
 
 import { fakePngApi } from '@/lib/api/fakePng';
 import { locationPngApi } from '@/lib/api/locationPng';
+import { CHAT_ACTION_TYPES, getAvailableDropdownActions } from '@/config/chatActionTypes';
 import styles from '@/styles/components/chat/MessageInput.module.scss';
 import type { ActionType, SendMessageRequest } from '@/types/chat';
 
@@ -103,53 +104,18 @@ const MAX_CHARACTERS = 1200;
  * toggle button instead (see `hasMasterPermission` in the component).
  */
 function getAvailableActions(characterData: CharacterData, hasWhisperTargets: boolean): ActionType[] {
-  // dice_roll, stat_check moved to dedicated buttons
-  const baseActions: ActionType[] = ['standard', 'ooc'];
-  const gamePermissions = characterData.gamePermissions || [];
-
-  // Whisper only makes sense if there's at least one other character present
-  if (hasWhisperTargets) {
-    baseActions.push('whisper');
-  }
-
-  // Helper: Check if has permission
-  const hasPermission = (permission: string): boolean => {
-    return gamePermissions.includes('game:*') || gamePermissions.includes(permission);
-  };
-
-  // Item use (only if has equipped items)
-  if (characterData.equippedItems && characterData.equippedItems.length > 0) {
-    baseActions.push('item_use');
-  }
-
-  // Moderation (only if has moderation action permission)
-  if (hasPermission('game:chat:moderation-action')) {
-    baseActions.push('moderation');
-  }
-
-  return baseActions;
+  return getAvailableDropdownActions({
+    hasWhisperTargets,
+    hasEquippedItems: (characterData.equippedItems?.length ?? 0) > 0,
+    gamePermissions: characterData.gamePermissions || [],
+  });
 }
 
 /**
  * Get action display name for placeholder
  */
 function getActionDisplayName(action: ActionType): string {
-  const names: Record<ActionType, string> = {
-    standard: 'messaggio',
-    whisper: 'sussurro',
-    ooc: 'messaggio fuori dal gioco',
-    dice_roll: 'tiro dado',
-    skill_check: 'tiro abilità',
-    stat_check: 'tiro caratteristica',
-    item_use: 'uso oggetto',
-    master: 'annuncio master',
-    moderation: 'azione di moderazione',
-    // System-generated (not manually created)
-    social_confrontation: 'conflitto sociale',
-    combat_action: 'azione di combattimento',
-    confrontation_reaction_request: 'richiesta reazione',
-  };
-  return names[action] || 'messaggio';
+  return CHAT_ACTION_TYPES[action].placeholderLabel;
 }
 
 /**
