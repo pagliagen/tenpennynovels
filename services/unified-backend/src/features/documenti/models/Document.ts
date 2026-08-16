@@ -171,8 +171,13 @@ DocumentSchema.pre('save', async function() {
     }
   }
 
-  // HTML GENERATION: Generate HTML content from contentDelta
-  if (this.isModified('contentDelta')) {
+  // HTML GENERATION: Generate HTML content from contentDelta.
+  // Anche se contentDelta non risulta "modified" in questo save, rigenera se
+  // content è vuoto/mancante mentre contentDelta è popolato: altrimenti un
+  // documento con content svuotato da una scrittura fuori flusso (es. write
+  // diretta su Mongo) resta rotto per sempre, perché nessun salvataggio "senza
+  // modifiche reali" lo ripara mai (isModified resterebbe false all'infinito).
+  if (this.isModified('contentDelta') || (!this.content && this.contentDelta)) {
     try {
       const { generateHtml } = await import('../services/HtmlGenerator');
       this.content = generateHtml(this.contentDelta, { injectHeadingIds: true });
