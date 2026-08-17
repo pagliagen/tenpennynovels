@@ -65,8 +65,12 @@ export const config = {
        * (necessario per `next build` / ISR contro gateway in produzione).
        */
       buildBypassSecret: (process.env.DOCUMENTS_BUILD_BYPASS_SECRET || '').trim(),
-      /** Disattiva del tutto il rate limit su /documents (solo se esplicitamente richiesto). */
-      disabled: process.env.DOCUMENTS_RATE_LIMIT_DISABLED === 'true',
+      /**
+       * Disattivo di default fuori produzione (dev locale/Docker), per non far scattare
+       * il limite durante lo sviluppo. `DOCUMENTS_RATE_LIMIT_DISABLED=true` forza la
+       * disattivazione anche in produzione (es. incident response); non serve settarla in dev.
+       */
+      disabled: !isProduction || process.env.DOCUMENTS_RATE_LIMIT_DISABLED === 'true',
     },
     /**
      * Fallback gateway-level per /auth.
