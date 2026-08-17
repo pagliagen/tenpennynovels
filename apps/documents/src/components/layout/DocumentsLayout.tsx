@@ -1,7 +1,9 @@
 'use client';
 
 import { ReactNode } from 'react';
+
 import { useIsDesktop } from '@/hooks/useIsDesktop';
+
 import { DocumentsLayoutDesktop } from './DocumentsLayoutDesktop';
 import { DocumentsLayoutMobile } from './DocumentsLayoutMobile';
 

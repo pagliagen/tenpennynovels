@@ -10,9 +10,10 @@
 
 'use client';
 
-import type { DocumentGroup as DocumentGroupType } from '@/types/document';
-import { DocumentLink } from './DocumentLink';
 import styles from '@/styles/components/navigation/DocumentTree.module.scss';
+import type { DocumentGroup as DocumentGroupType } from '@/types/document';
+
+import { DocumentLink } from './DocumentLink';
 
 interface DocumentGroupProps {
   group: DocumentGroupType;

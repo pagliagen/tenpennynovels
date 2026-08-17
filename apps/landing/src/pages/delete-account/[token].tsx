@@ -24,6 +24,7 @@ import { Button } from '@/components/Button';
 import { useFormState } from '@/hooks/useFormState';
 import { useTokenFromUrl } from '@/hooks/useTokenFromUrl';
 import { authService } from '@/services/AuthService';
+import { logger } from '@/lib/logger';
 
 /**
  * Delete Account Page Component
@@ -67,7 +68,7 @@ export default function DeleteAccountPage() {
       }
     } catch (error) {
       setError('Errore di connessione durante l\'eliminazione');
-      console.error('Errore eliminazione account:', error);
+      logger.error('Errore eliminazione account', { error });
     } finally {
       setLoading(false);
     }

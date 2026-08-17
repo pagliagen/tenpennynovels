@@ -12,8 +12,9 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import type { Document } from '@/types/document';
+
 import styles from '@/styles/components/navigation/DocumentTree.module.scss';
+import type { Document } from '@/types/document';
 
 interface DocumentLinkProps {
   document: Document;

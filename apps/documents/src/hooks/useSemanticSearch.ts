@@ -9,6 +9,7 @@
  */
 
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
+
 import { searchApi } from '@/lib/api/search';
 import type { SearchResponse, DocumentType } from '@/types/document';
 

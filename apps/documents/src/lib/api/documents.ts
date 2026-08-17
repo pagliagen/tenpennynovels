@@ -7,7 +7,6 @@
  * @since 1.0.0
  */
 
-import { api } from './client';
 import type {
   Document,
   DocumentSection,
@@ -16,6 +15,8 @@ import type {
   DocumentSubtype,
   DocumentType,
 } from '@/types/document';
+
+import { api } from './client';
 
 /** Corpo risposta lista documenti (axios `data` già estratto dal client). */
 interface DocumentsListBody {

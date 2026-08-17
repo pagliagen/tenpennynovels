@@ -30,6 +30,8 @@
 
 import DOMPurify from 'isomorphic-dompurify';
 
+import { logger } from '@/lib/logger';
+
 /**
  * Sanitizes plain text user input (strictest mode)
  *
@@ -270,7 +272,7 @@ export function sanitizeURL(url: string): string {
 
   for (const protocol of dangerousProtocols) {
     if (lowerURL.startsWith(protocol)) {
-      console.warn(`[Sanitizer] Blocked dangerous URL protocol: ${protocol}`);
+      logger.warn(`[Sanitizer] Blocked dangerous URL protocol: ${protocol}`);
       return '';
     }
   }
@@ -282,7 +284,7 @@ export function sanitizeURL(url: string): string {
   if (hasProtocol) {
     const isSafe = safeProtocols.some(protocol => lowerURL.startsWith(protocol));
     if (!isSafe) {
-      console.warn(`[Sanitizer] Blocked unknown URL protocol: ${trimmedURL}`);
+      logger.warn(`[Sanitizer] Blocked unknown URL protocol: ${trimmedURL}`);
       return '';
     }
   }

@@ -40,12 +40,12 @@ Su redirect cross-origin arriva come query param: leggerlo, salvarlo in `session
 
 | App | Config | `no-console` |
 |---|---|---|
-| game | `eslint.config.mjs` (flat, ESLint 9) | `error` — off per `src/lib/logger.ts` |
-| management | `.eslintrc.json` | `error` — off per `src/lib/logger.ts` |
-| documents | `.eslintrc.json` (+ type-checking, import/order) | `warn` con `allow: ["warn","error"]` |
-| landing | **nessuna config** | — |
+| game | `eslint.config.mjs` (flat, ESLint `^9.39.x`) | `error` — off per `src/lib/logger.ts` |
+| management | `eslint.config.mjs` (flat, ESLint `^9.39.x`) | `error` — off per `src/lib/logger.ts` |
+| documents | `eslint.config.mjs` (flat, ESLint `^9.39.x`, + type-checking, `import/order`) | `error` — off per `src/lib/logger.ts` |
+| landing | **nessuna config** | wrapper `@/lib/logger` presente ma non enforced |
 
-Non assumere flat config: solo `game` la usa. Prima di modificare la config di un'app, guarda quale dei due formati usa.
+Tutte e 3 usano flat config e `npm run lint` → `eslint .` (`next lint` non esiste più in Next.js 16). **Non salire a `eslint ^10`**: `eslint-config-next@16.2.12` include una `eslint-plugin-react` interna che usa `context.getFilename()`, rimossa in ESLint 10 — vedi incidente 2026-08-17 in `00-critical.md` §2.
 
 ---
 

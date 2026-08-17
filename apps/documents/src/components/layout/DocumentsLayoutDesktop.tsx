@@ -1,14 +1,17 @@
 'use client';
 
-import { ReactNode, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useAuthStore } from '@/store/authStore';
-import { useSearchState } from '@/hooks/useSearch';
+import { ReactNode, useRef, useEffect, useCallback } from 'react';
+
 import { useAiStatus } from '@/hooks/useAiStatus';
-import { Sidebar } from './Sidebar';
-import { SearchResults } from '../search/SearchResults';
+import { useSearchState } from '@/hooks/useSearch';
+import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/layout/DocumentsLayoutDesktop.module.scss';
+
+import { SearchResults } from '../search/SearchResults';
+
+import { Sidebar } from './Sidebar';
 
 interface DocumentsLayoutDesktopProps {
   children: ReactNode;

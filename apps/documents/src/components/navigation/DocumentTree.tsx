@@ -11,10 +11,12 @@
 'use client';
 
 import { useDocumentGroups } from '@/hooks/useDocumentGroups';
-import type { Document } from '@/types/document';
-import { DocumentGroup } from './DocumentGroup';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
 import styles from '@/styles/components/navigation/DocumentTree.module.scss';
+import type { Document } from '@/types/document';
+
+import { LoadingSpinner } from '../ui/LoadingSpinner';
+
+import { DocumentGroup } from './DocumentGroup';
 
 interface DocumentTreeProps {
   documents: Document[];

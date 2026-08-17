@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
+import { useState } from 'react';
+
 import type { AIAnswer, AIEnrichment, AIReading } from '@/hooks/useSearch';
 import styles from '@/styles/components/SearchResults.module.scss';
 

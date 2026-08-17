@@ -14,6 +14,8 @@
  * @module lib/api/interceptors
  */
 
+import { logger } from '@/lib/logger';
+
 /**
  * Extended RequestInit with additional configuration
  *
@@ -252,10 +254,7 @@ function isAuthFlowPath(pathname: string): boolean {
  * so no manual Authorization header is added.
  */
 interceptorManager.useRequestInterceptor((config) => {
-  // Log request in development
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[API Request] ${config.method || 'GET'} ${config.url}`);
-  }
+  logger.debug(`[API Request] ${config.method || 'GET'} ${config.url}`);
 
   return config;
 });
@@ -281,9 +280,7 @@ interceptorManager.useRequestInterceptor((config) => {
         'X-Session-Id': sessionId,
       };
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[API Interceptor] Attached X-Session-Id:', sessionId);
-      }
+      logger.debug('[API Interceptor] Attached X-Session-Id', { sessionId });
     }
   }
 
@@ -304,10 +301,7 @@ interceptorManager.useRequestInterceptor((config) => {
  * - Logs all API responses with status code and URL
  */
 interceptorManager.useResponseInterceptor(async (response) => {
-  // Log response in development
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[API Response] ${response.status} ${response.url}`);
-  }
+  logger.debug(`[API Response] ${response.status} ${response.url}`);
 
   // Handle 401 - Unauthorized (session expired)
   if (response.status === 401) {

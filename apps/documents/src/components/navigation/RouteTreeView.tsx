@@ -8,8 +8,9 @@
  * @since 1.0.0
  */
 
-import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
+
 import styles from './RouteTreeView.module.scss';
 
 interface RouteTreeViewProps {

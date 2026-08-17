@@ -8,17 +8,20 @@
  * @since 1.0.0
  */
 
+import { QueryClientProvider } from '@tanstack/react-query';
 import type { AppProps } from 'next/app';
 import dynamic from 'next/dynamic';
-import Head from 'next/head';
-import Script from 'next/script';
-import { useRouter } from 'next/router';
-import { useEffect } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { useReportWebVitals } from 'next/web-vitals';
 import localFont from 'next/font/local';
+import Head from 'next/head';
+import { useRouter } from 'next/router';
+import Script from 'next/script';
+import { useReportWebVitals } from 'next/web-vitals';
+import { useEffect } from 'react';
+
+import { AuthInitializer } from '@/components/auth/AuthInitializer';
 import { queryClient } from '@/lib/api/queryClient';
 import { readAnalyticsConsent } from '@/lib/cookieConsent';
+import { logger } from '@/lib/logger';
 
 // Victorian fonts optimization with next/font
 const thriftedAttire = localFont({
@@ -60,7 +63,6 @@ const ReactQueryDevtools = process.env.NODE_ENV === 'development'
       { ssr: false }
     )
   : () => null;
-import { AuthInitializer } from '@/components/auth/AuthInitializer';
 import { DocumentsLayout } from '@/components/layout/DocumentsLayout';
 import '@/styles/globals.scss';
 
@@ -85,7 +87,7 @@ export default function App({ Component, pageProps }: AppProps) {
         // Clean URL (remove query param)
         router.replace(router.pathname, undefined, { shallow: true });
       } catch (error) {
-        console.error('[App documenti] Impossibile salvare sessionId:', error);
+        logger.error('[App documenti] Impossibile salvare sessionId', { error });
       }
     }
   }, [router.query.sessionId]);
@@ -100,10 +102,7 @@ export default function App({ Component, pageProps }: AppProps) {
       });
     }
 
-    // Log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Indicatori web]', metric);
-    }
+    logger.debug('[Indicatori web]', { metric });
   });
 
   return (

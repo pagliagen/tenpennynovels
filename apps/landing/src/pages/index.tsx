@@ -34,6 +34,7 @@ import { LoginSchema } from '@/lib/validation/schemas';
 import { handleApiFormErrors, getAllFormErrorsMessage } from '@/utils/formErrorHandler';
 import { homeSchema } from '@/utils/schemas';
 import { ApiError } from '@/lib/api/errors';
+import { logger } from '@/lib/logger';
 import type { Character } from '@/types';
 import type { FieldErrors } from 'react-hook-form';
 
@@ -109,7 +110,7 @@ export default function LoginPage() {
         }
       })
       .catch((err) => {
-        console.error('Email verification error:', err);
+        logger.error('Email verification error', { error: err });
         if (err instanceof ApiError) {
           setError(err.message);
           if ((err.details as { canResend?: boolean })?.canResend) {
@@ -145,7 +146,7 @@ export default function LoginPage() {
       }
     } catch (error) {
       setError('Errore di connessione durante l\'invio della verifica');
-      console.error('Errore resend verification:', error);
+      logger.error('Errore resend verification', { error });
     } finally {
       setIsResendingVerification(false);
     }
@@ -173,19 +174,15 @@ export default function LoginPage() {
       // Defense: Prevent session pollution from previous user (shared device scenario)
       try {
         sessionStorage.removeItem('character_session_id');
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[Login] SessionStorage cleared');
-        }
+        logger.debug('[Login] SessionStorage cleared');
       } catch (storageError) {
-        console.error('[Login] Failed to clear sessionStorage:', storageError);
+        logger.error('[Login] Failed to clear sessionStorage', { error: storageError });
         // Non-blocking: continue login even if cleanup fails
       }
 
       const result = await authService.login(data);
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Login] result.success:', result.success, 'hasData:', !!result.data);
-      }
+      logger.debug('[Login] result', { success: result.success, hasData: !!result.data });
 
       if (result.success && result.data) {
         // Show character select modal or redirect based on number of characters
@@ -203,18 +200,16 @@ export default function LoginPage() {
               throw new Error('sessionStorage write verification failed');
             }
 
-            if (process.env.NODE_ENV === 'development') {
-              console.log('[Login Page] sessionId saved and verified');
-            }
+            logger.debug('[Login Page] sessionId saved and verified');
           } catch (error) {
             // ✅ CRITICAL: ABORT login on storage failure (show error to user)
-            console.error('[Login Page] ❌ sessionStorage write failed:', error);
+            logger.error('[Login Page] sessionStorage write failed', { error });
             setError('Impossibile salvare la sessione. Svuota la cache del browser.');
             setLoading(false);
             return; // Stop redirect
           }
-        } else if (process.env.NODE_ENV === 'development') {
-          console.warn('[Login Page] No sessionId in response (auto-select may have been skipped).');
+        } else {
+          logger.warn('[Login Page] No sessionId in response (auto-select may have been skipped).');
         }
 
         const userCharacters = userData.user?.characters;
@@ -241,7 +236,7 @@ export default function LoginPage() {
       }
     } catch (error) {
       setError('Si è verificato un errore imprevisto');
-      console.error('Errore login:', error);
+      logger.error('Errore login', { error });
     } finally {
       setLoading(false);
     }

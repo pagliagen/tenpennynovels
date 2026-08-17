@@ -1,7 +1,9 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api/client';
+import { useState, useCallback, useEffect, useRef } from 'react';
+
 import { API_CONFIG } from '@/constants/config';
+import { api } from '@/lib/api/client';
+import { logger } from '@/lib/logger';
 import type { DocumentType } from '@/types/document';
 
 const SEARCH_DEBOUNCE_MS = 400;
@@ -238,7 +240,7 @@ function useSSESearch(query: string, options: UseSearchOptions = {}) {
         });
 
         if (!response.ok || !response.body) {
-          console.error('[SSE] Risposta non valida:', response.status);
+          logger.error('[SSE] Risposta non valida', { status: response.status });
           setAiLoading(false);
           setIsLoading(false);
           return;
@@ -257,9 +259,7 @@ function useSSESearch(query: string, options: UseSearchOptions = {}) {
           sseBuffer = remaining;
 
           for (const { event, data } of events) {
-            if (process.env.NODE_ENV === 'development') {
-              console.log(`[SSE] +${Date.now() - t0}ms event: ${event}`);
-            }
+            logger.debug(`[SSE] +${Date.now() - t0}ms event: ${event}`);
 
             if (event === 'results') {
               try {
@@ -311,7 +311,7 @@ function useSSESearch(query: string, options: UseSearchOptions = {}) {
         setAiComplete(true);
       } catch (err: any) {
         if (err.name === 'AbortError') return;
-        console.error('[SSE] Errore di rete:', err);
+        logger.error('[SSE] Errore di rete', { error: err });
         setAiLoading(false);
         setIsLoading(false);
       }

@@ -29,6 +29,7 @@ import { useFormState } from '@/hooks/useFormState';
 import { authService } from '@/services/AuthService';
 import { ForgotPasswordSchema } from '@/lib/validation/schemas';
 import { getAllFormErrorsMessage } from '@/utils/formErrorHandler';
+import { logger } from '@/lib/logger';
 
 /**
  * Forgot password form data type
@@ -90,7 +91,7 @@ export default function ForgotPasswordPage() {
       }
     } catch (error) {
       setError('Errore di connessione durante l\'invio della richiesta');
-      console.error('Errore forgot password:', error);
+      logger.error('Errore forgot password', { error });
     } finally {
       setLoading(false);
     }

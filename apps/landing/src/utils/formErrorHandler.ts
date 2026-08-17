@@ -13,6 +13,7 @@
 
 import type { UseFormSetError, FieldErrors, FieldPath } from 'react-hook-form';
 import type { ApiResponse } from '@/types';
+import { logger } from '@/lib/logger';
 
 /**
  * Handle API Form Errors
@@ -60,7 +61,7 @@ export function handleApiFormErrors<T extends Record<string, any>>(
     if (setGlobalError) {
       setGlobalError(result.error);
     } else {
-      console.warn('API error without global error handler:', result.error);
+      logger.warn('API error without global error handler', { error: result.error });
     }
   }
 }

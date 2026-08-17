@@ -31,6 +31,7 @@ import { useTokenFromUrl } from '@/hooks/useTokenFromUrl';
 import { authService } from '@/services/AuthService';
 import { ResetPasswordSchema } from '@/lib/validation/schemas';
 import { handleApiFormErrors, getAllFormErrorsMessage } from '@/utils/formErrorHandler';
+import { logger } from '@/lib/logger';
 
 /**
  * Reset password form data type
@@ -101,7 +102,7 @@ export default function ResetPasswordPage() {
       }
     } catch (error) {
       setError('Errore di connessione durante il cambio password');
-      console.error('Errore reset password:', error);
+      logger.error('Errore reset password', { error });
     } finally {
       setLoading(false);
     }

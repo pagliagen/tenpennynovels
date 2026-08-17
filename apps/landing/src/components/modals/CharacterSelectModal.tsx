@@ -14,6 +14,7 @@ import { Button } from '@/components/Button';
 import { Alert } from '@/components/Alert';
 import { authService } from '@/services/AuthService';
 import { characterService } from '@/services/CharacterService';
+import { logger } from '@/lib/logger';
 import type { Character } from '@/types';
 
 const FALLBACK_AVATAR =
@@ -46,9 +47,9 @@ export function CharacterSelectModal({
       try {
         sessionStorage.removeItem('character_session_id');
         sessionStorage.removeItem('character_context');
-        console.log('[CharacterSelectModal] SessionStorage cleared');
+        logger.debug('[CharacterSelectModal] SessionStorage cleared');
       } catch (storageError) {
-        console.error('[CharacterSelectModal] Failed to clear sessionStorage:', storageError);
+        logger.error('[CharacterSelectModal] Failed to clear sessionStorage', { error: storageError });
       }
 
       const result = await characterService.selectCharacter(characterId);
@@ -66,16 +67,16 @@ export function CharacterSelectModal({
               throw new Error('sessionStorage write verification failed');
             }
 
-            console.log('[CharacterSelectModal] ✅ sessionId saved and verified:', responseData.sessionId);
+            logger.debug('[CharacterSelectModal] sessionId saved and verified', { sessionId: responseData.sessionId });
           } catch (error) {
             // ✅ CRITICAL: ABORT on storage failure
-            console.error('[CharacterSelectModal] ❌ sessionStorage write failed:', error);
+            logger.error('[CharacterSelectModal] sessionStorage write failed', { error });
             setError('Impossibile salvare la sessione. Svuota la cache del browser.');
             setSelecting('');
             return; // Stop redirect
           }
         } else {
-          console.warn('[CharacterSelectModal] ⚠️ No sessionId in response');
+          logger.warn('[CharacterSelectModal] No sessionId in response');
         }
 
         // Redirect to game with sessionId as query param
@@ -86,14 +87,14 @@ export function CharacterSelectModal({
         if (sessionId) {
           window.location.href = `${gameUrl}?sessionId=${sessionId}`;
         } else {
-          console.error('[CharacterSelectModal] No sessionId found - redirect without it');
+          logger.error('[CharacterSelectModal] No sessionId found - redirect without it');
           window.location.href = gameUrl;
         }
       } else {
         setError(result.error || 'Errore durante la selezione del personaggio');
       }
     } catch (error) {
-      console.error('Character selection failed:', error);
+      logger.error('Character selection failed', { error });
       setError('Errore di connessione durante la selezione');
     } finally {
       setSelecting('');
@@ -106,7 +107,7 @@ export function CharacterSelectModal({
       onClose?.();
       router.push('/');
     } catch (error) {
-      console.error('Logout failed:', error);
+      logger.error('Logout failed', { error });
     }
   };
 

@@ -12,10 +12,11 @@
  */
 
 import { GetServerSideProps } from 'next';
+
 import { SEO } from '@/components/SEO';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { documentsApi } from '@/lib/api/documents';
 import { findFirstLeafPath } from '@/lib/findFirstLeafPath';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 export default function AmbientazioneIndex() {
   // Rendered only when no leaf document exists (API empty or unreachable).

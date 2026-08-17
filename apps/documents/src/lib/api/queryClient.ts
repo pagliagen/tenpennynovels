@@ -9,7 +9,10 @@
  */
 
 import { QueryClient, DefaultOptions, QueryCache, MutationCache } from '@tanstack/react-query';
+
 import { QUERY_CONFIG } from '@/constants/config';
+import { logger } from '@/lib/logger';
+
 import { parseError } from './errors';
 
 /**
@@ -70,14 +73,11 @@ const queryCache = new QueryCache({
   onError: (error: Error) => {
     const apiError = parseError(error);
 
-    // Log errors in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[Errore query]', {
-        category: apiError.category,
-        message: apiError.message,
-        details: apiError.details,
-      });
-    }
+    logger.debug('[Errore query]', {
+      category: apiError.category,
+      message: apiError.message,
+      details: apiError.details,
+    });
 
     // Additional error handling can be added here
     // e.g., show toast notification, redirect on auth error, etc.
@@ -97,14 +97,11 @@ const mutationCache = new MutationCache({
   onError: (error: Error) => {
     const apiError = parseError(error);
 
-    // Log errors in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[Errore mutazione]', {
-        category: apiError.category,
-        message: apiError.message,
-        details: apiError.details,
-      });
-    }
+    logger.debug('[Errore mutazione]', {
+      category: apiError.category,
+      message: apiError.message,
+      details: apiError.details,
+    });
 
     // Additional error handling can be added here
   },

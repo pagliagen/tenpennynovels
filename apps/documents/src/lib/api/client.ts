@@ -16,7 +16,10 @@
  */
 
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+
 import { API_CONFIG } from '@/constants/config';
+import { logger } from '@/lib/logger';
+
 import { parseAxiosError, ApiError } from './errors';
 
 /**
@@ -100,28 +103,23 @@ const createApiClient = (): AxiosInstance => {
   client.interceptors.response.use(
     (response: AxiosResponse) => {
       // Log performance metrics in development
-      if (process.env.NODE_ENV === 'development') {
-        const duration = Date.now() - (response.config.metadata?.startTime || 0);
-        console.log(
-          `[API] ${response.config.method?.toUpperCase()} ${response.config.url} — ${duration} ms`
-        );
-      }
+      const duration = Date.now() - (response.config.metadata?.startTime || 0);
+      logger.debug(
+        `[API] ${response.config.method?.toUpperCase()} ${response.config.url} — ${duration} ms`
+      );
 
       return response;
     },
     async (error: AxiosError) => {
       const apiError = parseAxiosError(error);
 
-      // Log errors in development with full context
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[Errore API]', {
-          url: error.config?.url,
-          category: apiError.category,
-          status: apiError.statusCode,
-          message: apiError.message,
-          details: apiError.details,
-        });
-      }
+      logger.debug('[Errore API]', {
+        url: error.config?.url,
+        category: apiError.category,
+        status: apiError.statusCode,
+        message: apiError.message,
+        details: apiError.details,
+      });
 
       return Promise.reject(apiError);
     }

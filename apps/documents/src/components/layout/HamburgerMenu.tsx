@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { useAuthStore } from '@/store/authStore';
+import { useState } from 'react';
+
 import { useDocumentTree } from '@/hooks/useDocumentTree';
 import { useFavorites } from '@/hooks/useFavorites';
-import { SubtypeTreeView } from '../navigation/SubtypeTreeView';
-import { FavoritesTreeView } from '../navigation/FavoritesTreeView';
+import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/layout/HamburgerMenu.module.scss';
+
+import { FavoritesTreeView } from '../navigation/FavoritesTreeView';
+import { SubtypeTreeView } from '../navigation/SubtypeTreeView';
 
 export function HamburgerMenu(): JSX.Element {
   const router = useRouter();

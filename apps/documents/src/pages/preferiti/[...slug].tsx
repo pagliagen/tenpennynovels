@@ -1,12 +1,14 @@
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
-import { SEO } from '@/components/SEO';
-import { documentsApi } from '@/lib/api/documents';
+
 import { DocumentDetail } from '@/components/documents/DocumentDetail';
-import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import type { DocumentDetail as DocumentDetailType } from '@/types/document';
 import { DocumentHeader } from '@/components/documents/DocumentHeader';
+import { SEO } from '@/components/SEO';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { documentsApi } from '@/lib/api/documents';
+import { logger } from '@/lib/logger';
 import styles from '@/styles/components/documents/MainContent.module.scss';
+import type { DocumentDetail as DocumentDetailType } from '@/types/document';
 
 interface PreferitiDetailProps {
   data: DocumentDetailType | null;
@@ -68,7 +70,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req }) =>
 
     return { props: { data } };
   } catch (error: any) {
-    console.error('[Dettaglio preferiti] Errore caricamento', { type, path, error });
+    logger.error('[Dettaglio preferiti] Errore caricamento', { type, path, error });
 
     if (error?.statusCode === 404 || error?.response?.status === 404) {
       return { notFound: true };

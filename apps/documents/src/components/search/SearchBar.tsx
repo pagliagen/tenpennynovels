@@ -7,11 +7,13 @@
 
 'use client';
 
-import { useRef, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useRef, useEffect } from 'react';
+
 import { useSearchState } from '@/hooks/useSearch';
-import { SearchResults } from './SearchResults';
 import styles from '@/styles/components/SearchBar.module.scss';
+
+import { SearchResults } from './SearchResults';
 
 interface SearchBarProps {
   placeholder?: string;

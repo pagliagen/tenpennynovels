@@ -11,9 +11,11 @@
  * @since 2.0.0
  */
 
-import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
 import Link from 'next/link';
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
+
 import type { DocumentSubtype, SubtypeDocument } from '@/types/document';
+
 import styles from './RouteTreeView.module.scss';
 
 const STORAGE_KEY_PREFIX = 'sidebar-expanded';

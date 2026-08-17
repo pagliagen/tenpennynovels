@@ -11,8 +11,9 @@
 'use client';
 
 import DOMPurify from 'isomorphic-dompurify';
-import type { DocumentSection as DocumentSectionType } from '@/types/document';
+
 import styles from '@/styles/components/documents/DocumentDetail.module.scss';
+import type { DocumentSection as DocumentSectionType } from '@/types/document';
 
 interface DocumentSectionProps {
   section: DocumentSectionType;

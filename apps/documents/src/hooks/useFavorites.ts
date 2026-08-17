@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+
 import { favoritesApi, isDocumentCachedAsFavorite, type FavoriteEntry } from '@/lib/api/favorites';
 
 export const favoritesKeys = {

@@ -11,15 +11,17 @@
 
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { useRouter } from 'next/router';
-import { SEO } from '@/components/SEO';
-import { documentsApi } from '@/lib/api/documents';
+
 import { DocumentDetail } from '@/components/documents/DocumentDetail';
-import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import type { DocumentDetail as DocumentDetailType } from '@/types/document';
 import { DocumentHeader } from '@/components/documents/DocumentHeader';
-import { createArticleSchema, createDocumentBreadcrumbSchema } from '@/utils/schemas';
+import { SEO } from '@/components/SEO';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { API_CONFIG } from '@/constants/config';
+import { documentsApi } from '@/lib/api/documents';
+import { logger } from '@/lib/logger';
 import styles from '@/styles/components/documents/MainContent.module.scss';
+import type { DocumentDetail as DocumentDetailType } from '@/types/document';
+import { createArticleSchema, createDocumentBreadcrumbSchema } from '@/utils/schemas';
 
 interface AmbientazioneDetailProps {
   data: DocumentDetailType | null;
@@ -99,7 +101,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     const result = await response.json();
 
     if (!result.success || !result.data) {
-      console.warn('[getStaticPaths] Impossibile recuperare le route ambientazione');
+      logger.warn('[getStaticPaths] Impossibile recuperare le route ambientazione');
       return { paths: [], fallback: 'blocking' };
     }
 
@@ -112,7 +114,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
       fallback: 'blocking'  // ISR on-demand for new documents
     };
   } catch (error) {
-    console.error('[getStaticPaths] Errore:', error);
+    logger.error('[getStaticPaths] Errore', { error });
     return { paths: [], fallback: 'blocking' };
   }
 };
@@ -140,7 +142,7 @@ export const getStaticProps: GetStaticProps<AmbientazioneDetailProps> = async ({
       revalidate: 3600  // Regenerate every 1 hour if requested
     };
   } catch (error: any) {
-    console.error('[Dettaglio ambientazione] Errore caricamento', { path, error });
+    logger.error('[Dettaglio ambientazione] Errore caricamento', { path, error });
 
     if (error?.statusCode === 404 || error?.response?.status === 404) {
       return { notFound: true };

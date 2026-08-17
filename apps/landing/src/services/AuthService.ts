@@ -23,6 +23,7 @@
 
 import { apiPost, apiGet } from '@/lib/api/client';
 import { sanitizeUserInput } from '@/lib/validation/sanitizers';
+import { logger } from '@/lib/logger';
 import type { ApiResponse, User, LoginCredentials, LoginSuccessPayload, RegisterData } from '@/types';
 
 /**
@@ -146,11 +147,9 @@ export class AuthService {
     try {
       sessionStorage.removeItem('character_session_id');
       sessionStorage.removeItem('character_context'); // Legacy
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[AuthService] SessionStorage cleared on logout');
-      }
+      logger.debug('[AuthService] SessionStorage cleared on logout');
     } catch (error) {
-      console.error('[AuthService] Failed to clear sessionStorage on logout:', error);
+      logger.error('[AuthService] Failed to clear sessionStorage on logout', { error });
       // Non-blocking: continue logout
     }
 

@@ -26,6 +26,7 @@ import '@/styles/main.scss';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AnalyticsGate } from '@/components/AnalyticsGate';
 import { readAnalyticsConsent } from '@/lib/cookieConsent';
+import { logger } from '@/lib/logger';
 
 // Victorian fonts optimization with next/font
 const thriftedAttire = localFont({
@@ -84,10 +85,7 @@ export default function App({ Component, pageProps }: AppProps) {
       });
     }
 
-    // Log in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Web Vitals]', metric);
-    }
+    logger.debug('[Web Vitals]', { metric });
   });
 
   return (

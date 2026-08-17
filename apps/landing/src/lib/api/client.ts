@@ -32,6 +32,8 @@
  */
 
 import type { ApiResponse } from '@/types';
+import { logger } from '@/lib/logger';
+
 import { requestCache } from './cache';
 import { interceptorManager, type RequestConfig } from './interceptors';
 import { ApiError, NetworkError, TimeoutError, isRetryableError } from './errors';
@@ -159,9 +161,7 @@ async function apiRequestWithRetry<T>(config: RequestConfig): Promise<ApiRespons
       // Exponential backoff: 0ms, 1s, 2s, 4s
       if (attempt > 0) {
         const delay = API_CONFIG.INITIAL_RETRY_DELAY * Math.pow(2, attempt - 1);
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[API Retry] Attempt ${attempt + 1}/${API_CONFIG.MAX_RETRIES + 1} after ${delay}ms delay`);
-        }
+        logger.debug(`[API Retry] Attempt ${attempt + 1}/${API_CONFIG.MAX_RETRIES + 1} after ${delay}ms delay`);
         await sleep(delay);
       }
 
@@ -221,9 +221,7 @@ async function apiRequestWithRetry<T>(config: RequestConfig): Promise<ApiRespons
       }
 
       // Continue to next retry attempt
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(`[API] Retryable error on attempt ${attempt + 1}:`, error);
-      }
+      logger.warn(`[API] Retryable error on attempt ${attempt + 1}`, { error });
     }
   }
 
@@ -301,9 +299,7 @@ export async function apiRequest<T = any>(
   // Check if this request is already in-flight
   const cachedPromise = requestCache.get<T>(cacheKey);
   if (cachedPromise) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[API Cache] Using cached promise for ${method} ${endpoint}`);
-    }
+    logger.debug(`[API Cache] Using cached promise for ${method} ${endpoint}`);
     return cachedPromise;
   }
 

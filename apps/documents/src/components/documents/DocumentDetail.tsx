@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import DOMPurify from 'isomorphic-dompurify';
-import type { DocumentDetail as DocumentDetailType } from '@/types/document'; 
+import { useEffect, useRef } from 'react';
+
 import { useIsDesktop } from '@/hooks/useIsDesktop';
-import { TableOfContents } from './TableOfContents';
 import styles from '@/styles/components/documents/DocumentDetail.module.scss';
+import type { DocumentDetail as DocumentDetailType } from '@/types/document'; 
+
+import { TableOfContents } from './TableOfContents';
+
 
 interface DocumentDetailProps {
   data: DocumentDetailType;

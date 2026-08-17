@@ -1,6 +1,8 @@
-import { useState } from 'react';
 import Link from 'next/link';
+import { useState } from 'react';
+
 import type { FavoriteEntry } from '@/lib/api/favorites';
+
 import styles from './RouteTreeView.module.scss';
 
 interface FavoritesTreeViewProps {

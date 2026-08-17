@@ -7,13 +7,15 @@
  * @module pages/search
  */
 
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+
 import { SEO } from '@/components/SEO';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { API_CONFIG } from '@/constants/config';
+import { logger } from '@/lib/logger';
 import styles from '@/styles/pages/SearchPage.module.scss';
 
 interface SearchResult {
@@ -67,7 +69,7 @@ export default function SearchPage() {
 
       setSearchPerformed(true);
     } catch (err) {
-      console.error('[Ricerca] Errore:', err);
+      logger.error('[Ricerca] Errore', { error: err });
       setError('Errore di connessione. Riprova più tardi.');
     } finally {
       setLoading(false);

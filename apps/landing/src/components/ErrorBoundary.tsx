@@ -22,6 +22,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
+import { logger } from '@/lib/logger';
 import styles from '@/styles/components/ErrorBoundary.module.scss';
 
 /**
@@ -92,8 +93,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
    * @returns {void}
    */
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Log error to console for debugging
-    console.error('ErrorBoundary caught error:', error, errorInfo);
+    logger.error('ErrorBoundary caught error', { error, errorInfo });
 
     // Note: Error tracking service (Sentry, LogRocket) can be added here in production
     // Example: errorTrackingService.logError(error, errorInfo);

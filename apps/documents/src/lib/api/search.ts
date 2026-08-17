@@ -8,8 +8,10 @@
  * @since 1.0.0
  */
 
-import { api } from './client';
+import { logger } from '@/lib/logger';
 import type { SearchResponse, DocumentType } from '@/types/document';
+
+import { api } from './client';
 
 interface SemanticSearchBody {
   data: {
@@ -105,9 +107,7 @@ export const searchApi = {
       }
       return body.suggestions ?? [];
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[Ricerca] Endpoint suggerimenti non disponibile:', error);
-      }
+      logger.debug('[Ricerca] Endpoint suggerimenti non disponibile', { error });
       return [];
     }
   },

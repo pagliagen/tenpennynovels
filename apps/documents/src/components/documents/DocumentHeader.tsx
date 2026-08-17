@@ -1,9 +1,9 @@
 'use client';
 
-import type { Document } from '@/types/document';
-import { useAuthStore } from '@/store/authStore';
 import { useToggleFavorite, useIsFavorited } from '@/hooks/useFavorites';
+import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/documents/DocumentDetail.module.scss';
+import type { Document } from '@/types/document';
 
 interface DocumentHeaderProps {
   document: Document;

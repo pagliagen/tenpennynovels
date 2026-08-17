@@ -13,6 +13,7 @@
  */
 
 import { GetServerSideProps } from 'next';
+
 import { SEO } from '@/components/SEO';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { documentsApi } from '@/lib/api/documents';

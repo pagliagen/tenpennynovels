@@ -9,9 +9,11 @@
  */
 
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
+
 import { documentsApi } from '@/lib/api/documents';
-import { documentKeys } from './useDocuments';
 import type { DocumentDetail } from '@/types/document';
+
+import { documentKeys } from './useDocuments';
 
 /**
  * Fetch document detail with sections

@@ -31,6 +31,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { authService } from '@/services/AuthService';
 import { RegisterSchema } from '@/lib/validation/schemas';
 import { handleApiFormErrors, getAllFormErrorsMessage } from '@/utils/formErrorHandler';
+import { logger } from '@/lib/logger';
 
 /**
  * Register form data type (inferred from Zod schema)
@@ -143,7 +144,7 @@ export default function RegisterPage() {
       }
     } catch (error) {
       setError('Si è verificato un errore imprevisto');
-      console.error('Errore registrazione:', error);
+      logger.error('Errore registrazione', { error });
     } finally {
       setLoading(false);
     }

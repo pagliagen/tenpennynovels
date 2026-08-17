@@ -25,6 +25,7 @@ import {
   COOKIE_CONSENT_ACCEPTED,
   COOKIE_CONSENT_EVENT,
 } from '@/lib/cookieConsent';
+import { logger } from '@/lib/logger';
 
 const hasAnalyticsInBuild = Boolean(process.env.NEXT_PUBLIC_GA_ID);
 
@@ -54,7 +55,7 @@ const CookieBannerContent: React.FC = () => {
     } catch (error) {
       // localStorage unavailable (private mode, disabled, etc.)
       // Don't show banner to avoid annoying users
-      console.warn('[CookieBanner] localStorage unavailable:', error);
+      logger.warn('[CookieBanner] localStorage unavailable', { error });
     }
   }, []);
 
@@ -68,7 +69,7 @@ const CookieBannerContent: React.FC = () => {
     try {
       localStorage.setItem(COOKIE_CONSENT_STORAGE_KEY, COOKIE_CONSENT_ACCEPTED);
     } catch (error) {
-      console.warn('[CookieBanner] Failed to save consent:', error);
+      logger.warn('[CookieBanner] Failed to save consent', { error });
     }
 
     window.dispatchEvent(new Event(COOKIE_CONSENT_EVENT));

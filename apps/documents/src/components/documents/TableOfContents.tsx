@@ -11,10 +11,11 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import type { DocumentSection, HierarchicalChild } from '@/types/document';
+import React, { useState, useEffect } from 'react';
+
 import styles from '@/styles/components/documents/TableOfContents.module.scss';
+import type { DocumentSection, HierarchicalChild } from '@/types/document';
 
 interface TableOfContentsProps {
   mode: 'routes' | 'anchors' | 'hierarchical';

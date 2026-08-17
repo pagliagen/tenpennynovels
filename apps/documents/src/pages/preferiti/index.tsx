@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useEffect } from 'react';
+
 import { SEO } from '@/components/SEO';
-import { useAuthStore } from '@/store/authStore';
-import { useFavorites } from '@/hooks/useFavorites';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useFavorites } from '@/hooks/useFavorites';
+import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/pages/PreferitiIndex.module.scss';
 
 export default function PreferitiIndex() {

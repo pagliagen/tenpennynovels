@@ -1,13 +1,17 @@
 'use client';
 
-import { ReactNode, useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useAuthStore } from '@/store/authStore';
+import { ReactNode, useRef, useState, useEffect, useCallback } from 'react';
+
 import { useSearchState } from '@/hooks/useSearch';
-import { SearchResults } from '../search/SearchResults';
-import { HamburgerMenu } from './HamburgerMenu';
+import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/layout/DocumentsLayoutMobile.module.scss';
+
+import { SearchResults } from '../search/SearchResults';
+
+import { HamburgerMenu } from './HamburgerMenu';
+
 
 interface DocumentsLayoutMobileProps {
   children: ReactNode;

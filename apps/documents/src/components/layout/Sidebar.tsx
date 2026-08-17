@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useAuthStore } from '@/store/authStore';
+
 import { useDocumentTree } from '@/hooks/useDocumentTree';
 import { useFavorites } from '@/hooks/useFavorites';
-import { SubtypeTreeView } from '../navigation/SubtypeTreeView';
-import { FavoritesTreeView } from '../navigation/FavoritesTreeView';
+import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/layout/Sidebar.module.scss';
+
+import { FavoritesTreeView } from '../navigation/FavoritesTreeView';
+import { SubtypeTreeView } from '../navigation/SubtypeTreeView';
 
 export function Sidebar(): JSX.Element {
   const router = useRouter();
