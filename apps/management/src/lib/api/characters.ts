@@ -117,6 +117,27 @@ export async function rejectCharacter(id: string, data: RejectCharacterData): Pr
 }
 
 /**
+ * Riporta in bozza un character già approvato
+ */
+export async function revertCharacterToDraft(
+  id: string,
+  data?: { note?: string }
+): Promise<{ characterId: string; action: 'draft'; note?: string }> {
+  const response = await withRetry(() =>
+    apiClient.post<ApiResponse<{ characterId: string; action: 'draft'; note?: string }>>(
+      `/admin/characters/${id}/draft`,
+      data || {}
+    )
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nel riportare il personaggio in bozza');
+  }
+
+  return response.data.data;
+}
+
+/**
  * Attiva/disattiva character
  */
 export async function toggleCharacterStatus(id: string, isActive: boolean): Promise<Character> {

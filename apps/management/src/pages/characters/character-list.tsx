@@ -10,6 +10,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable, FilterState } from '@/components/shared/ConfigurableDataTable';
+import { ContextMenu, ContextMenuItem } from '@/components/shared/ContextMenu';
 import { SidePanel } from '@/components/shared/SidePanel';
 import { ImageUploader } from '@/components/shared/ImageUploader';
 import { GenerateImageButton } from '@/components/shared/GenerateImageButton';
@@ -22,6 +23,7 @@ import {
   useDeleteCharacter,
   useApproveCharacter,
   useRejectCharacter,
+  useRevertCharacterToDraft,
   useBulkApproveCharacters,
   useBulkRejectCharacters,
   useBulkDeleteCharacters
@@ -116,6 +118,7 @@ export default function CharacterList() {
   const deleteCharacter = useDeleteCharacter();
   const approveCharacter = useApproveCharacter();
   const rejectCharacter = useRejectCharacter();
+  const revertToDraft = useRevertCharacterToDraft();
   const bulkApprove = useBulkApproveCharacters();
   const bulkReject = useBulkRejectCharacters();
   const bulkDelete = useBulkDeleteCharacters();
@@ -210,6 +213,21 @@ export default function CharacterList() {
           break;
         }
 
+        case 'revert-to-draft': {
+          const confirmed = await confirm({
+            title: 'Riporta in bozza',
+            message: `${character.fullName} è già approvato: riportarlo in bozza gli impedirà di giocare finché non viene ri-sottomesso e ri-approvato. Il giocatore riceverà una notifica. Continuare?`,
+            confirmLabel: 'Riporta in bozza',
+            type: 'danger'
+          });
+
+          if (confirmed) {
+            await revertToDraft.mutateAsync({ id: character._id });
+            addNotification({ type: 'success', message: `${character.fullName} riportato in bozza` });
+          }
+          break;
+        }
+
         case 'delete': {
           const confirmed = await confirm({
             title: 'Conferma Eliminazione',
@@ -232,6 +250,41 @@ export default function CharacterList() {
         message: error instanceof Error ? error.message : 'Errore nell\'esecuzione azione'
       });
     }
+  };
+
+  /**
+   * Azioni riga: quelle da config + "Riporta in bozza", visibile solo se il
+   * personaggio è approvato (non esprimibile nel JSON di config, che non
+   * supporta condizioni per-riga sulle action — solo su campi dei SidePanel).
+   */
+  const renderCharacterActions = (character: Character) => {
+    if (!tableConfig.config?.actions) return null;
+
+    const items: ContextMenuItem[] = tableConfig.config.actions.map(action => ({
+      key: action.key,
+      label: action.label,
+      icon: action.icon,
+      variant: action.type === 'danger' ? 'danger' : action.type === 'success' ? 'success' : 'default',
+      onClick: () => handleAction(action.key, character)
+    }));
+
+    if (character.playerStatus === 'approved') {
+      items.push({
+        key: 'revert-to-draft',
+        label: 'Riporta in bozza',
+        icon: '📋',
+        variant: 'danger',
+        onClick: () => handleAction('revert-to-draft', character)
+      });
+    }
+
+    return (
+      <ContextMenu
+        items={items}
+        position="left"
+        ariaLabel={`Azioni per ${character.fullName}`}
+      />
+    );
   };
 
   /**
@@ -535,6 +588,7 @@ export default function CharacterList() {
           data={filteredData}
           loading={isLoading || tableConfig.loading}
           onAction={handleAction}
+          renderActions={renderCharacterActions}
           pagination={{
             page: params.page,
             pageSize: params.pageSize,

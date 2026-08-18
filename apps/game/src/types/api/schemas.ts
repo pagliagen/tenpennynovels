@@ -266,7 +266,7 @@ export const CharacterSchema = z.object({
   // disconnessione.
   pendingReviewNotification: z.object({
     reviewId: MongoIdSchema,
-    action: z.enum(['approve', 'reject']),
+    action: z.enum(['approve', 'reject', 'draft']),
     note: z.string().optional(),
     reviewedAt: z.string().datetime(),
   }).nullable().optional(),

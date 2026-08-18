@@ -20,7 +20,7 @@ import styles from '@/styles/components/character/CharacterReviewOutcomeModal.mo
 
 interface PendingReviewNotification {
   reviewId: string;
-  action: 'approve' | 'reject';
+  action: 'approve' | 'reject' | 'draft';
   note?: string;
   reviewedAt: string;
 }
@@ -49,6 +49,13 @@ export function CharacterReviewOutcomeModal({
   };
 
   const isApproved = notification.action === 'approve';
+  const isDrafted = notification.action === 'draft';
+
+  const outcomeMessage = isApproved
+    ? 'Il tuo personaggio è stato approvato!'
+    : isDrafted
+      ? 'Il tuo personaggio, già approvato, è stato riportato in bozza dallo staff.'
+      : 'Il tuo personaggio è stato rifiutato ed è tornato in bozza.';
 
   return (
     <Modal
@@ -71,9 +78,7 @@ export function CharacterReviewOutcomeModal({
     >
       <div className={styles.body}>
         <p className={`${styles.outcome} ${isApproved ? styles.approved : styles.rejected}`}>
-          {isApproved
-            ? 'Il tuo personaggio è stato approvato!'
-            : 'Il tuo personaggio è stato rifiutato ed è tornato in bozza.'}
+          {outcomeMessage}
         </p>
 
         {notification.note && (

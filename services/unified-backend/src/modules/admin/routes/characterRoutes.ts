@@ -64,6 +64,16 @@ router.post(
   CharacterApprovalController.submitCharacterReview
 );
 
+// Revert an approved character back to draft - specific route
+router.post(
+  '/:characterId/draft',
+  requireViewPermission('characters.detail.approve'),
+  AdminAuthMiddleware.logAdminAction('character.revert_to_draft', 'character_management'),
+  autoLogOutcome,
+  AdminAuthMiddleware.sensitiveOperationLimit(),
+  CharacterApprovalController.revertCharacterToDraft
+);
+
 // Update review priority - specific route
 router.patch(
   '/:characterId/priority',

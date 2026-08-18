@@ -26,6 +26,8 @@ export interface Character {
   age: number;
   gender: 'male' | 'female' | 'other';
   status: 'pending' | 'approved' | 'rejected' | 'active' | 'inactive';
+  /** Stato reale restituito da GET /admin/characters (a differenza di `status` sopra, che il backend non valorizza mai). */
+  playerStatus?: 'draft' | 'pending' | 'approved';
   approvalStatus: {
     status: 'pending' | 'approved' | 'rejected';
     reviewedBy?: string;

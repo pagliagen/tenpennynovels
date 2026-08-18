@@ -758,18 +758,21 @@ export class AuthController {
           .lean();
 
         if (fullCharacter) {
-          // Esito di approvazione/rifiuto non ancora "visto" dal giocatore
-          // (reviewHistory sopravvive alla disconnessione — vedi
-          // core/character/models/Character.ts). Solo approve/reject:
-          // request_changes/draft non richiedono questa interstiziale.
+          // Esito di approvazione/rifiuto/riporta-in-bozza non ancora "visto"
+          // dal giocatore (reviewHistory sopravvive alla disconnessione —
+          // vedi core/character/models/Character.ts). Solo questi tre: 'draft'
+          // qui indica un revert amministrativo di un personaggio APPROVED
+          // (azione "Riporta in bozza"), non il playerStatus iniziale di un
+          // personaggio mai ancora sottomesso — request_changes resta escluso,
+          // non ha un flusso amministrativo reale dietro.
           const pendingReview = (fullCharacter.reviewHistory || [])
-            .filter((r: any) => !r.acknowledged && (r.action === 'approve' || r.action === 'reject'))
+            .filter((r: any) => !r.acknowledged && (r.action === 'approve' || r.action === 'reject' || r.action === 'draft'))
             .sort((a: any, b: any) => new Date(b.reviewedAt).getTime() - new Date(a.reviewedAt).getTime())[0];
 
           const pendingReviewNotification = pendingReview
             ? {
                 reviewId: pendingReview._id.toString(),
-                action: pendingReview.action as 'approve' | 'reject',
+                action: pendingReview.action as 'approve' | 'reject' | 'draft',
                 note: pendingReview.note,
                 reviewedAt: new Date(pendingReview.reviewedAt).toISOString()
               }

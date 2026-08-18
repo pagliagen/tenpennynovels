@@ -30,6 +30,14 @@ export const GamePermissions = {
   CHARACTER_LIST_OWN: 'game:character:list:own',
   CHARACTER_CREATE: 'game:character:create',
   CHARACTER_DELETE: 'game:character:delete',
+  // Accesso al wizard di creazione/modifica: mai formalizzato qui finora,
+  // esisteva solo come stringa ad-hoc iniettata via characterPermissions dal
+  // pre-save hook di Character.ts per playerStatus='draft'. Per un personaggio
+  // normale l'override bastava; per un personaggio isGestore=true no, perché
+  // getCharacterGamePermissions() con isGestore bypassa l'override e ritorna
+  // Object.values(GamePermissions) — che senza questa voce non la conteneva
+  // mai, negando l'accesso al wizard a un gestore riportato in bozza.
+  CHARACTER_WIZARD: 'game:character:wizard',
 
   // Character Details
   CHARACTER_BACKGROUND_READ: 'game:character:background:read',
@@ -419,11 +427,19 @@ function resolveGameplayRolePermissions(roleName: string): GamePermission[] {
  * Check if character has specific game permission
  *
  * Resolution order:
- * 1. isGestore = true → GRANT ALL
+ * 1. isGestore = true E playerStatus = 'approved' → GRANT ALL
  * 2. Status restrictions FIRST (foundational game rules, cannot be overridden)
- * 3. characterPermissions: "-permission" → DENY, "permission" or "game:*" → GRANT
+ * 3. characterPermissions: "-permission" → DENY, "permission" o "game:*" → GRANT
  * 4. gameplayRoles (player, master, moderatore) → GRANT if role has permission
  * 5. Default → DENY
+ *
+ * Il bypass gestore resta "dormiente" mentre il personaggio è draft/pending:
+ * altrimenti un gestore riportato in bozza (es. azione admin "Riporta in
+ * bozza") manterrebbe l'accesso completo invece di essere trattato come un
+ * personaggio draft normale (solo wizard, vedi CHARACTER_WIZARD sotto) —
+ * bug reale riscontrato: hasWizardPermission restava false perché
+ * Object.values(GamePermissions) non passa mai dall'override
+ * characterPermissions che aggiunge quel permesso ai draft non-gestore.
  *
  * @param permission - Permission to check
  * @param playerStatus - Character status (draft, pending, approved)
@@ -438,7 +454,7 @@ export function hasGamePermission(
   gameplayRoles: string[],
   characterPermissions: string[]
 ): boolean {
-  if (isGestore) return true;
+  if (isGestore && playerStatus === 'approved') return true;
 
   // Status restrictions FIRST (foundational game rules)
   const blockedPerms = StatusRestrictions[playerStatus] || [];
@@ -477,8 +493,8 @@ export function getCharacterGamePermissions(
   gameplayRoles: string[],
   characterPermissions: string[]
 ): GamePermission[] {
-  // Gestore has all permissions
-  if (isGestore) return Object.values(GamePermissions);
+  // Gestore has all permissions — ma solo da approvato, vedi commento su hasGamePermission.
+  if (isGestore && playerStatus === 'approved') return Object.values(GamePermissions);
 
   const allPermissions = new Set<GamePermission>();
   const roles = gameplayRoles.length > 0 ? gameplayRoles : ['player'];
