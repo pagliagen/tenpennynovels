@@ -81,6 +81,12 @@ export const appConfig = {
       hmacSecret: process.env.AI_GATEWAY_HMAC_SECRET,
       webhookSecret: process.env.AI_GATEWAY_WEBHOOK_SECRET,
     },
+    documents: {
+      // URL interno (stesso VPS, dietro Nginx solo in produzione): evita il
+      // round-trip via internet per una chiamata service-to-service.
+      internalUrl: isProduction ? 'http://127.0.0.1:4002' : 'http://localhost:4002',
+      revalidateSecret: process.env.DOCUMENTS_REVALIDATE_SECRET || '',
+    },
   },
 
   cdn: {
