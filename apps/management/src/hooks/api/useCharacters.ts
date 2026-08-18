@@ -319,6 +319,49 @@ export function useRejectCharacter() {
 }
 
 /**
+ * Hook per riportare in bozza un character già approvato, con optimistic update
+ */
+export function useRevertCharacterToDraft() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data?: { note?: string } }) =>
+      characterAPI.revertCharacterToDraft(id, data),
+
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: characterKeys.lists() });
+      await queryClient.cancelQueries({ queryKey: characterKeys.detail(id) });
+
+      const previousLists = queryClient.getQueriesData({ queryKey: characterKeys.lists() });
+      const previousDetail = queryClient.getQueryData(characterKeys.detail(id));
+
+      updateCharacterInCache(queryClient, id, (char) => ({
+        ...char,
+        playerStatus: 'draft'
+      }));
+
+      return { previousLists, previousDetail };
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      if (context?.previousDetail) {
+        queryClient.setQueryData(characterKeys.detail(variables.id), context.previousDetail);
+      }
+    },
+
+    onSettled: (data, error, variables) => {
+      queryClient.invalidateQueries({ queryKey: characterKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: characterKeys.detail(variables.id) });
+    }
+  });
+}
+
+/**
  * Hook per bulk approve characters con optimistic updates
  */
 export function useBulkApproveCharacters() {

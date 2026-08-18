@@ -1054,6 +1054,124 @@ export class CharacterApprovalController {
     }
   }
 
+  /**
+   * Riporta in bozza un personaggio già approvato
+   * POST /admin/characters/:characterId/draft
+   *
+   * A differenza di reject (che riporta in draft un personaggio PENDING, con
+   * semantica di rifiuto submission), questo agisce su un personaggio già
+   * APPROVED: nessuna pulizia di equipment/CharacterFinances qui, perché
+   * buildInitialFinances() già cancella e ricrea i record ad ogni approvazione
+   * successiva ("Always delete existing and recreate for security").
+   */
+  static async revertCharacterToDraft(req: Request<{ characterId: string }>, res: Response): Promise<void> {
+    try {
+      const characterId = req.params.characterId;
+      const { note } = req.body;
+
+      const { Character } = await import('@core/character/models/Character');
+
+      const character = await Character.findOne({
+        _id: characterId,
+        playerStatus: 'approved'
+      }).lean(false);
+
+      if (!character) {
+        res.status(404).json(errorResponse(
+          'Personaggio non trovato o non approvato',
+          'CHARACTER_NOT_FOUND',
+          undefined,
+          404,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      if (!auditInfo) {
+        res.status(401).json(errorResponse(
+          'Autenticazione richiesta',
+          'AUTHENTICATION_REQUIRED',
+          undefined,
+          401,
+          getRequestId(req)
+        ));
+        return;
+      }
+
+      character.playerStatus = 'draft';
+      character.reviewNote = note;
+
+      character.addReview({
+        action: 'draft',
+        reviewedBy: auditInfo.adminId,
+        note
+      });
+
+      await character.save();
+
+      logger.info('Character reverted to draft', {
+        ...auditInfo,
+        characterId,
+        characterName: character.name,
+        note,
+        category: 'character_management'
+      });
+
+      // Stesso canale/payload di approve/reject: CharacterReviewEventHandler
+      // manda la notifica WebSocket + messaggio off-game al personaggio.
+      try {
+        const reviewEvent = {
+          characterId,
+          characterName: character.name || 'Unknown',
+          action: 'draft',
+          note: note || '',
+          reviewedBy: auditInfo.adminId,
+          reviewedByUsername: auditInfo.adminUsername,
+          timestamp: new Date().toISOString(),
+          adminCookies: {
+            auth_token: req.cookies?.auth_token,
+            character_context: req.cookies?.character_context
+          }
+        };
+
+        await redis.getClient().publish('character:review_completed', JSON.stringify(reviewEvent));
+
+        logger.info('Character draft event published to Redis', {
+          event: 'character:review_completed',
+          characterId,
+          action: 'draft',
+          reviewedBy: auditInfo.adminUsername
+        });
+      } catch (redisError: unknown) {
+        logger.error('Failed to publish character draft event to Redis', {
+          error: redisError instanceof Error ? redisError.message : String(redisError),
+          characterId
+        });
+        // Continue execution - Redis failure shouldn't break the revert
+      }
+
+      res.json(createResponse(
+        { characterId, action: 'draft', note },
+        'Personaggio riportato in bozza',
+        getRequestId(req)
+      ));
+    } catch (error: unknown) {
+      logger.error('Error reverting character to draft:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        characterId: req.params.characterId
+      });
+
+      res.status(500).json(errorResponse(
+        'Impossibile riportare il personaggio in bozza',
+        'REVERT_CHARACTER_TO_DRAFT_ERROR',
+        undefined,
+        500,
+        getRequestId(req)
+      ));
+    }
+  }
 
   /**
    * Get character approval statistics

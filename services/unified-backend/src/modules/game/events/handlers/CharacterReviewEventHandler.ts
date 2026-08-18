@@ -47,20 +47,26 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
         return;
       }
 
-      const actionTyped = action === 'approve' || action === 'reject' ? action : undefined;
+      const actionTyped = action === 'approve' || action === 'reject' || action === 'draft' ? action : undefined;
       if (actionTyped) {
         await this.sendCharacterReviewMessage(characterId, characterName ?? '', actionTyped, note ?? '', reviewedByUsername);
         await this.notifyCharacterStatusChange(characterId, characterName ?? '', actionTyped, note ?? '');
 
-        const { applyCharacterReviewOutcome } = await import('@features/tickets/api');
-        await applyCharacterReviewOutcome({
-          characterId,
-          characterName: characterName ?? '',
-          action: actionTyped,
-          note: note ?? '',
-          reviewedBy: reviewedBy ?? '',
-          reviewedByUsername
-        });
+        // Il ticket character_approval di un personaggio già APPROVED è già
+        // chiuso da tempo: per 'draft' non c'è nulla da aggiornare lì (a
+        // differenza di approve/reject, che chiudono/commentano un ticket
+        // ancora aperto legato alla submission pending).
+        if (actionTyped === 'approve' || actionTyped === 'reject') {
+          const { applyCharacterReviewOutcome } = await import('@features/tickets/api');
+          await applyCharacterReviewOutcome({
+            characterId,
+            characterName: characterName ?? '',
+            action: actionTyped,
+            note: note ?? '',
+            reviewedBy: reviewedBy ?? '',
+            reviewedByUsername
+          });
+        }
       }
 
     } catch (error: unknown) {
@@ -78,7 +84,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
   private async sendCharacterReviewMessage(
     characterId: string,
     characterName: string,
-    action: 'approve' | 'reject',
+    action: 'approve' | 'reject' | 'draft',
     note: string,
     reviewedByUsername: string
   ): Promise<void> {
@@ -119,8 +125,13 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
         if (note && note.trim()) {
           messageContent += `\n\nNota: ${note}`;
         }
-      } else {
+      } else if (action === 'reject') {
         messageContent = `📝 Abbiamo verificato il tuo personaggio "${characterName}" ed è stato RESPINTO.\n\nIl motivo è il seguente: ${note}\n\nPuoi modificare il personaggio e sottoporlo nuovamente per l'approvazione. Se hai domande, rispondi pure a questo messaggio!`;
+      } else {
+        messageContent = `📋 Il tuo personaggio "${characterName}", già approvato, è stato riportato in bozza dall'amministrazione.\n\nPuoi modificarlo e sottoporlo nuovamente per l'approvazione quando sei pronto/a.`;
+        if (note && note.trim()) {
+          messageContent += `\n\nNota: ${note}`;
+        }
       }
 
       // ✅ Use direct service calls (no HTTP overhead)
@@ -229,7 +240,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
   private async notifyCharacterStatusChange(
     characterId: string,
     characterName: string,
-    action: 'approve' | 'reject',
+    action: 'approve' | 'reject' | 'draft',
     note?: string
   ): Promise<void> {
     try {
@@ -247,6 +258,18 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
       const rejectMessage = note?.trim()
         ? `Il tuo personaggio è stato respinto. Motivo: ${note.trim()}`
         : 'Il tuo personaggio è stato respinto. Puoi modificarlo e risubmettere.';
+      const draftMessage = note?.trim()
+        ? `Il tuo personaggio, già approvato, è stato riportato in bozza. Motivo: ${note.trim()}`
+        : 'Il tuo personaggio, già approvato, è stato riportato in bozza dall\'amministrazione.';
+
+      let message: string;
+      if (action === 'approve') {
+        message = 'Il tuo personaggio è stato approvato! I dati sono stati aggiornati.';
+      } else if (action === 'reject') {
+        message = rejectMessage;
+      } else {
+        message = draftMessage;
+      }
 
       // Send WebSocket event to the specific character/user to refresh data
       this.io.to(`user_${userId}`).emit('character_status_changed', {
@@ -257,9 +280,7 @@ export class CharacterReviewEventHandler extends BaseEventHandler {
         newStatus: action === 'approve' ? 'APPROVED' : 'DRAFT',
         note: note || '',
         timestamp: new Date().toISOString(),
-        message: action === 'approve'
-          ? 'Il tuo personaggio è stato approvato! I dati sono stati aggiornati.'
-          : rejectMessage
+        message
       });
 
       logger.info('[CharacterReviewEventHandler] Character status change notification sent', {
