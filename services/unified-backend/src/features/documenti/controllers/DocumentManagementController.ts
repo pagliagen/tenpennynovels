@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { db } from '@database/models';
 import Document from '../models/Document';
 import DocumentSubtype from '../models/DocumentSubtype';
+import { PreviewTokenService } from '../services/PreviewTokenService';
+import { generateHtml } from '../services/HtmlGenerator';
 import { logger } from '@modules/admin/utils/logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
@@ -244,6 +246,105 @@ export class DocumentManagementController {
       res.status(500).json(errorResponse(
         error.message || 'Errore aggiornamento documento',
         'UPDATE_DOCUMENT_ERROR', undefined, 500, getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Autosave leggero (debounce 1s dall'editor)
+   * PATCH /admin/documents/:id/autosave
+   * Body: { title?: string, contentDelta?: any }
+   *
+   * Bypassa deliberatamente document.save(): niente hook Mongoose, quindi
+   * niente re-embed via embeddings-worker né rigenerazione SEO via AI Gateway
+   * ad ogni tick di digitazione — quei side-effect pesanti restano solo sul
+   * salvataggio esplicito (updateDocument sopra). Whitelist ristretta a
+   * title/contentDelta: non tocca slug/subtypeId/type, quindi non serve il
+   * ricalcolo di `path` che vive nel pre-save hook del modello.
+   */
+  static async autosaveDocument(req: Request, res: Response): Promise<void> {
+    try {
+      const id = req.params.id as string;
+
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
+      const { title, contentDelta } = req.body;
+      const update: Record<string, unknown> = { lastUpdated: new Date() };
+
+      if (typeof title === 'string') {
+        update.title = title;
+      }
+      if (contentDelta !== undefined) {
+        update.contentDelta = contentDelta;
+        try {
+          update.content = generateHtml(contentDelta, { injectHeadingIds: true });
+        } catch (error) {
+          logger.error('[Autosave] Failed to generate HTML from contentDelta:', error);
+        }
+      }
+
+      if (update.title === undefined && update.contentDelta === undefined) {
+        res.status(400).json(errorResponse(
+          'Nessun campo da salvare (title o contentDelta richiesti)',
+          'VALIDATION_ERROR', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
+      const result = await Document.updateOne({ _id: id }, { $set: update });
+
+      if (result.matchedCount === 0) {
+        res.status(404).json(errorResponse(
+          'Documento non trovato', 'DOCUMENT_NOT_FOUND', undefined, 404, getRequestId(req)
+        ));
+        return;
+      }
+
+      res.json(successResponse({ lastUpdated: update.lastUpdated }, undefined, getRequestId(req)));
+    } catch (error: any) {
+      logger.error('Error autosaving document:', error);
+      res.status(500).json(errorResponse(
+        error.message || 'Errore autosave documento',
+        'AUTOSAVE_DOCUMENT_ERROR', undefined, 500, getRequestId(req)
+      ));
+    }
+  }
+
+  /**
+   * Genera un token firmato short-lived per l'iframe di preview in apps/documents
+   * GET /admin/documents/:id/preview-token
+   */
+  static async getPreviewToken(req: Request, res: Response): Promise<void> {
+    try {
+      const id = req.params.id as string;
+
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
+      const exists = await Document.exists({ _id: id });
+      if (!exists) {
+        res.status(404).json(errorResponse(
+          'Documento non trovato', 'DOCUMENT_NOT_FOUND', undefined, 404, getRequestId(req)
+        ));
+        return;
+      }
+
+      const { token, expiresAt } = PreviewTokenService.sign(id);
+      res.json(successResponse({ token, expiresAt }, undefined, getRequestId(req)));
+    } catch (error: any) {
+      logger.error('Error generating preview token:', error);
+      res.status(500).json(errorResponse(
+        error.message || 'Errore generazione token preview',
+        'PREVIEW_TOKEN_ERROR', undefined, 500, getRequestId(req)
       ));
     }
   }

@@ -1,0 +1,17 @@
+@use '../../variables' as *;
+
+.container {
+  min-height: 100vh;
+  background-color: #d5d9c2;
+  padding: $spacing-md;
+}
+
+.draftBanner {
+  background-color: #f3d98b;
+  border: 1px solid #b5942f;
+  border-radius: 4px;
+  padding: $spacing-sm $spacing-md;
+  margin-bottom: $spacing-md;
+  font-weight: 600;
+  text-align: center;
+}

@@ -22,7 +22,21 @@ const publicLimiter = rateLimit({
   keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
 });
 
+// La richiesta arriva dal server Next di apps/documents (SSR), non dal browser
+// dell'admin: condividerebbe l'IP con TUTTE le preview di TUTTI i gestori se
+// riusasse publicLimiter, così un solo editor molto attivo bloccherebbe gli
+// altri. Keyed per documento invece che per IP.
+const previewLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  keyGenerator: (req) => `doc:${req.params.id}`,
+});
+
 // ========== PUBLIC ROUTES ==========
+
+// Preview autenticata via token (editor gestionale) — DEVE stare prima di
+// /:type/:path, altrimenti Express interpreta "preview" come type.
+router.get('/preview/:id', previewLimiter, DocumentController.getPreviewById);
 
 // List documents (for navigation/menu)
 router.get('/routes/list', publicLimiter, AuthMiddleware.optionalAuth, DocumentController.listRoutes);

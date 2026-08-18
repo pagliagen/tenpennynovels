@@ -48,6 +48,12 @@ router.get('/:id/with-children',
   DocumentManagementController.getDocumentWithChildren
 );
 
+// Token firmato short-lived per l'iframe di preview live in apps/documents
+router.get('/:id/preview-token',
+  AdminAuthMiddleware.requireGranularPermission('documents.read'),
+  DocumentManagementController.getPreviewToken
+);
+
 // Get single document by ID (for editing)
 router.get('/:id',
   AdminAuthMiddleware.requireGranularPermission('documents.read'),
@@ -66,6 +72,12 @@ router.patch('/:id',
   AdminAuthMiddleware.logAdminAction('document.update', 'document_management'),
   autoLogOutcome,
   DocumentManagementController.updateDocument
+);
+
+// Autosave leggero (debounce editor): niente audit log, ogni tick sarebbe rumore
+router.patch('/:id/autosave',
+  AdminAuthMiddleware.requireGranularPermission('documents.update'),
+  DocumentManagementController.autosaveDocument
 );
 
 // Soft delete document

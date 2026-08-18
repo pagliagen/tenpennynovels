@@ -30,6 +30,7 @@ interface DocumentGetBody {
       title: string;
       description?: string;
       content?: string;
+      isDraft?: boolean;
     };
     route: {
       path: string;
@@ -81,6 +82,38 @@ export const documentsApi = {
       kind: 'document',
       isPublic: payload.route.isPublic,
       content: payload.document.content || '',
+    };
+
+    const sections: DocumentSection[] = payload.sections || [];
+
+    return {
+      document,
+      sections,
+      hasChildren: payload.hasChildren ?? false,
+      ...(payload.childDocuments != null ? { childDocuments: payload.childDocuments } : {}),
+    };
+  },
+
+  /**
+   * Get single document by ID via preview token — usato dall'iframe di
+   * preview nel gestionale, ignora isDraft/visible/isPublic (a differenza di
+   * `get()`), autorizzato dal token firmato invece che da sessione/cookie.
+   */
+  async getPreview(id: string, token: string): Promise<DocumentDetail> {
+    const { data: payload } = await api.get<DocumentGetBody>(`/documents/preview/${id}`, {
+      params: { token },
+    });
+
+    const document: Document = {
+      _id: payload.document._id,
+      path: payload.route.path,
+      title: payload.document.title,
+      description: payload.document.description || '',
+      type: payload.route.type,
+      kind: 'document',
+      isPublic: payload.route.isPublic,
+      content: payload.document.content || '',
+      isDraft: payload.document.isDraft,
     };
 
     const sections: DocumentSection[] = payload.sections || [];

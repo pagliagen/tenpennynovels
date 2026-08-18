@@ -151,6 +151,18 @@ export function useUpdateDocument() {
 }
 
 /**
+ * Hook per l'autosave leggero dell'editor (debounce 1s).
+ * Niente invalidation: l'UI legge lo stato locale del modal, non la cache —
+ * invalidare qui causerebbe solo refetch inutili durante la digitazione.
+ */
+export function useAutosaveDocument() {
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { title?: string; contentDelta?: any } }) =>
+      documentAPI.autosaveDocument(id, data)
+  });
+}
+
+/**
  * Hook per eliminare document con optimistic updates
  */
 export function useDeleteDocument() {

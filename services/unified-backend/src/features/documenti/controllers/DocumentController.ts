@@ -8,10 +8,11 @@
 
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import Document from '../models/Document';
+import Document, { IDocument } from '../models/Document';
 import DocumentSubtype from '../models/DocumentSubtype';
 import { EmbeddingService } from '../services/EmbeddingService';
 import { HierarchyService } from '../services/HierarchyService';
+import { PreviewTokenService } from '../services/PreviewTokenService';
 import { logger } from '@shared/utils/logger';
 import { isQuestion } from '../utils/questionDetector';
 import { extensions } from '@core/extensions/registry';
@@ -52,135 +53,179 @@ export class DocumentController {
         return;
       }
 
-      // Build response with sections from child documents + chunks
-      const childrenWithDepth = await HierarchyService.fetchChildDocuments(doc._id);
-      const hasChildren = childrenWithDepth.length > 0;
+      await DocumentController.sendDetailResponse(doc, res);
+    } catch (error: unknown) {
+      logger.error('Error in getByPath:', error);
+      res.status(500).json({ result: false, error: 'Errore recupero documento', code: 'GET_DOCUMENT_ERROR' });
+    }
+  }
 
-      const db = mongoose.connection.db;
-      if (!db) {
-        throw new Error('Database connection not available');
-      }
+  /**
+   * GET /documents/preview/:id?token=...
+   *
+   * Preview autenticata via token firmato (PreviewTokenService), non da sessione/cookie
+   * cross-subdomain: ignora isDraft/visible/isPublic (a differenza di getByPath), così
+   * l'iframe di preview nel gestionale può mostrare un documento non ancora pubblicato.
+   */
+  static async getPreviewById(req: Request<{ id: string }>, res: Response): Promise<void> {
+    const { id } = req.params;
 
-      const rootChunks = await db.collection('documentchunks').find({
-        documentId: doc._id.toString(),
-        isActive: true
-      }).sort({ order: 1 }).toArray();
-
-      const document = {
-        _id: doc._id.toString(),
-        slug: doc.slug,
-        title: doc.title,
-        description: doc.description || '',
-        type: doc.type,
-        path: doc.path,
-        content: doc.content,
-        tags: doc.tags || [],
-        isDraft: doc.isDraft || false,
-        draftNotes: doc.draftNotes,
-        isPublic: doc.isPublic,
-        createdAt: doc.createdAt,
-        lastUpdated: doc.lastUpdated
-      };
-
-      const convertChunk = (chunk: { _id: { toString(): string }; documentId: { toString(): string }; heading: string; slug: string; content: string; headingLevel: number; order: number }, depth: number = 0) => ({
-        _id: chunk._id.toString(),
-        documentId: chunk.documentId.toString(),
-        title: chunk.heading,
-        slug: chunk.slug,
-        content: DocumentController.convertPlainTextToHTML(chunk.content, chunk.headingLevel),
-        order: chunk.order,
-        depth
-      });
-
-      if (!hasChildren) {
-        res.json({
-          result: true,
-          data: {
-            route: { path: doc.path, type: doc.type, kind: 'document', isPublic: doc.isPublic, enabled: true },
-            document,
-            sections: rootChunks.map(c => convertChunk(c as unknown as Parameters<typeof convertChunk>[0])),
-            hasChildren: false
-          }
-        });
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json({ result: false, error: 'ID documento non valido', code: 'INVALID_DOCUMENT_ID' });
         return;
       }
 
-      // Build hierarchical children
-      const hierarchicalChildren = await HierarchyService.buildHierarchicalChildren(
-        doc._id, doc.path, doc.type as 'ambientazione' | 'regolamento', 0, 5
-      );
-
-      const hasAnyChildWithSeparatePage = (children: Array<{ hasOwnPage?: boolean; children?: Array<{ hasOwnPage?: boolean; children?: unknown[] }> }>): boolean =>
-        children.some(child => child.hasOwnPage || hasAnyChildWithSeparatePage((child.children || []) as Array<{ hasOwnPage?: boolean; children?: Array<{ hasOwnPage?: boolean; children?: unknown[] }> }>));
-
-      if (hasAnyChildWithSeparatePage(hierarchicalChildren)) {
-        res.json({
-          result: true,
-          data: {
-            route: { path: doc.path, type: doc.type, kind: 'document', isPublic: doc.isPublic, enabled: true },
-            document,
-            sections: rootChunks.map(c => convertChunk(c as unknown as Parameters<typeof convertChunk>[0])),
-            hasChildren: false,
-            childDocuments: hierarchicalChildren
-          }
-        });
+      const token = req.query.token;
+      if (typeof token !== 'string' || !PreviewTokenService.verify(token, id)) {
+        res.status(403).json({ result: false, error: 'Token di preview non valido o scaduto', code: 'INVALID_PREVIEW_TOKEN' });
         return;
       }
 
-      // Assemble full hierarchy
-      const allSections: Record<string, unknown>[] = rootChunks.map(c => ({ ...convertChunk(c as unknown as Parameters<typeof convertChunk>[0]), isRootChunk: true }));
+      // Il plugin soft-delete esclude già i documenti cancellati dalle query di default.
+      const doc = await Document.findById(id);
 
-      for (const { document: childDoc, depth, order } of childrenWithDepth) {
-        const childChunks = await db.collection('documentchunks').find({
-          documentId: childDoc._id.toString(),
-          isActive: true
-        }).sort({ order: 1 }).toArray();
-
-        allSections.push({
-          _id: childDoc._id.toString(),
-          documentId: childDoc._id.toString(),
-          title: childDoc.title,
-          slug: childDoc.slug,
-          content: `<h${depth + 1}>${childDoc.title}</h${depth + 1}>`,
-          order,
-          depth,
-          isDocumentTitle: true
-        });
-
-        childChunks.forEach((chunk, chunkIndex: number) => {
-          allSections.push({
-            ...convertChunk(chunk as unknown as Parameters<typeof convertChunk>[0], depth),
-            order: order + (chunkIndex * 0.01),
-            parentDocumentId: childDoc._id.toString()
-          });
-        });
+      if (!doc) {
+        res.status(404).json({ result: false, error: 'Risorsa non trovata', code: 'NOT_FOUND' });
+        return;
       }
 
-      allSections.sort((a, b) => (a.order as number) - (b.order as number));
+      await DocumentController.sendDetailResponse(doc, res);
+    } catch (error: unknown) {
+      logger.error('Error in getPreviewById:', error);
+      res.status(500).json({ result: false, error: 'Errore recupero documento', code: 'GET_DOCUMENT_ERROR' });
+    }
+  }
 
+  /**
+   * Assembla e invia la response di dettaglio documento (sections da child
+   * documents + chunk), condivisa da getByPath e getPreviewById.
+   */
+  private static async sendDetailResponse(doc: IDocument, res: Response): Promise<void> {
+    // Build response with sections from child documents + chunks
+    const childrenWithDepth = await HierarchyService.fetchChildDocuments(doc._id);
+    const hasChildren = childrenWithDepth.length > 0;
+
+    const db = mongoose.connection.db;
+    if (!db) {
+      throw new Error('Database connection not available');
+    }
+
+    const rootChunks = await db.collection('documentchunks').find({
+      documentId: doc._id.toString(),
+      isActive: true
+    }).sort({ order: 1 }).toArray();
+
+    const document = {
+      _id: doc._id.toString(),
+      slug: doc.slug,
+      title: doc.title,
+      description: doc.description || '',
+      type: doc.type,
+      path: doc.path,
+      content: doc.content,
+      tags: doc.tags || [],
+      isDraft: doc.isDraft || false,
+      draftNotes: doc.draftNotes,
+      isPublic: doc.isPublic,
+      createdAt: doc.createdAt,
+      lastUpdated: doc.lastUpdated
+    };
+
+    const convertChunk = (chunk: { _id: { toString(): string }; documentId: { toString(): string }; heading: string; slug: string; content: string; headingLevel: number; order: number }, depth: number = 0) => ({
+      _id: chunk._id.toString(),
+      documentId: chunk.documentId.toString(),
+      title: chunk.heading,
+      slug: chunk.slug,
+      content: DocumentController.convertPlainTextToHTML(chunk.content, chunk.headingLevel),
+      order: chunk.order,
+      depth
+    });
+
+    if (!hasChildren) {
       res.json({
         result: true,
         data: {
           route: { path: doc.path, type: doc.type, kind: 'document', isPublic: doc.isPublic, enabled: true },
           document,
-          sections: allSections,
-          hasChildren: true,
-          childDocuments: childrenWithDepth.map(({ document: childDoc, depth }) => ({
-            _id: childDoc._id.toString(),
-            slug: childDoc.slug,
-            title: childDoc.title,
-            hasOwnPage: false,
-            depth,
-            order: childDoc.order,
-            children: []
-          }))
+          sections: rootChunks.map(c => convertChunk(c as unknown as Parameters<typeof convertChunk>[0])),
+          hasChildren: false
         }
       });
-
-    } catch (error: unknown) {
-      logger.error('Error in getByPath:', error);
-      res.status(500).json({ result: false, error: 'Errore recupero documento', code: 'GET_DOCUMENT_ERROR' });
+      return;
     }
+
+    // Build hierarchical children
+    const hierarchicalChildren = await HierarchyService.buildHierarchicalChildren(
+      doc._id, doc.path, doc.type as 'ambientazione' | 'regolamento', 0, 5
+    );
+
+    const hasAnyChildWithSeparatePage = (children: Array<{ hasOwnPage?: boolean; children?: Array<{ hasOwnPage?: boolean; children?: unknown[] }> }>): boolean =>
+      children.some(child => child.hasOwnPage || hasAnyChildWithSeparatePage((child.children || []) as Array<{ hasOwnPage?: boolean; children?: Array<{ hasOwnPage?: boolean; children?: unknown[] }> }>));
+
+    if (hasAnyChildWithSeparatePage(hierarchicalChildren)) {
+      res.json({
+        result: true,
+        data: {
+          route: { path: doc.path, type: doc.type, kind: 'document', isPublic: doc.isPublic, enabled: true },
+          document,
+          sections: rootChunks.map(c => convertChunk(c as unknown as Parameters<typeof convertChunk>[0])),
+          hasChildren: false,
+          childDocuments: hierarchicalChildren
+        }
+      });
+      return;
+    }
+
+    // Assemble full hierarchy
+    const allSections: Record<string, unknown>[] = rootChunks.map(c => ({ ...convertChunk(c as unknown as Parameters<typeof convertChunk>[0]), isRootChunk: true }));
+
+    for (const { document: childDoc, depth, order } of childrenWithDepth) {
+      const childChunks = await db.collection('documentchunks').find({
+        documentId: childDoc._id.toString(),
+        isActive: true
+      }).sort({ order: 1 }).toArray();
+
+      allSections.push({
+        _id: childDoc._id.toString(),
+        documentId: childDoc._id.toString(),
+        title: childDoc.title,
+        slug: childDoc.slug,
+        content: `<h${depth + 1}>${childDoc.title}</h${depth + 1}>`,
+        order,
+        depth,
+        isDocumentTitle: true
+      });
+
+      childChunks.forEach((chunk, chunkIndex: number) => {
+        allSections.push({
+          ...convertChunk(chunk as unknown as Parameters<typeof convertChunk>[0], depth),
+          order: order + (chunkIndex * 0.01),
+          parentDocumentId: childDoc._id.toString()
+        });
+      });
+    }
+
+    allSections.sort((a, b) => (a.order as number) - (b.order as number));
+
+    res.json({
+      result: true,
+      data: {
+        route: { path: doc.path, type: doc.type, kind: 'document', isPublic: doc.isPublic, enabled: true },
+        document,
+        sections: allSections,
+        hasChildren: true,
+        childDocuments: childrenWithDepth.map(({ document: childDoc, depth }) => ({
+          _id: childDoc._id.toString(),
+          slug: childDoc.slug,
+          title: childDoc.title,
+          hasOwnPage: false,
+          depth,
+          order: childDoc.order,
+          children: []
+        }))
+      }
+    });
   }
 
   /**
