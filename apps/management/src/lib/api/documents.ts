@@ -93,6 +93,32 @@ export async function updateDocument(id: string, data: UpdateDocumentData): Prom
 }
 
 /**
+ * Autosave leggero (debounce editor): niente re-embed/SEO, a differenza di updateDocument.
+ */
+export async function autosaveDocument(id: string, data: { title?: string; contentDelta?: any }): Promise<{ lastUpdated: string }> {
+  const response = await apiClient.patch<ApiResponse<{ lastUpdated: string }>>(`/admin/documents/${id}/autosave`, data);
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nell\'autosave documento');
+  }
+
+  return response.data.data;
+}
+
+/**
+ * Token firmato short-lived per l'iframe di preview live in apps/documents
+ */
+export async function getDocumentPreviewToken(id: string): Promise<{ token: string; expiresAt: string }> {
+  const response = await apiClient.get<ApiResponse<{ token: string; expiresAt: string }>>(`/admin/documents/${id}/preview-token`);
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nella generazione del token preview');
+  }
+
+  return response.data.data;
+}
+
+/**
  * Elimina document (soft delete)
  */
 export async function deleteDocument(id: string): Promise<void> {

@@ -3,6 +3,7 @@
  * Simpler alternative to SidePanel (which is form-based)
  */
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import classNames from 'classnames';
 import styles from './PreviewPanel.module.scss';
 
@@ -48,8 +49,13 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+  // position: fixed non basta a garantire la visibilità se il pannello resta
+  // annidato dentro un antenato con overflow (es. il .modalBody scrollabile
+  // di Modal): l'overflow lo taglia comunque. Portal su document.body, come
+  // fa già Modal, per uscire da qualunque contenitore scrollabile chiamante.
+  if (typeof window === 'undefined') return null;
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop */}
       <div className={styles.backdrop} onClick={onClose} />
@@ -73,6 +79,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
           {children}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 };

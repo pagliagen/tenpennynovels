@@ -69,6 +69,8 @@ import '@/styles/globals.scss';
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+  // Preview live per l'iframe del gestionale: niente nav/sidebar del sito.
+  const isEmbedPreview = router.pathname.startsWith('/preview');
 
   /**
    * Initialize sessionId from query parameter
@@ -133,9 +135,13 @@ export default function App({ Component, pageProps }: AppProps) {
 
       <div className={`${thriftedAttire.variable} ${lesMysteres.variable} ${bahnschrift.variable}`}>
         <AuthInitializer>
-          <DocumentsLayout>
+          {isEmbedPreview ? (
             <Component {...pageProps} />
-          </DocumentsLayout>
+          ) : (
+            <DocumentsLayout>
+              <Component {...pageProps} />
+            </DocumentsLayout>
+          )}
 
           {/* React Query Devtools (dynamic import, solo in dev; in prod è no-op) */}
           <ReactQueryDevtools initialIsOpen={false} />

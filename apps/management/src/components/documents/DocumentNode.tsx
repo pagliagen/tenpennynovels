@@ -7,6 +7,7 @@ import React, { useState, useRef, useEffect, type CSSProperties } from 'react';
 import classNames from 'classnames';
 import styles from './DocumentTreeView.module.scss';
 import type { DocumentTreeNode } from '@/types/api/Document';
+import { API_CONFIG } from '@/constants/config';
 import { logger } from '@/lib/logger';
 
 interface DocumentNodeProps {
@@ -44,10 +45,7 @@ export const DocumentNode: React.FC<DocumentNodeProps> = React.memo(({
   const getDocumentUrl = (): string | null => {
     if (!doc.path) return null;
 
-    const baseUrl = process.env.NODE_ENV === 'production'
-      ? 'https://documenti.tenpennynovels.com'
-      : 'http://localhost:4002';
-    return `${baseUrl}/${doc.subtype ? doc.type ?? 'ambientazione' : 'ambientazione'}/${doc.path}`;
+    return `${API_CONFIG.DOCUMENTS_URL}/${doc.subtype ? doc.type ?? 'ambientazione' : 'ambientazione'}/${doc.path}`;
   };
 
   const documentUrl = getDocumentUrl();
