@@ -2,11 +2,12 @@
  * Modal for editing document content with TipTap editor
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/shared/Modal';
 import { PreviewPanel } from '@/components/shared/PreviewPanel';
 import { DocumentContentEditor } from './DocumentContentEditor';
 import { DocumentIframePreview } from './DocumentIframePreview';
-import { useDocument, useUpdateDocument, useAutosaveDocument } from '@/hooks/api/useDocuments';
+import { useDocument, useUpdateDocument, useAutosaveDocument, documentKeys } from '@/hooks/api/useDocuments';
 import { useNotificationStore } from '@/store/notificationStore';
 import styles from './EditDocumentModal.module.scss';
 
@@ -34,6 +35,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   const updateDocument = useUpdateDocument();
   const autosaveDocument = useAutosaveDocument();
   const addNotification = useNotificationStore(state => state.addNotification);
+  const queryClient = useQueryClient();
 
   // Stato più recente per i callback dei timer (evita closure su valori stantii).
   // Aggiornato in un effect (mai durante il render) e comunque letto solo ~1s
@@ -160,10 +162,22 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
     // Flush: se c'è una digitazione degli ultimi <1s non ancora autosalvata,
     // persistila prima di chiudere (con l'autosave reale non ha più senso
     // "annullare" — solo evitare di perdere l'ultima frazione di secondo).
-    if (debounceTimerRef.current) {
-      clearDebounceTimer();
-      await runAutosave();
-    }
+    const hadPendingEdit = !!debounceTimerRef.current;
+    clearDebounceTimer();
+
+    // Aspetta un eventuale autosave già in volo, altrimenti un flush qui
+    // sotto verrebbe scartato dal mutex e potremmo invalidare la cache
+    // prima che l'ultimo salvataggio sia davvero scritto.
+    if (savingRef.current) await savingRef.current.catch(() => {});
+    if (hadPendingEdit) await runAutosave();
+
+    // useAutosaveDocument non invalida mai la cache di useDocument (apposta,
+    // per non resettare l'editor mentre l'utente digita): farlo qui, alla
+    // chiusura, altrimenti riaprendo si rivede la versione precedente pur
+    // avendo il DB — e quindi il preview — già aggiornato.
+    queryClient.invalidateQueries({ queryKey: documentKeys.detail(documentId) });
+    queryClient.invalidateQueries({ queryKey: documentKeys.lists() });
+
     onClose();
   };
 
