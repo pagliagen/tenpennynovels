@@ -141,6 +141,11 @@ const DocumentSchema = new Schema<IDocument>({
  * Pre-save hook: Path calculation, type validation, HTML generation
  */
 DocumentSchema.pre('save', async function() {
+  // Path precedente, per poter rigenerare anche la vecchia pagina ISR se questo
+  // save cambia lo slug o il subtype (altrimenti l'URL vecchio resta stale finché
+  // non scade la revalidate: 3600 di apps/documents).
+  (this as any)._previousPath = this.isNew ? null : this.path;
+
   // PATH CALCULATION: Calculate path from subtype.slug + doc.slug
   if (this.isNew || this.isModified('subtypeId') || this.isModified('slug')) {
     const DocumentSubtype = (await import('./DocumentSubtype')).default;
@@ -226,6 +231,15 @@ DocumentSchema.post('save', async function(doc) {
   } catch (error) {
     logger.error('[Document] Failed to publish embedding event:', error);
   }
+
+  // Fire-and-forget: rigenera on-demand la pagina ISR su apps/documents.
+  // Non si attende la risposta, non deve rallentare il save dal gestionale.
+  import('@shared/services/DocumentsRevalidator').then(({ revalidateDocumentPaths }) => {
+    const previousPath = (doc as any)._previousPath;
+    revalidateDocumentPaths(doc.type, [doc.path, previousPath]);
+  }).catch((error) => {
+    logger.error('[Document] Failed to load DocumentsRevalidator:', error);
+  });
 
   // Fire-and-forget SEO description generation when content changed
   if ((doc as any)._seoTrigger && doc.content) {
