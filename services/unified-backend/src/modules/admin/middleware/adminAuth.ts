@@ -113,18 +113,19 @@ export class AdminAuthMiddleware {
 
             try {
               const char = await Character.findById(finalCharacterId)
-                .select('gameplayRoles adminPermissions isGestore canAccessAdminPanel')
+                .select('gameplayRoles adminPermissions isGestore canAccessAdminPanel playerStatus')
                 .lean()
                 .exec();
 
               if (char && req.user) {
+                const isApprovedGestore = char.isGestore && char.playerStatus === 'approved';
                 const adminRoles = gameplayRolesToAdminRoles(char.gameplayRoles || []);
-                if (char.isGestore) adminRoles.push('amministratore');
+                if (isApprovedGestore) adminRoles.push('amministratore');
                 req.user.characterRoles = adminRoles;
                 req.user.gameplayRoles = (char.gameplayRoles || []) as ('player' | 'master' | 'moderatore')[];
                 req.user.adminPermissions = char.adminPermissions || [];
-                req.user.isGestore = char.isGestore || false;
-                req.user.canAccessAdminPanel = char.canAccessAdminPanel || char.isGestore || false;
+                req.user.isGestore = isApprovedGestore || false;
+                req.user.canAccessAdminPanel = char.canAccessAdminPanel || isApprovedGestore || false;
 
                 logger.info(`[AdminAuth] Character loaded: id=${finalCharacterId} | isGestore=${char.isGestore} | roles=${JSON.stringify(char.gameplayRoles)} | canAccess=${char.canAccessAdminPanel}`);
               } else {

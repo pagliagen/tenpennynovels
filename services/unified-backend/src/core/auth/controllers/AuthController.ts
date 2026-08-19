@@ -812,7 +812,9 @@ export class AuthController {
             id: user.userId,
             username: user.username,
             canAccessAdminPanel: fullCharacter
-              ? (fullCharacter.canAccessAdminPanel || fullCharacter.isGestore || false)
+              ? (fullCharacter.canAccessAdminPanel ||
+                 (fullCharacter.isGestore && fullCharacter.playerStatus === 'approved') ||
+                 false)
               : false
           },
           character: characterData,

@@ -104,7 +104,8 @@ router.get('/me',
 
     const characterRoles = selectedCharacter?.gameplayRoles || [];
     const characterPermissions = selectedCharacter?.adminPermissions || [];
-    const canAccessManagement = selectedCharacter?.canAccessAdminPanel === true || selectedCharacter?.isGestore === true;
+    const canAccessManagement = selectedCharacter?.canAccessAdminPanel === true ||
+      (selectedCharacter?.isGestore === true && selectedCharacter?.playerStatus === 'approved');
 
     logger.info('🔒 Management panel access check:', {
       userId: user._id,
