@@ -40,7 +40,7 @@ import { useAuthStore } from '@/store/authStore';
  */
 export default function CharacterWizardPage() {
   const router = useRouter();
-  const { selectedCharacter, isAuthenticated, hasGamePermission } = useAuthStore();
+  const { selectedCharacter, isAuthenticated, hasGamePermission, gamePermissions } = useAuthStore();
   const isSubmittingRef = useRef(false);
 
   const setSubmitting = useCallback((value: boolean) => {
@@ -65,11 +65,19 @@ export default function CharacterWizardPage() {
       return;
     }
 
+    // gamePermissions non è persistito (authStore) e arriva solo con la
+    // risposta di /auth/session: finché è vuoto, "non ho il permesso" è
+    // indistinguibile da "non l'ho ancora caricato". Rimbalzare qui creava un
+    // vicolo cieco col redirect di GameLayout, che tenta una sola volta per
+    // transizione a draft: al primo load il wizard rimandava su '/' e nessun
+    // retry riportava indietro. Si attende: il render mostra "Caricamento".
+    if (gamePermissions.length === 0) return;
+
     if (!hasGamePermission('game:character:wizard') || selectedCharacter?.playerStatus !== 'draft') {
       router.push('/');
       return;
     }
-  }, [isAuthenticated, selectedCharacter, hasGamePermission, router]);
+  }, [isAuthenticated, selectedCharacter, hasGamePermission, gamePermissions, router]);
 
   // Show loading while checking auth/character/permission
   if (!isAuthenticated || !selectedCharacter || !hasGamePermission('game:character:wizard') || selectedCharacter.playerStatus !== 'draft') {

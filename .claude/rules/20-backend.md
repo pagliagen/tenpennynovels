@@ -75,6 +75,11 @@ Catena middleware: `authenticateUser()` → `authenticateCharacter()` → `requi
 
 **Validazione di ownership obbligatoria**: `session.userId === req.user.userId`, altrimenti 403. Difesa in profondità: il possesso del `sessionId` non basta.
 
+**I poteri elevati valgono solo su un personaggio `playerStatus: 'approved'`.** Vale sia per `isGestore` sia per i `gameplayRoles` master/moderatore: un personaggio draft/pending va trattato come un giocatore normale. `StatusRestrictions` in `config/permissions/game.ts` **non** è la sede giusta per farlo rispettare (elenca permessi bloccati uno per uno e non conteneva i `game:admin:*`): il filtro sta in `resolveEffectiveRoles()` + nel guard del bypass gestore.
+**Incidente 2026-08-19** — `/auth/session` restituiva tutti i `game:admin:*` a un PG in bozza con `gameplayRoles: ['master']`. Due bypass distinti nello stesso file, entrambi valutati **prima** dello stato: `if (isGestore) return ...` e i permessi di ruolo mai filtrati per stato. Il primo era già stato corretto in #59, il secondo no.
+
+**Permessi derivati dallo stato, non denormalizzati.** `game:character:wizard` viene calcolato in `getCharacterGamePermissions()` da `playerStatus === 'draft'`. Non fidarsi dell'array `characterPermissions` come sorgente: l'hook `pre('save')` di `Character.ts` lo popola solo su `isModified('playerStatus')`, quindi ogni `updateOne`/`findByIdAndUpdate`, fix manuale sul DB o `Object.assign` che rimpiazza l'array in blocco (`CharacterApprovalController`, `allowedFields`) lasciava un draft senza il permesso e col wizard irraggiungibile (incidenti 2026-08-14 e 2026-08-19). Un `-game:character:wizard` esplicito continua a vincere.
+
 Il cookie `character_context` è **deprecato**: usare `X-Session-Id`. Flusso completo: `docs/tecnica/backend/authentication.md`.
 
 **WebSocket**: Socket.IO con adapter Redis (scaling orizzontale). All'handshake verifica JWT dai cookie + `sessionId` dalla query, poi join della room `character:<id>`. Broadcast per room.

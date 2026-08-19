@@ -406,6 +406,22 @@ export const StatusRestrictions: Record<string, GamePermission[]> = {
 };
 
 /**
+ * Ruoli effettivi per lo stato del personaggio.
+ *
+ * I poteri da master/moderatore valgono solo su un personaggio APPROVATO: un
+ * draft/pending va trattato come un giocatore normale, stessa regola del
+ * bypass isGestore (vedi hasGamePermission). Senza questo, un personaggio in
+ * bozza con gameplayRoles=['master'] riceveva tutti i game:admin:* — bug reale
+ * 2026-08-19: StatusRestrictions non elenca i permessi admin/master, quindi il
+ * filtro per stato non li rimuoveva mai e /auth/session li restituiva a un PG
+ * mai approvato.
+ */
+function resolveEffectiveRoles(playerStatus: string, gameplayRoles: string[]): string[] {
+  if (playerStatus !== 'approved') return ['player'];
+  return gameplayRoles.length > 0 ? gameplayRoles : ['player'];
+}
+
+/**
  * Resolve permissions for a gameplay role (including inheritance)
  */
 function resolveGameplayRolePermissions(roleName: string): GamePermission[] {
@@ -463,13 +479,17 @@ export function hasGamePermission(
   // Explicit deny
   if (characterPermissions.includes(`-${permission}`)) return false;
 
+  // Wizard: derivato dallo stato, non dall'array salvato (vedi
+  // getCharacterGamePermissions per il perché).
+  if (playerStatus === 'draft' && permission === GamePermissions.CHARACTER_WIZARD) return true;
+
   // Explicit grant or wildcard
   if (characterPermissions.includes(permission) || characterPermissions.includes('game:*')) {
     return true;
   }
 
   // Role-based
-  const roles = gameplayRoles.length > 0 ? gameplayRoles : ['player'];
+  const roles = resolveEffectiveRoles(playerStatus, gameplayRoles);
   for (const roleName of roles) {
     const rolePermissions = resolveGameplayRolePermissions(roleName);
     if (rolePermissions.includes(permission)) return true;
@@ -497,7 +517,7 @@ export function getCharacterGamePermissions(
   if (isGestore && playerStatus === 'approved') return Object.values(GamePermissions);
 
   const allPermissions = new Set<GamePermission>();
-  const roles = gameplayRoles.length > 0 ? gameplayRoles : ['player'];
+  const roles = resolveEffectiveRoles(playerStatus, gameplayRoles);
 
   // Collect role permissions
   for (const roleName of roles) {
@@ -507,6 +527,15 @@ export function getCharacterGamePermissions(
   // Remove status-blocked permissions
   const blockedPerms = StatusRestrictions[playerStatus] || [];
   blockedPerms.forEach(blocked => allPermissions.delete(blocked));
+
+  // Il wizard è una funzione dello stato, non un permesso da tenere in cache:
+  // l'hook pre-save di Character.ts lo inietta in characterPermissions solo su
+  // isModified('playerStatus'), quindi qualunque scrittura che salta i hook
+  // Mongoose (updateOne/findByIdAndUpdate, fix manuali sul DB) o che rimpiazza
+  // l'array in blocco lascia un draft senza permesso e col wizard
+  // irraggiungibile. Derivarlo qui rende lo stato la sola fonte di verità.
+  // Un deny esplicito resta possibile: gli override sotto girano dopo.
+  if (playerStatus === 'draft') allPermissions.add(GamePermissions.CHARACTER_WIZARD);
 
   // Apply character-level overrides
   characterPermissions.forEach(p => {
