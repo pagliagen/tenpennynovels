@@ -15,7 +15,7 @@ import { appConfig } from '../../config/runtime/appConfig';
 import { logger } from '@shared/utils/logger';
 
 export async function revalidateDocumentPaths(
-  type: 'ambientazione' | 'regolamento',
+  type: string,
   paths: (string | undefined | null)[]
 ): Promise<void> {
   const secret = appConfig.services.documents.revalidateSecret;

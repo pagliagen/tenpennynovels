@@ -12,7 +12,9 @@
 
 import mongoose, { Schema, Document as MongooseDocument } from 'mongoose';
 
-export type DocumentType = 'ambientazione' | 'regolamento';
+import { ALL_DOCUMENT_TYPE_LIST, type DocumentType } from '../constants/documentTypes';
+
+export type { DocumentType };
 
 export interface IDocumentSubtype extends MongooseDocument {
   slug: string;
@@ -36,7 +38,7 @@ const DocumentSubtypeSchema = new Schema<IDocumentSubtype>(
     },
     type: {
       type: String,
-      enum: ['ambientazione', 'regolamento'],
+      enum: ALL_DOCUMENT_TYPE_LIST,
       required: true
     },
     order: {

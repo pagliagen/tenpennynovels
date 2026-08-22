@@ -5,6 +5,7 @@ import DocumentSubtype from '../models/DocumentSubtype';
 import Document from '../models/Document';
 import { logger } from '@modules/admin/utils/logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
+import { ALL_DOCUMENT_TYPES, isDocumentType, type DocumentType } from '../constants/documentTypes';
 
 const router = Router();
 
@@ -31,7 +32,7 @@ router.get('/',
       // CWE-943: qs può trasformare ?type[$where]=x in un oggetto — typeof
       // esplicito prima del confronto, il cast `as string` non protegge a runtime.
       const filter: any = {};
-      if (typeof type === 'string' && ['ambientazione', 'regolamento'].includes(type)) {
+      if (isDocumentType(type)) {
         filter.type = type;
       }
 
@@ -70,16 +71,16 @@ router.post('/',
         return;
       }
 
-      if (!['ambientazione', 'regolamento'].includes(type)) {
+      if (!isDocumentType(type)) {
         res.status(400).json(errorResponse(
-          'type deve essere "ambientazione" o "regolamento"',
+          `type deve essere uno fra: ${ALL_DOCUMENT_TYPES.join(', ')}`,
           'INVALID_TYPE',
           undefined, 400, getRequestId(req)
         ));
         return;
       }
-      // Verificato dall'includes() sopra: uno dei due letterali validi.
-      const safeType = type as 'ambientazione' | 'regolamento';
+      // Verificato dal type guard sopra: uno dei letterali validi.
+      const safeType: DocumentType = type;
 
       const existing = await DocumentSubtype.findOne({ type: safeType, slug });
       if (existing) {

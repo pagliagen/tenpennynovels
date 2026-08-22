@@ -10,6 +10,7 @@ import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiR
 import { appConfig } from '@config/runtime';
 import { aiGatewayClient } from '@modules/game/services/AIGatewayClient';
 import { Types } from 'mongoose';
+import { ALL_DOCUMENT_TYPES, isDocumentType, type DocumentType } from '../constants/documentTypes';
 
 const mongoose = db.getMongoose();
 
@@ -23,9 +24,14 @@ function isValidObjectId(id: unknown): boolean {
 /**
  * Validate document type against a literal whitelist — rejects query objects
  * (e.g. type[$ne]=x parsed as { $ne: 'x' }) before the value reaches a query.
+ *
+ * Lato gestionale la whitelist include i tipi riservati: l'authoring del
+ * manuale master avviene qui, protetto dai permessi granulari documents.*
+ * (vedi routes/admin-documents.ts). Il default-deny per tipo riguarda solo la
+ * lettura pubblica — vedi utils/documentAccess.ts.
  */
-function isValidDocumentType(value: unknown): value is 'ambientazione' | 'regolamento' {
-  return value === 'ambientazione' || value === 'regolamento';
+function isValidDocumentType(value: unknown): value is DocumentType {
+  return isDocumentType(value);
 }
 
 /**
@@ -597,9 +603,9 @@ export class DocumentManagementController {
         return;
       }
 
-      if (!['ambientazione', 'regolamento'].includes(type)) {
+      if (!isDocumentType(type)) {
         res.status(400).json(errorResponse(
-          'type deve essere "ambientazione" o "regolamento"',
+          `type deve essere uno fra: ${ALL_DOCUMENT_TYPES.join(', ')}`,
           'INVALID_TYPE', undefined, 400, getRequestId(req)
         ));
         return;
