@@ -6,7 +6,7 @@
  * Comportamento (non è solo “presentational”):
  * - Composizione UI (sidebar, TopBar, finestre modali, ecc.)
  * - Orchestrazione: hook di query (mail, chat, ticket), WebSocket per invalidazioni,
- *   refresh sessione dopo eventi, redirect wizard, init location store.
+ *   refresh sessione dopo eventi, init location store.
  *
  * @module components/layout/GameLayout
  * @since 2.0.0
@@ -67,13 +67,6 @@ interface GameLayoutProps {
 }
 
 type ChatNotificationSoundFile = (typeof CHAT_NOTIFICATION_SOUND_FILES)[number];
-
-// Modulo-level, non un useRef: GameLayout non è un layout persistente in
-// _app.tsx, ogni pagina lo istanzia nel proprio return (vedi wizard.tsx,
-// index.tsx...) — React lo smonta e rimonta ad ogni navigazione, quindi un
-// ref si resetterebbe ad ogni tentativo e non basterebbe a rompere un
-// ping-pong con un'altra guardia che rimanda indietro dal wizard.
-let wizardRedirectAttempted = false;
 
 /** Friendly label for each notification sound file, in file order */
 const CHAT_NOTIFICATION_SOUND_LABELS: Record<ChatNotificationSoundFile, string> = Object.fromEntries(
@@ -214,32 +207,6 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
     if (router.pathname === '/character-banned') return;
     void router.replace('/character-banned');
   }, [selectedCharacter, characterBan, router]);
-
-  /**
-   * Personaggio riportato in bozza (rifiuto, o azione admin "Riporta in
-   * bozza" su un personaggio già approvato) mentre la sessione di gioco è
-   * già aperta: refreshSession() aggiorna selectedCharacter.playerStatus
-   * dopo l'evento WebSocket, ma finora nessun redirect reattivo lo seguiva
-   * (bastava solo cliccare l'avatar o un'altra voce che controlla lo stato
-   * "a manina") — qui si segue lo stesso pattern del redirect per ban sopra.
-   *
-   * Un solo tentativo per transizione a 'draft' (wizardRedirectAttemptedRef):
-   * GameLayout è persistente su tutta la SPA e questo effect rigira ad ogni
-   * cambio rotta (router cambia identità), quindi se qualcos'altro rimanda
-   * via da /character/wizard (es. il suo stesso guard su hasGamePermission,
-   * se gamePermissions non risultasse ancora aggiornato) un retry automatico
-   * qui creerebbe un ping-pong infinito — mai riscontrato prima perché nessun
-   * altro redirect in GameLayout compete con una rotta che rimanda indietro.
-   */
-  useEffect(() => {
-    if (!selectedCharacter || selectedCharacter.playerStatus !== 'draft') {
-      wizardRedirectAttempted = false;
-      return;
-    }
-    if (router.pathname === '/character/wizard' || wizardRedirectAttempted) return;
-    wizardRedirectAttempted = true;
-    void router.replace('/character/wizard');
-  }, [selectedCharacter, router]);
 
   /**
    * Esito approvazione/rifiuto non ancora confermato: sopravvive alla

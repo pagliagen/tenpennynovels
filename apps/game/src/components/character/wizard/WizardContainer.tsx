@@ -9,6 +9,7 @@ import { api } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import { useAuthStore } from '@/store/authStore';
 import { useWizardStore } from '@/store/wizardStore';
+import type { CharacterCreatePayload } from '@/types/wizard';
 import styles from '@/styles/components/character/wizard/WizardContainer.module.scss';
 import type { AuthSessionApiResponse } from '@/types/authSession';
 
@@ -95,6 +96,7 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
     transformForBackend,
     reset,
     loadFromDraft,
+    markServerSynced,
     loadCreationConfig,
     creationConfig,
     basicInfo,
@@ -124,6 +126,7 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
   const updateCharacter = useUpdateCharacter(characterId || '');
 
   const [submitFeedback, setSubmitFeedback] = useState<SubmitFeedback>(null);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const feedbackRef = useRef<HTMLDivElement>(null);
 
   const clearFeedback = useCallback(() => setSubmitFeedback(null), []);
@@ -150,16 +153,28 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
     const draftMatchesCharacter = _draftCharacterId === characterId
       && currentFirstName.trim() !== '';
 
-    // Skip load if draft already matches this character and server data hasn't changed
+    // Draft locale già di questo personaggio: vince lui, sempre.
+    //
+    // Il wizard NON ha un salvataggio intermedio — l'unica scrittura sul server
+    // è il submit finale (updateCharacter + submitForApproval qui sotto), quindi
+    // la copia di lavoro è il draft in localStorage e il documento su Mongo è
+    // fermo all'ultimo tentativo di invio. Prima si ricaricava dal server ogni
+    // volta che il suo `updatedAt` non coincideva con `_serverUpdatedAt`: al
+    // primo refresh dopo una qualunque scrittura server-side (un submit fallito
+    // in validazione scrive comunque il personaggio, o una modifica dello staff)
+    // il giocatore si ritrovava silenziosamente riportato allo stato salvato,
+    // perdendo tutto il lavoro della sessione. Sintomo osservato: professione
+    // cambiata nello Step 2, refresh, e la professione tornava quella vecchia —
+    // con il listino ricalcolato di conseguenza (banner "Lingua straniera sul
+    // listino della professione" ricomparso).
+    //
+    // `_serverUpdatedAt` resta registrato per sapere su quale revisione del
+    // server si basa il draft, ma non decide più il ricaricamento.
     if (draftMatchesCharacter) {
-      const serverDataChanged = existingCharacter.updatedAt
-        && _serverUpdatedAt !== existingCharacter.updatedAt;
-      if (!serverDataChanged) {
-        logger.info('[WizardContainer] load-effect: skipped, draft already matches and server unchanged', {
-          value: { _draftCharacterId, _serverUpdatedAt, serverUpdatedAt: existingCharacter.updatedAt },
-        });
-        return;
-      }
+      logger.info('[WizardContainer] load-effect: skipped, il draft locale è di questo personaggio e ha la precedenza', {
+        value: { _draftCharacterId, _serverUpdatedAt, serverUpdatedAt: existingCharacter.updatedAt },
+      });
+      return;
     }
 
     logger.info('[WizardContainer] load-effect: calling loadFromDraft', {
@@ -226,8 +241,59 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
     return validation;
   }, [basicInfo, occupation, stats, skills, dynamicSkills, background, creationConfig]);
 
+  /**
+   * Salva la bozza sul server.
+   *
+   * Il wizard è lungo (6 step, 15-30 minuti dichiarati): fino ad ora l'unica
+   * scrittura era il submit finale, quindi tutto il lavoro viveva solo nel
+   * localStorage del browser — perso cambiando macchina, profilo o pulendo i
+   * dati del sito, e invisibile allo staff finché il personaggio non veniva
+   * inviato.
+   *
+   * `skills`/`dynamicSkills` vengono omesse finché la mappa delle abilità è
+   * vuota (Step 4 mai aperto in questa sessione): mandare `dynamicSkills: []`
+   * cancellerebbe sul server le specializzazioni già salvate, perché
+   * CharacterController le sostituisce in blocco.
+   */
+  const persistDraft = useCallback(async (): Promise<void> => {
+    if (!characterId) return;
+
+    const fullPayload = transformForBackend();
+    const { skills: _skills, dynamicSkills: _dynamicSkills, ...payloadWithoutSkills } = fullPayload;
+    const skillsLoaded = Object.keys(useWizardStore.getState().skills).length > 0;
+    const payload: Partial<CharacterCreatePayload> = skillsLoaded
+      ? { ...fullPayload }
+      : { ...payloadWithoutSkills };
+
+    // Campi ancora vuoti allo Step 1: `occupation` è un ObjectId ref e `gender`
+    // un enum, quindi la stringa vuota fa fallire il salvataggio in validazione
+    // Mongoose invece di essere trattata come "non compilato".
+    if (!payload.occupation) delete payload.occupation;
+    if (!payload.gender) delete payload.gender;
+
+    setIsSavingDraft(true);
+    try {
+      const saved = await updateCharacter.mutateAsync(payload);
+      markServerSynced(saved?.updatedAt);
+      logger.info('[WizardContainer] bozza salvata sul server', { value: { characterId } });
+    } catch (error: any) {
+      logger.error('[WizardContainer] salvataggio bozza fallito', { error });
+      setSubmitFeedback({
+        type: 'error',
+        message: `Non sono riuscito a salvare la bozza sul server: ${error?.message || 'errore sconosciuto'}. I dati restano in questo browser, riprova al prossimo passaggio.`,
+      });
+    } finally {
+      setIsSavingDraft(false);
+    }
+  }, [characterId, transformForBackend, updateCharacter, markServerSynced]);
+
   const handleNext = () => {
-    nextStep();
+    // La navigazione non aspetta la rete: se lo step è valido si prosegue subito
+    // e il salvataggio va in background (il draft locale resta comunque la copia
+    // di lavoro, quindi un errore di rete non fa perdere niente).
+    if (!nextStep()) return;
+    clearFeedback();
+    void persistDraft();
   };
 
   const handleStepClick = (step: number) => {
@@ -417,7 +483,7 @@ function WizardContainerInner({ characterId, onSubmittingChange }: WizardContain
         helpText={STEP_HELP_TEXTS[currentStep] || ''}
         onNext={handleNext}
         onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
+        isSubmitting={isSubmitting || isSavingDraft}
         customActions={footerActionsContent}
       />
     </div>

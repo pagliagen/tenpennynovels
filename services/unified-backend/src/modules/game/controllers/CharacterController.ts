@@ -1344,7 +1344,10 @@ export class CharacterController {
             publicDescription: character.publicDescription,
             privateDescription: character.privateDescription,
             avatar: character.avatar,
-            prestavolto: character.prestavolto
+            prestavolto: character.prestavolto,
+            // Il wizard lo registra come "revisione del server su cui è
+            // allineata la bozza" dopo il salvataggio di uno step.
+            updatedAt: character.updatedAt
           }
         },
         undefined,

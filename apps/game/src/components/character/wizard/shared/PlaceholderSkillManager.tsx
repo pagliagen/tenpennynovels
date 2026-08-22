@@ -40,13 +40,24 @@ export function PlaceholderSkillManager({
   requiredMinimum,
   error,
 }: PlaceholderSkillManagerProps): JSX.Element {
-  const { skills, dynamicSkills, addDynamicSkill, removeDynamicSkill, updateSkill } = useWizardStore();
+  const { skills, dynamicSkills, occupation, addDynamicSkill, removeDynamicSkill, setPrimaryDynamicSkill, updateSkill } =
+    useWizardStore();
   const [isAdding, setIsAdding] = useState(false);
   const [specialization, setSpecialization] = useState('');
   const [inputError, setInputError] = useState('');
 
   // Find all dynamic skills derived from this placeholder
   const derivedSkills = dynamicSkills.filter((ds) => ds.name === placeholderSkill.name);
+
+  // Il concetto di "principale" esiste SOLO se il placeholder è sul listino
+  // della professione: lì occupa uno slot obbligatorio, quindi una
+  // specializzazione va eletta e portata al minimo richiesto, e solo quella
+  // spende dal pool Professione. Fuori dal listino non c'è nessuno slot da
+  // occupare: sono tutte specializzazioni libere, senza minimo, a carico del
+  // pool hobby — mostrare il radio "Principale" non avrebbe senso.
+  const isOccupationPlaceholder = (occupation.requiredPlaceholderSkills || []).includes(
+    placeholderSkill.name
+  );
 
   // Get placeholder type label
   const placeholderTypeLabel = getPlaceholderTypeLabel(placeholderSkill.placeholderType);
@@ -72,11 +83,13 @@ export function PlaceholderSkillManager({
     // Generate unique skill ID
     const skillId = `${placeholderSkill.id}-${trimmedSpec.toLowerCase().replace(/\s+/g, '-')}`;
 
-    // Add to dynamic skills
+    // Add to dynamic skills (mai principale d'ufficio: la sceglie il giocatore
+    // col radio, ed è quella che spende dal pool Professione)
     addDynamicSkill({
       skillId,
       name: placeholderSkill.name,
       specialization: trimmedSpec,
+      isPrimary: false,
     });
 
     // Initialize skill breakdown (NO required bonus yet - user must select primary)
@@ -102,17 +115,10 @@ export function PlaceholderSkillManager({
   const handleRemove = (skillId: string) => {
     if (!confirm('Rimuovere questa specializzazione?')) return;
 
-    // Get current skill to check if it was primary
-    const currentSkill = skills[skillId];
-    const wasPrimary = (currentSkill?.requiredBonus || 0) > 0;
+    const wasPrimary = derivedSkills.find((ds) => ds.skillId === skillId)?.isPrimary === true;
 
-    // Remove from dynamic skills
+    // removeDynamicSkill ripulisce anche il breakdown in `skills`
     removeDynamicSkill(skillId);
-
-    // Remove from skills breakdown
-    const { skills: currentSkills } = useWizardStore.getState();
-    const { [skillId]: removed, ...remainingSkills } = currentSkills;
-    useWizardStore.setState({ skills: remainingSkills });
 
     logger.info(`[PlaceholderSkillManager] Removed ${skillId}${wasPrimary ? ' (was primary)' : ''}`);
   };
@@ -121,54 +127,26 @@ export function PlaceholderSkillManager({
    * Handle selecting primary specialization
    */
   const handleSelectPrimary = (selectedSkillId: string) => {
-    const updatedSkills = { ...skills };
-
-    // Clear requiredBonus from all derived skills
-    derivedSkills.forEach((ds) => {
-      const skill = updatedSkills[ds.skillId];
-      if (skill) {
-        updatedSkills[ds.skillId] = {
-          ...skill,
-          requiredBonus: 0,
-          total: skill.base + skill.manualPoints + skill.occupationBonus,
-        };
-      }
-    });
-
-    // Apply requiredBonus to selected skill
-    const selectedSkill = updatedSkills[selectedSkillId];
-    if (selectedSkill) {
-      const newRequiredBonus = Math.max(0, requiredMinimum - selectedSkill.base);
-      updatedSkills[selectedSkillId] = {
-        ...selectedSkill,
-        requiredBonus: newRequiredBonus,
-        total:
-          selectedSkill.base +
-          newRequiredBonus +
-          selectedSkill.manualPoints +
-          selectedSkill.occupationBonus,
-      };
-    }
-
-    // Update store
-    useWizardStore.setState({ skills: updatedSkills });
-
+    setPrimaryDynamicSkill(selectedSkillId);
     logger.info(`[PlaceholderSkillManager] Set primary: ${selectedSkillId}`);
   };
 
-  // Find which skill is currently primary (has requiredBonus > 0)
-  const primarySkillId = derivedSkills.find(
-    (ds) => (skills[ds.skillId]?.requiredBonus ?? 0) > 0
-  )?.skillId;
+  // La principale è marcata esplicitamente: dedurla da requiredBonus > 0 non
+  // funziona se la base del placeholder è già >= requiredMinimum (bonus = 0).
+  const primarySkillId = isOccupationPlaceholder
+    ? derivedSkills.find((ds) => ds.isPrimary)?.skillId
+    : undefined;
 
   return (
     <div className={styles.placeholderSkillManager}>
       {/* Header */}
       <div className={styles.placeholderHeader}>
-        <strong>⚠️ {placeholderSkill.name}</strong>
+        <strong>{isOccupationPlaceholder ? '⚠️ ' : ''}{placeholderSkill.name}</strong>
         <WarningIcon message={error} />
         <span className={styles.placeholderNote}>
-          Aggiungi almeno una {placeholderTypeLabel} e selezionala come principale ({requiredMinimum} punti)
+          {isOccupationPlaceholder
+            ? `Sul listino della professione: aggiungi almeno una ${placeholderTypeLabel} e selezionala come principale (${requiredMinimum} punti)`
+            : `Aggiungi una ${placeholderTypeLabel} se vuoi: nessun minimo richiesto, spende dal pool hobby`}
         </span>
       </div>
 
@@ -178,7 +156,7 @@ export function PlaceholderSkillManager({
           <table className={styles.derivedSkillsTable}>
             <thead>
               <tr>
-                <th>Principale</th>
+                {isOccupationPlaceholder && <th>Principale</th>}
                 <th>Specializzazione</th>
                 <th>Base</th>
                 <th>Req.</th>
@@ -201,24 +179,26 @@ export function PlaceholderSkillManager({
 
                 return (
                   <tr key={ds.skillId} className={isPrimary ? styles.primaryRow : ''}>
-                    <td>
-                      <input
-                        type="radio"
-                        name={`primary-${placeholderSkill.id}`}
-                        checked={isPrimary}
-                        onChange={() => handleSelectPrimary(ds.skillId)}
-                        title={`Seleziona come principale (${requiredMinimum} punti)`}
-                      />
-                    </td>
+                    {isOccupationPlaceholder && (
+                      <td>
+                        <input
+                          type="radio"
+                          name={`primary-${placeholderSkill.id}`}
+                          checked={isPrimary}
+                          onChange={() => handleSelectPrimary(ds.skillId)}
+                          title={`Seleziona come principale (${requiredMinimum} punti)`}
+                        />
+                      </td>
+                    )}
                     <td>
                       <strong>{ds.specialization}</strong>
-                      {isPrimary && <span className={styles.primaryBadge}>★</span>}
+                      {isPrimary && isOccupationPlaceholder && <span className={styles.primaryBadge}>★</span>}
                     </td>
                     <td>{skill.base}</td>
                     <td>{skill.requiredBonus > 0 ? `+${skill.requiredBonus}` : '-'}</td>
                     <td>{skill.manualPoints}</td>
                     <td>
-                      <strong className={skill.total >= requiredMinimum ? styles.validTotal : ''}>
+                      <strong className={!isOccupationPlaceholder || skill.total >= requiredMinimum ? styles.validTotal : ''}>
                         {skill.total}
                       </strong>
                     </td>
@@ -238,7 +218,7 @@ export function PlaceholderSkillManager({
             </tbody>
           </table>
 
-          {!primarySkillId && (
+          {isOccupationPlaceholder && !primarySkillId && (
             <div className={styles.warningMessage}>
               ⚠️ Seleziona una {placeholderTypeLabel} come principale per soddisfare il requisito
             </div>

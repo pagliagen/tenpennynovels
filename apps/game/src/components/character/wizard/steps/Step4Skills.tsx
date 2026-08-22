@@ -13,7 +13,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { useSkills, useOccupations } from '@/hooks/useCharacterCreation';
-import { computeSkillPools, computeSkillPoolUsage } from '@/lib/utils/skillPools';
+import { computeSkillPools, computeSkillPoolUsage, isOccupationSkill } from '@/lib/utils/skillPools';
 import { useWizardStore, resolveSkillBaseValue } from '@/store/wizardStore';
 import styles from '@/styles/components/character/wizard/Step4Skills.module.scss';
 
@@ -85,7 +85,44 @@ export function Step4Skills(): JSX.Element {
         });
       }
     });
-  }, [apiSkills, skills, updateSkill, stats]);
+
+    // Stessa riconciliazione per le specializzazioni, che ereditano la base dal
+    // placeholder padre: se quella base è una FORMULA su una stat cambia allo
+    // Step 3, e i draft salvati prima del fix di persistenza hanno base 0.
+    const requiredMinimum = creationConfig?.occupation?.requiredSkillMinimum ?? 30;
+    dynamicSkills.forEach((ds) => {
+      const placeholder = apiSkills.find((s) => s.name === ds.name);
+      if (!placeholder) return;
+
+      const resolvedBase = resolveSkillBaseValue(placeholder.baseFormula, placeholder.baseValue, stats);
+      const existingSkill = skills[ds.skillId];
+      // Il requiredBonus (portare la skill al minimo richiesto) esiste solo per
+      // la principale di un placeholder sul listino della professione: è lì che
+      // c'è uno slot obbligatorio da soddisfare. Altrove nessun minimo.
+      const requiredBonus =
+        ds.isPrimary && (occupation.requiredPlaceholderSkills || []).includes(ds.name)
+          ? Math.max(0, requiredMinimum - resolvedBase)
+          : 0;
+
+      if (!existingSkill) {
+        updateSkill(ds.skillId, {
+          base: resolvedBase,
+          requiredBonus,
+          manualPoints: 0,
+          occupationBonus: 0,
+          total: resolvedBase + requiredBonus,
+          category: placeholder.category,
+        });
+      } else if (existingSkill.base !== resolvedBase || existingSkill.requiredBonus !== requiredBonus) {
+        updateSkill(ds.skillId, {
+          ...existingSkill,
+          base: resolvedBase,
+          requiredBonus,
+          total: resolvedBase + requiredBonus + existingSkill.manualPoints + existingSkill.occupationBonus,
+        });
+      }
+    });
+  }, [apiSkills, skills, updateSkill, stats, dynamicSkills, creationConfig, occupation.requiredPlaceholderSkills]);
 
   /**
    * Auto-Assign Required Skills
@@ -280,7 +317,7 @@ export function Step4Skills(): JSX.Element {
                           +{skill.occupationBonus}
                         </span>
                       )}
-                      {occupation.occupationSkillIds?.includes(skillDef.id) && (
+                      {isOccupationSkill(skillDef.id, dynamicSkills, occupation) && (
                         <span className={styles.badgeOccupation} title="Sul listino della professione: spende dal pool EDUxN">
                           Professione
                         </span>

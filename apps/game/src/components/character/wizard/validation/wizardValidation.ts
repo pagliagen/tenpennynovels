@@ -167,10 +167,9 @@ export function validateStep4(
         return;
       }
 
-      const hasPrimary = derivedSkillsForPlaceholder.some((ds) => {
-        const skill = skills[ds.skillId];
-        return skill && skill.requiredBonus > 0;
-      });
+      // Marcatura esplicita: requiredBonus > 0 non distingue la principale
+      // quando la base del placeholder è già >= requiredMinimum.
+      const hasPrimary = derivedSkillsForPlaceholder.some((ds) => ds.isPrimary);
 
       if (!hasPrimary) {
         errors[`placeholder_${placeholderName}`] = `"${placeholderName}": seleziona una specializzazione come principale`;

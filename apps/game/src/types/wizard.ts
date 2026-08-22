@@ -156,6 +156,19 @@ export interface DynamicSkill {
   skillId: string;
   name: string;
   specialization?: string;
+  /**
+   * Specializzazione che occupa lo slot della professione (il "principale"
+   * scelto col radio in PlaceholderSkillManager). SOLO questa spende dal pool
+   * Professione: l'occupazione mette a listino "Lingua straniera" una volta,
+   * non tutte le lingue che il giocatore decide di aggiungere. Le altre sono
+   * hobby. Classificazione in isOccupationSkill (lib/utils/skillPools.ts),
+   * speculare a characterCreationUtils.ts lato backend.
+   *
+   * Non derivarlo da `requiredBonus > 0`: il bonus è
+   * `max(0, requiredMinimum - base)` e vale 0 se la base del placeholder è già
+   * >= requiredMinimum, rendendo il principale indistinguibile dagli altri.
+   */
+  isPrimary: boolean;
 }
 
 /**
@@ -310,9 +323,16 @@ export interface CharacterCreatePayload {
 
   // Dynamic skills (placeholder specializations like "Lingua straniera (Francese)")
   dynamicSkills?: Array<{
+    /** Chiave con cui la specializzazione vive in `skills` lato wizard. Persistita
+     *  per poter ricostruire il breakdown al reload: le chiavi non-ObjectId sono
+     *  scartate dal filtro di CharacterController.updateCharacter, quindi il
+     *  punteggio di una skill dinamica sopravvive solo qui dentro. */
+    skillId: string;
     skillName: string;
     basedOnTemplate: string;
     customValue: string;
+    /** true = specializzazione che occupa lo slot della professione (vedi DynamicSkill) */
+    isPrimary: boolean;
     value: number;
     base: number;
     requiredBonus: number;

@@ -69,6 +69,25 @@ interface OccupationSkillSet {
  * Expects requiredSkillSlots.options and bonusSkills.skillId to be populated
  * (same shape CharacterController/validateCharacterSubmission already fetch).
  */
+/**
+ * Una specializzazione di placeholder (es. "Lingua straniera (Francese)") pesca dal
+ * pool Professione SOLO se è la principale — quella che occupa lo slot — e solo se
+ * il template è sul listino dell'occupazione. Il listino concede UNA lingua: prima
+ * bastava che il template fosse fra i placeholderNames e ogni lingua extra
+ * consumava il pool EDUxN.
+ *
+ * `isPrimary` è stato introdotto dopo: sui draft che non ce l'hanno si ricade sul
+ * marcatore implicito di allora, requiredBonus > 0.
+ * Speculare a isOccupationSkill in apps/game/src/lib/utils/skillPools.ts.
+ */
+function isDynamicOccupationSkill(
+  dynamicEntry: { basedOnTemplate: string; isPrimary?: boolean; requiredBonus?: number },
+  occSkillSet: OccupationSkillSet
+): boolean {
+  if (!occSkillSet.placeholderNames.has(dynamicEntry.basedOnTemplate)) return false;
+  return dynamicEntry.isPrimary ?? (dynamicEntry.requiredBonus || 0) > 0;
+}
+
 export function buildOccupationSkillSet(occupation: IOccupation): OccupationSkillSet {
   const skillIds = new Set<string>();
   const placeholderNames = new Set<string>();
@@ -524,7 +543,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
 
       // Dynamic skill found — use its breakdown directly and count the points
       skillDisplayName = dynamicEntry.skillName;
-      isOccupationSkill = occSkillSet.placeholderNames.has(dynamicEntry.basedOnTemplate);
+      isOccupationSkill = isDynamicOccupationSkill(dynamicEntry, occSkillSet);
 
       if (typeof skillValue === 'object' && skillValue !== null && 'total' in skillValue) {
         const breakdown = skillValue as SkillBreakdown;
@@ -580,7 +599,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
     const manualPoints = dynamicEntry.manualPoints || 0;
     const requiredBonus = dynamicEntry.requiredBonus || 0;
     const pointsSpent = manualPoints + requiredBonus;
-    const isOccupationSkill = occSkillSet.placeholderNames.has(dynamicEntry.basedOnTemplate);
+    const isOccupationSkill = isDynamicOccupationSkill(dynamicEntry, occSkillSet);
 
     if (isOccupationSkill) {
       spentOcc += pointsSpent;

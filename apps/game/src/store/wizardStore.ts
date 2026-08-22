@@ -135,6 +135,7 @@ interface WizardStore extends WizardData {
   autoAssignRequiredSkills: (occupationData: any, skillDefinitions: any) => void;
   addDynamicSkill: (skill: DynamicSkill) => void;
   removeDynamicSkill: (skillId: string) => void;
+  setPrimaryDynamicSkill: (skillId: string) => void;
 
   // Actions - Background (Step 5)
   updateBackground: (data: Partial<WizardBackground>) => void;
@@ -151,6 +152,7 @@ interface WizardStore extends WizardData {
   // Actions - Reset
   reset: () => void;
   loadFromDraft: (character: any) => void; // For editing DRAFT characters
+  markServerSynced: (updatedAt?: string | null) => void;
 }
 
 /**
@@ -175,6 +177,7 @@ const initialState = (): Omit<
   | 'autoAssignRequiredSkills'
   | 'addDynamicSkill'
   | 'removeDynamicSkill'
+  | 'setPrimaryDynamicSkill'
   | 'updateBackground'
   | 'validateAll'
   | 'validateStep'
@@ -184,6 +187,7 @@ const initialState = (): Omit<
   | 'transformForBackend'
   | 'reset'
   | 'loadFromDraft'
+  | 'markServerSynced'
 > => ({
   // Hydration & draft tracking
   _hasHydrated: false,
@@ -417,10 +421,24 @@ export const useWizardStore = create<WizardStore>()(
        * @param data - Partial occupation data
        */
       updateOccupation: (data) => {
+        const current = get().occupation;
+        const occupationChanged =
+          data.occupationId !== undefined && data.occupationId !== current.occupationId;
+
         set({
           occupation: {
-            ...get().occupation,
+            ...current,
             ...data,
+            // Cambiando professione il listino della precedente non vale più, e
+            // sopravviveva sia in memoria sia in localStorage finché non si
+            // rientrava nello Step 4 (unico posto che lo ricalcola, in
+            // autoAssignRequiredSkills). Restava così un placeholder "di
+            // mestiere" fantasma: il wizard chiedeva di eleggere una lingua
+            // principale e le imponeva il minimo di 30 punti per conto di
+            // un'occupazione non più selezionata.
+            ...(occupationChanged
+              ? { requiredPlaceholderSkills: [], occupationSkillIds: [], occupationBonusesApplied: false }
+              : {}),
           },
         });
       },
@@ -863,6 +881,37 @@ export const useWizardStore = create<WizardStore>()(
           updates.skills = updatedSkills;
         }
 
+        // Un placeholder che NON è sul listino della professione non ha una
+        // "principale": nessuno slot da occupare, quindi nessun requiredBonus e
+        // nessun minimo da rispettare (le sue specializzazioni sono hobby). Qui
+        // si ripulisce la scelta rimasta appesa da un'occupazione precedente:
+        // questo è l'unico punto che conosce il listino reale e aggiornato.
+        const placeholderSet = new Set(dedupedOccupation.requiredPlaceholderSkills);
+        const toDemote = currentDynamicSkills.filter((ds) => ds.isPrimary && !placeholderSet.has(ds.name));
+
+        if (toDemote.length > 0) {
+          toDemote.forEach((ds) => {
+            const breakdown = updatedSkills[ds.skillId];
+            if (!breakdown || breakdown.requiredBonus === 0) return;
+            updatedSkills[ds.skillId] = {
+              ...breakdown,
+              requiredBonus: 0,
+              total: breakdown.base + breakdown.manualPoints + breakdown.occupationBonus,
+            };
+          });
+
+          updates.skills = updatedSkills;
+          updates.dynamicSkills = currentDynamicSkills.map((ds) =>
+            ds.isPrimary && !placeholderSet.has(ds.name) ? { ...ds, isPrimary: false } : ds
+          );
+
+          logger.info(
+            `[wizardStore] Specializzazioni degradate (placeholder fuori listino): ${toDemote
+              .map((ds) => `${ds.name} (${ds.specialization})`)
+              .join(', ')}`
+          );
+        }
+
         set(updates);
         logger.info(`[wizardStore] Auto-assigned required skills. Placeholders tracked: [${requiredPlaceholderSkills.join(', ')}]`);
       },
@@ -891,13 +940,63 @@ export const useWizardStore = create<WizardStore>()(
       /**
        * Remove Dynamic Skill
        *
-       * Removes a specialization skill.
+       * Rimuove la specializzazione E il suo breakdown da `skills`: lasciarlo
+       * lì significherebbe continuare a contarne i punti in sumSkillSpend, che
+       * itera `skills`, non `dynamicSkills`.
        *
        * @param skillId - Skill ID to remove
        */
       removeDynamicSkill: (skillId) => {
+        const { dynamicSkills, skills } = get();
+        const { [skillId]: _removed, ...remainingSkills } = skills;
+
         set({
-          dynamicSkills: get().dynamicSkills.filter((s) => s.skillId !== skillId),
+          dynamicSkills: dynamicSkills.filter((s) => s.skillId !== skillId),
+          skills: remainingSkills,
+        });
+      },
+
+      /**
+       * Set Primary Dynamic Skill
+       *
+       * Elegge la specializzazione "principale" di un placeholder: è quella che
+       * soddisfa lo slot obbligatorio (riceve il requiredBonus fino a
+       * requiredSkillMinimum) ed è l'unica che spende dal pool Professione se il
+       * placeholder è sul listino dell'occupazione (vedi isOccupationSkill).
+       * Le sorelle dello stesso template vengono degradate qui, in un solo set().
+       *
+       * @param skillId - Skill dinamica da eleggere a principale
+       */
+      setPrimaryDynamicSkill: (skillId) => {
+        const { dynamicSkills, skills, creationConfig } = get();
+        const target = dynamicSkills.find((ds) => ds.skillId === skillId);
+        if (!target) {
+          logger.warn(`[WizardStore] setPrimaryDynamicSkill: skill dinamica sconosciuta ${skillId}`);
+          return;
+        }
+
+        const requiredMinimum = creationConfig?.occupation?.requiredSkillMinimum ?? 30;
+        const siblings = dynamicSkills.filter((ds) => ds.name === target.name);
+        const updatedSkills = { ...skills };
+
+        siblings.forEach((ds) => {
+          const breakdown = updatedSkills[ds.skillId];
+          if (!breakdown) return;
+          const requiredBonus = ds.skillId === skillId
+            ? Math.max(0, requiredMinimum - breakdown.base)
+            : 0;
+          updatedSkills[ds.skillId] = {
+            ...breakdown,
+            requiredBonus,
+            total: breakdown.base + requiredBonus + breakdown.manualPoints + breakdown.occupationBonus,
+          };
+        });
+
+        set({
+          skills: updatedSkills,
+          dynamicSkills: dynamicSkills.map((ds) =>
+            ds.name === target.name ? { ...ds, isPrimary: ds.skillId === skillId } : ds
+          ),
         });
       },
 
@@ -1021,12 +1120,18 @@ export const useWizardStore = create<WizardStore>()(
        * @returns CharacterCreatePayload ready for POST /game/characters
        */
       transformForBackend: () => {
-        const { basicInfo, occupation, stats, derivedStats, skills, background } = get();
+        const { basicInfo, occupation, stats, derivedStats, skills, background, dynamicSkills } = get();
+
+        // Le skill dinamiche viaggiano solo nel loro array: la loro chiave non è
+        // un ObjectId e CharacterController.updateCharacter la scarta comunque,
+        // loggando un warning per ognuna.
+        const dynamicSkillIds = new Set(dynamicSkills.map((ds) => ds.skillId));
 
         // Transform skills - preserve ObjectId keys and send full SkillBreakdown
         // Backend expects: { "skillId": SkillBreakdown } or { "skillId": number }
         const transformedSkills: Record<string, any> = {};
         for (const [skillId, breakdown] of Object.entries(skills)) {
+          if (dynamicSkillIds.has(skillId)) continue;
           // Skills are keyed by ObjectId - pass AS-IS (no conversion!)
           // Send full breakdown if available, otherwise just the number
           if (typeof breakdown === 'object' && breakdown.total !== undefined) {
@@ -1037,13 +1142,18 @@ export const useWizardStore = create<WizardStore>()(
         }
 
         // Transform dynamicSkills for backend (Character.dynamicSkills schema)
-        const { dynamicSkills } = get();
         const transformedDynamicSkills = dynamicSkills.map((ds) => {
           const breakdown = skills[ds.skillId];
           return {
+            // skillId e isPrimary sono l'unico modo di ricostruire la skill al
+            // reload: CharacterController.updateCharacter scarta dalle `skills`
+            // ogni chiave non-ObjectId, quindi il breakdown di una dinamica vive
+            // solo qui dentro (vedi loadFromDraft).
+            skillId: ds.skillId,
             skillName: `${ds.name} (${ds.specialization || ''})`,
             basedOnTemplate: ds.name,
             customValue: ds.specialization || '',
+            isPrimary: ds.isPrimary === true,
             value: breakdown?.total || 0,
             base: breakdown?.base || 0,
             requiredBonus: breakdown?.requiredBonus || 0,
@@ -1135,6 +1245,20 @@ export const useWizardStore = create<WizardStore>()(
       },
 
       /**
+       * Mark Server Synced
+       *
+       * Registra la revisione del server su cui è allineato il draft locale,
+       * dopo un salvataggio riuscito. Il draft locale resta comunque la copia di
+       * lavoro (vedi il load-effect in WizardContainer): questo serve a sapere
+       * su quale versione salvata ci si basa.
+       *
+       * @param updatedAt - updatedAt restituito dal server
+       */
+      markServerSynced: (updatedAt) => {
+        set({ _serverUpdatedAt: updatedAt || null });
+      },
+
+      /**
        * Load from Draft
        *
        * Loads existing DRAFT character data into wizard for editing.
@@ -1174,6 +1298,51 @@ export const useWizardStore = create<WizardStore>()(
             } else if (value && typeof value === 'object') {
               skillsObj[key] = value;
             }
+          });
+        }
+
+        // Skill dinamiche (specializzazioni dei placeholder): il loop qui sopra le
+        // ha appena scartate, perché la loro chiave non è un ObjectId — e il
+        // filtro speculare in CharacterController.updateCharacter fa sì che il
+        // server non le abbia mai nemmeno salvate dentro `skills` con quella
+        // chiave. Vivono solo in character.dynamicSkills[]: senza questo blocco
+        // ogni loadFromDraft (che scatta ad ogni reload in cui il server ha un
+        // updatedAt più recente di quello in localStorage — cioè sempre, dopo un
+        // salvataggio) restituiva un wizard con la lingua sparita e i punti persi.
+        const restoredDynamicSkills: DynamicSkill[] = [];
+        if (Array.isArray(character.dynamicSkills)) {
+          character.dynamicSkills.forEach((ds: any) => {
+            const template = ds?.basedOnTemplate;
+            const specialization = ds?.customValue || '';
+            if (!template) return;
+
+            // Draft salvati prima che skillId venisse persistito: chiave sintetica
+            // deterministica, riscritta al primo salvataggio successivo.
+            const skillId: string = ds.skillId
+              || `dyn:${template}:${specialization.toLowerCase().replace(/\s+/g, '-')}`;
+
+            const base = ds.base ?? 0;
+            const requiredBonus = ds.requiredBonus ?? 0;
+            const manualPoints = ds.manualPoints ?? 0;
+            const occupationBonus = ds.occupationBonus ?? 0;
+
+            restoredDynamicSkills.push({
+              skillId,
+              name: template,
+              specialization,
+              // Fallback per i draft pre-isPrimary: il principale è l'unico ad
+              // aver ricevuto il requiredBonus.
+              isPrimary: ds.isPrimary ?? requiredBonus > 0,
+            });
+
+            skillsObj[skillId] = {
+              base,
+              requiredBonus,
+              manualPoints,
+              occupationBonus,
+              total: ds.value ?? base + requiredBonus + manualPoints + occupationBonus,
+              category: ds.category || 'general',
+            };
           });
         }
 
@@ -1235,6 +1404,7 @@ export const useWizardStore = create<WizardStore>()(
             ideaRoll: derived.ideaRoll ?? charStats.ideaRoll ?? 20,
           },
           skills: skillsObj,
+          dynamicSkills: restoredDynamicSkills,
           background: character.background ? {
             briefHistory: character.background.briefHistory || '',
             significantEvents: character.background.significantEvents || '',
@@ -1271,6 +1441,23 @@ export const useWizardStore = create<WizardStore>()(
           dynamicSkills: state.dynamicSkills,
           background: state.background,
         }),
+        // v1: DynamicSkill.isPrimary. Prima la "principale" era implicita
+        // (requiredBonus > 0): backfill dei draft già in localStorage, senza cui
+        // nessuna specializzazione risulterebbe principale e la lingua di
+        // professione finirebbe di colpo sul pool hobby.
+        version: 1,
+        migrate: (persisted: unknown, version: number) => {
+          const state = persisted as Partial<WizardData> | null;
+          if (!state || version >= 1 || !Array.isArray(state.dynamicSkills)) return state;
+
+          return {
+            ...state,
+            dynamicSkills: state.dynamicSkills.map((ds) => ({
+              ...ds,
+              isPrimary: ds.isPrimary ?? (state.skills?.[ds.skillId]?.requiredBonus ?? 0) > 0,
+            })),
+          };
+        },
         onRehydrateStorage: () => {
           return (_state, error) => {
             if (!error) {

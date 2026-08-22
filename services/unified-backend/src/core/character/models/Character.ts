@@ -116,6 +116,14 @@ export interface ICharacter extends Document, SoftDeleteMethods {
     customValue: string;        // Specialization value (e.g., "Italiano")
     value: number;              // Current skill value
     category: string;           // Skill category
+    // Chiave con cui il wizard tiene la skill in character.skills. Le chiavi
+    // non-ObjectId vengono scartate da updateCharacter, quindi senza questo
+    // campo il client non può ricostruire la skill dinamica al reload.
+    skillId?: string;
+    // true = specializzazione che occupa lo slot dell'occupazione. Solo questa
+    // spende dal pool Professione: il listino concede UNA lingua, non tutte
+    // quelle aggiunte dal giocatore (vedi validateCharacterSubmission).
+    isPrimary?: boolean;
     // Breakdown mirrors SkillBreakdown. The wizard always sends these (see
     // transformForBackend in wizardStore.ts) but until now the schema didn't
     // declare them, so Mongoose silently stripped them on save - only `value`
@@ -483,6 +491,8 @@ const CharacterSchema = new Schema<ICharacter>({
       customValue: { type: String, required: true },    // Specialization value
       value: { type: Number, required: true },          // Current skill value
       category: { type: String, required: true },       // Skill category
+      skillId: { type: String },                        // Chiave lato wizard (vedi interfaccia)
+      isPrimary: { type: Boolean, default: false },     // Occupa lo slot della professione
       base: { type: Number, default: 0 },
       requiredBonus: { type: Number, default: 0 },
       manualPoints: { type: Number, default: 0 },

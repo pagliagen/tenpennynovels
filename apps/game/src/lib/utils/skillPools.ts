@@ -111,6 +111,12 @@ export interface SkillPoolUsage {
  * source of truth for the classification - skills are already marked via
  * occupation.occupationSkillIds / requiredPlaceholderSkills, so this is a
  * straight lookup, no cleverness needed.
+ *
+ * Skill dinamiche (specializzazioni di un placeholder tipo "Lingua straniera"):
+ * professione SOLO la principale, e solo se il placeholder è sul listino
+ * dell'occupazione. Il listino concede UNA lingua, non tutte quelle che il
+ * giocatore aggiunge: prima bastava che il template fosse fra i
+ * requiredPlaceholderSkills e ogni specializzazione extra pescava dal pool EDUxN.
  */
 export function isOccupationSkill(
   skillId: string,
@@ -119,7 +125,10 @@ export function isOccupationSkill(
 ): boolean {
   const dynamicEntry = dynamicSkills.find((ds) => ds.skillId === skillId);
   if (dynamicEntry) {
-    return (occupation.requiredPlaceholderSkills || []).includes(dynamicEntry.name);
+    return (
+      dynamicEntry.isPrimary === true &&
+      (occupation.requiredPlaceholderSkills || []).includes(dynamicEntry.name)
+    );
   }
   return (occupation.occupationSkillIds || []).includes(skillId);
 }

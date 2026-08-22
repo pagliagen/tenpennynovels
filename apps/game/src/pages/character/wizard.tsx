@@ -67,10 +67,9 @@ export default function CharacterWizardPage() {
 
     // gamePermissions non è persistito (authStore) e arriva solo con la
     // risposta di /auth/session: finché è vuoto, "non ho il permesso" è
-    // indistinguibile da "non l'ho ancora caricato". Rimbalzare qui creava un
-    // vicolo cieco col redirect di GameLayout, che tenta una sola volta per
-    // transizione a draft: al primo load il wizard rimandava su '/' e nessun
-    // retry riportava indietro. Si attende: il render mostra "Caricamento".
+    // indistinguibile da "non l'ho ancora caricato". Rimbalzare subito
+    // sbatterebbe fuori dal wizard chi ci è entrato apposta, al costo di un
+    // semplice reload. Si attende: il render mostra "Caricamento".
     if (gamePermissions.length === 0) return;
 
     if (!hasGamePermission('game:character:wizard') || selectedCharacter?.playerStatus !== 'draft') {
