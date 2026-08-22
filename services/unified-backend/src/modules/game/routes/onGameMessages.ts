@@ -58,7 +58,10 @@ router.use(AuthMiddleware.requireUserAuth);
 router.use(AuthMiddleware.requireCharacterContext);
 
 // Send on-game message (multi-recipient support)
-// BLOCKED for DRAFT characters (only APPROVED can send)
+// BLOCKED for DRAFT characters (only APPROVED can send): garantito dal default
+// requireApproved del middleware. Prima di quel default il commento era falso —
+// né il middleware né OnGameMessageController verificavano playerStatus, e un
+// draft poteva inviare messaggi on-game.
 // ✅ SECURITY: Rate limited (20 req/min)
 router.post('/messages',
   sendMessageLimiter,

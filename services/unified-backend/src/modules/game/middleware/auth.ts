@@ -437,7 +437,18 @@ export class AuthMiddleware {
    * Middleware factory: Requires specific gameplay roles
    * Must be called after requireCharacterAuth
    */
-  static requireGameplayRoles(roles: ('player' | 'master' | 'moderatore')[]) {
+  static requireGameplayRoles(
+    roles: ('player' | 'master' | 'moderatore')[],
+    options: { requireApproved?: boolean } = {}
+  ) {
+    // Default sicuro: i gameplayRoles valgono solo su un personaggio APPROVATO.
+    // Stessa classe dell'incidente 2026-08-19 (/auth/session restituiva i
+    // game:admin:* a un draft con gameplayRoles=['master']): il fix aveva
+    // coperto resolveEffectiveRoles() ma non questo middleware, che è un terzo
+    // percorso indipendente. Chi ammette davvero i draft deve dichiararlo con
+    // requireApproved: false, non ereditarlo per omissione.
+    const { requireApproved = true } = options;
+
     return (req: Request, res: Response, next: NextFunction): void => {
       if (!req.character) {
         const response: ApiResponse = {
@@ -447,6 +458,25 @@ export class AuthMiddleware {
           timestamp: new Date().toISOString()
         };
         res.status(400).json(response);
+        return;
+      }
+
+      if (requireApproved && req.character.isApproved !== true) {
+        logger.warn('Gameplay role negato: personaggio non approvato', {
+          characterId: req.character.characterId,
+          requiredRoles: roles,
+          playerStatus: req.character.playerStatus,
+          ipAddress: req.ip
+        });
+
+        const response: ApiResponse = {
+          result: false,
+          error: 'Permessi di gioco insufficienti',
+          code: 'INSUFFICIENT_GAMEPLAY_PERMISSIONS',
+          details: { requiredRoles: roles },
+          timestamp: new Date().toISOString()
+        };
+        res.status(403).json(response);
         return;
       }
 

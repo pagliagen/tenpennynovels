@@ -422,9 +422,19 @@ export class AuthMiddleware {
   }
 
   /**
-   * Middleware to check character gameplay roles (player | master | moderatore). isGestore bypassa il check.
+   * Middleware to check character gameplay roles (player | master | moderatore).
+   * isGestore bypassa il check sui ruoli, ma NON lo stato del personaggio.
+   *
+   * Default sicuro: sia il bypass gestore sia i gameplayRoles valgono solo su un
+   * personaggio APPROVATO (incidente 2026-08-19). Usare requireApproved: false
+   * solo dove ammettere i draft è una scelta deliberata e documentata.
    */
-  static requireGameplayRole(roles: ('player' | 'master' | 'moderatore')[]) {
+  static requireGameplayRole(
+    roles: ('player' | 'master' | 'moderatore')[],
+    options: { requireApproved?: boolean } = {}
+  ) {
+    const { requireApproved = true } = options;
+
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
         if (!req.character) {
@@ -435,6 +445,25 @@ export class AuthMiddleware {
             timestamp: new Date().toISOString()
           };
           return res.status(400).json(response);
+        }
+
+        if (requireApproved && req.character.isApproved !== true) {
+          logSecurity('gameplay_role_unapproved_character', {
+            characterId: req.character.characterId,
+            characterName: req.character.characterName,
+            playerStatus: req.character.playerStatus,
+            requiredRoles: roles,
+            isGestore: req.character.isGestore,
+            ipAddress: req.ip
+          });
+
+          const response: ApiResponse = {
+            result: false,
+            error: 'Permessi di gioco insufficienti',
+            code: 'INSUFFICIENT_GAMEPLAY_ROLE',
+            timestamp: new Date().toISOString()
+          };
+          return res.status(403).json(response);
         }
 
         if (req.character.isGestore) {
