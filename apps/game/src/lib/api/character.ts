@@ -294,7 +294,7 @@ export const characterApi = {
    * ```typescript
    * const config = await characterApi.getCreationConfig();
    * logger.info(`Stats budget: ${config.stats.totalPoints}`); // 450
-   * logger.info(`Skills budget: ${config.skills.totalPoints}`); // 250
+   * logger.info(`Skills budget: ${config.skills.totalPoints}`); // 200
    * ```
    */
   async getCreationConfig(): Promise<CharacterCreationConfig> {

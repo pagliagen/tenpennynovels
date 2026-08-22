@@ -14,6 +14,7 @@ import { CharacterCreationConfigService } from '@shared/services/CharacterCreati
 import { Occupation } from '@features/occupazioni/models/Occupation';
 import { Skill } from '@database/models/Skill';
 import { logger } from '@shared/utils/logger';
+import { parseBaseSkillPoints } from '../utils/characterCreationUtils';
 
 export class CharacterCreationController {
   /**
@@ -40,14 +41,6 @@ export class CharacterCreationController {
         .select('name baseValue category description isPlaceholder placeholderType')
         .sort({ name: 1 })
         .lean();
-
-      // Parse skill total points formula (e.g. "constant:200" → 200)
-      const parseSkillTotalPoints = (formula: string): number => {
-        if (formula?.startsWith('constant:')) {
-          return parseInt(formula.replace('constant:', ''), 10) || 200;
-        }
-        return 200;
-      };
 
       // Format complete configuration for frontend
       const completeConfig = {
@@ -94,7 +87,7 @@ export class CharacterCreationController {
           gameplayCap: rulesConfig.stats.gameplayCap,
         },
         skillsConfig: {
-          totalPoints: parseSkillTotalPoints(rulesConfig.skills.totalPointsFormula),
+          totalPoints: parseBaseSkillPoints(rulesConfig.skills.totalPointsFormula),
           occupationPointsFormula: rulesConfig.skills.occupationPointsFormula,
           hobbyPointsFormula: rulesConfig.skills.hobbyPointsFormula,
           creationCap: rulesConfig.skills.creationCap,

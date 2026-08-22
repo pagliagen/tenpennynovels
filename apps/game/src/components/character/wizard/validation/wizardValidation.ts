@@ -123,9 +123,7 @@ export function validateStep4(
   stats: WizardStats,
   occupation: WizardOccupation,
   dynamicSkills: DynamicSkill[],
-  creationConfig?: CharacterCreationConfig | null,
-  baseClaimedByOcc = 0,
-  baseClaimedByHobby = 0
+  creationConfig?: CharacterCreationConfig | null
 ): ValidationResult {
   const errors: Record<string, string> = {};
 
@@ -134,13 +132,13 @@ export function validateStep4(
   const CREATION_CAP_WITH_OCC = creationConfig?.skills.creationCapWithOccupation ?? 80;
 
   const pools = computeSkillPools(stats, creationConfig);
-  const usage = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools, baseClaimedByOcc, baseClaimedByHobby);
+  const usage = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools);
   const totalSpent = usage.totalSpent;
 
-  if (usage.overflowOcc > 0 || usage.overflowHobby > 0) {
+  if (!usage.isFeasible) {
     errors.skillsBudget =
       `Punti abilità: superati i pool disponibili ` +
-      `(Professione: ${usage.spentOcc}/${pools.occPool}, Hobby: ${usage.spentHobby}/${pools.hobbyPool}, ` +
+      `(Professione: ${usage.spentOccRaw}/${pools.occPool}, Hobby: ${usage.spentHobbyRaw}/${pools.hobbyPool}, ` +
       `Base: ${usage.baseUsed}/${pools.basePool})`;
   } else if (totalSpent !== pools.totalPool) {
     const diff = totalSpent - pools.totalPool;
@@ -234,15 +232,13 @@ export function validateAllSteps(data: {
   stats: WizardStats;
   skills: Record<string, SkillBreakdown>;
   dynamicSkills: DynamicSkill[];
-  baseClaimedByOcc?: number;
-  baseClaimedByHobby?: number;
   background: WizardBackground;
   creationConfig?: CharacterCreationConfig | null;
 }): Record<number, ValidationResult> {
   const step1 = validateStep1(data.basicInfo, data.occupation, data.creationConfig);
   const step2 = validateStep2(data.occupation);
   const step3 = validateStep3(data.stats, data.creationConfig);
-  const step4 = validateStep4(data.skills, data.stats, data.occupation, data.dynamicSkills, data.creationConfig, data.baseClaimedByOcc, data.baseClaimedByHobby);
+  const step4 = validateStep4(data.skills, data.stats, data.occupation, data.dynamicSkills, data.creationConfig);
   const step5 = validateStep5(data.background, data.creationConfig);
   const allValid = step1.valid && step2.valid && step3.valid && step4.valid && step5.valid;
 

@@ -2,21 +2,23 @@
  * Skill Point Pools
  *
  * Three skill-point pools during character creation:
- * - Base pool: flat, spendable on any skill regardless of type.
  * - Occupation pool (EDU x N): spendable ONLY on occupation-eligible skills.
  * - Hobby pool (INT x N): spendable ONLY on non-occupation skills.
+ * - Base pool: flat, spendable on any skill regardless of type.
  *
- * Spend order: the base pool is drawn FIRST for every skill, no matter its type;
- * only once base is exhausted does additional spend fall to the skill's own
- * earmarked pool (EDU x N for occupation skills, INT x N otherwise).
+ * Spend order: each skill draws FIRST from its own earmarked pool (EDU x N for
+ * occupation skills, INT x N otherwise); only the excess beyond that pool's
+ * capacity falls back on the flexible base pool. The build is feasible as long
+ * as the two excesses together fit in the base pool.
  *
- * How much of base each type has claimed (`baseClaimedByOcc`/`baseClaimedByHobby`)
- * is NOT recomputed here - it's tracked incrementally in the wizard store
- * (updateSkill, autoAssignRequiredSkills) as points actually change, in the order
- * they actually change. A stateless recompute from a `skills` snapshot alone
- * cannot tell "these points came from base" from "these overflowed", since a
- * plain object has no meaningful order - that was the bug in an earlier version
- * of this file. This module only classifies and sums; it doesn't decide history.
+ * This is a pure function of the current `skills` snapshot: it does NOT depend
+ * on the order in which points were assigned, so it survives a page refresh, a
+ * draft reload, and a stats change identically. An earlier version drew from
+ * base FIRST, which is order-dependent - it needed incremental
+ * `baseClaimedByOcc`/`baseClaimedByHobby` counters in the wizard store that were
+ * never persisted (so a refresh reset them to 0 and the toolbar showed garbage)
+ * and it flagged perfectly feasible builds as over budget depending on the order
+ * the player happened to click in. Don't reintroduce that: keep this stateless.
  *
  * Mirrors the server-side authoritative check in
  * services/unified-backend/src/modules/game/utils/characterCreationUtils.ts
@@ -72,7 +74,11 @@ export interface SkillPools {
  * Compute the 3 pool sizes from the character's current stats and the creation config.
  */
 export function computeSkillPools(stats: WizardStats, config?: CharacterCreationConfig | null): SkillPools {
-  const basePool = config?.skills.totalPoints ?? 250;
+  // 200 = stesso fallback del backend (DEFAULT_BASE_SKILL_POINTS in
+  // characterCreationUtils.ts). I due valori devono coincidere SEMPRE: se
+  // divergono, il wizard mostra un budget diverso da quello che il server
+  // valida e il submit viene rifiutato senza spiegazione.
+  const basePool = config?.skills.totalPoints ?? 200;
   const occPool = Math.max(0, evalStatFormula(config?.skills.occupationPointsFormula ?? 'EDUx4', 'EDU', stats.education));
   const hobbyPool = Math.max(0, evalStatFormula(config?.skills.hobbyPointsFormula ?? 'INTx2', 'INT', stats.intelligence));
 
@@ -80,17 +86,23 @@ export function computeSkillPools(stats: WizardStats, config?: CharacterCreation
 }
 
 export interface SkillPoolUsage {
-  /** Punti attribuiti al pool Professione (EDU x N) - solo l'eccedenza oltre il base pool */
+  /** Spesa lorda sulle abilità di professione (manualPoints + requiredBonus) */
+  spentOccRaw: number;
+  /** Spesa lorda sulle abilità NON di professione */
+  spentHobbyRaw: number;
+  /** Quanta parte del pool Professione (EDU x N) è realmente consumata */
   spentOcc: number;
-  /** Punti attribuiti al pool Hobby (INT x N) - solo l'eccedenza oltre il base pool */
+  /** Quanta parte del pool Hobby (INT x N) è realmente consumata */
   spentHobby: number;
-  /** Eccedenza oltre la capienza del pool Professione (spesa infeasible) */
-  overflowOcc: number;
-  /** Eccedenza oltre la capienza del pool Hobby (spesa infeasible) */
-  overflowHobby: number;
-  totalSpent: number;
-  /** Portion of the base pool actually in use */
+  /** Eccedenza di professione scaricata sul pool base */
+  baseFromOcc: number;
+  /** Eccedenza di hobby scaricata sul pool base */
+  baseFromHobby: number;
+  /** Porzione del pool base in uso (baseFromOcc + baseFromHobby) */
   baseUsed: number;
+  /** Quanto si sfora anche il pool base: > 0 = build non ammissibile */
+  baseOverflow: number;
+  totalSpent: number;
   isFeasible: boolean;
 }
 
@@ -113,9 +125,8 @@ export function isOccupationSkill(
 }
 
 /**
- * Sum current manualPoints+requiredBonus spend, split by type. Pure sum, no
- * ordering - "how much of that came from base" is a separate question,
- * answered by the incrementally-tracked baseClaimedByOcc/baseClaimedByHobby.
+ * Sum current manualPoints+requiredBonus spend, split by type. Pure sum: which
+ * pool each chunk lands in is decided by computeSkillPoolUsage.
  */
 export function sumSkillSpend(
   skills: Record<string, SkillBreakdown>,
@@ -142,64 +153,40 @@ export function sumSkillSpend(
 }
 
 /**
- * Classify current skill-point spend into the base/occupation/hobby pools and
+ * Classify current skill-point spend into the occupation/hobby/base pools and
  * check feasibility. `override` lets a caller check a hypothetical single-skill
- * change before committing it (e.g. Step4Skills' handleTotalChange), without
- * mutating the real `skills` map.
+ * change before committing it, without mutating the real `skills` map.
  *
- * `baseClaimedByOcc`/`baseClaimedByHobby` come from the wizard store, tracked
- * incrementally as points actually change (see updateSkill) - this function
- * just subtracts that already-known claim from the raw type totals.
+ * Earmarked pool first, base absorbs the excess - stateless, order-independent,
+ * identical to the backend check. See the module doc for why.
  */
 export function computeSkillPoolUsage(
   skills: Record<string, SkillBreakdown>,
   dynamicSkills: DynamicSkill[],
   occupation: WizardOccupation,
   pools: SkillPools,
-  baseClaimedByOcc: number,
-  baseClaimedByHobby: number,
   override?: { skillId: string; manualPoints: number }
 ): SkillPoolUsage {
   const { spentOccRaw, spentHobbyRaw } = sumSkillSpend(skills, dynamicSkills, occupation, override);
 
-  const spentOcc = Math.max(0, spentOccRaw - baseClaimedByOcc);
-  const spentHobby = Math.max(0, spentHobbyRaw - baseClaimedByHobby);
-  const baseUsed = baseClaimedByOcc + baseClaimedByHobby;
+  const spentOcc = Math.min(spentOccRaw, pools.occPool);
+  const spentHobby = Math.min(spentHobbyRaw, pools.hobbyPool);
 
-  const overflowOcc = Math.max(0, spentOcc - pools.occPool);
-  const overflowHobby = Math.max(0, spentHobby - pools.hobbyPool);
+  const baseFromOcc = spentOccRaw - spentOcc;
+  const baseFromHobby = spentHobbyRaw - spentHobby;
+  const baseUsed = baseFromOcc + baseFromHobby;
+  const baseOverflow = Math.max(0, baseUsed - pools.basePool);
 
   return {
+    spentOccRaw,
+    spentHobbyRaw,
     spentOcc,
     spentHobby,
-    overflowOcc,
-    overflowHobby,
-    totalSpent: spentOccRaw + spentHobbyRaw,
+    baseFromOcc,
+    baseFromHobby,
     baseUsed,
-    isFeasible: overflowOcc === 0 && overflowHobby === 0 && baseUsed <= pools.basePool,
+    baseOverflow,
+    totalSpent: spentOccRaw + spentHobbyRaw,
+    isFeasible: baseOverflow === 0,
   };
-}
-
-/**
- * One-time baseline split of the base pool between occ/hobby raw spend, used
- * when there's no incremental history to fall back on (autoAssignRequiredSkills
- * right after an occupation is (re)selected, or loading an existing draft).
- * Deterministic, no arbitrary type priority: whichever type is spending LESS
- * gets covered by base first (in full, if it fits), the other gets whatever's
- * left - this minimizes total overflow, the only "fair" tie-break that doesn't
- * favor one type over the other.
- */
-export function computeInitialBaseClaims(
-  spentOccRaw: number,
-  spentHobbyRaw: number,
-  basePool: number
-): { baseClaimedByOcc: number; baseClaimedByHobby: number } {
-  if (spentOccRaw <= spentHobbyRaw) {
-    const baseClaimedByOcc = Math.min(spentOccRaw, basePool);
-    const baseClaimedByHobby = Math.min(spentHobbyRaw, basePool - baseClaimedByOcc);
-    return { baseClaimedByOcc, baseClaimedByHobby };
-  }
-  const baseClaimedByHobby = Math.min(spentHobbyRaw, basePool);
-  const baseClaimedByOcc = Math.min(spentOccRaw, basePool - baseClaimedByHobby);
-  return { baseClaimedByOcc, baseClaimedByHobby };
 }

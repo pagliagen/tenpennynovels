@@ -29,7 +29,7 @@ import { logger } from '@/lib/logger';
  * @returns {JSX.Element} Step 4 form
  */
 export function Step4Skills(): JSX.Element {
-  const { stats, skills, occupation, dynamicSkills, baseClaimedByOcc, baseClaimedByHobby, updateSkill, autoAssignRequiredSkills, stepErrors, creationConfig } = useWizardStore();
+  const { stats, skills, occupation, dynamicSkills, updateSkill, autoAssignRequiredSkills, stepErrors, creationConfig } = useWizardStore();
   const errors = stepErrors[4] || {};
 
   // Fetch skills from API
@@ -40,25 +40,25 @@ export function Step4Skills(): JSX.Element {
 
   // Three pools: base (flexible) + occupation (EDUxN, professione) + hobby (INTxN)
   const pools = computeSkillPools(stats, creationConfig);
-  const usage = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools, baseClaimedByOcc, baseClaimedByHobby);
+  const usage = computeSkillPoolUsage(skills, dynamicSkills, occupation, pools);
   const occupationFormula = creationConfig?.skills.occupationPointsFormula ?? 'EDUx4';
   const hobbyFormula = creationConfig?.skills.hobbyPointsFormula ?? 'INTx2';
 
   useWizardToolbar(() => (
     <div className={styles.pointsSummary}>
       <span className={styles.pointsLabel}>PUNTI:</span>
-      <span className={`${styles.pointsValue} ${usage.spentOcc > pools.occPool ? styles.pointsExceeded : ''}`}>
+      <span className={styles.pointsValue}>
         Professione ({occupationFormula}) {usage.spentOcc}/{pools.occPool}
       </span>
-      <span className={`${styles.pointsValue} ${usage.spentHobby > pools.hobbyPool ? styles.pointsExceeded : ''}`}>
+      <span className={styles.pointsValue}>
         Hobby ({hobbyFormula}) {usage.spentHobby}/{pools.hobbyPool}
       </span>
-      <span className={`${styles.pointsValue} ${usage.baseUsed > pools.basePool ? styles.pointsExceeded : styles.pointsValid}`}>
+      <span className={`${styles.pointsValue} ${usage.baseOverflow > 0 ? styles.pointsExceeded : styles.pointsValid}`}>
         Base liberi {usage.baseUsed}/{pools.basePool}
       </span>
       <WarningIcon message={stepErrors[4]?.skillsBudget} />
     </div>
-  ), [usage.spentOcc, usage.spentHobby, usage.baseUsed, pools.occPool, pools.hobbyPool, pools.basePool, occupationFormula, hobbyFormula, stepErrors]);
+  ), [usage.spentOcc, usage.spentHobby, usage.baseUsed, usage.baseOverflow, pools.occPool, pools.hobbyPool, pools.basePool, occupationFormula, hobbyFormula, stepErrors]);
 
   // Initialize skills with base values from API (resolve formulas with current stats)
   useEffect(() => {

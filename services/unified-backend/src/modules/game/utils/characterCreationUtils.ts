@@ -12,10 +12,37 @@ import { logger } from '../logger';
  * Implements the new occupation system with required skills (6) and bonus skills (1-2).
  */
 
+/**
+ * Punti "liberi" (pool base): unica sorgente di verità.
+ *
+ * Il valore vive in SystemConfiguration come formula
+ * (`character_creation_skills_total_points_formula`, default `constant:200`).
+ * Chiunque debba conoscere il pool base DEVE passare da qui: prima esistevano
+ * tre parser duplicati (qui, in CharacterCreationController e in
+ * CharacterCreationConfigService) e due fallback diversi (200 e 250), quindi
+ * lo stesso personaggio riceveva un budget diverso a seconda dell'endpoint
+ * che rispondeva.
+ *
+ * `formula:` non è implementato (nessun uso reale): logga e ricade sul default.
+ */
+export const DEFAULT_BASE_SKILL_POINTS = 200;
+
+export function parseBaseSkillPoints(formula: string | undefined): number {
+  if (formula?.startsWith('constant:')) {
+    const parsed = parseInt(formula.replace('constant:', ''), 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_BASE_SKILL_POINTS;
+  }
+  if (formula) {
+    logger.warn('Formula-based skill points not implemented, falling back to default', {
+      formula,
+      fallback: DEFAULT_BASE_SKILL_POINTS,
+    });
+  }
+  return DEFAULT_BASE_SKILL_POINTS;
+}
+
 interface SkillPointsCalculation {
-  basePoints: number; // 200 punti base
-  intBonus: number; // INT/2 bonus points
-  basePool: number; // Flexible pool, spendable on any skill (= basePoints)
+  basePool: number; // Punti liberi, spendibili su qualsiasi abilità
   occPool: number; // EDU x N, spendable ONLY on occupation-eligible skills
   hobbyPool: number; // INT x N, spendable ONLY on non-occupation skills
   totalAvailable: number; // basePool + occPool + hobbyPool
@@ -126,14 +153,14 @@ function resolveBaseValue(baseValue: string | number, characterStats?: Record<st
  * Calculate available skill points for a character
  *
  * Three pools:
- * - basePool: flat value from SystemConfiguration (default 250, replaces old formula 200+INT/2),
+ * - basePool: flat value from SystemConfiguration (default 200, replaces old formula 200+INT/2),
  *   spendable on any skill.
  * - occPool: EDU x N (config.skills.occupationPointsFormula), spendable ONLY on occupation skills.
  * - hobbyPool: INT x N (config.skills.hobbyPointsFormula), spendable ONLY on non-occupation skills.
  *
  * @param character - The character object
  * @param config - Character creation configuration
- * @param totalSkillPoints - Total base skill points from SystemConfiguration (optional, for async fetch)
+ * @param totalSkillPoints - Pool base già risolto (opzionale); se assente si deriva da config
  * @returns Skill points calculation breakdown
  */
 export function calculateAvailableSkillPoints(
@@ -141,8 +168,10 @@ export function calculateAvailableSkillPoints(
   config: CharacterCreationConfig,
   totalSkillPoints?: number
 ): SkillPointsCalculation {
-  // Use flat value from SystemConfiguration (passed as parameter) or fallback to 250
-  const basePool = totalSkillPoints ?? 250;
+  // Pool base da SystemConfiguration. Il parametro esiste solo per i chiamanti
+  // che l'hanno già risolto; senza, lo si deriva dalla stessa config - mai un
+  // literal diverso, vedi parseBaseSkillPoints.
+  const basePool = totalSkillPoints ?? parseBaseSkillPoints(config.skills.totalPointsFormula);
 
   const occPool = Math.max(0, calculateStatFormula(
     config.skills.occupationPointsFormula || 'EDUx4',
@@ -156,10 +185,6 @@ export function calculateAvailableSkillPoints(
   ));
 
   const totalAvailable = basePool + occPool + hobbyPool;
-
-  // For backward compatibility, keep basePoints and intBonus fields but set to total and 0
-  const basePoints = basePool;
-  const intBonus = 0;
 
   // Skill caps from config
   const skillCap = config.skills.creationCap || 75;
@@ -178,8 +203,6 @@ export function calculateAvailableSkillPoints(
   });
 
   return {
-    basePoints,
-    intBonus,
     basePool,
     occPool,
     hobbyPool,
@@ -431,14 +454,7 @@ export async function validateCharacterSubmission(character: ICharacter, config:
   }
 
   // ====== SKILLS VALIDATION ======
-  // Parse skill total from formula (e.g. "constant:200" → 200), same logic as CharacterCreationController.
-  const parseSkillFormula = (formula: string): number => {
-    if (formula?.startsWith('constant:')) return parseInt(formula.replace('constant:', ''), 10) || 200;
-    return 200;
-  };
-  const totalSkillPoints = parseSkillFormula(config.skills.totalPointsFormula);
-
-  const skillPoints = calculateAvailableSkillPoints(character, config, totalSkillPoints);
+  const skillPoints = calculateAvailableSkillPoints(character, config);
   const skillCap = skillPoints.skillCap;
   const finalSkillCap = skillPoints.finalSkillCap;
 

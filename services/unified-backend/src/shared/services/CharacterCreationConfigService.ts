@@ -70,7 +70,6 @@ export interface CharacterCreationConfig {
   };
   skills: {
     totalPointsFormula: string; // "constant:200" or "formula:EDUx4" (use 'x' for multiplication)
-    intelligenceBonusFormula: string;  // "INT/2", "INTx2", "INT+10", "constant:N"
     occupationPointsFormula: string;   // "EDUx4" - pool riservato alle skill di professione
     hobbyPointsFormula: string;        // "INTx2" - pool riservato alle skill hobbistiche
     creationCap: number;                // Normal creation cap
@@ -173,7 +172,6 @@ export class CharacterCreationConfigService {
       },
       skills: {
         totalPointsFormula: configs['character_creation_skills_total_points_formula'] || 'constant:200',
-        intelligenceBonusFormula: configs['character_creation_skills_int_bonus_formula'] || 'INT/2',
         occupationPointsFormula: configs['character_creation_skills_occupation_points_formula'] || 'EDUx4',
         hobbyPointsFormula: configs['character_creation_skills_hobby_points_formula'] || 'INTx2',
         creationCap: configs['character_creation_skills_creation_cap'] || 75,
@@ -257,7 +255,6 @@ export class CharacterCreationConfigService {
       { key: 'character_creation_stats_min_values', value: config.stats.minValues },
       { key: 'character_creation_stats_description', value: config.stats.description },
       { key: 'character_creation_skills_total_points_formula', value: config.skills.totalPointsFormula },
-      { key: 'character_creation_skills_int_bonus_formula', value: config.skills.intelligenceBonusFormula },
       { key: 'character_creation_skills_occupation_points_formula', value: config.skills.occupationPointsFormula },
       { key: 'character_creation_skills_hobby_points_formula', value: config.skills.hobbyPointsFormula },
       { key: 'character_creation_skills_creation_cap', value: config.skills.creationCap },
@@ -312,65 +309,6 @@ export class CharacterCreationConfigService {
   }
 
   // ==================== HELPER METHODS ====================
-
-  /**
-   * Calculate skill points based on formula
-   * Supports both constant values and dynamic formulas
-   */
-  public calculateSkillPoints(
-    intelligence: number,
-    config: CharacterCreationConfig
-  ): {
-    base: number;
-    intBonus: number;
-    total: number;
-  } {
-    const formula = config.skills.totalPointsFormula;
-    let basePoints = 200; // Default
-
-    if (formula.startsWith('constant:')) {
-      basePoints = parseInt(formula.replace('constant:', ''));
-    } else if (formula.startsWith('formula:')) {
-      // Handle formula-based calculation (e.g., "formula:EDUx4")
-      // For future expansion - currently not implemented
-      const formulaStr = formula.replace('formula:', '');
-      logger.warn('Formula-based skill points not yet implemented', {
-        formula: formulaStr
-      });
-      basePoints = 200;
-    }
-
-    const intBonus = calculateIntelligenceBonus(
-      config.skills.intelligenceBonusFormula || 'INT/2',
-      intelligence
-    );
-
-    return {
-      base: basePoints,
-      intBonus,
-      total: basePoints + intBonus
-    };
-  }
-
-  /**
-   * Parse and calculate intelligence bonus from formula
-   * Supports: INT/N, INTxN, INT+N, INT-N, constant:N
-   * @param formula - Formula to calculate
-   * @param intelligenceValue - Intelligence stat value
-   * @returns Calculated INT bonus (floored)
-   */
-  public calculateIntelligenceBonusMethod(formula: string, intelligenceValue: number): number {
-    return calculateIntelligenceBonus(formula, intelligenceValue);
-  }
-
-  /**
-   * Validate intelligence bonus formula
-   * @param formula - Formula to validate
-   * @returns Validation result
-   */
-  public validateIntelligenceBonusFormulaMethod(formula: string): { valid: boolean; error?: string } {
-    return validateIntelligenceBonusFormula(formula);
-  }
 
   /**
    * Get social class by finance skill value
@@ -671,7 +609,6 @@ export class CharacterCreationConfigService {
       },
       skills: {
         totalPointsFormula: 'constant:200',
-        intelligenceBonusFormula: 'INT/2',
         occupationPointsFormula: 'EDUx4',
         hobbyPointsFormula: 'INTx2',
         creationCap: 75,
@@ -791,78 +728,6 @@ export function calculateStatFormula(formula: string, token: string, statValue: 
     });
     return fallback();
   }
-}
-
-/**
- * @deprecated Use calculateStatFormula(formula, 'INT', intelligenceValue) directly.
- * Kept as a thin wrapper so existing callers keep compiling.
- */
-export function calculateIntelligenceBonus(formula: string, intelligenceValue: number): number {
-  return calculateStatFormula(formula, 'INT', intelligenceValue);
-}
-
-/**
- * Validate intelligence bonus formula
- * @param formula - Formula to validate
- * @returns Validation result with error message if invalid
- */
-export function validateIntelligenceBonusFormula(formula: string): { valid: boolean; error?: string } {
-  if (!formula || formula.trim() === '') {
-    return { valid: false, error: 'Formula vuota' };
-  }
-
-  // Check constant formula
-  if (formula.startsWith('constant:')) {
-    const value = parseInt(formula.replace('constant:', ''));
-    if (isNaN(value)) {
-      return { valid: false, error: 'Costante non valida' };
-    }
-    return { valid: true };
-  }
-
-  // Check INT formula
-  if (!formula.includes('INT')) {
-    return { valid: false, error: 'Formula deve contenere "INT"' };
-  }
-
-  // Replace x with * and INT with 50 for test
-  let testFormula = formula.replace(/x/gi, '*').replace(/INT/gi, '50');
-
-  // Check for valid characters only
-  if (!/^[\d+\-*/().\s]+$/.test(testFormula)) {
-    return { valid: false, error: 'Caratteri non validi (solo +, -, x, /, (, ) permessi)' };
-  }
-
-  // Try to evaluate with test value
-  try {
-    eval(testFormula);
-    return { valid: true };
-  } catch (error) {
-    return { valid: false, error: 'Formula non valida' };
-  }
-}
-
-/**
- * Get intelligence bonus formula with backward compatibility
- * Falls back to old intelligenceBonusDivisor format if new formula doesn't exist
- * @param config - Character creation configuration
- * @returns Formula string
- */
-export function getIntelligenceBonusFormula(config: CharacterCreationConfig): string {
-  // New system: formula string
-  if (config.skills.intelligenceBonusFormula) {
-    return config.skills.intelligenceBonusFormula;
-  }
-
-  // Old system: divisor number (backward compatibility)
-  // @ts-ignore - intelligenceBonusDivisor may exist in old configs
-  if (config.skills.intelligenceBonusDivisor) {
-    // @ts-ignore
-    return `INT/${config.skills.intelligenceBonusDivisor}`;
-  }
-
-  // Default
-  return 'INT/2';
 }
 
 // ==================== DERIVED STATS PARSER FUNCTIONS ====================

@@ -10,9 +10,6 @@ export { ConfigurationService } from './ConfigurationService';
 export {
   CharacterCreationConfigService,
   getCharacterCreationConfig,
-  calculateIntelligenceBonus,
-  validateIntelligenceBonusFormula,
-  getIntelligenceBonusFormula,
   calculateDerivedStat,
   validateDerivedFormula,
   calculateDamageBonusTable,
