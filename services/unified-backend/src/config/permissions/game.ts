@@ -55,6 +55,7 @@ export const GamePermissions = {
   DOCUMENTS_SEARCH: 'game:documents:search',
   DOCUMENTS_FAVORITES_READ: 'game:documents:favorites:read',
   DOCUMENTS_FAVORITES_TOGGLE: 'game:documents:favorites:toggle',
+  DOCUMENTS_MASTER_MANUAL_READ: 'game:documents:master-manual:read', // master (tipo 'manuale-master')
 
   // Character Creation
   CHARACTER_CREATION_CONFIG: 'game:character-creation:config',
@@ -368,6 +369,7 @@ export const GameRolePermissions: Record<string, GamePermission[]> = {
     GamePermissions.ADMIN_ECONOMY_SERVICES_RENEW,
     GamePermissions.ADMIN_EXPERIENCE_GRANT,
     GamePermissions.ADMIN_TIME_ADVANCE,
+    GamePermissions.DOCUMENTS_MASTER_MANUAL_READ,
   ],
 
   /**

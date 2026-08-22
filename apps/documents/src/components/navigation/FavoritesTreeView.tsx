@@ -13,6 +13,7 @@ interface FavoritesTreeViewProps {
 const TYPE_LABELS: Record<string, string> = {
   ambientazione: 'Ambientazione',
   regolamento: 'Regolamento',
+  'manuale-master': 'Manuale Master',
 };
 
 export function FavoritesTreeView({ favorites, currentPath }: FavoritesTreeViewProps) {

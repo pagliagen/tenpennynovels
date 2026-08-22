@@ -12,6 +12,7 @@
 
 import { logger } from '@shared/utils/logger';
 import { appConfig } from '@config/runtime';
+import type { DocumentType } from '../constants/documentTypes';
 
 const EMBEDDINGS_SERVICE_URL = appConfig.services.embeddingsUrl;
 
@@ -53,7 +54,7 @@ export class EmbeddingService {
    */
   static async semanticSearch(
     query: string,
-    type?: 'ambientazione' | 'regolamento',
+    type?: DocumentType,
     limit: number = 10,
     minScore: number = 0.4,
     source?: 'documents' | 'forum' | 'chat',

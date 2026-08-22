@@ -14,6 +14,7 @@ import path from 'path';
 import Document from '@features/documenti/models/Document';
 import { logger } from '@shared/utils/logger';
 import { appConfig } from '@config/runtime';
+import { PUBLIC_DOCUMENT_TYPE_LIST } from '@features/documenti/constants/documentTypes';
 
 const LANDING_DOMAIN = 'https://tenpennynovels.com';
 const DOCUMENTS_DOMAIN = 'https://documenti.tenpennynovels.com';
@@ -144,6 +145,9 @@ export class SitemapService {
 
   private static async buildDocumentsSitemap(): Promise<{ xml: string; count: number }> {
     const documents = await Document.find({
+      // Solo i tipi a lettura libera: un tipo riservato (manuale master) nella
+      // sitemap ne pubblicherebbe l'URL a Google anche se la pagina è protetta.
+      type: { $in: PUBLIC_DOCUMENT_TYPE_LIST },
       isPublic: true,
       isDraft: false,
       visible: true,

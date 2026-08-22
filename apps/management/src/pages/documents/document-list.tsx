@@ -24,11 +24,12 @@ import {
 import { useNotificationStore } from '@/store/notificationStore';
 import { useURLFilter } from '@/hooks/useURLFilter';
 import { setFilterInHash } from '@/lib/utils/urlFilters';
-import type { DocumentTreeNode } from '@/types/api/Document';
+import type { DocumentTreeNode, DocumentType } from '@/types/api/Document';
+import { DOCUMENT_TYPES, DOCUMENT_TYPE_LABELS } from '@/types/api/Document';
 import styles from '@/styles/pages/DocumentList.module.scss';
 
 export default function DocumentList() {
-  const urlFilter = useURLFilter<{ type?: 'ambientazione' | 'regolamento' }>();
+  const urlFilter = useURLFilter<{ type?: DocumentType }>();
   const typeFilter = urlFilter?.type || 'ambientazione';
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
@@ -87,7 +88,7 @@ export default function DocumentList() {
     return filterTree(docs);
   }, [data?.data, activeSubtypeIds, subtypes]);
 
-  const handleTypeFilterChange = (type: 'ambientazione' | 'regolamento') => {
+  const handleTypeFilterChange = (type: DocumentType) => {
     setFilterInHash({ type });
   };
 
@@ -200,18 +201,15 @@ export default function DocumentList() {
 
         {/* Type Filters */}
         <div className={styles.filters}>
-          <button
-            className={`${styles.filterButton} ${typeFilter === 'ambientazione' ? styles.active : ''}`}
-            onClick={() => handleTypeFilterChange('ambientazione')}
-          >
-            🌍 Ambientazione
-          </button>
-          <button
-            className={`${styles.filterButton} ${typeFilter === 'regolamento' ? styles.active : ''}`}
-            onClick={() => handleTypeFilterChange('regolamento')}
-          >
-            📜 Regolamento
-          </button>
+          {DOCUMENT_TYPES.map(type => (
+            <button
+              key={type}
+              className={`${styles.filterButton} ${typeFilter === type ? styles.active : ''}`}
+              onClick={() => handleTypeFilterChange(type)}
+            >
+              {DOCUMENT_TYPE_LABELS[type]}
+            </button>
+          ))}
         </div>
 
         {/* Subtype Filters */}

@@ -11,12 +11,18 @@
 import mongoose, { Schema, Document as MongooseDocument, Types } from 'mongoose';
 import { softDeletePlugin, SoftDeleteMethods } from '@database/plugins/softDeletePlugin';
 import { logger } from '@shared/utils/logger';
+import {
+  ALL_DOCUMENT_TYPE_LIST,
+  isPublicDocumentType,
+  isRestrictedDocumentType,
+  type DocumentType,
+} from '../constants/documentTypes';
 
 export interface IDocument extends MongooseDocument, SoftDeleteMethods {
   // Identity
   slug: string;
   title: string;
-  type: 'ambientazione' | 'regolamento';
+  type: DocumentType;
 
   // Subtype & Routing
   subtypeId: Types.ObjectId;
@@ -56,7 +62,7 @@ const DocumentSchema = new Schema<IDocument>({
   },
   type: {
     type: String,
-    enum: ['ambientazione', 'regolamento'],
+    enum: ALL_DOCUMENT_TYPE_LIST,
     required: true,
     index: true
   },
@@ -146,6 +152,15 @@ DocumentSchema.pre('save', async function() {
   // non scade la revalidate: 3600 di apps/documents).
   (this as any)._previousPath = this.isNew ? null : this.path;
 
+  // I tipi riservati non vanno indicizzati: /search e /semantic-search sono
+  // raggiungibili anche da anonimi, e un chunk in Qdrant/ES è leggibile a
+  // prescindere dal filtro applicato sui documenti. Se il documento sta
+  // DIVENTANDO riservato ora, i chunk già scritti quando era pubblico vanno
+  // rimossi, altrimenti restano cercabili da chiunque. Il flag si calcola qui
+  // perché in post('save') i modified path sono già stati azzerati.
+  (this as any)._purgeEmbeddings =
+    isRestrictedDocumentType(this.type) && (this.isNew || this.isModified('type'));
+
   // PATH CALCULATION: Calculate path from subtype.slug + doc.slug
   if (this.isNew || this.isModified('subtypeId') || this.isModified('slug')) {
     const DocumentSubtype = (await import('./DocumentSubtype')).default;
@@ -217,29 +232,42 @@ DocumentSchema.pre('save', async function() {
  * Post-save hook: Trigger embedding generation or cleanup + SEO description generation
  */
 DocumentSchema.post('save', async function(doc) {
-  try {
-    const { publishDocumentEvent } = await import('@shared/services/EmbeddingEventPublisher');
+  const publicType = isPublicDocumentType(doc.type) ? doc.type : null;
 
-    const action = doc.isNew ? 'created' : 'updated';
-    await publishDocumentEvent(action, {
-      _id: doc._id.toString(),
-      title: doc.title,
-      content: doc.content || '',
-      contentDelta: doc.contentDelta,
-      type: doc.type
-    });
+  try {
+    if (publicType === null) {
+      if ((doc as any)._purgeEmbeddings) {
+        const { publishDocumentDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');
+        await publishDocumentDeletedEvent(doc._id.toString());
+      }
+    } else {
+      const { publishDocumentEvent } = await import('@shared/services/EmbeddingEventPublisher');
+
+      const action = doc.isNew ? 'created' : 'updated';
+      await publishDocumentEvent(action, {
+        _id: doc._id.toString(),
+        title: doc.title,
+        content: doc.content || '',
+        contentDelta: doc.contentDelta,
+        type: publicType
+      });
+    }
   } catch (error) {
     logger.error('[Document] Failed to publish embedding event:', error);
   }
 
   // Fire-and-forget: rigenera on-demand la pagina ISR su apps/documents.
   // Non si attende la risposta, non deve rallentare il save dal gestionale.
-  import('@shared/services/DocumentsRevalidator').then(({ revalidateDocumentPaths }) => {
-    const previousPath = (doc as any)._previousPath;
-    revalidateDocumentPaths(doc.type, [doc.path, previousPath]);
-  }).catch((error) => {
-    logger.error('[Document] Failed to load DocumentsRevalidator:', error);
-  });
+  // Solo per i tipi pubblici: le pagine dei tipi riservati sono client-only
+  // (niente getStaticProps), quindi non c'è nessuna cache ISR da rigenerare.
+  if (publicType !== null) {
+    import('@shared/services/DocumentsRevalidator').then(({ revalidateDocumentPaths }) => {
+      const previousPath = (doc as any)._previousPath;
+      revalidateDocumentPaths(doc.type, [doc.path, previousPath]);
+    }).catch((error) => {
+      logger.error('[Document] Failed to load DocumentsRevalidator:', error);
+    });
+  }
 
   // Fire-and-forget SEO description generation when content changed
   if ((doc as any)._seoTrigger && doc.content) {

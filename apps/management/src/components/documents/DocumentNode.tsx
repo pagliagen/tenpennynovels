@@ -43,9 +43,12 @@ export const DocumentNode: React.FC<DocumentNodeProps> = React.memo(({
   const [copied, setCopied] = useState(false);
 
   const getDocumentUrl = (): string | null => {
-    if (!doc.path) return null;
+    // Senza type non si può costruire l'URL: il fallback 'ambientazione' che
+    // c'era prima produceva un link rotto per ogni documento di un altro tipo
+    // (il backend non esponeva `type` nel tree, quindi era sempre attivo).
+    if (!doc.path || !doc.type) return null;
 
-    return `${API_CONFIG.DOCUMENTS_URL}/${doc.subtype ? doc.type ?? 'ambientazione' : 'ambientazione'}/${doc.path}`;
+    return `${API_CONFIG.DOCUMENTS_URL}/${doc.type}/${doc.path}`;
   };
 
   const documentUrl = getDocumentUrl();

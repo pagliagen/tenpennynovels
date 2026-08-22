@@ -17,11 +17,19 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { API_CONFIG } from '@/constants/config';
 import { logger } from '@/lib/logger';
 import styles from '@/styles/pages/SearchPage.module.scss';
+import { DOCUMENT_TYPE_CONFIGS, type DocumentType } from '@/types/document';
+
+/** Classe SCSS del badge per tipo (vedi SearchPage.module.scss). */
+const TYPE_BADGE_CLASS: Record<DocumentType, string | undefined> = {
+  ambientazione: styles.typeAmbientazione,
+  regolamento: styles.typeRegolamento,
+  'manuale-master': styles.typeManualeMaster,
+};
 
 interface SearchResult {
   title: string;
   url: string;
-  type: 'ambientazione' | 'regolamento';
+  type: DocumentType;
 }
 
 interface SearchResponse {
@@ -138,11 +146,9 @@ export default function SearchPage() {
                         </Link>
                         <div className={styles.resultMeta}>
                           <span
-                            className={`${styles.typeBadge} ${
-                              result.type === 'ambientazione' ? styles.typeAmbientazione : styles.typeRegolamento
-                            }`}
+                            className={`${styles.typeBadge} ${TYPE_BADGE_CLASS[result.type] ?? ''}`}
                           >
-                            {result.type === 'ambientazione' ? 'Ambientazione' : 'Regolamento'}
+                            {DOCUMENT_TYPE_CONFIGS[result.type].label}
                           </span>
                           <span className={styles.resultUrl}>{result.url}</span>
                         </div>

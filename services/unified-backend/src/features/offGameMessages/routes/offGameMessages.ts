@@ -78,11 +78,14 @@ router.use(AuthMiddleware.requireUserAuth);
 router.use(AuthMiddleware.requireCharacterContext);
 
 // Send off-game message
-// All character states allowed (draft, pending, approved)
+// All character states allowed (draft, pending, approved): la messaggistica
+// off-game è deliberatamente aperta ai draft, con restrizioni granulari nel
+// controller (OffGameChatController: un draft può scrivere solo a personaggi
+// approvati). Opt-out esplicito dal default "solo approvati" del middleware.
 // ✅ SECURITY: Rate limited (30 req/min)
 router.post('/offgame-messages',
   sendMessageLimiter,
-  AuthMiddleware.requireGameplayRoles(['player']),
+  AuthMiddleware.requireGameplayRoles(['player'], { requireApproved: false }),
   OffGameMessageController.sendMessage
 );
 

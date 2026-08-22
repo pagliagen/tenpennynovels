@@ -21,6 +21,7 @@ import { API_CONFIG } from '@/constants/config';
 import { logger } from '@/lib/logger';
 
 import { parseAxiosError, ApiError } from './errors';
+import { getCharacterSessionId } from '@/lib/characterSession';
 
 /**
  * Create Axios instance with base configuration
@@ -67,12 +68,13 @@ const createApiClient = (): AxiosInstance => {
       //   config.headers.Authorization = `Bearer ${token}`;
       // }
 
-      // Add X-Session-Id header from sessionStorage (multi-tab support)
-      if (typeof window !== 'undefined') {
-        const sessionId = sessionStorage.getItem('character_session_id');
-        if (sessionId) {
-          config.headers['X-Session-Id'] = sessionId;
-        }
+      // X-Session-Id: identifica il PERSONAGGIO (per-tab). getCharacterSessionId
+      // lo recupera dall'URL se non è ancora stato persistito, così anche la
+      // prima richiesta dopo il redirect dal gioco lo porta — vedi il commento
+      // sull'ordine degli effect in lib/characterSession.ts.
+      const sessionId = getCharacterSessionId();
+      if (sessionId) {
+        config.headers['X-Session-Id'] = sessionId;
       }
 
       // SSG/ISR/API Gateway: bypass rate limit (solo Node, mai esposto al browser)

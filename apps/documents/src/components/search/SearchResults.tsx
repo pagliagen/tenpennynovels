@@ -3,30 +3,16 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
-import type { AIAnswer, AIEnrichment, AIReading } from '@/hooks/useSearch';
+import type { AIAnswer, AIEnrichment, AIReading, SearchResult } from '@/hooks/useSearch';
 import styles from '@/styles/components/SearchResults.module.scss';
+import { DOCUMENT_TYPE_ICONS, DOCUMENT_TYPE_CONFIGS, type DocumentType } from '@/types/document';
 
-interface SearchResult {
-  document: {
-    _id: string;
-    slug: string;
-    title: string;
-    content: string;
-    tags: string[];
-    isDraft: boolean;
-  };
-  route: {
-    path: string;
-    type: 'ambientazione' | 'regolamento';
-    subtypeTitle: string;
-    anchor: string;
-    fullPath: string;
-  };
-  matchLevel: number;
-  matchHeading: string;
-  similarity: number;
-  matchScore: string;
-}
+/** Etichetta con icona mostrata nel breadcrumb dei risultati. */
+const SEARCH_TYPE_LABELS: Record<DocumentType, string> = {
+  ambientazione: `${DOCUMENT_TYPE_ICONS.ambientazione} ${DOCUMENT_TYPE_CONFIGS.ambientazione.label}`,
+  regolamento: `${DOCUMENT_TYPE_ICONS.regolamento} ${DOCUMENT_TYPE_CONFIGS.regolamento.label}`,
+  'manuale-master': `${DOCUMENT_TYPE_ICONS['manuale-master']} ${DOCUMENT_TYPE_CONFIGS['manuale-master'].label}`,
+};
 
 interface SearchResultsProps {
   results: SearchResult[];
@@ -183,8 +169,7 @@ function ResultItem({ result, onClose }: { result: SearchResult; onClose: () => 
 
         <p className={styles.resultBreadcrumb}>
           <span className={styles.breadcrumbType}>
-            {result.route.type === 'ambientazione' && '🌍 Ambientazione'}
-            {result.route.type === 'regolamento' && '📜 Regolamento'}
+            {SEARCH_TYPE_LABELS[result.route.type]}
           </span>
           {result.route.subtypeTitle && (
             <>

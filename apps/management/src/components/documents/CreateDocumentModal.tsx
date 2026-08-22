@@ -9,11 +9,12 @@ import { createDocument, getSubtypes } from '@/lib/api/documents';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import styles from '@/styles/components/Modal.module.scss';
+import type { DocumentType } from '@/types/api/Document';
 
 interface CreateDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type: 'ambientazione' | 'regolamento';
+  type: DocumentType;
   preselectedParentDocId?: string | null;
   onDocumentCreated: (documentId: string) => void;
 }

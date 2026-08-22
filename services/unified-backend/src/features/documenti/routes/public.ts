@@ -9,8 +9,23 @@ import { Router, Request } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { DocumentController } from '../controllers/DocumentController';
 import { AuthMiddleware } from '@modules/game/middleware/auth';
+import { AuthMiddleware as CoreAuthMiddleware } from '@core/auth/middleware/auth';
 
 const router = Router();
+
+/**
+ * Contesto personaggio OPZIONALE.
+ *
+ * Serve solo a decidere se il richiedente può vedere i tipi riservati
+ * (manuale master): il ruolo master vive sul personaggio, non sull'utente,
+ * quindi il cookie JWT da solo non basta — serve l'header X-Session-Id, che
+ * apps/documents invia quando l'utente è arrivato dal link nel gioco
+ * (client.ts lo legge da sessionStorage).
+ *
+ * `false` = non blocca chi non ce l'ha: l'app documenti resta pubblica, e chi
+ * non ha sessione personaggio vede semplicemente i soli tipi pubblici.
+ */
+const optionalCharacter = CoreAuthMiddleware.authenticateCharacter(false);
 
 // CodeQL non vede il rate limiting già applicato a monte da api-gateway per
 // /documents (30/min non autenticati, 120/min autenticati — vedi
@@ -39,28 +54,28 @@ const previewLimiter = rateLimit({
 router.get('/preview/:id', previewLimiter, DocumentController.getPreviewById);
 
 // List documents (for navigation/menu)
-router.get('/routes/list', publicLimiter, AuthMiddleware.optionalAuth, DocumentController.listRoutes);
+router.get('/routes/list', publicLimiter, AuthMiddleware.optionalAuth, optionalCharacter, DocumentController.listRoutes);
 
 // List documents grouped by subtype (hierarchical sidebar)
-router.get('/routes/list-hierarchical', publicLimiter, AuthMiddleware.optionalAuth, DocumentController.listRoutesHierarchical);
+router.get('/routes/list-hierarchical', publicLimiter, AuthMiddleware.optionalAuth, optionalCharacter, DocumentController.listRoutesHierarchical);
 
 // AI availability status
 router.get('/ai-status', publicLimiter, DocumentController.aiStatus);
 
 // Text search (full-text via MongoDB)
-router.get('/search', publicLimiter, AuthMiddleware.optionalAuth, DocumentController.textSearch);
+router.get('/search', publicLimiter, AuthMiddleware.optionalAuth, optionalCharacter, DocumentController.textSearch);
 
 // Semantic search
-router.get('/semantic-search', publicLimiter, AuthMiddleware.optionalAuth, DocumentController.semanticSearch);
+router.get('/semantic-search', publicLimiter, AuthMiddleware.optionalAuth, optionalCharacter, DocumentController.semanticSearch);
 
 // Get document by type + nested path (e.g., /documents/ambientazione/introduzione/presentazione)
-router.get('/:type/:category/:slug', publicLimiter, AuthMiddleware.optionalAuth, (req, res) => {
+router.get('/:type/:category/:slug', publicLimiter, AuthMiddleware.optionalAuth, optionalCharacter, (req, res) => {
   (req.params as Record<string, string>).path = `${req.params.category}/${req.params.slug}`;
   return DocumentController.getByPath(req as Request<{ type: string; path: string }>, res);
 });
 
 // Get document by type + single-level path
-router.get('/:type/:path', publicLimiter, AuthMiddleware.optionalAuth, DocumentController.getByPath);
+router.get('/:type/:path', publicLimiter, AuthMiddleware.optionalAuth, optionalCharacter, DocumentController.getByPath);
 
 // ========== AUTHENTICATED ROUTES ==========
 
@@ -73,6 +88,7 @@ router.get('/:type/:path', publicLimiter, AuthMiddleware.optionalAuth, DocumentC
 router.get('/favorites',
   publicLimiter,
   AuthMiddleware.requireUserAuth,
+  optionalCharacter,
   DocumentController.getFavorites
 );
 
@@ -80,6 +96,7 @@ router.get('/favorites',
 router.post('/:type/:category/:slug/favorite',
   publicLimiter,
   AuthMiddleware.requireUserAuth,
+  optionalCharacter,
   (req, res) => {
     (req.params as Record<string, string>).path = `${req.params.category}/${req.params.slug}`;
     return DocumentController.toggleFavorite(req as Request<{ type: string; path: string }>, res);
@@ -90,6 +107,7 @@ router.post('/:type/:category/:slug/favorite',
 router.post('/:type/:path/favorite',
   publicLimiter,
   AuthMiddleware.requireUserAuth,
+  optionalCharacter,
   DocumentController.toggleFavorite
 );
 

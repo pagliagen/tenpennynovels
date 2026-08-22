@@ -15,6 +15,12 @@ import { HierarchyService } from '../services/HierarchyService';
 import { PreviewTokenService } from '../services/PreviewTokenService';
 import { logger } from '@shared/utils/logger';
 import { isQuestion } from '../utils/questionDetector';
+import {
+  applyReadableTypeFilter,
+  canReadDocumentType,
+  readableDocumentTypes,
+} from '../utils/documentAccess';
+import { isDocumentType, type DocumentType } from '../constants/documentTypes';
 import { extensions } from '@core/extensions/registry';
 import type { ContextChunk } from '@core/extensions/points';
 
@@ -29,8 +35,19 @@ export class DocumentController {
     const { type, path } = req.params;
 
     try {
-      if (!['ambientazione', 'regolamento'].includes(type)) {
+      if (!isDocumentType(type)) {
         res.status(400).json({ result: false, error: 'Tipo non valido', code: 'INVALID_TYPE' });
+        return;
+      }
+
+      // Tipi riservati (manuale master): serve il permesso di ruolo, che vive
+      // sul personaggio — quindi l'header X-Session-Id, non il solo cookie JWT.
+      if (!canReadDocumentType(req, type)) {
+        res.status(403).json({
+          result: false,
+          error: 'Documento riservato ai master',
+          code: 'DOCUMENT_TYPE_FORBIDDEN'
+        });
         return;
       }
 
@@ -157,7 +174,7 @@ export class DocumentController {
 
     // Build hierarchical children
     const hierarchicalChildren = await HierarchyService.buildHierarchicalChildren(
-      doc._id, doc.path, doc.type as 'ambientazione' | 'regolamento', 0, 5
+      doc._id, doc.path, doc.type, 0, 5
     );
 
     const hasAnyChildWithSeparatePage = (children: Array<{ hasOwnPage?: boolean; children?: Array<{ hasOwnPage?: boolean; children?: unknown[] }> }>): boolean =>
@@ -247,12 +264,10 @@ export class DocumentController {
         filter.parentId = null;
       }
 
-      // CWE-943: guardia già reale (includes() su stringhe letterali non
-      // combacia mai con un oggetto), ma typeof esplicito rimuove
-      // l'ambiguità del cast `as string` per l'analisi statica.
-      if (typeof type === 'string' && ['ambientazione', 'regolamento'].includes(type)) {
-        filter.type = type;
-      }
+      // Default-deny sui tipi: senza il permesso di lettura riservata il
+      // manuale master non entra nemmeno quando `type` non è specificato.
+      // CWE-943: il typeof esplicito è dentro applyReadableTypeFilter.
+      applyReadableTypeFilter(filter, req, type);
 
       if (!req.user) {
         filter.isPublic = true;
@@ -283,12 +298,17 @@ export class DocumentController {
    */
   static async listRoutesHierarchical(req: Request, res: Response): Promise<void> {
     try {
-      const subtypes = await DocumentSubtype.find().sort({ type: 1, order: 1 }).lean();
+      const readableTypes = readableDocumentTypes(req);
+
+      const subtypes = await DocumentSubtype.find({ type: { $in: readableTypes } })
+        .sort({ type: 1, order: 1 })
+        .lean();
 
       const docFilter: Record<string, unknown> = {
         deletedAt: null,
         isDraft: { $ne: true },
         visible: { $ne: false },
+        type: { $in: readableTypes },
       };
 
       if (!req.user) {
@@ -341,11 +361,12 @@ export class DocumentController {
         docsBySubtype.get(key)!.push(buildTreeNode(doc));
       });
 
-      // Build grouped response
-      const grouped: Record<string, Record<string, unknown>[]> = {
-        ambientazione: [],
-        regolamento: []
-      };
+      // Build grouped response: le chiavi seguono i tipi leggibili, così il
+      // frontend riceve sempre un array (anche vuoto) per ogni tipo che gli è
+      // consentito vedere, e nessuna chiave per quelli che non gli competono.
+      const grouped: Record<string, Record<string, unknown>[]> = Object.fromEntries(
+        readableTypes.map(t => [t, [] as Record<string, unknown>[]])
+      );
 
       subtypes.forEach(subtype => {
         const subtypeId = subtype._id.toString();
@@ -396,13 +417,9 @@ export class DocumentController {
         filter.isPublic = true;
       }
 
-      // Optional type filter
-      // CWE-943: guardia già reale (includes() su stringhe letterali non
-      // combacia mai con un oggetto), ma typeof esplicito rimuove
-      // l'ambiguità del cast `as string` per l'analisi statica.
-      if (typeof type === 'string' && ['ambientazione', 'regolamento'].includes(type)) {
-        filter.type = type;
-      }
+      // Default-deny sui tipi: il manuale master non deve comparire nei
+      // risultati di ricerca di chi non può aprirlo.
+      applyReadableTypeFilter(filter, req, type);
 
       const results = await Document.find(filter)
         .select('title path type slug')
@@ -447,7 +464,10 @@ export class DocumentController {
       const fetchLimit = Math.max(displayLimit, aiLimit);
 
       const searchResults = await EmbeddingService.semanticSearch(
-        query, type as 'ambientazione' | 'regolamento' | undefined, fetchLimit, Number(minSimilarity)
+        query,
+        isDocumentType(type) && canReadDocumentType(req, type) ? type : undefined,
+        fetchLimit,
+        Number(minSimilarity)
       );
 
       if (searchResults.length === 0) {
@@ -501,7 +521,11 @@ export class DocumentController {
         _id: { $in: documentIds.map(id => new mongoose.Types.ObjectId(id)) },
         deletedAt: null,
         isDraft: { $ne: true },
-        visible: { $ne: false }
+        visible: { $ne: false },
+        // Seconda linea di difesa: i tipi riservati non vengono indicizzati
+        // (Document.post('save')), ma se un documento cambia tipo o resta un
+        // chunk orfano, il join qui lo scarta comunque.
+        type: { $in: readableDocumentTypes(req) }
       };
 
       if (!req.user) {
@@ -658,6 +682,9 @@ export class DocumentController {
           }
         },
         { $unwind: '$document' },
+        // Un preferito salvato quando si era master non deve restare visibile
+        // dopo la perdita del ruolo.
+        { $match: { 'document.type': { $in: readableDocumentTypes(req) } } },
         {
           $project: {
             id: '$_id',
@@ -699,8 +726,17 @@ export class DocumentController {
 
       const { type, path } = req.params;
 
+      if (!canReadDocumentType(req, type)) {
+        res.status(403).json({
+          result: false,
+          error: 'Documento riservato ai master',
+          code: 'DOCUMENT_TYPE_FORBIDDEN'
+        });
+        return;
+      }
+
       const document = await Document.findOne({
-        type: type as 'ambientazione' | 'regolamento',
+        type: type as DocumentType,
         path,
         deletedAt: null,
         isDraft: false,

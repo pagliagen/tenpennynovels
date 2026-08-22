@@ -20,6 +20,7 @@ import { useEffect } from 'react';
 
 import { AuthInitializer } from '@/components/auth/AuthInitializer';
 import { queryClient } from '@/lib/api/queryClient';
+import { getCharacterSessionId } from '@/lib/characterSession';
 import { readAnalyticsConsent } from '@/lib/cookieConsent';
 import { logger } from '@/lib/logger';
 
@@ -73,26 +74,31 @@ export default function App({ Component, pageProps }: AppProps) {
   const isEmbedPreview = router.pathname.startsWith('/preview');
 
   /**
-   * Initialize sessionId from query parameter
+   * Ripulisce l'URL dal `?sessionId=` dopo il redirect dal gioco.
    *
-   * When redirecting from game app (different origin), sessionStorage is NOT shared.
-   * Game app passes sessionId as query param: ?sessionId=xxx
-   * This effect reads it and saves to sessionStorage (once).
+   * La PERSISTENZA non è più qui: la fa getCharacterSessionId() leggendo
+   * direttamente dall'URL alla prima richiesta. Questo effect girava dopo
+   * quello di useAuth (React esegue gli effect dei figli prima del padre) e
+   * dopo l'idratazione di router.query, quindi la prima chiamata a
+   * /auth/session partiva senza X-Session-Id e senza gamePermissions — vedi
+   * lib/characterSession.ts.
    */
   useEffect(() => {
     const { sessionId } = router.query;
 
     if (sessionId && typeof sessionId === 'string') {
-      try {
-        sessionStorage.setItem('character_session_id', sessionId);
+      // Persistenza idempotente, nel caso nessuna richiesta sia ancora partita.
+      getCharacterSessionId();
 
-        // Clean URL (remove query param)
-        router.replace(router.pathname, undefined, { shallow: true });
-      } catch (error) {
-        logger.error('[App documenti] Impossibile salvare sessionId', { error });
-      }
+      // asPath e non pathname: su una rotta dinamica pathname è il template
+      // ('/ambientazione/[...slug]'), quindi la replace non ripuliva nulla e il
+      // sessionId restava nell'URL — finendo in cronologia e in qualunque link
+      // copiato. Si notava solo ora: prima l'unica pagina che riceveva il
+      // parametro era la root, dove pathname e asPath coincidono.
+      const pathWithoutQuery = router.asPath.split('?')[0] ?? router.asPath;
+      void router.replace(pathWithoutQuery, undefined, { shallow: true });
     }
-  }, [router.query.sessionId]);
+  }, [router, router.query.sessionId]);
 
   // Report Web Vitals to Google Analytics
   useReportWebVitals((metric) => {

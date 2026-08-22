@@ -10,6 +10,7 @@ import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiR
 import { appConfig } from '@config/runtime';
 import { aiGatewayClient } from '@modules/game/services/AIGatewayClient';
 import { Types } from 'mongoose';
+import { ALL_DOCUMENT_TYPES, isDocumentType, type DocumentType } from '../constants/documentTypes';
 
 const mongoose = db.getMongoose();
 
@@ -23,9 +24,14 @@ function isValidObjectId(id: unknown): boolean {
 /**
  * Validate document type against a literal whitelist — rejects query objects
  * (e.g. type[$ne]=x parsed as { $ne: 'x' }) before the value reaches a query.
+ *
+ * Lato gestionale la whitelist include i tipi riservati: l'authoring del
+ * manuale master avviene qui, protetto dai permessi granulari documents.*
+ * (vedi routes/admin-documents.ts). Il default-deny per tipo riguarda solo la
+ * lettura pubblica — vedi utils/documentAccess.ts.
  */
-function isValidDocumentType(value: unknown): value is 'ambientazione' | 'regolamento' {
-  return value === 'ambientazione' || value === 'regolamento';
+function isValidDocumentType(value: unknown): value is DocumentType {
+  return isDocumentType(value);
 }
 
 /**
@@ -44,7 +50,7 @@ export class DocumentManagementController {
 
   /**
    * Get documents tree grouped by subtype
-   * GET /admin/documents?type=ambientazione|regolamento
+   * GET /admin/documents?type=<uno di ALL_DOCUMENT_TYPES>
    */
   static async getDocuments(req: Request, res: Response): Promise<void> {
     try {
@@ -53,7 +59,7 @@ export class DocumentManagementController {
       // Reject non-string values (e.g. type[$ne]=x parsed as an object) before any query use
       if (!isValidDocumentType(type)) {
         res.status(400).json(errorResponse(
-          'type is required (ambientazione or regolamento)',
+          `type è obbligatorio (uno fra: ${ALL_DOCUMENT_TYPES.join(', ')})`,
           'VALIDATION_ERROR', undefined, 400, getRequestId(req)
         ));
         return;
@@ -95,6 +101,7 @@ export class DocumentManagementController {
               order: doc.order,
               parentId: doc.parentId ? doc.parentId.toString() : null,
               path: doc.path,
+              type: doc.type,
               subtype: doc.subtypeId ? {
                 _id: (doc.subtypeId as { _id?: unknown; slug?: string; title?: string })._id?.toString(),
                 slug: (doc.subtypeId as { _id?: unknown; slug?: string; title?: string }).slug,
@@ -597,9 +604,9 @@ export class DocumentManagementController {
         return;
       }
 
-      if (!['ambientazione', 'regolamento'].includes(type)) {
+      if (!isDocumentType(type)) {
         res.status(400).json(errorResponse(
-          'type deve essere "ambientazione" o "regolamento"',
+          `type deve essere uno fra: ${ALL_DOCUMENT_TYPES.join(', ')}`,
           'INVALID_TYPE', undefined, 400, getRequestId(req)
         ));
         return;

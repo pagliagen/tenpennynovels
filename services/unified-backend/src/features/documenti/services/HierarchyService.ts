@@ -7,6 +7,7 @@
 
 import mongoose from 'mongoose';
 import Document from '../models/Document';
+import type { DocumentType } from '../constants/documentTypes';
 
 export class HierarchyService {
   /**
@@ -53,7 +54,7 @@ export class HierarchyService {
   static async buildHierarchicalChildren(
     parentDocId: mongoose.Types.ObjectId,
     parentPath: string,
-    type: 'ambientazione' | 'regolamento',
+    type: DocumentType,
     currentDepth: number = 0,
     maxDepth: number = 5
   ): Promise<any[]> {
