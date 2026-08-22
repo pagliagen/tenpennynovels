@@ -30,6 +30,12 @@ Comune a tutte: Next.js 16 **Pages Router** (non App Router), React 18, TypeScri
 **Sessione personaggio multi-tab**: `sessionId` in **`sessionStorage`** (per-tab), mai `localStorage` (condiviso tra tab → il tab 1 vedrebbe il personaggio del tab 2). Inviato come header `X-Session-Id`.
 Su redirect cross-origin arriva come query param: leggerlo, salvarlo in `sessionStorage`, poi ripulire l'URL. In management **attendere `router.isReady`** prima di processarlo.
 
+**Tre modi di perdere il `sessionId` in arrivo, tutti visti dal vivo** (2026-08-22, `apps/documents`). Sono latenti finché nessuna feature usa davvero il personaggio: si manifestano tutti insieme il giorno in cui una lo usa.
+
+1. **La redirect SSR non conserva la query string.** Il link del gioco punta alla root, e `getServerSideProps` redirige al primo documento foglia: `redirect: { destination }` scarta `?sessionId=`, che muore lato server prima di qualunque JS. Propagarlo esplicitamente (`withSessionId()` in `lib/characterSession.ts`).
+2. **Gli effect dei figli girano prima di quelli del padre.** `AuthInitializer` è dentro `_app`: il suo `GET /auth/session` partiva prima che l'effect di `_app` scrivesse `sessionStorage`, tornava senza `gamePermissions` e non riprovava mai (effect a dipendenze stabili). Non affidarsi all'ordine: leggere il sessionId dall'URL al momento della richiesta (`getCharacterSessionId()`), non da un effect.
+3. **`router.pathname` non è `router.asPath`.** La pulizia dell'URL faceva `router.replace(router.pathname)`, che su una rotta dinamica è il template `/ambientazione/[...slug]`: non ripuliva niente e il sessionId restava nell'URL, in cronologia e nei link copiati. Usare `router.asPath.split('?')[0]`.
+
 **Stili**: solo SCSS Modules (`*.module.scss`). CSS globale solo in `globals.scss`. Variabili CSS in `:root`.
 
 **Error boundary**: ogni app deve averne uno per evitare il crash totale.

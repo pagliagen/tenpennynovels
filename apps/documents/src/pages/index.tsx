@@ -17,6 +17,7 @@ import { GetServerSideProps } from 'next';
 import { SEO } from '@/components/SEO';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { documentsApi } from '@/lib/api/documents';
+import { withSessionId } from '@/lib/characterSession';
 import { findFirstLeafPath } from '@/lib/findFirstLeafPath';
 
 export default function HomePage() {
@@ -34,7 +35,7 @@ export default function HomePage() {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async ({ query }) => {
   try {
     const hierarchical = await documentsApi.listHierarchical();
     const subtypes = hierarchical.ambientazione || [];
@@ -42,7 +43,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
 
     return {
       redirect: {
-        destination: firstPath || '/ambientazione',
+        destination: withSessionId(firstPath || '/ambientazione', query),
         permanent: false,
       },
     };
@@ -51,7 +52,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
     // fallback (renders a loading page instead of erroring) if it's down too.
     return {
       redirect: {
-        destination: '/ambientazione',
+        destination: withSessionId('/ambientazione', query),
         permanent: false,
       },
     };

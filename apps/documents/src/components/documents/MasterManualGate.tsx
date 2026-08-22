@@ -23,22 +23,13 @@ import { ReactNode } from 'react';
 
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { hasCharacterSession } from '@/lib/characterSession';
 import { useAuthStore, selectCanReadMasterManual } from '@/store/authStore';
 
 const TITLE = 'Ten Penny Novels | Manuale Master';
 
 interface MasterManualGateProps {
   children: ReactNode;
-}
-
-/** Legge il sessionId senza far esplodere il render se sessionStorage è inaccessibile. */
-function hasCharacterSession(): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    return !!sessionStorage.getItem('character_session_id');
-  } catch {
-    return false;
-  }
 }
 
 export function MasterManualGate({ children }: MasterManualGateProps): JSX.Element {
