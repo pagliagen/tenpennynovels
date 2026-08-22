@@ -50,7 +50,7 @@ export class DocumentManagementController {
 
   /**
    * Get documents tree grouped by subtype
-   * GET /admin/documents?type=ambientazione|regolamento
+   * GET /admin/documents?type=<uno di ALL_DOCUMENT_TYPES>
    */
   static async getDocuments(req: Request, res: Response): Promise<void> {
     try {
@@ -59,7 +59,7 @@ export class DocumentManagementController {
       // Reject non-string values (e.g. type[$ne]=x parsed as an object) before any query use
       if (!isValidDocumentType(type)) {
         res.status(400).json(errorResponse(
-          'type is required (ambientazione or regolamento)',
+          `type è obbligatorio (uno fra: ${ALL_DOCUMENT_TYPES.join(', ')})`,
           'VALIDATION_ERROR', undefined, 400, getRequestId(req)
         ));
         return;
@@ -101,6 +101,7 @@ export class DocumentManagementController {
               order: doc.order,
               parentId: doc.parentId ? doc.parentId.toString() : null,
               path: doc.path,
+              type: doc.type,
               subtype: doc.subtypeId ? {
                 _id: (doc.subtypeId as { _id?: unknown; slug?: string; title?: string })._id?.toString(),
                 slug: (doc.subtypeId as { _id?: unknown; slug?: string; title?: string }).slug,

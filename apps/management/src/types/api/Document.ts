@@ -8,6 +8,24 @@
 import type { ApiResponse } from './common';
 
 /**
+ * Tipi di documento.
+ *
+ * 'manuale-master' è a lettura riservata su apps/documents (serve il permesso
+ * game:documents:master-manual:read), ma nel gestionale è un tipo come gli
+ * altri: l'authoring è già protetto dai permessi granulari documents.*.
+ */
+export const DOCUMENT_TYPES = ['ambientazione', 'regolamento', 'manuale-master'] as const;
+
+export type DocumentType = (typeof DOCUMENT_TYPES)[number];
+
+/** Etichette e icona per i filtri e le intestazioni. */
+export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
+  ambientazione: '🌍 Ambientazione',
+  regolamento: '📜 Regolamento',
+  'manuale-master': '🎭 Manuale Master',
+};
+
+/**
  * DocumentSubtype Interface
  * Raggruppamento ordinabile di documenti per tipo
  */
@@ -15,7 +33,7 @@ export interface DocumentSubtype {
   _id: string;
   slug: string;
   title: string;
-  type: 'ambientazione' | 'regolamento';
+  type: DocumentType;
   order: number;
   expandedByDefault: boolean;
   createdAt?: string;
@@ -38,7 +56,7 @@ export interface DocumentTreeNode {
   parentId: string | null;
   path?: string;
   /** Tipo route pubblica documenti (se noto dal backend). */
-  type?: 'ambientazione' | 'regolamento';
+  type?: DocumentType;
   subtype: {
     _id: string;
     slug: string;
@@ -56,7 +74,7 @@ export interface Document {
   slug: string;
   content: string;
   contentDelta?: any;
-  type: 'ambientazione' | 'regolamento';
+  type: DocumentType;
   subtypeId?: string | DocumentSubtype;
   path?: string;
   isPublic?: boolean;
@@ -85,7 +103,7 @@ export interface DocumentListParams {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   search?: string;
-  type?: 'ambientazione' | 'regolamento';
+  type?: DocumentType;
 }
 
 /**
@@ -102,7 +120,7 @@ export interface DocumentTreeResponse {
 export interface CreateDocumentData {
   title: string;
   slug: string;
-  type: 'ambientazione' | 'regolamento';
+  type: DocumentType;
   subtypeId: string;
   parentId?: string | null;
   contentDelta?: any;
@@ -118,7 +136,7 @@ export interface UpdateDocumentData {
   content?: string;
   contentDelta?: any;
   lastUpdated?: string;
-  type?: 'ambientazione' | 'regolamento';
+  type?: DocumentType;
   subtypeId?: string;
   isPublic?: boolean;
   tags?: string[];
@@ -130,7 +148,7 @@ export interface SeoDocument {
   _id: string;
   title: string;
   slug: string;
-  type: 'ambientazione' | 'regolamento';
+  type: DocumentType;
   path: string;
   description: string;
 }

@@ -2,7 +2,7 @@
  * Subtypes Management Page
  *
  * CRUD operations and drag-and-drop reordering for DocumentSubtype entities.
- * Subtypes are filtered by document type (ambientazione/regolamento).
+ * Subtypes are filtered by document type (vedi DOCUMENT_TYPES).
  */
 
 import React, { useState, useEffect } from 'react';
@@ -34,10 +34,9 @@ import {
   useReorderSubtypes
 } from '@/hooks/api/useDocuments';
 import { useNotificationStore } from '@/store/notificationStore';
-import type { DocumentSubtype } from '@/types/api/Document';
+import type { DocumentSubtype, DocumentType } from '@/types/api/Document';
+import { DOCUMENT_TYPES, DOCUMENT_TYPE_LABELS } from '@/types/api/Document';
 import styles from '@/styles/pages/Subtypes.module.scss';
-
-type DocumentType = 'ambientazione' | 'regolamento';
 
 function SortableSubtypeRow({
   subtype,
@@ -266,18 +265,15 @@ export default function SubtypesPage() {
 
         {/* Type filters */}
         <div className={styles.filters}>
-          <button
-            className={`${styles.filterButton} ${typeFilter === 'ambientazione' ? styles.active : ''}`}
-            onClick={() => setTypeFilter('ambientazione')}
-          >
-            🌍 Ambientazione
-          </button>
-          <button
-            className={`${styles.filterButton} ${typeFilter === 'regolamento' ? styles.active : ''}`}
-            onClick={() => setTypeFilter('regolamento')}
-          >
-            📜 Regolamento
-          </button>
+          {DOCUMENT_TYPES.map(type => (
+            <button
+              key={type}
+              className={`${styles.filterButton} ${typeFilter === type ? styles.active : ''}`}
+              onClick={() => setTypeFilter(type)}
+            >
+              {DOCUMENT_TYPE_LABELS[type]}
+            </button>
+          ))}
         </div>
 
         {/* Create/Edit form */}
