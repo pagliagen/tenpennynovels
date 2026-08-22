@@ -75,8 +75,20 @@ Catena middleware: `authenticateUser()` → `authenticateCharacter()` → `requi
 
 **Validazione di ownership obbligatoria**: `session.userId === req.user.userId`, altrimenti 403. Difesa in profondità: il possesso del `sessionId` non basta.
 
-**I poteri elevati valgono solo su un personaggio `playerStatus: 'approved'`.** Vale sia per `isGestore` sia per i `gameplayRoles` master/moderatore: un personaggio draft/pending va trattato come un giocatore normale. `StatusRestrictions` in `config/permissions/game.ts` **non** è la sede giusta per farlo rispettare (elenca permessi bloccati uno per uno e non conteneva i `game:admin:*`): il filtro sta in `resolveEffectiveRoles()` + nel guard del bypass gestore.
+**I poteri elevati valgono solo su un personaggio `playerStatus: 'approved'`.** Vale sia per `isGestore` sia per i `gameplayRoles` master/moderatore: un personaggio draft/pending va trattato come un giocatore normale. `StatusRestrictions` in `config/permissions/game.ts` **non** è la sede giusta per farlo rispettare (elenca permessi bloccati uno per uno e non conteneva i `game:admin:*`).
+
+**Ci sono tre percorsi indipendenti che concedono poteri di ruolo, non uno.** Ogni fix va applicato a tutti e tre, o resta un buco:
+
+| Percorso | Dove | Stato |
+|---|---|---|
+| `hasGamePermission()` / `resolveEffectiveRoles()` | `config/permissions/game.ts` | filtra per stato ✅ |
+| `hasAdminPermission()` | `config/permissions/admin.ts` | bypass `isGestore` **non** filtrato per stato ⚠️ |
+| `requireGameplayRoles()` / `requireGameplayRole()` | `modules/game/middleware/auth.ts`, `core/auth/middleware/auth.ts` | filtra da 2026-08-22 (`requireApproved`, default `true`) |
+
+Per un check di ruolo preferire **`hasGamePermission()`**: risolve già stato, override e bypass gestore in un punto solo.
+
 **Incidente 2026-08-19** — `/auth/session` restituiva tutti i `game:admin:*` a un PG in bozza con `gameplayRoles: ['master']`. Due bypass distinti nello stesso file, entrambi valutati **prima** dello stato: `if (isGestore) return ...` e i permessi di ruolo mai filtrati per stato. Il primo era già stato corretto in #59, il secondo no.
+**Incidente 2026-08-22** — stessa classe, terzo percorso mai toccato dai fix precedenti: `requireGameplayRoles()` non guardava `playerStatus`, e la variante `core` valutava `if (isGestore) next()` prima dello stato. Raggio reale nullo (unici usi: `['player']`), ma il commento di `onGameMessages.ts` dichiarava «BLOCKED for DRAFT characters» ed era **falso** — né middleware né `OnGameMessageController` controllavano nulla. Fix: parametro `requireApproved` con default `true`; `offGameMessages.ts` ammette i draft di proposito e fa opt-out esplicito.
 
 **Permessi derivati dallo stato, non denormalizzati.** `game:character:wizard` viene calcolato in `getCharacterGamePermissions()` da `playerStatus === 'draft'`. Non fidarsi dell'array `characterPermissions` come sorgente: l'hook `pre('save')` di `Character.ts` lo popola solo su `isModified('playerStatus')`, quindi ogni `updateOne`/`findByIdAndUpdate`, fix manuale sul DB o `Object.assign` che rimpiazza l'array in blocco (`CharacterApprovalController`, `allowedFields`) lasciava un draft senza il permesso e col wizard irraggiungibile (incidenti 2026-08-14 e 2026-08-19). Un `-game:character:wizard` esplicito continua a vincere.
 
@@ -85,6 +97,10 @@ Il cookie `character_context` è **deprecato**: usare `X-Session-Id`. Flusso com
 **WebSocket**: Socket.IO con adapter Redis (scaling orizzontale). All'handshake verifica JWT dai cookie + `sessionId` dalla query, poi join della room `character:<id>`. Broadcast per room.
 
 **Redis pub/sub** per la comunicazione cross-service (es. `embeddings:document:new` verso embeddings-worker).
+
+**Tipi di documento e lettura riservata.** Sorgente unica: `features/documenti/constants/documentTypes.ts`. `manuale-master` è a lettura riservata (permesso `game:documents:master-manual:read`, ruolo master), gli altri due sono pubblici. Regola: ogni percorso di lettura pubblica parte da `PUBLIC_DOCUMENT_TYPES` e passa da `utils/documentAccess.ts` — **default-deny**, mai una lista di esclusioni. I canali da coprire sono cinque, non uno: dettaglio, `routes/list`, `routes/list-hierarchical`, `/search`, `/semantic-search`, più i preferiti. Fuori dai canali pubblici: escluso da `SitemapService`, non indicizzato (il `post('save')` di `Document.ts` pubblica un evento *deleted* quando un documento pubblico diventa riservato, altrimenti i chunk già in Qdrant/ES restano cercabili da chiunque) e non revalidato.
+
+Il permesso vive sul **personaggio**, quindi richiede `X-Session-Id`: le route pubbliche montano `authenticateCharacter(false)`. Su `apps/documents` questo implica che le pagine riservate siano **client-only** — vedi `10-frontend.md`.
 
 **Revalidation ISR di `apps/documents`**: `Document.ts` (post-save hook) chiama fire-and-forget `POST /api/revalidate` su `apps/documents` (`DocumentsRevalidator.ts`, secret condiviso `DOCUMENTS_REVALIDATE_SECRET`) per rigenerare subito la pagina statica. Le pagine dettaglio di `regolamento`/`ambientazione` sono ISR con `revalidate: 3600`: senza questo trigger, un salvataggio da gestionale non si vede sul sito pubblico per fino a un'ora (fix 2026-08-18).
 

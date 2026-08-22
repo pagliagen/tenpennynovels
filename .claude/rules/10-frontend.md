@@ -101,6 +101,11 @@ Skill disponibile: `/new-management-page`.
 
 **Read-only**: nessuna mutazione sui documenti. L'editing sta in management. Eccezione: i preferiti dell'utente.
 
+**Contenuti riservati = pagine client-only.** `/manuale-master/*` non usa `getStaticProps` né `getServerSideProps`, e non è una svista: l'ISR è una cache **condivisa** fra tutti i visitatori (la prima visita di un master servirebbe la pagina a chiunque), e l'SSR non vede `sessionStorage`, dove vive il `sessionId` che identifica il personaggio. Conseguenze volute: niente indicizzazione, niente sitemap, niente JSON-LD. Non "ottimizzare" queste pagine aggiungendoci ISR.
+Il `sessionId` arriva solo dal link nella TopBar del game (`?sessionId=`) ed è per-tab: chi apre `documenti.` direttamente **non** vede il manuale anche se è master. `MasterManualGate` lo dice esplicitamente invece di mostrare un 404. Il gating lato frontend è solo cosmetico: l'autorità è il backend.
+
+**Il tipo di documento non si deduce con un ternario.** `Sidebar`/`HamburgerMenu` usavano `isOnRegolamento ? 'regolamento' : 'ambientazione'`: usare `resolveDocumentSection()` (`utils/documentSection.ts`).
+
 **Ricerca semantica**: endpoint dedicato con fallback su ricerca testuale. Query minima 3 caratteri.
 
 **Font vittoriani** via `next/font/local` con variabili CSS. Nessun CDN esterno.
