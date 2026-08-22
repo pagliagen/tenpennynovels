@@ -7,6 +7,7 @@ import { useDocumentTree } from '@/hooks/useDocumentTree';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuthStore } from '@/store/authStore';
 import styles from '@/styles/components/layout/Sidebar.module.scss';
+import { resolveDocumentSection } from '@/utils/documentSection';
 
 import { FavoritesTreeView } from '../navigation/FavoritesTreeView';
 import { SubtypeTreeView } from '../navigation/SubtypeTreeView';
@@ -17,21 +18,11 @@ export function Sidebar(): JSX.Element {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const currentPath = router.asPath;
-  const isOnPreferiti = currentPath.startsWith('/preferiti');
-  const isOnRegolamento = currentPath.startsWith('/regolamento');
+  const { type: currentType, label: sectionLabel, isFavorites: isOnPreferiti } =
+    resolveDocumentSection(currentPath);
 
   const { data: favorites } = useFavorites(isAuthenticated && isOnPreferiti);
 
-  let sectionLabel: string;
-  if (isOnPreferiti) {
-    sectionLabel = 'Preferiti';
-  } else if (isOnRegolamento) {
-    sectionLabel = 'Regolamento';
-  } else {
-    sectionLabel = 'Ambientazione';
-  }
-
-  const currentType = isOnRegolamento ? 'regolamento' : 'ambientazione';
   const subtypes = documentsByType?.[currentType] || [];
 
   const renderTree = () => {

@@ -14,6 +14,16 @@
  * @module utils/schemas
  */
 
+import { DOCUMENT_TYPE_CONFIGS, type DocumentType } from '@/types/document';
+
+/**
+ * Etichetta leggibile del tipo. I due ternari che c'erano prima etichettavano
+ * come "Regolamento" qualunque tipo diverso da ambientazione.
+ */
+function documentTypeLabel(type: string): string {
+  return DOCUMENT_TYPE_CONFIGS[type as DocumentType]?.label ?? type;
+}
+
 /**
  * Organization Schema
  *
@@ -235,7 +245,7 @@ export function createArticleSchema(document: {
       "width": 1200,
       "height": 630
     },
-    "articleSection": document.type === 'ambientazione' ? 'Ambientazione' : 'Regolamento',
+    "articleSection": documentTypeLabel(document.type),
     "wordCount": document.content ? document.content.split(/\s+/).length : undefined,
     "inLanguage": "it-IT"
   };
@@ -279,7 +289,7 @@ export function createDocumentBreadcrumbSchema(
     {
       "@type": "ListItem",
       "position": 2,
-      "name": type === 'ambientazione' ? 'Ambientazione' : 'Regolamento',
+      "name": documentTypeLabel(type),
       "item": `${BASE_URL}/${type}`
     },
     ...pathSegments.map((segment, idx) => ({

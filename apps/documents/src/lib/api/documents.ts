@@ -7,6 +7,7 @@
  * @since 1.0.0
  */
 
+import type { DocumentsByType } from '@/hooks/useDocumentTree';
 import type {
   Document,
   DocumentSection,
@@ -50,10 +51,12 @@ interface SectionsBody {
 
 interface HierarchicalBody {
   data?: {
-    routes?: {
-      ambientazione: DocumentSubtype[];
-      regolamento: DocumentSubtype[];
-    };
+    /**
+     * Una chiave per ogni tipo che il richiedente può leggere: il backend
+     * omette del tutto i tipi riservati per chi non ha il permesso, quindi
+     * 'manuale-master' può mancare ed è normale.
+     */
+    routes?: Partial<Record<DocumentType, DocumentSubtype[]>>;
   };
 }
 
@@ -142,11 +145,14 @@ export const documentsApi = {
   /**
    * List documents grouped by subtype within each type
    */
-  async listHierarchical(): Promise<{
-    ambientazione: DocumentSubtype[];
-    regolamento: DocumentSubtype[];
-  }> {
+  async listHierarchical(): Promise<DocumentsByType> {
     const body = await api.get<HierarchicalBody>('/documents/routes/list-hierarchical');
-    return body.data?.routes ?? { ambientazione: [], regolamento: [] };
+    const routes = body.data?.routes ?? {};
+
+    return {
+      ambientazione: routes.ambientazione ?? [],
+      regolamento: routes.regolamento ?? [],
+      'manuale-master': routes['manuale-master'] ?? [],
+    };
   },
 };

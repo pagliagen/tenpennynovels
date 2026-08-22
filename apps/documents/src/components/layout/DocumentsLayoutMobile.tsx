@@ -5,7 +5,7 @@ import { useRouter } from 'next/router';
 import { ReactNode, useRef, useState, useEffect, useCallback } from 'react';
 
 import { useSearchState } from '@/hooks/useSearch';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore, selectCanReadMasterManual } from '@/store/authStore';
 import styles from '@/styles/components/layout/DocumentsLayoutMobile.module.scss';
 
 import { SearchResults } from '../search/SearchResults';
@@ -20,6 +20,7 @@ interface DocumentsLayoutMobileProps {
 export function DocumentsLayoutMobile({ children }: DocumentsLayoutMobileProps): JSX.Element {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const canReadMasterManual = useAuthStore(selectCanReadMasterManual);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [searchExpanded, setSearchExpanded] = useState(false);
 
@@ -145,7 +146,7 @@ export function DocumentsLayoutMobile({ children }: DocumentsLayoutMobileProps):
         </div>
       </header>
 
-      {/* Menu Bar: Ambientazione | Regolamento | Preferiti */}
+      {/* Menu Bar: Ambientazione | Regolamento | Manuale Master | Preferiti */}
       <nav className={styles.menuBar}>
         <Link
           href="/ambientazione"
@@ -159,6 +160,14 @@ export function DocumentsLayoutMobile({ children }: DocumentsLayoutMobileProps):
         >
           Regolamento
         </Link>
+        {canReadMasterManual && (
+          <Link
+            href="/manuale-master"
+            className={`${styles.menuTab} ${isActiveSection('/manuale-master') ? styles.active : ''}`}
+          >
+            Manuale Master
+          </Link>
+        )}
         {isAuthenticated && (
           <Link
             href="/preferiti"

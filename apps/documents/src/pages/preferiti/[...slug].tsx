@@ -8,6 +8,7 @@ import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { documentsApi } from '@/lib/api/documents';
 import { logger } from '@/lib/logger';
 import styles from '@/styles/components/documents/MainContent.module.scss';
+import { isPublicDocumentType } from '@/types/document';
 import type { DocumentDetail as DocumentDetailType } from '@/types/document';
 
 interface PreferitiDetailProps {
@@ -60,7 +61,10 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req }) =>
   const type = slugArray[0];
   const path = slugArray.slice(1).join('/');
 
-  if (type !== 'ambientazione' && type !== 'regolamento') {
+  // Solo i tipi pubblici: la pagina è SSR e inoltra i cookie, ma NON ha la
+  // sessione personaggio (sessionStorage è per-tab e lato client), quindi non
+  // potrebbe mai autorizzare un tipo riservato. Il backend rifiuta comunque.
+  if (!isPublicDocumentType(type)) {
     return { notFound: true };
   }
 

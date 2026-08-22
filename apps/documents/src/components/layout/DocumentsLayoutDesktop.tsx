@@ -6,7 +6,7 @@ import { ReactNode, useRef, useEffect, useCallback } from 'react';
 
 import { useAiStatus } from '@/hooks/useAiStatus';
 import { useSearchState } from '@/hooks/useSearch';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore, selectCanReadMasterManual } from '@/store/authStore';
 import styles from '@/styles/components/layout/DocumentsLayoutDesktop.module.scss';
 
 import { SearchResults } from '../search/SearchResults';
@@ -17,9 +17,36 @@ interface DocumentsLayoutDesktopProps {
   children: ReactNode;
 }
 
+interface NavTabProps {
+  href: string;
+  label: string;
+  active: boolean;
+}
+
+/**
+ * Tab della barra di navigazione.
+ *
+ * `<img>` e non next/image: lo sfondo è un asset decorativo a dimensione fissa
+ * già in /public, e l'ottimizzazione di next/image non porta nulla qui.
+ */
+function NavTab({ href, label, active }: NavTabProps): JSX.Element {
+  return (
+    <Link href={href} className={styles.navTab}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={active ? '/images/doc_bottom_on.png' : '/images/doc_bottom_off.png'}
+        alt=""
+        className={styles.navTabBg}
+      />
+      <span className={styles.navTabLabel}>{label}</span>
+    </Link>
+  );
+}
+
 export function DocumentsLayoutDesktop({ children }: DocumentsLayoutDesktopProps): JSX.Element {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const canReadMasterManual = useAuthStore(selectCanReadMasterManual);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const { aiAvailable } = useAiStatus();
 
@@ -80,31 +107,29 @@ export function DocumentsLayoutDesktop({ children }: DocumentsLayoutDesktopProps
         <header className={styles.header}>
           <div className={styles.headerInner}>
             <nav className={styles.nav}>
-              <Link href="/ambientazione" className={styles.navTab}>
-                <img
-                  src={isActiveSection('/ambientazione') ? '/images/doc_bottom_on.png' : '/images/doc_bottom_off.png'}
-                  alt=""
-                  className={styles.navTabBg}
+              <NavTab
+                href="/ambientazione"
+                label="Ambientazione"
+                active={isActiveSection('/ambientazione')}
+              />
+              <NavTab
+                href="/regolamento"
+                label="Regolamento"
+                active={isActiveSection('/regolamento')}
+              />
+              {canReadMasterManual && (
+                <NavTab
+                  href="/manuale-master"
+                  label="Manuale Master"
+                  active={isActiveSection('/manuale-master')}
                 />
-                <span className={styles.navTabLabel}>Ambientazione</span>
-              </Link>
-              <Link href="/regolamento" className={styles.navTab}>
-                <img
-                  src={isActiveSection('/regolamento') ? '/images/doc_bottom_on.png' : '/images/doc_bottom_off.png'}
-                  alt=""
-                  className={styles.navTabBg}
-                />
-                <span className={styles.navTabLabel}>Regolamento</span>
-              </Link>
+              )}
               {isAuthenticated && (
-                <Link href="/preferiti" className={styles.navTab}>
-                  <img
-                    src={isActiveSection('/preferiti') ? '/images/doc_bottom_on.png' : '/images/doc_bottom_off.png'}
-                    alt=""
-                    className={styles.navTabBg}
-                  />
-                  <span className={styles.navTabLabel}>Preferiti</span>
-                </Link>
+                <NavTab
+                  href="/preferiti"
+                  label="Preferiti"
+                  active={isActiveSection('/preferiti')}
+                />
               )}
             </nav>
 

@@ -11,12 +11,14 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { documentsApi } from '@/lib/api/documents';
-import type { DocumentSubtype } from '@/types/document';
+import type { DocumentSubtype, DocumentType } from '@/types/document';
 
-export interface DocumentsByType {
-  ambientazione: DocumentSubtype[];
-  regolamento: DocumentSubtype[];
-}
+/**
+ * Una entry per ogni tipo. Per chi non ha il permesso di lettura riservata
+ * 'manuale-master' resta semplicemente un array vuoto: il backend non lo
+ * restituisce, il client normalizza (vedi documentsApi.listHierarchical).
+ */
+export type DocumentsByType = Record<DocumentType, DocumentSubtype[]>;
 
 /**
  * Fetch all documents grouped by subtype

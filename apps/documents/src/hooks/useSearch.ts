@@ -39,7 +39,7 @@ function isQuestion(query: string): boolean {
 
 // --- Types ---
 
-interface SearchResult {
+export interface SearchResult {
   document: {
     _id: string;
     slug: string;

@@ -12,16 +12,18 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { logger } from '@/lib/logger';
-import type { DocumentType } from '@/types/document';
+import { PUBLIC_DOCUMENT_TYPES, type PublicDocumentType } from '@/types/document';
 
-const VALID_TYPES: DocumentType[] = ['ambientazione', 'regolamento'];
+// Solo i tipi pubblici: le pagine dei tipi riservati sono client-only, non
+// esiste nessuna cache ISR da rigenerare. Il backend non chiama nemmeno.
+const VALID_TYPES: PublicDocumentType[] = [...PUBLIC_DOCUMENT_TYPES];
 
 // Segmenti di path attesi: slug alfanumerici separati da "/" (come da
 // Document.path = "{subtype.slug}/{doc.slug}"), niente altro.
 const PATH_SEGMENT_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/;
 
 interface RevalidateBody {
-  type?: DocumentType;
+  type?: PublicDocumentType;
   paths?: unknown;
 }
 

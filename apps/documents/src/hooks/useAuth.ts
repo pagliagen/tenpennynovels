@@ -27,6 +27,12 @@ interface SessionResponse {
   data?: {
     valid: boolean;
     user?: SessionUser;
+    /**
+     * Permessi del personaggio attivo. Il backend li restituisce solo se la
+     * richiesta portava X-Session-Id (apiClient lo aggiunge da sessionStorage
+     * quando l'utente è arrivato dal gioco).
+     */
+    gamePermissions?: string[];
   };
 }
 
@@ -39,7 +45,7 @@ export interface UseAuthReturn {
 export function useAuth(): UseAuthReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
-  const { setUser, logout } = useAuthStore();
+  const { setUser, logout, setInitialized } = useAuthStore();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
@@ -52,7 +58,7 @@ export function useAuth(): UseAuthReturn {
         if (cancelled) return;
 
         if (response.success && response.data?.valid && response.data.user) {
-          setUser(response.data.user);
+          setUser(response.data.user, response.data.gamePermissions ?? []);
         } else {
           logout();
         }
@@ -62,6 +68,7 @@ export function useAuth(): UseAuthReturn {
         if (!cancelled) {
           setIsLoading(false);
           setIsInitialized(true);
+          setInitialized();
         }
       }
     };
@@ -71,7 +78,7 @@ export function useAuth(): UseAuthReturn {
     return () => {
       cancelled = true;
     };
-  }, [setUser, logout]);
+  }, [setUser, logout, setInitialized]);
 
   return { isLoading, isInitialized, isAuthenticated };
 }
