@@ -14,7 +14,7 @@ import path from 'path';
 import Document from '@features/documenti/models/Document';
 import { logger } from '@shared/utils/logger';
 import { appConfig } from '@config/runtime';
-import { PUBLIC_DOCUMENT_TYPE_LIST } from '@features/documenti/constants/documentTypes';
+import { PUBLIC_DOCUMENT_TYPE_LIST } from '@features/documenti/api';
 
 const LANDING_DOMAIN = 'https://tenpennynovels.com';
 const DOCUMENTS_DOMAIN = 'https://documenti.tenpennynovels.com';

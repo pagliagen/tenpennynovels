@@ -417,8 +417,8 @@ export interface LocationActivity {
 // Document Management Types
 // Riesportato dalla sorgente unica in features/documenti: qui viveva una
 // seconda union che sarebbe silenziosamente andata in drift al primo tipo nuovo.
-export type { DocumentType } from '@features/documenti/constants/documentTypes';
-import type { DocumentType } from '@features/documenti/constants/documentTypes';
+export type { DocumentType } from '@features/documenti/api';
+import type { DocumentType } from '@features/documenti/api';
 export type DocumentVisibility = 'pubblico' | 'ristretto' | 'spento';
 export type DocumentStatus = 'draft' | 'published' | 'archived' | 'deleted';
 

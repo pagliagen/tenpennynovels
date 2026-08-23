@@ -9,3 +9,26 @@
  * feature e la referenzia via dependsOn: ['documenti']).
  */
 export { EmbeddingService } from './services/EmbeddingService';
+
+/**
+ * Tipi documento: sorgente unica in constants/documentTypes.ts, riesposta qui
+ * perché serve fuori dalla feature (tipi del gestionale, SitemapService). Sono
+ * costanti e type guard senza dipendenze, non logica di dominio: farle passare
+ * dal barrel evita sia la duplicazione della union sia un boundary-allow per
+ * ogni consumer.
+ */
+export {
+  PUBLIC_DOCUMENT_TYPES,
+  RESTRICTED_DOCUMENT_TYPES,
+  ALL_DOCUMENT_TYPES,
+  PUBLIC_DOCUMENT_TYPE_LIST,
+  ALL_DOCUMENT_TYPE_LIST,
+  isDocumentType,
+  isPublicDocumentType,
+  isRestrictedDocumentType,
+} from './constants/documentTypes';
+export type {
+  DocumentType,
+  PublicDocumentType,
+  RestrictedDocumentType,
+} from './constants/documentTypes';
