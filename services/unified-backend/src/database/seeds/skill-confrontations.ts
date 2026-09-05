@@ -29,6 +29,7 @@
 
 import mongoose from 'mongoose';
 import { SkillConfrontation } from '@features/confronti/api';
+import { appConfig } from '@config/runtime/appConfig';
 
 const COMBAT_SKILLS = [
   'Armi da botta',
@@ -121,7 +122,12 @@ const COMBAT_CONFRONTATIONS = [
 }));
 
 async function seed(): Promise<void> {
-  const uri = process.env.MONGODB_URI || 'mongodb://admin:admin123@localhost:27017/tenpennynovels?authSource=admin';
+  // Niente URI hardcodata qui: un'unica sorgente (appConfig), che legge
+  // MONGODB_URI e in sviluppo usa il fallback documentato.
+  const uri = appConfig.db.mongodbUri;
+  if (!uri) {
+    throw new Error('MONGODB_URI non impostata (obbligatoria con NODE_ENV=production)');
+  }
   await mongoose.connect(uri);
 
   for (const config of [...SOCIAL_CONFRONTATIONS, ...COMBAT_CONFRONTATIONS]) {
