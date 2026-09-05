@@ -128,7 +128,7 @@ Il permesso vive sul **personaggio**, quindi richiede `X-Session-Id`: le route p
 
 **Collection** (384 dimensioni, distanza cosine): `documents`, `document_chunks`, `forum_posts`, `chat_messages`.
 
-**Cache**: hash MD5 del testo come chiave, TTL 1h. Con cache ~50ms, senza ~1.5s.
+**Cache**: hash SHA-256 del testo come chiave (`hashContent`), TTL 1h. Con cache ~50ms, senza ~1.5s. `stableUUID` usa ancora MD5 di proposito: serve un digest da 32 hex per il formato UUID dei point ID Qdrant.
 
 **Python**: subprocess `sentence-transformers` (`paraphrase-multilingual-MiniLM-L12-v2`), ~60s di caricamento modello all'avvio.
 
