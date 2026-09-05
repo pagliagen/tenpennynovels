@@ -141,7 +141,7 @@ async function main(): Promise<void> {
     lines.push(key);
   }
 
-  lines.sort();
+  lines.sort((a, b) => a.localeCompare(b));
   process.stdout.write(lines.join('\n') + '\n');
 
   // Il processo resta vivo per cron/timer avviati come side-effect

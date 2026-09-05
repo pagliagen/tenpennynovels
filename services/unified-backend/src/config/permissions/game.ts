@@ -545,7 +545,7 @@ export function getCharacterGamePermissions(
     else if (p !== 'game:*') allPermissions.add(p as GamePermission);
   });
 
-  return Array.from(allPermissions).sort();
+  return Array.from(allPermissions).sort((a, b) => a.localeCompare(b));
 }
 
 /**

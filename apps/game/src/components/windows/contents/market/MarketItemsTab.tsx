@@ -70,7 +70,7 @@ export function MarketItemsTab({ data }: MarketItemsTabProps): React.ReactElemen
   const addToast = useUIStore((s) => s.addToast);
 
   const categories = useMemo(
-    () => Array.from(new Set(data.items.map((item) => item.category))).sort(),
+    () => Array.from(new Set(data.items.map((item) => item.category))).sort((a, b) => a.localeCompare(b)),
     [data.items]
   );
 
