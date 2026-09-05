@@ -30,8 +30,10 @@ const migrations: Record<string, MigrationFn> = {
 export function applyMigrations(fromVersion: string, data: unknown): unknown {
   let currentData = data;
 
-  // Apply each migration in order
-  const versions = Object.keys(migrations).sort();
+  // Apply each migration in order (numeric-aware: "1.10.0" dopo "1.9.0")
+  const versions = Object.keys(migrations).sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true })
+  );
 
   for (const version of versions) {
     if (version > fromVersion && version <= STORAGE_VERSION) {
