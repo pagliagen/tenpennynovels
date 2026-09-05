@@ -16,8 +16,9 @@ COPY package*.json ./
 # Install dependencies (including dev dependencies for tsx)
 RUN npm install
 
-# Copy source code
-COPY . .
+# Copy source code (esplicito: niente COPY . . — S6470)
+COPY tsconfig.json ./
+COPY src ./src
 
 # Expose port
 EXPOSE 8000

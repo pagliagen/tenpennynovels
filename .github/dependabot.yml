@@ -4,7 +4,10 @@
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # GitHub Actions: le action di terze parti in deploy.yml sono pinnate al
+  # commit SHA (githubactions:S7637). Senza questo blocco i pin invecchiano
+  # in silenzio — dependabot apre una PR quando esce una nuova versione.
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"

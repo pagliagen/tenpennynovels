@@ -14,6 +14,7 @@
 
 import { createLogger } from '../utils/logger';
 import { ConfigurationService } from './ConfigurationService';
+import { evaluateFormula, FormulaError } from './formulaEvaluator';
 
 const logger = createLogger({ serviceName: 'CharacterCreationConfigService' });
 
@@ -716,8 +717,8 @@ export function calculateStatFormula(formula: string, token: string, statValue: 
       return fallback();
     }
 
-    // Evaluate mathematical expression
-    const result = eval(processedFormula);
+    // Evaluate mathematical expression (parser dedicato, niente eval)
+    const result = evaluateFormula(processedFormula);
     return Math.floor(result);
   } catch (error: any) {
     logger.error('Error evaluating stat formula', {
@@ -801,13 +802,14 @@ function preprocessDerivedFormula(formula: string, stats: CharacterStats): strin
     processed = processed.replace(new RegExp(`\\b${abbr}\\b`, 'g'), value.toString());
   }
 
-  // 2. Replace math functions with JavaScript equivalents
-  processed = processed.replace(/FLOOR\s*\(/gi, 'Math.floor(');
-  processed = processed.replace(/CEIL\s*\(/gi, 'Math.ceil(');
-  processed = processed.replace(/ROUND\s*\(/gi, 'Math.round(');
-  processed = processed.replace(/ABS\s*\(/gi, 'Math.abs(');
-  processed = processed.replace(/MIN\s*\(/gi, 'Math.min(');
-  processed = processed.replace(/MAX\s*\(/gi, 'Math.max(');
+  // 2. Normalizza i nomi delle funzioni matematiche (il parser le riconosce
+  //    in minuscolo, senza prefisso `Math.`)
+  processed = processed.replace(/FLOOR\s*\(/gi, 'floor(');
+  processed = processed.replace(/CEIL\s*\(/gi, 'ceil(');
+  processed = processed.replace(/ROUND\s*\(/gi, 'round(');
+  processed = processed.replace(/ABS\s*\(/gi, 'abs(');
+  processed = processed.replace(/MIN\s*\(/gi, 'min(');
+  processed = processed.replace(/MAX\s*\(/gi, 'max(');
 
   // 3. Replace user-friendly operators
   processed = processed.replace(/x/gi, '*');
@@ -851,8 +853,9 @@ export function calculateDerivedStat(formula: string, stats: CharacterStats): nu
     // Preprocess formula
     let processed = preprocessDerivedFormula(formula, stats);
 
-    // Validate: only allow safe characters (including letters for Math.floor, Math.ceil, etc.)
-    if (!/^[\da-zA-Z+\-*/().,<>=!&|\s]+$/.test(processed)) {
+    // Validate: solo numeri, operatori aritmetici, parentesi, virgole e nomi
+    // di funzione (floor/ceil/round/abs/min/max)
+    if (!/^[\da-zA-Z+\-*/().,\s]+$/.test(processed)) {
       logger.error('Invalid formula characters detected in derived stat', {
         original: formula,
         processed
@@ -860,9 +863,9 @@ export function calculateDerivedStat(formula: string, stats: CharacterStats): nu
       return 0;
     }
 
-    // Evaluate mathematical expression
-    const result = eval(processed);
-    return typeof result === 'number' ? Math.floor(result) : 0;
+    // Evaluate mathematical expression (parser dedicato, niente eval)
+    const result = evaluateFormula(processed);
+    return Math.floor(result);
   } catch (error: any) {
     logger.error('Error evaluating derived stat formula', {
       formula,
@@ -915,19 +918,21 @@ export function validateDerivedFormula(formula: string): { valid: boolean; error
   try {
     const processed = preprocessDerivedFormula(formula, testStats);
 
-    // Check for valid characters only (including letters for Math.floor, Math.ceil, etc.)
-    if (!/^[\da-zA-Z+\-*/().,<>=!&|\s]+$/.test(processed)) {
+    // Check for valid characters only (numeri, operatori, parentesi, virgole,
+    // nomi di funzione)
+    if (!/^[\da-zA-Z+\-*/().,\s]+$/.test(processed)) {
       return {
         valid: false,
-        error: 'Caratteri non validi (solo +, -, *, /, <, >, =, &, |, (, ) e funzioni matematiche permessi)'
+        error: 'Caratteri non validi (solo +, -, *, /, (, ) e funzioni floor/ceil/round/abs/min/max permessi)'
       };
     }
 
-    // Try to evaluate
-    eval(processed);
+    // Try to evaluate (parser dedicato, niente eval)
+    evaluateFormula(processed);
     return { valid: true };
   } catch (error) {
-    return { valid: false, error: 'Formula non valida o errore di sintassi' };
+    const msg = error instanceof FormulaError ? error.message : 'Formula non valida o errore di sintassi';
+    return { valid: false, error: msg };
   }
 }
 

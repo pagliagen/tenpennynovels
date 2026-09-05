@@ -129,8 +129,8 @@ export class EmbeddingWorker {
       }
     });
 
-    // Initialize Redis client for caching
-    this.initRedisCache();
+    // Il client Redis di cache viene connesso in start() (operazione async,
+    // fuori dal constructor — S7059).
   }
 
   /**
@@ -325,6 +325,9 @@ export class EmbeddingWorker {
     }
 
     logger.info('🚀 Starting Embedding Worker with BullMQ...');
+
+    // Connetti il client Redis di cache prima di processare
+    await this.initRedisCache();
 
     // ✅ Ensure collections exist before processing
     await this.ensureCollections();
@@ -523,10 +526,12 @@ export class EmbeddingWorker {
   }
 
   /**
-   * Hash content for cache key
+   * Hash content for cache key. SHA-256 (non MD5): non è un contesto di
+   * sicurezza — è solo una chiave Redis — ma evita il finding S4790 e il
+   * costo è irrilevante rispetto all'embedding.
    */
   private hashContent(content: string): string {
-    return crypto.createHash('md5').update(content).digest('hex');
+    return crypto.createHash('sha256').update(content).digest('hex');
   }
 
   /**
