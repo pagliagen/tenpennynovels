@@ -35,6 +35,7 @@ interface DocumentTreeViewProps {
   onDeleteDocument: (docId: string) => void;
   onToggleDocumentVisibility: (docId: string) => void;
   onToggleDocumentDraft: (docId: string) => void;
+  onToggleDocumentPublic: (docId: string) => void;
   onReorderSiblings?: (parentId: string | null, orderedIds: string[]) => void;
 }
 
@@ -46,6 +47,7 @@ export function DocumentTreeView({
   onDeleteDocument,
   onToggleDocumentVisibility,
   onToggleDocumentDraft,
+  onToggleDocumentPublic,
   onReorderSiblings
 }: DocumentTreeViewProps): React.ReactElement {
   const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
@@ -164,6 +166,7 @@ export function DocumentTreeView({
                 onDelete={onDeleteDocument}
                 onToggleVisibility={onToggleDocumentVisibility}
                 onToggleDraft={onToggleDocumentDraft}
+                onTogglePublic={onToggleDocumentPublic}
                 onCreateChildDocument={onCreateChildDocument}
               />
             ))}

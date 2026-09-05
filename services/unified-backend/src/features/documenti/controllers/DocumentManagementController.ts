@@ -489,6 +489,43 @@ export class DocumentManagementController {
   }
 
   /**
+   * Toggle document public/private status
+   * PATCH /admin/documents/:id/toggle-public
+   */
+  static async toggleDocumentPublic(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params as { id: string };
+
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
+      const document = await Document.findById(id);
+
+      if (!document) {
+        res.status(404).json(errorResponse(
+          'Documento non trovato', 'DOCUMENT_NOT_FOUND', undefined, 404, getRequestId(req)
+        ));
+        return;
+      }
+
+      document.isPublic = !document.isPublic;
+      await document.save();
+
+      res.json(successResponse({ isPublic: document.isPublic }, undefined, getRequestId(req)));
+    } catch (error: any) {
+      logger.error('Error toggling document public status:', error);
+      res.status(500).json(errorResponse(
+        error.message || 'Errore toggle pubblico documento',
+        'TOGGLE_PUBLIC_ERROR', undefined, 500, getRequestId(req)
+      ));
+    }
+  }
+
+  /**
    * Get single document by ID (for editing)
    */
   static async getDocumentById(req: Request, res: Response): Promise<void> {
@@ -672,7 +709,10 @@ export class DocumentManagementController {
         contentDelta: contentDelta || { type: 'doc', content: [] },
         isDraft: isDraft !== undefined ? isDraft : true,
         visible: visible !== undefined ? visible : true,
-        isPublic: isPublic !== undefined ? isPublic : false,
+        // Default true: la maggior parte dei documenti è pubblica, solo poche
+        // eccezioni (es. manuale-master) richiedono login. Coerente col
+        // default dello schema (Document.ts) — prima era `false`, disallineato.
+        isPublic: isPublic !== undefined ? isPublic : true,
         tags: tags || [],
         order: order !== undefined ? order : 0,
         createdAt: new Date(),

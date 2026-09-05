@@ -31,7 +31,9 @@ export function CreateDocumentModal({
   const [subtypeId, setSubtypeId] = useState('');
   const [isDraft, setIsDraft] = useState(true);
   const [visible, setVisible] = useState(true);
-  const [isPublic, setIsPublic] = useState(false);
+  // Pubblico di default: la maggior parte dei documenti lo è, solo poche
+  // eccezioni (es. contenuti riservati al master) richiedono login.
+  const [isPublic, setIsPublic] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
 

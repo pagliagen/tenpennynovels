@@ -7,7 +7,7 @@ import { Modal } from '@/components/shared/Modal';
 import { PreviewPanel } from '@/components/shared/PreviewPanel';
 import { DocumentContentEditor } from './DocumentContentEditor';
 import { DocumentIframePreview } from './DocumentIframePreview';
-import { useDocument, useUpdateDocument, useAutosaveDocument, documentKeys } from '@/hooks/api/useDocuments';
+import { useDocument, useUpdateDocument, useAutosaveDocument, useSubtypes, documentKeys } from '@/hooks/api/useDocuments';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useConfirm } from '@/hooks/useConfirm';
 import styles from './EditDocumentModal.module.scss';
@@ -31,10 +31,15 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   const { data: document, isLoading, isError, error } = useDocument(documentId);
   const [contentDelta, setContentDelta] = useState<any>(null);
   const [title, setTitle] = useState('');
+  const [subtypeId, setSubtypeId] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [refreshSignal, setRefreshSignal] = useState(0);
   const updateDocument = useUpdateDocument();
   const autosaveDocument = useAutosaveDocument();
+  // Solo i sottotipi dello stesso type: cambiare il type del documento non è
+  // gestito da questo modal (richiederebbe anche una nuova validazione di
+  // path/permessi lato lettura pubblica, vedi documentAccess.ts).
+  const { data: subtypes = [] } = useSubtypes(document?.type);
   const addNotification = useNotificationStore(state => state.addNotification);
   const queryClient = useQueryClient();
   const { confirm, ConfirmDialogComponent } = useConfirm();
@@ -65,8 +70,12 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
     if (document) {
       const initialContentDelta = document.contentDelta || { type: 'doc', content: [] };
       const initialTitle = document.title || '';
+      const initialSubtypeId = typeof document.subtypeId === 'string'
+        ? document.subtypeId
+        : document.subtypeId?._id || '';
       setContentDelta(initialContentDelta);
       setTitle(initialTitle);
+      setSubtypeId(initialSubtypeId);
       originalSnapshotRef.current = { title: initialTitle, contentDelta: initialContentDelta };
       hasAutosavedRef.current = false;
     }
@@ -151,6 +160,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
         data: {
           contentDelta,
           title,
+          subtypeId,
           lastUpdated: new Date().toISOString()
         }
       });
@@ -291,6 +301,23 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
             className={styles.titleInput}
             placeholder="Inserisci titolo..."
           />
+        </div>
+
+        {/* Subtype Selector */}
+        <div className={styles.titleSection}>
+          <label htmlFor="doc-subtype">Sottotipo</label>
+          <select
+            id="doc-subtype"
+            value={subtypeId}
+            onChange={(e) => setSubtypeId(e.target.value)}
+            className={styles.titleInput}
+          >
+            {subtypes.map((st) => (
+              <option key={st._id} value={st._id}>
+                {st.title} ({st.slug})
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* TipTap Editor */}

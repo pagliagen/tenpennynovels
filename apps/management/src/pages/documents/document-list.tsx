@@ -19,7 +19,8 @@ import {
   useReorderSiblings,
   useDeleteDocument,
   useToggleDocumentVisibility,
-  useToggleDocumentDraft
+  useToggleDocumentDraft,
+  useToggleDocumentPublic
 } from '@/hooks/api/useDocuments';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useURLFilter } from '@/hooks/useURLFilter';
@@ -46,6 +47,7 @@ export default function DocumentList() {
   const deleteDocument = useDeleteDocument();
   const toggleDocumentVisibility = useToggleDocumentVisibility();
   const toggleDocumentDraft = useToggleDocumentDraft();
+  const toggleDocumentPublic = useToggleDocumentPublic();
   const { confirm, ConfirmDialogComponent } = useConfirm();
   const addNotification = useNotificationStore(state => state.addNotification);
 
@@ -162,6 +164,18 @@ export default function DocumentList() {
     }
   };
 
+  const handleToggleDocumentPublic = async (documentId: string) => {
+    try {
+      await toggleDocumentPublic.mutateAsync(documentId);
+      addNotification({ type: 'success', message: 'Visibilità pubblica aggiornata' });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Errore nell\'aggiornamento'
+      });
+    }
+  };
+
   if (error) {
     return (
       <ManagementLayout>
@@ -243,6 +257,7 @@ export default function DocumentList() {
             onDeleteDocument={handleDeleteDocument}
             onToggleDocumentVisibility={handleToggleDocumentVisibility}
             onToggleDocumentDraft={handleToggleDocumentDraft}
+            onToggleDocumentPublic={handleToggleDocumentPublic}
             onReorderSiblings={handleReorderSiblings}
           />
         )}

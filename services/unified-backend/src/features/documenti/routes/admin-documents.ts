@@ -104,6 +104,14 @@ router.patch('/:id/toggle-draft',
   DocumentManagementController.toggleDocumentDraft
 );
 
+// Toggle public/private status
+router.patch('/:id/toggle-public',
+  AdminAuthMiddleware.requireGranularPermission('documents.update'),
+  AdminAuthMiddleware.logAdminAction('document.toggle_public', 'document_management'),
+  autoLogOutcome,
+  DocumentManagementController.toggleDocumentPublic
+);
+
 // Regenerate SEO description via AI gateway
 router.post('/:id/regenerate-seo',
   AdminAuthMiddleware.requireGranularPermission('documents.update'),

@@ -183,6 +183,19 @@ export async function toggleDocumentDraft(id: string): Promise<void> {
   }
 }
 
+/**
+ * Toggle document public/private status
+ */
+export async function toggleDocumentPublic(id: string): Promise<void> {
+  const response = await withRetry(() =>
+    apiClient.patch<ApiResponse<void>>(`/admin/documents/${id}/toggle-public`)
+  );
+
+  if (!response.data.success) {
+    throw new Error(response.data.error || 'Errore nel toggle pubblico documento');
+  }
+}
+
 // ========== SUBTYPES API ==========
 
 /**

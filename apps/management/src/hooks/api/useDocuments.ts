@@ -280,6 +280,36 @@ export function useToggleDocumentDraft() {
   });
 }
 
+/**
+ * Hook per toggle document public/private status
+ */
+export function useToggleDocumentPublic() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => documentAPI.toggleDocumentPublic(id),
+
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: documentKeys.lists() });
+      const previousLists = queryClient.getQueriesData({ queryKey: documentKeys.lists() });
+
+      updateDocumentNodeInTree(queryClient, id, (node) => ({
+        ...node, isPublic: !node.isPublic
+      }));
+
+      return { previousLists };
+    },
+
+    onError: (error, variables, context) => {
+      if (context?.previousLists) {
+        context.previousLists.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    }
+  });
+}
+
 // ========== SUBTYPE HOOKS ==========
 
 /**

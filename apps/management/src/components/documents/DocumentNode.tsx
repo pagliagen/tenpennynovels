@@ -21,6 +21,7 @@ interface DocumentNodeProps {
   onDelete: (docId: string) => void;
   onToggleVisibility: (docId: string) => void;
   onToggleDraft: (docId: string) => void;
+  onTogglePublic: (docId: string) => void;
   onCreateChildDocument: (parentDocId: string) => void;
 }
 
@@ -35,6 +36,7 @@ export const DocumentNode: React.FC<DocumentNodeProps> = React.memo(({
   onDelete,
   onToggleVisibility,
   onToggleDraft,
+  onTogglePublic,
   onCreateChildDocument
 }) => {
   const hasChildren = doc.children && doc.children.length > 0;
@@ -175,6 +177,12 @@ export const DocumentNode: React.FC<DocumentNodeProps> = React.memo(({
                 className={styles.menuItem}
               >
                 {doc.isDraft ? '✓ Pubblica' : '📋 Segna Bozza'}
+              </button>
+              <button
+                onClick={() => { onTogglePublic(doc._id); setMenuOpen(false); }}
+                className={styles.menuItem}
+              >
+                {doc.isPublic ? '🔒 Rendi Privato' : '🌐 Rendi Pubblico'}
               </button>
               <button
                 onClick={() => { onDelete(doc._id); setMenuOpen(false); }}
