@@ -17,8 +17,9 @@ COPY package*.json ./
 # Install ALL dependencies (including dev)
 RUN npm install
 
-# Copy source code
-COPY . .
+# Copy source code (esplicito: niente COPY . . — S6470)
+COPY tsconfig.json ./
+COPY src ./src
 
 # Expose port
 EXPOSE 3001
