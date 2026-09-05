@@ -23,14 +23,14 @@ CURRENT_NODE="$(node --version 2>/dev/null | tr -d 'v')"
 echo "🔎 Node richiesto (.nvmrc): v${REQUIRED_NODE}"
 echo "🔎 Node attivo:             v${CURRENT_NODE:-non trovato}"
 
-if [ "$CURRENT_NODE" != "$REQUIRED_NODE" ]; then
+if [[ "$CURRENT_NODE" != "$REQUIRED_NODE" ]]; then
   echo ""
   echo "⚠️  La versione Node attiva NON corrisponde a .nvmrc."
-  if command -v nvm >/dev/null 2>&1 || [ -s "$NVM_DIR/nvm.sh" ]; then
+  if command -v nvm >/dev/null 2>&1 || [[ -s "$NVM_DIR/nvm.sh" ]]; then
     echo "   nvm è disponibile in questa shell: eseguo 'nvm install && nvm use'..."
     export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
     # shellcheck disable=SC1091
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [[ -s "$NVM_DIR/nvm.sh" ]] && \. "$NVM_DIR/nvm.sh"
     nvm install
     nvm use
   else
@@ -68,7 +68,7 @@ NPM_DIRS=(
 )
 
 for dir in "${NPM_DIRS[@]}"; do
-  if [ ! -f "$dir/package.json" ]; then
+  if [[ ! -f "$dir/package.json" ]]; then
     echo "⏭️  ${dir}: package.json non trovato, salto"
     continue
   fi
@@ -93,12 +93,12 @@ echo "=================================================================="
 
 PY_DIR="services/embeddings-worker/python"
 
-if [ ! -f "$PY_DIR/requirements.txt" ]; then
+if [[ ! -f "$PY_DIR/requirements.txt" ]]; then
   echo "⏭️  ${PY_DIR}: requirements.txt non trovato, salto"
   SKIPPED_PY=true
 else
   PYTHON_BIN="$(command -v python3 || true)"
-  if [ -z "$PYTHON_BIN" ]; then
+  if [[ -z "$PYTHON_BIN" ]]; then
     echo "❌ python3 non trovato nel PATH"
     FAILED+=("python3:not-found")
   else
@@ -126,7 +126,7 @@ fi
 # ---------------------------------------------------------------------------
 echo ""
 echo "=================================================================="
-if [ ${#FAILED[@]} -eq 0 ]; then
+if [[ ${#FAILED[@]} -eq 0 ]]; then
   echo "✅ Setup completato senza errori."
   $SKIPPED_PY && echo "   (venv Python saltato: requirements.txt non trovato)"
   exit 0
