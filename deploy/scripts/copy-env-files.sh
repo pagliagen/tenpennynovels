@@ -27,7 +27,7 @@ echo "Template dir: $TEMPLATE_DIR"
 echo ""
 
 # Check if template directory exists
-if [ ! -d "$TEMPLATE_DIR" ]; then
+if [[ ! -d "$TEMPLATE_DIR" ]]; then
     echo -e "${RED}❌ Template directory not found: $TEMPLATE_DIR${NC}"
     exit 1
 fi
@@ -52,7 +52,7 @@ copy_env() {
     echo "  Target: $TARGET_DIR/$TARGET_FILENAME"
 
     # Check if source exists
-    if [ ! -f "$SOURCE" ]; then
+    if [[ ! -f "$SOURCE" ]]; then
         echo -e "  ${RED}✗ Source file not found${NC}"
         SKIPPED=$((SKIPPED + 1))
         echo ""
@@ -60,7 +60,7 @@ copy_env() {
     fi
 
     # Check if target directory exists
-    if [ ! -d "$PROJECT_ROOT/$TARGET_DIR" ]; then
+    if [[ ! -d "$PROJECT_ROOT/$TARGET_DIR" ]]; then
         echo -e "  ${RED}✗ Target directory not found${NC}"
         SKIPPED=$((SKIPPED + 1))
         echo ""
@@ -68,7 +68,7 @@ copy_env() {
     fi
 
     # Backup existing file if present
-    if [ -f "$TARGET" ]; then
+    if [[ -f "$TARGET" ]]; then
         BACKUP="$TARGET.backup.$(date +%Y%m%d_%H%M%S)"
         cp "$TARGET" "$BACKUP"
         echo -e "  ${BLUE}📦 Backed up existing file to: $(basename $BACKUP)${NC}"
@@ -108,15 +108,15 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}Summary${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo -e "${GREEN}✓ Copied:    $COPIED files${NC}"
-if [ $BACKED_UP -gt 0 ]; then
+if [[ $BACKED_UP -gt 0 ]]; then
     echo -e "${BLUE}📦 Backed up: $BACKED_UP files${NC}"
 fi
-if [ $SKIPPED -gt 0 ]; then
+if [[ $SKIPPED -gt 0 ]]; then
     echo -e "${YELLOW}⊘ Skipped:   $SKIPPED files${NC}"
 fi
 echo ""
 
-if [ $COPIED -eq 0 ]; then
+if [[ $COPIED -eq 0 ]]; then
     echo -e "${RED}❌ No files were copied. Check the errors above.${NC}"
     exit 1
 fi
