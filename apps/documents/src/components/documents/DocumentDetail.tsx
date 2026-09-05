@@ -17,6 +17,10 @@ interface DocumentDetailProps {
 export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
   const { document, sections, childDocuments } = data;
   const isDesktop = useIsDesktop(1024);
+  // Lo spazio dell'indice sulla griglia resta riservato anche quando non c'è
+  // abbastanza materiale per mostrarlo: altrimenti il contenuto si allarga a
+  // piena larghezza e la larghezza dell'articolo cambia documento per
+  // documento in modo inconsistente.
   const showTOC = isDesktop && sections && sections.length >= 2;
   const articleRef = useRef<HTMLElement>(null);
 
@@ -39,7 +43,7 @@ export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
   return ( 
       <article ref={articleRef} className={styles.article}>
 
-        <div className={showTOC ? styles.bodyLayout : styles.bodyLayoutFullWidth}>
+        <div className={isDesktop ? styles.bodyLayout : styles.bodyLayoutFullWidth}>
           <div className={styles.body}>
             <div
               className={styles.documentContent}
