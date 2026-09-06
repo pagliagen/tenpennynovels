@@ -275,7 +275,7 @@ export class ValidationMiddleware {
       .withMessage('Identifier must be between 3 and 50 characters')
       .custom((value) => {
         // Check if it's either a valid email OR a valid username
-        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        const isEmail = /^[^\s@]+@[^\s.@]+\.[^\s@]+$/.test(value); // dominio senza "." (S8786)
         const isUsername = /^[a-zA-Z0-9_]+$/.test(value);
         
         if (!isEmail && !isUsername) {

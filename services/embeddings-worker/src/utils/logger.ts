@@ -23,8 +23,10 @@ class Logger {
 
   private format(level: LogLevel, message: string, context?: Record<string, any>): string {
     const timestamp = new Date().toISOString();
+    // Rimuove CR/LF dal messaggio: evita log injection / forging di righe (S5145)
+    const safeMessage = String(message).replace(/[\r\n]+/g, ' ');
     const contextStr = context ? ` ${JSON.stringify(context)}` : '';
-    return `[${timestamp}] [${level.toUpperCase()}] ${message}${contextStr}`;
+    return `[${timestamp}] [${level.toUpperCase()}] ${safeMessage}${contextStr}`;
   }
 
   debug(message: string, context?: Record<string, any>): void {
