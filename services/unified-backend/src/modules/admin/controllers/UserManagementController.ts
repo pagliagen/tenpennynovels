@@ -447,42 +447,9 @@ export class UserManagementController {
       const userId = req.params.userId;
       const banData: UserBan = req.body;
 
-      // Validate ban data
-      if (!banData.reason || banData.reason.trim().length === 0) {
-        res.status(400).json(errorResponse(
-          'Ban reason is required',
-          'BAN_REASON_REQUIRED',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
+      if (!UserManagementController.validateBanInput(req, res, banData)) {
         return;
       }
-
-      if (!banData.duration || !['temporary', 'permanent'].includes(banData.duration)) {
-        res.status(400).json(errorResponse(
-          'Invalid ban duration',
-          'INVALID_BAN_DURATION',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      if (banData.duration === 'temporary' && !banData.bannedUntil) {
-        res.status(400).json(errorResponse(
-          'Ban end date required for temporary bans',
-          'BAN_END_DATE_REQUIRED',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Import User model
-      const { User } = await import('@core/auth/models/User');
 
       // Get audit info for bannedBy field (includes character name from cookie)
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -840,135 +807,39 @@ export class UserManagementController {
    * POST /admin/users/bulk-ban
    */
   static async bulkBanUsers(req: Request, res: Response): Promise<void> {
-    try {
-      const { userIds, reason, duration, bannedUntil } = req.body;
+    const { reason, duration, bannedUntil } = req.body ?? {};
 
-      if (!Array.isArray(userIds) || userIds.length === 0) {
-        res.status(400).json(errorResponse(
-          'userIds array is required',
-          'INVALID_INPUT',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Validate ban data
-      if (!reason || reason.trim().length === 0) {
-        res.status(400).json(errorResponse(
-          'Ban reason is required',
-          'BAN_REASON_REQUIRED',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      if (!duration || !['temporary', 'permanent'].includes(duration)) {
-        res.status(400).json(errorResponse(
-          'Invalid ban duration',
-          'INVALID_BAN_DURATION',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      if (duration === 'temporary' && !bannedUntil) {
-        res.status(400).json(errorResponse(
-          'Ban end date required for temporary bans',
-          'BAN_END_DATE_REQUIRED',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      const { User } = await import('@core/auth/models/User');
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      if (!auditInfo) {
-        res.status(401).json(errorResponse(
-          'Autenticazione richiesta',
-          'UNAUTHORIZED',
-          undefined,
-          401,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Ban all users
-      const results = await Promise.allSettled(
-        userIds.map(async (userId: string) => {
-          if (!Types.ObjectId.isValid(userId)) {
-            throw new Error(`Invalid userId: ${userId}`);
-          }
-
-          const updateData: any = {
-            isBanned: true,
-            banReason: reason,
-            bannedAt: new Date(),
-            bannedBy: auditInfo.adminId,
-            bannedByName: auditInfo.adminCharacterName,
-            bannedUntil: duration === 'temporary' && bannedUntil ? new Date(bannedUntil) : null
-          };
-
-          if (duration === 'temporary' && bannedUntil) {
-            updateData.bannedUntil = new Date(bannedUntil);
-          }
-
-          const user = await User.findByIdAndUpdate(
-            userId,
-            updateData,
-            { returnDocument: 'after' }
-          );
-
-          if (!user) {
-            throw new Error(`User not found: ${userId}`);
-          }
-
-          return user;
-        })
-      );
-
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
-      const failedCount = results.filter(r => r.status === 'rejected').length;
-
-      logger.info('Bulk ban users completed', {
-        ...auditInfo,
-        totalUsers: userIds.length,
-        successful: successCount,
-        failed: failedCount,
-        reason
-      });
-
-      res.json(successResponse(
-        {
-          success: successCount,
-          failed: failedCount,
-          results: results.map((r, i) => ({
-            userId: userIds[i],
-            success: r.status === 'fulfilled',
-            error: r.status === 'rejected' ? r.reason : undefined
-          }))
-        },
-        'Bulk ban completed',
-        getRequestId(req)
-      ));
-    } catch (error: unknown) {
-      logger.error('Error in bulk ban users:', { error: error instanceof Error ? error.message : String(error) });
-      res.status(500).json(errorResponse(
-        'Failed to bulk ban users',
-        'BULK_BAN_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+    if (!UserManagementController.validateBanInput(req, res, { reason, duration, bannedUntil })) {
+      return;
     }
+
+    const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+    if (!auditInfo) {
+      res.status(401).json(errorResponse('Autenticazione richiesta', 'UNAUTHORIZED', undefined, 401, getRequestId(req)));
+      return;
+    }
+
+    await UserManagementController.runBulkUserUpdate(
+      req,
+      res,
+      req.body?.userIds,
+      () => ({
+        isBanned: true,
+        banReason: reason,
+        bannedAt: new Date(),
+        bannedBy: auditInfo.adminId,
+        bannedByName: auditInfo.adminCharacterName,
+        bannedUntil: duration === 'temporary' && bannedUntil ? new Date(bannedUntil) : null
+      }),
+      {
+        logDone: 'Bulk ban users completed',
+        responseMsg: () => 'Bulk ban completed',
+        errorLog: 'Error in bulk ban users:',
+        errorMsg: 'Failed to bulk ban users',
+        errorCode: 'BULK_BAN_ERROR',
+        logExtra: { reason }
+      }
+    );
   }
 
   /**
@@ -976,80 +847,22 @@ export class UserManagementController {
    * POST /admin/users/bulk-unban
    */
   static async bulkUnbanUsers(req: Request, res: Response): Promise<void> {
-    try {
-      const { userIds, reason } = req.body;
-
-      if (!Array.isArray(userIds) || userIds.length === 0) {
-        res.status(400).json(errorResponse(
-          'userIds array is required',
-          'INVALID_INPUT',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
+    await UserManagementController.runBulkUserUpdate(
+      req,
+      res,
+      req.body?.userIds,
+      () => ({
+        isBanned: false,
+        $unset: { banReason: '', bannedAt: '', bannedBy: '', bannedByName: '', bannedUntil: '' }
+      }),
+      {
+        logDone: 'Bulk unban users completed',
+        responseMsg: () => 'Bulk unban completed',
+        errorLog: 'Error in bulk unban users:',
+        errorMsg: 'Failed to bulk unban users',
+        errorCode: 'BULK_UNBAN_ERROR'
       }
-
-      const { User } = await import('@core/auth/models/User');
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-
-      // Unban all users
-      const results = await Promise.allSettled(
-        userIds.map(async (userId: string) => {
-          if (!Types.ObjectId.isValid(userId)) {
-            throw new Error(`Invalid userId: ${userId}`);
-          }
-
-          const user = await User.findByIdAndUpdate(
-            userId,
-            {
-              isBanned: false,
-              $unset: { banReason: '', bannedAt: '', bannedBy: '', bannedByName: '', bannedUntil: '' }
-            },
-            { returnDocument: 'after' }
-          );
-
-          if (!user) {
-            throw new Error(`User not found: ${userId}`);
-          }
-
-          return user;
-        })
-      );
-
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
-      const failedCount = results.filter(r => r.status === 'rejected').length;
-
-      logger.info('Bulk unban users completed', {
-        ...auditInfo,
-        totalUsers: userIds.length,
-        successful: successCount,
-        failed: failedCount
-      });
-
-      res.json(successResponse(
-        {
-          success: successCount,
-          failed: failedCount,
-          results: results.map((r, i) => ({
-            userId: userIds[i],
-            success: r.status === 'fulfilled',
-            error: r.status === 'rejected' ? r.reason : undefined
-          }))
-        },
-        'Bulk unban completed',
-        getRequestId(req)
-      ));
-    } catch (error: unknown) {
-      logger.error('Error in bulk unban users:', { error: error instanceof Error ? error.message : String(error) });
-      res.status(500).json(errorResponse(
-        'Failed to bulk unban users',
-        'BULK_UNBAN_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
+    );
   }
 
   /**
@@ -1731,82 +1544,19 @@ export class UserManagementController {
    * POST /admin/users/bulk-activate
    */
   static async bulkActivateUsers(req: Request, res: Response): Promise<void> {
-    try {
-      const { userIds } = req.body;
-
-      if (!Array.isArray(userIds) || userIds.length === 0) {
-        res.status(400).json(errorResponse(
-          'userIds array is required',
-          'INVALID_INPUT',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
+    await UserManagementController.runBulkUserUpdate(
+      req,
+      res,
+      req.body?.userIds,
+      () => ({ isActive: true }),
+      {
+        logDone: 'Bulk activate users completed',
+        responseMsg: (s, f) => `Bulk activate completed: ${s} successful, ${f} failed`,
+        errorLog: 'Error in bulk activate users:',
+        errorMsg: 'Failed to bulk activate users',
+        errorCode: 'BULK_ACTIVATE_ERROR'
       }
-
-      const { User } = await import('@core/auth/models/User');
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-
-      // Activate all users
-      const results = await Promise.allSettled(
-        userIds.map(async (userId: string) => {
-          if (!Types.ObjectId.isValid(userId)) {
-            throw new Error(`Invalid userId: ${userId}`);
-          }
-
-          const user = await User.findByIdAndUpdate(
-            userId,
-            { isActive: true },
-            { returnDocument: 'after' }
-          );
-
-          if (!user) {
-            throw new Error(`User not found: ${userId}`);
-          }
-
-          return user;
-        })
-      );
-
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
-      const failedCount = results.filter(r => r.status === 'rejected').length;
-
-      logger.info('Bulk activate users completed', {
-        ...auditInfo,
-        totalUsers: userIds.length,
-        successful: successCount,
-        failed: failedCount
-      });
-
-      res.json(successResponse(
-        {
-          success: successCount,
-          failed: failedCount,
-          results: results.map((result, index) => ({
-            userId: userIds[index],
-            success: result.status === 'fulfilled',
-            error: result.status === 'rejected' ? result.reason?.message || String(result.reason) : undefined
-          }))
-        },
-        `Bulk activate completed: ${successCount} successful, ${failedCount} failed`,
-        getRequestId(req)
-      ));
-    } catch (error: unknown) {
-      logger.error('Error in bulk activate users:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        errorDetails: error
-      });
-
-      res.status(500).json(errorResponse(
-        'Failed to bulk activate users',
-        'BULK_ACTIVATE_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
+    );
   }
 
   /**
@@ -1814,82 +1564,19 @@ export class UserManagementController {
    * POST /admin/users/bulk-deactivate
    */
   static async bulkDeactivateUsers(req: Request, res: Response): Promise<void> {
-    try {
-      const { userIds } = req.body;
-
-      if (!Array.isArray(userIds) || userIds.length === 0) {
-        res.status(400).json(errorResponse(
-          'userIds array is required',
-          'INVALID_INPUT',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
+    await UserManagementController.runBulkUserUpdate(
+      req,
+      res,
+      req.body?.userIds,
+      () => ({ isActive: false }),
+      {
+        logDone: 'Bulk deactivate users completed',
+        responseMsg: (s, f) => `Bulk deactivate completed: ${s} successful, ${f} failed`,
+        errorLog: 'Error in bulk deactivate users:',
+        errorMsg: 'Failed to bulk deactivate users',
+        errorCode: 'BULK_DEACTIVATE_ERROR'
       }
-
-      const { User } = await import('@core/auth/models/User');
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-
-      // Deactivate all users
-      const results = await Promise.allSettled(
-        userIds.map(async (userId: string) => {
-          if (!Types.ObjectId.isValid(userId)) {
-            throw new Error(`Invalid userId: ${userId}`);
-          }
-
-          const user = await User.findByIdAndUpdate(
-            userId,
-            { isActive: false },
-            { returnDocument: 'after' }
-          );
-
-          if (!user) {
-            throw new Error(`User not found: ${userId}`);
-          }
-
-          return user;
-        })
-      );
-
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
-      const failedCount = results.filter(r => r.status === 'rejected').length;
-
-      logger.info('Bulk deactivate users completed', {
-        ...auditInfo,
-        totalUsers: userIds.length,
-        successful: successCount,
-        failed: failedCount
-      });
-
-      res.json(successResponse(
-        {
-          success: successCount,
-          failed: failedCount,
-          results: results.map((result, index) => ({
-            userId: userIds[index],
-            success: result.status === 'fulfilled',
-            error: result.status === 'rejected' ? result.reason?.message || String(result.reason) : undefined
-          }))
-        },
-        `Bulk deactivate completed: ${successCount} successful, ${failedCount} failed`,
-        getRequestId(req)
-      ));
-    } catch (error: unknown) {
-      logger.error('Error in bulk deactivate users:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        errorDetails: error
-      });
-
-      res.status(500).json(errorResponse(
-        'Failed to bulk deactivate users',
-        'BULK_DEACTIVATE_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
+    );
   }
 
   /**
@@ -2022,22 +1709,7 @@ export class UserManagementController {
       ));
 
     } catch (error: unknown) {
-      logger.error('Assign PNG error:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-
-      // Check if it's a Mongoose validation error
-      const errorMessage = error instanceof Error ? error.message : 'Impossibile creare PNG';
-      const isValidationError = errorMessage.includes('validation failed');
-
-      res.status(isValidationError ? 400 : 500).json(errorResponse(
-        isValidationError ? `Errore di validazione: ${errorMessage}` : 'Impossibile creare PNG',
-        isValidationError ? 'VALIDATION_ERROR' : 'ASSIGN_PNG_ERROR',
-        undefined,
-        isValidationError ? 400 : 500,
-        getRequestId(req)
-      ));
+      UserManagementController.handleAssignCharacterError(req, res, error, 'PNG', 'ASSIGN_PNG_ERROR');
     }
   }
 
@@ -2166,22 +1838,142 @@ export class UserManagementController {
       ));
 
     } catch (error: unknown) {
-      logger.error('Assign Master error:', {
+      UserManagementController.handleAssignCharacterError(req, res, error, 'Master', 'ASSIGN_MASTER_ERROR');
+    }
+  }
+
+  // ===========================================================================
+  // Helper privati — sorgente unica per blocchi prima duplicati negli handler
+  // ===========================================================================
+
+  /**
+   * Valida i campi di un ban (reason / duration / bannedUntil).
+   * Invia la risposta di errore e ritorna `false` se non valido.
+   * Prima era ripetuto identico in banUser e bulkBanUsers.
+   */
+  private static validateBanInput(
+    req: Request,
+    res: Response,
+    input: { reason?: string; duration?: string; bannedUntil?: unknown }
+  ): boolean {
+    if (!input.reason || input.reason.trim().length === 0) {
+      res.status(400).json(errorResponse('Ban reason is required', 'BAN_REASON_REQUIRED', undefined, 400, getRequestId(req)));
+      return false;
+    }
+    if (!input.duration || !['temporary', 'permanent'].includes(input.duration)) {
+      res.status(400).json(errorResponse('Invalid ban duration', 'INVALID_BAN_DURATION', undefined, 400, getRequestId(req)));
+      return false;
+    }
+    if (input.duration === 'temporary' && !input.bannedUntil) {
+      res.status(400).json(errorResponse('Ban end date required for temporary bans', 'BAN_END_DATE_REQUIRED', undefined, 400, getRequestId(req)));
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Esegue un update di massa su una lista di userId: valida l'array, applica
+   * `buildUpdate` a ogni utente in parallelo (Promise.allSettled), poi risponde
+   * con conteggio successi/fallimenti e per-riga.
+   * Prima era ripetuto ~identico in bulkBanUsers/bulkUnbanUsers/
+   * bulkActivateUsers/bulkDeactivateUsers (l'unica differenza era l'update).
+   */
+  private static async runBulkUserUpdate(
+    req: Request,
+    res: Response,
+    userIds: unknown,
+    buildUpdate: (userId: string) => Record<string, unknown>,
+    labels: {
+      logDone: string;
+      responseMsg: (success: number, failed: number) => string;
+      errorLog: string;
+      errorMsg: string;
+      errorCode: string;
+      logExtra?: Record<string, unknown>;
+    }
+  ): Promise<void> {
+    try {
+      if (!Array.isArray(userIds) || userIds.length === 0) {
+        res.status(400).json(errorResponse('userIds array is required', 'INVALID_INPUT', undefined, 400, getRequestId(req)));
+        return;
+      }
+
+      const ids = userIds as string[];
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+
+      const results = await Promise.allSettled(
+        ids.map(async (userId: string) => {
+          if (!Types.ObjectId.isValid(userId)) {
+            throw new Error(`Invalid userId: ${userId}`);
+          }
+          const user = await User.findByIdAndUpdate(userId, buildUpdate(userId), { returnDocument: 'after' });
+          if (!user) {
+            throw new Error(`User not found: ${userId}`);
+          }
+          return user;
+        })
+      );
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failedCount = results.filter(r => r.status === 'rejected').length;
+
+      logger.info(labels.logDone, {
+        ...auditInfo,
+        ...labels.logExtra,
+        totalUsers: ids.length,
+        successful: successCount,
+        failed: failedCount
+      });
+
+      res.json(successResponse(
+        {
+          success: successCount,
+          failed: failedCount,
+          results: results.map((result, index) => ({
+            userId: ids[index],
+            success: result.status === 'fulfilled',
+            error: result.status === 'rejected'
+              ? ((result.reason as { message?: string })?.message || String(result.reason))
+              : undefined
+          }))
+        },
+        labels.responseMsg(successCount, failedCount),
+        getRequestId(req)
+      ));
+    } catch (error: unknown) {
+      logger.error(labels.errorLog, {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-
-      // Check if it's a Mongoose validation error
-      const errorMessage = error instanceof Error ? error.message : 'Impossibile creare Master';
-      const isValidationError = errorMessage.includes('validation failed');
-
-      res.status(isValidationError ? 400 : 500).json(errorResponse(
-        isValidationError ? `Errore di validazione: ${errorMessage}` : 'Impossibile creare Master',
-        isValidationError ? 'VALIDATION_ERROR' : 'ASSIGN_MASTER_ERROR',
-        undefined,
-        isValidationError ? 400 : 500,
-        getRequestId(req)
-      ));
+      res.status(500).json(errorResponse(labels.errorMsg, labels.errorCode, undefined, 500, getRequestId(req)));
     }
+  }
+
+  /**
+   * Gestione errori condivisa di assignPNG / assignMaster: log + distinzione
+   * fra errore di validazione Mongoose (400) e generico (500).
+   */
+  private static handleAssignCharacterError(
+    req: Request,
+    res: Response,
+    error: unknown,
+    entityLabel: string,
+    errorCode: string
+  ): void {
+    logger.error(`Assign ${entityLabel} error:`, {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+
+    const errorMessage = error instanceof Error ? error.message : `Impossibile creare ${entityLabel}`;
+    const isValidationError = errorMessage.includes('validation failed');
+
+    res.status(isValidationError ? 400 : 500).json(errorResponse(
+      isValidationError ? `Errore di validazione: ${errorMessage}` : `Impossibile creare ${entityLabel}`,
+      isValidationError ? 'VALIDATION_ERROR' : errorCode,
+      undefined,
+      isValidationError ? 400 : 500,
+      getRequestId(req)
+    ));
   }
 }
