@@ -1513,172 +1513,56 @@ export class CharacterApprovalController {
    * POST /admin/characters/bulk-approve
    */
   static async bulkApproveCharacters(req: Request, res: Response): Promise<void> {
-    try {
-      const { characterIds } = req.body;
+    // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7)
+    const { Occupation } = await import('@features/occupazioni/models/Occupation');
 
-      if (!Array.isArray(characterIds) || characterIds.length === 0) {
-        res.status(400).json(errorResponse(
-          'characterIds array is required',
-          'INVALID_INPUT',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      const { Character } = await import('@core/character/models/Character');
-      // boundary-allow: debito dichiarato, CharacterApprovalController.ts resta fuori dalla feature occupazioni (Fase 6.2) fino al consolidamento del core (Fase 7)
-      const { Occupation } = await import('@features/occupazioni/models/Occupation');
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      if (!auditInfo) {
-        res.status(401).json(errorResponse(
-          'Autenticazione richiesta',
-          'UNAUTHORIZED',
-          undefined,
-          401,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Process all characters with Promise.allSettled
-      const results = await Promise.allSettled(
-        characterIds.map(async (characterId: string) => {
-          // Find character in PENDING_APPROVAL status
-          const character = await Character.findOne({
-            _id: characterId,
-            playerStatus: 'pending'
-          }).lean(false);
-
-          if (!character) {
-            throw new Error(`Character not found or not pending: ${characterId}`);
+    await CharacterApprovalController.runBulkCharacterOp(
+      req,
+      res,
+      req.body?.characterIds,
+      async (character, auditInfo) => {
+        // Starting items dall'occupazione
+        let startingItems = [];
+        if (character.occupation) {
+          const occupation = await Occupation.findById(character.occupation);
+          if (occupation && occupation.benefits && occupation.benefits.startingItems) {
+            startingItems = occupation.benefits.startingItems.map((item: any) => item.itemId);
           }
-
-          // Get starting items from occupation
-          let startingItems = [];
-          if (character.occupation) {
-            const occupation = await Occupation.findById(character.occupation);
-            if (occupation && occupation.benefits && occupation.benefits.startingItems) {
-              startingItems = occupation.benefits.startingItems.map((item: any) => item.itemId);
-            }
-          }
-
-          // Get Finanza skill for initial finances
-          const finanzaSkill = CharacterApprovalController.extractFinanzaSkill(character);
-
-          // Create finances record (same shape as single approval — cash/bankDeposit/creditLine)
-          await CharacterApprovalController.buildInitialFinances(character._id, finanzaSkill);
-
-          // Update character status - USE TOP-LEVEL FIELDS (not metadata)
-          character.playerStatus = 'approved';
-          character.approvedAt = new Date();
-          character.approvedBy = auditInfo.adminId;
-          character.approvedByName = auditInfo.adminUsername;
-          character.gameplayRoles = ['player'];
-          character.equipment = startingItems; // Use equipment, not inventory
-
-          // Add to review history
-          character.addReview({
-            action: 'approve',
-            reviewedBy: auditInfo.adminId,
-            note: 'Bulk approval'
-          });
-
-          await character.save();
-
-          // Send Redis event for real-time notifications and off-game messaging
-          // (mancava nei metodi bulk — solo le azioni singole lo pubblicavano)
-          try {
-            const reviewEvent = {
-              characterId: character._id.toString(),
-              characterName: character.name || 'Unknown',
-              action: 'approve',
-              note: 'Bulk approval',
-              reviewedBy: auditInfo.adminId,
-              reviewedByUsername: auditInfo.adminUsername,
-              timestamp: new Date().toISOString(),
-              adminCookies: {
-                auth_token: req.cookies?.auth_token,
-                character_context: req.cookies?.character_context
-              }
-            };
-            await redis.getClient().publish('character:review_completed', JSON.stringify(reviewEvent));
-          } catch (redisError: unknown) {
-            logger.error('Failed to publish character review event to Redis (bulk approve)', {
-              error: redisError instanceof Error ? redisError.message : String(redisError),
-              characterId: character._id.toString()
-            });
-            // Continue execution - Redis failure shouldn't break the approval process
-          }
-
-          logger.info('Character approved in bulk', {
-            ...auditInfo,
-            characterId: character._id,
-            characterName: `${character.characterName} ${character.characterSurname}`,
-            finanzaSkill
-          });
-
-          return character;
-        })
-      );
-
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
-      const failedCount = results.filter(r => r.status === 'rejected').length;
-
-      // Extract error details for logging and response
-      const detailedResults = results.map((r, i) => {
-        if (r.status === 'fulfilled') {
-          return {
-            characterId: characterIds[i],
-            result: true
-          };
-        } else {
-          const errorMessage = r.reason instanceof Error
-            ? r.reason.message
-            : (typeof r.reason === 'string' ? r.reason : String(r.reason));
-
-          // Log individual failure for debugging
-          logger.warn('Character approval failed in bulk operation', {
-            characterId: characterIds[i],
-            error: errorMessage,
-            stack: r.reason instanceof Error ? r.reason.stack : undefined
-          });
-
-          return {
-            characterId: characterIds[i],
-            result: false,
-            error: errorMessage
-          };
         }
-      });
 
-      logger.info('Bulk approve characters completed', {
-        ...auditInfo,
-        totalCharacters: characterIds.length,
-        successful: successCount,
-        failed: failedCount
-      });
+        const finanzaSkill = CharacterApprovalController.extractFinanzaSkill(character);
+        await CharacterApprovalController.buildInitialFinances(character._id, finanzaSkill);
 
-      res.json(successResponse(
-        {
-          success: successCount,
-          failed: failedCount,
-          results: detailedResults
-        },
-        'Bulk approve completed',
-        getRequestId(req)
-      ));
-    } catch (error: unknown) {
-      logger.error('Error in bulk approve characters:', { error: error instanceof Error ? error.message : String(error) });
-      res.status(500).json(errorResponse(
-        'Failed to bulk approve characters',
-        'BULK_APPROVE_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
+        character.playerStatus = 'approved';
+        character.approvedAt = new Date();
+        character.approvedBy = auditInfo.adminId;
+        character.approvedByName = auditInfo.adminUsername;
+        character.gameplayRoles = ['player'];
+        character.equipment = startingItems;
+        character.addReview({ action: 'approve', reviewedBy: auditInfo.adminId, note: 'Bulk approval' });
+        await character.save();
+
+        await CharacterApprovalController.publishBulkReviewEvent(req, character, 'approve', 'Bulk approval', auditInfo);
+
+        logger.info('Character approved in bulk', {
+          ...auditInfo,
+          characterId: character._id,
+          characterName: `${character.characterName} ${character.characterSurname}`,
+          finanzaSkill
+        });
+      },
+      {
+        findFilter: { playerStatus: 'pending' },
+        notFound: (id) => `Character not found or not pending: ${id}`,
+        logDone: 'Bulk approve characters completed',
+        responseMsg: 'Bulk approve completed',
+        warnMsg: 'Character approval failed in bulk operation',
+        errorLog: 'Error in bulk approve characters:',
+        errorMsg: 'Failed to bulk approve characters',
+        errorCode: 'BULK_APPROVE_ERROR',
+        rowKey: 'result'
+      }
+    );
   }
 
   /**
@@ -1686,142 +1570,49 @@ export class CharacterApprovalController {
    * POST /admin/characters/bulk-reject
    */
   static async bulkRejectCharacters(req: Request, res: Response): Promise<void> {
-    try {
-      const { characterIds, reason } = req.body;
+    const { reason } = req.body ?? {};
 
-      if (!Array.isArray(characterIds) || characterIds.length === 0) {
-        res.status(400).json(errorResponse(
-          'characterIds array is required',
-          'INVALID_INPUT',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      if (!reason || reason.trim().length === 0) {
-        res.status(400).json(errorResponse(
-          'Rejection reason is required',
-          'REASON_REQUIRED',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      const { Character } = await import('@core/character/models/Character');
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      if (!auditInfo) {
-        res.status(401).json(errorResponse(
-          'Autenticazione richiesta',
-          'UNAUTHORIZED',
-          undefined,
-          401,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Process all characters with Promise.allSettled
-      const results = await Promise.allSettled(
-        characterIds.map(async (characterId: string) => {
-          const character = await Character.findOne({
-            _id: characterId,
-            playerStatus: 'pending'
-          }).lean(false);
-
-          if (!character) {
-            throw new Error(`Character not found or not pending: ${characterId}`);
-          }
-
-          // Update status to DRAFT with rejection note - USE TOP-LEVEL FIELDS (not metadata)
-          character.playerStatus = 'draft';
-          character.rejectedAt = new Date();
-          character.rejectedBy = auditInfo.adminId;
-          character.rejectedByName = auditInfo.adminUsername;
-          character.rejectionReason = reason.trim();
-
-          // Add to review history
-          character.addReview({
-            action: 'reject',
-            reviewedBy: auditInfo.adminId,
-            note: reason.trim()
-          });
-
-          await character.save();
-
-          // Send Redis event for real-time notifications and off-game messaging
-          // (mancava nei metodi bulk — solo le azioni singole lo pubblicavano)
-          try {
-            const reviewEvent = {
-              characterId: character._id.toString(),
-              characterName: character.name || 'Unknown',
-              action: 'reject',
-              note: reason.trim(),
-              reviewedBy: auditInfo.adminId,
-              reviewedByUsername: auditInfo.adminUsername,
-              timestamp: new Date().toISOString(),
-              adminCookies: {
-                auth_token: req.cookies?.auth_token,
-                character_context: req.cookies?.character_context
-              }
-            };
-            await redis.getClient().publish('character:review_completed', JSON.stringify(reviewEvent));
-          } catch (redisError: unknown) {
-            logger.error('Failed to publish character review event to Redis (bulk reject)', {
-              error: redisError instanceof Error ? redisError.message : String(redisError),
-              characterId: character._id.toString()
-            });
-            // Continue execution - Redis failure shouldn't break the rejection process
-          }
-
-          logger.info('Character rejected in bulk', {
-            ...auditInfo,
-            characterId: character._id,
-            characterName: `${character.characterName} ${character.characterSurname}`,
-            reason: reason.trim()
-          });
-
-          return character;
-        })
-      );
-
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
-      const failedCount = results.filter(r => r.status === 'rejected').length;
-
-      logger.info('Bulk reject characters completed', {
-        ...auditInfo,
-        totalCharacters: characterIds.length,
-        successful: successCount,
-        failed: failedCount,
-        reason: reason.trim()
-      });
-
-      res.json(successResponse(
-        {
-          success: successCount,
-          failed: failedCount,
-          results: results.map((r, i) => ({
-            characterId: characterIds[i],
-            success: r.status === 'fulfilled',
-            error: r.status === 'rejected' ? r.reason : undefined
-          }))
-        },
-        'Bulk reject completed',
-        getRequestId(req)
-      ));
-    } catch (error: unknown) {
-      logger.error('Error in bulk reject characters:', { error: error instanceof Error ? error.message : String(error) });
-      res.status(500).json(errorResponse(
-        'Failed to bulk reject characters',
-        'BULK_REJECT_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
+    if (!reason || reason.trim().length === 0) {
+      res.status(400).json(errorResponse('Rejection reason is required', 'REASON_REQUIRED', undefined, 400, getRequestId(req)));
+      return;
     }
+
+    const trimmedReason = reason.trim();
+
+    await CharacterApprovalController.runBulkCharacterOp(
+      req,
+      res,
+      req.body?.characterIds,
+      async (character, auditInfo) => {
+        character.playerStatus = 'draft';
+        character.rejectedAt = new Date();
+        character.rejectedBy = auditInfo.adminId;
+        character.rejectedByName = auditInfo.adminUsername;
+        character.rejectionReason = trimmedReason;
+        character.addReview({ action: 'reject', reviewedBy: auditInfo.adminId, note: trimmedReason });
+        await character.save();
+
+        await CharacterApprovalController.publishBulkReviewEvent(req, character, 'reject', trimmedReason, auditInfo);
+
+        logger.info('Character rejected in bulk', {
+          ...auditInfo,
+          characterId: character._id,
+          characterName: `${character.characterName} ${character.characterSurname}`,
+          reason: trimmedReason
+        });
+      },
+      {
+        findFilter: { playerStatus: 'pending' },
+        notFound: (id) => `Character not found or not pending: ${id}`,
+        logDone: 'Bulk reject characters completed',
+        responseMsg: 'Bulk reject completed',
+        warnMsg: 'Character rejection failed in bulk operation',
+        errorLog: 'Error in bulk reject characters:',
+        errorMsg: 'Failed to bulk reject characters',
+        errorCode: 'BULK_REJECT_ERROR',
+        logExtra: { reason: trimmedReason }
+      }
+    );
   }
 
   /**
@@ -1892,91 +1683,28 @@ export class CharacterApprovalController {
   }
 
   static async bulkDeleteCharacters(req: Request, res: Response): Promise<void> {
-    try {
-      const { characterIds } = req.body;
-
-      if (!Array.isArray(characterIds) || characterIds.length === 0) {
-        res.status(400).json(errorResponse(
-          'characterIds array is required',
-          'INVALID_INPUT',
-          undefined,
-          400,
-          getRequestId(req)
-        ));
-        return;
+    await CharacterApprovalController.runBulkCharacterOp(
+      req,
+      res,
+      req.body?.characterIds,
+      async (character, auditInfo) => {
+        await character.softDelete(auditInfo.adminId, auditInfo.adminCharacterName || 'Unknown Admin');
+        logger.warn('Character soft deleted in bulk', {
+          ...auditInfo,
+          characterId: character._id,
+          characterName: character.name
+        });
+      },
+      {
+        notFound: (id) => `Character not found: ${id}`,
+        logDone: 'Bulk delete characters completed',
+        responseMsg: 'Bulk delete completed',
+        warnMsg: 'Character deletion failed in bulk operation',
+        errorLog: 'Error in bulk delete characters:',
+        errorMsg: 'Failed to bulk delete characters',
+        errorCode: 'BULK_DELETE_ERROR'
       }
-
-      const { Character } = await import('@core/character/models/Character');
-      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
-      if (!auditInfo) {
-        res.status(401).json(errorResponse(
-          'Autenticazione richiesta',
-          'UNAUTHORIZED',
-          undefined,
-          401,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // Process all characters with Promise.allSettled
-      const results = await Promise.allSettled(
-        characterIds.map(async (characterId: string) => {
-          const character = await Character.findById(characterId);
-
-          if (!character) {
-            throw new Error(`Character not found: ${characterId}`);
-          }
-
-          // Soft delete using plugin method
-          await character.softDelete(
-            auditInfo.adminId,
-            auditInfo.adminCharacterName || 'Unknown Admin'
-          );
-
-          logger.warn('Character soft deleted in bulk', {
-            ...auditInfo,
-            characterId,
-            characterName: character.name
-          });
-
-          return character;
-        })
-      );
-
-      const successCount = results.filter(r => r.status === 'fulfilled').length;
-      const failedCount = results.filter(r => r.status === 'rejected').length;
-
-      logger.info('Bulk delete characters completed', {
-        ...auditInfo,
-        totalCharacters: characterIds.length,
-        successful: successCount,
-        failed: failedCount
-      });
-
-      res.json(successResponse(
-        {
-          success: successCount,
-          failed: failedCount,
-          results: results.map((r, i) => ({
-            characterId: characterIds[i],
-            success: r.status === 'fulfilled',
-            error: r.status === 'rejected' ? r.reason : undefined
-          }))
-        },
-        'Bulk delete completed',
-        getRequestId(req)
-      ));
-    } catch (error: unknown) {
-      logger.error('Error in bulk delete characters:', { error: error instanceof Error ? error.message : String(error) });
-      res.status(500).json(errorResponse(
-        'Failed to bulk delete characters',
-        'BULK_DELETE_ERROR',
-        undefined,
-        500,
-        getRequestId(req)
-      ));
-    }
+    );
   }
 
   /**
@@ -2056,6 +1784,136 @@ export class CharacterApprovalController {
     } catch (error: unknown) {
       logger.error('Reject face claim error:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Impossibile rifiutare', code: 'REJECT_FACECLAIM_ERROR' });
+    }
+  }
+
+  /**
+   * Scheletro comune dei bulk handler (bulkApprove / bulkReject / bulkDelete):
+   * valida l'array characterIds, richiede `auditInfo` (401), carica ogni
+   * personaggio con `findOne({ _id, ...findFilter })`, applica `perCharacter`
+   * in parallelo (Promise.allSettled), logga i fallimenti singoli, poi
+   * risponde con conteggio e per-riga.
+   *
+   * `rowKey` = chiave della flag per-riga: 'success' (reject/delete) o
+   * 'result' (approve) — mantenuta per compatibilità col frontend esistente.
+   */
+  private static async runBulkCharacterOp(
+    req: Request,
+    res: Response,
+    characterIds: unknown,
+    perCharacter: (
+      character: any,
+      auditInfo: NonNullable<ReturnType<typeof AdminAuthMiddleware.getAuditInfo>>
+    ) => Promise<void>,
+    labels: {
+      findFilter?: Record<string, unknown>;
+      notFound: (id: string) => string;
+      logDone: string;
+      responseMsg: string;
+      warnMsg: string;
+      errorLog: string;
+      errorMsg: string;
+      errorCode: string;
+      logExtra?: Record<string, unknown>;
+      rowKey?: 'success' | 'result';
+    }
+  ): Promise<void> {
+    try {
+      if (!Array.isArray(characterIds) || characterIds.length === 0) {
+        res.status(400).json(errorResponse('characterIds array is required', 'INVALID_INPUT', undefined, 400, getRequestId(req)));
+        return;
+      }
+
+      const ids = characterIds as string[];
+      const { Character } = await import('@core/character/models/Character');
+      const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
+      if (!auditInfo) {
+        res.status(401).json(errorResponse('Autenticazione richiesta', 'UNAUTHORIZED', undefined, 401, getRequestId(req)));
+        return;
+      }
+
+      const results = await Promise.allSettled(
+        ids.map(async (characterId: string) => {
+          const character = await Character.findOne({ _id: characterId, ...(labels.findFilter ?? {}) }).lean(false);
+          if (!character) {
+            throw new Error(labels.notFound(characterId));
+          }
+          await perCharacter(character, auditInfo);
+          return character;
+        })
+      );
+
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failedCount = results.filter(r => r.status === 'rejected').length;
+      const rowKey = labels.rowKey ?? 'success';
+
+      const rows = results.map((r, i) => {
+        if (r.status === 'fulfilled') {
+          return { characterId: ids[i], [rowKey]: true };
+        }
+        const message = r.reason instanceof Error ? r.reason.message : String(r.reason);
+        logger.warn(labels.warnMsg, {
+          characterId: ids[i],
+          error: message,
+          stack: r.reason instanceof Error ? r.reason.stack : undefined
+        });
+        return { characterId: ids[i], [rowKey]: false, error: message };
+      });
+
+      logger.info(labels.logDone, {
+        ...auditInfo,
+        ...labels.logExtra,
+        totalCharacters: ids.length,
+        successful: successCount,
+        failed: failedCount
+      });
+
+      res.json(successResponse(
+        { success: successCount, failed: failedCount, results: rows },
+        labels.responseMsg,
+        getRequestId(req)
+      ));
+    } catch (error: unknown) {
+      logger.error(labels.errorLog, {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      res.status(500).json(errorResponse(labels.errorMsg, labels.errorCode, undefined, 500, getRequestId(req)));
+    }
+  }
+
+  /**
+   * Pubblica su Redis l'evento `character:review_completed` (approve/reject).
+   * Fire-and-forget: un errore Redis non deve rompere la review.
+   * Prima era ripetuto in bulkApprove e bulkReject.
+   */
+  private static async publishBulkReviewEvent(
+    req: Request,
+    character: any,
+    action: 'approve' | 'reject',
+    note: string,
+    auditInfo: { adminId: unknown; adminUsername: unknown }
+  ): Promise<void> {
+    try {
+      const reviewEvent = {
+        characterId: character._id.toString(),
+        characterName: character.name || 'Unknown',
+        action,
+        note,
+        reviewedBy: auditInfo.adminId,
+        reviewedByUsername: auditInfo.adminUsername,
+        timestamp: new Date().toISOString(),
+        adminCookies: {
+          auth_token: req.cookies?.auth_token,
+          character_context: req.cookies?.character_context
+        }
+      };
+      await redis.getClient().publish('character:review_completed', JSON.stringify(reviewEvent));
+    } catch (redisError: unknown) {
+      logger.error(`Failed to publish character review event to Redis (bulk ${action})`, {
+        error: redisError instanceof Error ? redisError.message : String(redisError),
+        characterId: character._id.toString()
+      });
     }
   }
 
