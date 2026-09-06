@@ -1,12 +1,10 @@
 # =============================================================================
 # TenPennyNovels - Unified Backend Dockerfile (Development)
+# Development mode con tsx watch (no build, hot reload).
+# In produzione unified-backend gira via PM2 sull'host, non da un container.
 # =============================================================================
-# Development mode con tsx watch (no build, hot reload)
 
 FROM node:24-alpine
-
-# Install global tools
-RUN npm install -g tsx nodemon
 
 # Set working directory
 WORKDIR /app
@@ -14,8 +12,9 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install ALL dependencies (including dev)
-RUN npm install
+# Install dependencies dal lockfile (versioni bloccate — S8543).
+# tsx è già in devDependencies: niente `npm install -g`.
+RUN npm ci
 
 # Copy source code (esplicito: niente COPY . . — S6470)
 COPY tsconfig.json ./
@@ -29,4 +28,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Start with tsx watch for hot reload
-CMD ["tsx", "watch", "src/server.ts"]
+CMD ["./node_modules/.bin/tsx", "watch", "src/server.ts"]
