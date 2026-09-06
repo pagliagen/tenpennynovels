@@ -2020,21 +2020,8 @@ export class CharacterApprovalController {
    */
   static async approveFaceClaim(req: Request, res: Response): Promise<void> {
     try {
-      const { Character } = await import('@core/character/models/Character');
-      const { Types } = await import('mongoose');
-
-      // Validate characterId to prevent SQL injection
-      const characterId = req.params.id as string;
-      if (!Types.ObjectId.isValid(characterId)) {
-        res.status(400).json({ success: false, error: 'ID personaggio non valido', code: 'INVALID_CHARACTER_ID' });
-        return;
-      }
-
-      const character = await Character.findById(characterId);
-      if (!character) {
-        res.status(404).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
-        return;
-      }
+      const character = await CharacterApprovalController.loadCharacterForFaceClaim(req, res);
+      if (!character) return;
 
       character.prestavoltoStatus = 'approved';
       character.prestavoltoApprovedBy = req.user!.userId;
@@ -2055,21 +2042,8 @@ export class CharacterApprovalController {
    */
   static async rejectFaceClaim(req: Request, res: Response): Promise<void> {
     try {
-      const { Character } = await import('@core/character/models/Character');
-      const { Types } = await import('mongoose');
-
-      // Validate characterId to prevent SQL injection
-      const characterId = req.params.id as string;
-      if (!Types.ObjectId.isValid(characterId)) {
-        res.status(400).json({ success: false, error: 'ID personaggio non valido', code: 'INVALID_CHARACTER_ID' });
-        return;
-      }
-
-      const character = await Character.findById(characterId);
-      if (!character) {
-        res.status(404).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
-        return;
-      }
+      const character = await CharacterApprovalController.loadCharacterForFaceClaim(req, res);
+      if (!character) return;
 
       character.prestavolto = undefined;
       character.prestavoltoStatus = null;
@@ -2083,6 +2057,30 @@ export class CharacterApprovalController {
       logger.error('Reject face claim error:', { error: error instanceof Error ? error.message : String(error) });
       res.status(500).json({ success: false, error: 'Impossibile rifiutare', code: 'REJECT_FACECLAIM_ERROR' });
     }
+  }
+
+  /**
+   * Carica il personaggio bersaglio di un'azione face-claim: valida l'ObjectId
+   * (400) e verifica l'esistenza (404). Se non valido risponde e ritorna null.
+   * Prima era ripetuto identico in approveFaceClaim e rejectFaceClaim.
+   */
+  private static async loadCharacterForFaceClaim(req: Request, res: Response): Promise<any | null> {
+    const { Character } = await import('@core/character/models/Character');
+    const { Types } = await import('mongoose');
+
+    const characterId = req.params.id as string;
+    if (!Types.ObjectId.isValid(characterId)) {
+      res.status(400).json({ success: false, error: 'ID personaggio non valido', code: 'INVALID_CHARACTER_ID' });
+      return null;
+    }
+
+    const character = await Character.findById(characterId);
+    if (!character) {
+      res.status(404).json({ success: false, error: 'Personaggio non trovato', code: 'CHARACTER_NOT_FOUND' });
+      return null;
+    }
+
+    return character;
   }
 
 }
