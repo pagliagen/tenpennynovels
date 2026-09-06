@@ -28,6 +28,7 @@ import sys
 import time
 import unicodedata
 import urllib.error
+import urllib.parse
 import urllib.request
 
 CSV_PATH = os.path.join(os.path.dirname(__file__), 'data', 'items.csv')
@@ -159,6 +160,12 @@ def main():
     ap.add_argument('--ollama-url', default=DEFAULT_OLLAMA_URL)
     ap.add_argument('--model', default=DEFAULT_MODEL)
     args = ap.parse_args()
+
+    # Valida l'URL prima di usarlo in richieste di rete (pythonsecurity:S8703):
+    # solo http/https con host esplicito, niente file://, gopher://, ecc.
+    parsed_url = urllib.parse.urlparse(args.ollama_url)
+    if parsed_url.scheme not in ('http', 'https') or not parsed_url.netloc:
+        sys.exit(f'❌ --ollama-url non valido: {args.ollama_url!r} (atteso http(s)://host[:porta])')
 
     if not os.path.exists(CSV_PATH):
         print(f'❌ CSV non trovato: {CSV_PATH}')

@@ -5,12 +5,14 @@ import { CDNService } from '../../admin/services/CDNService';
 import { logger } from '../logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
-// Nessun limite di dimensione file (richiesto esplicitamente): multer con
-// memoryStorage bufferizza l'intero file in RAM, quindi upload molto grandi
-// pesano sulla memoria del processo — accettabile per un uso da pochi
-// giocatori/master, da tenere d'occhio se il traffico dovesse crescere.
+// memoryStorage bufferizza l'intero file in RAM: senza un tetto un upload
+// molto grande può esaurire la memoria del processo (typescript:S5693).
+// 10MB come CDNController — un avatar/ritratto reale non lo supera mai.
+const MAX_AVATAR_SIZE = 10 * 1024 * 1024;
+
 export const uploadAvatar = multer({
   storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_AVATAR_SIZE },
   fileFilter: (_req, file, cb) => {
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (allowed.includes(file.mimetype)) {

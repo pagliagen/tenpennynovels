@@ -382,6 +382,11 @@ jobs:
 
       - name: Deployment failure summary
         if: failure()
+        env:
+          # I secreti passano da env, non interpolati nel run block (githubactions:S7636)
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
           echo "## ❌ Deployment Failed!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -391,7 +396,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
           echo "1. Check the logs above for error details" >> $GITHUB_STEP_SUMMARY
-          echo "2. SSH into the server to investigate: \`ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "2. SSH into the server to investigate: \`ssh -p \"$SSH_PORT\" \"$SSH_USERNAME@$SSH_HOST\"\`" >> $GITHUB_STEP_SUMMARY
           echo "3. Check PM2 status: \`pm2 status\`" >> $GITHUB_STEP_SUMMARY
           echo "4. Check PM2 logs: \`pm2 logs --lines 50\`" >> $GITHUB_STEP_SUMMARY
           echo "5. If needed, revert to previous commit and re-deploy" >> $GITHUB_STEP_SUMMARY

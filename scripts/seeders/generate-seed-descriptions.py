@@ -20,6 +20,7 @@ import os
 import argparse
 import urllib.request
 import urllib.error
+import urllib.parse
 import time
 
 SEEDS_DIR = os.path.join(os.path.dirname(__file__), 'data', 'documents')
@@ -85,6 +86,12 @@ def main():
     parser.add_argument('--api-key', default=DEFAULT_API_KEY)
     parser.add_argument('--force', action='store_true', help='Overwrite existing .description files')
     args = parser.parse_args()
+
+    # Valida l'URL prima di usarlo in richieste di rete (pythonsecurity:S8703):
+    # solo http/https con host esplicito.
+    parsed_url = urllib.parse.urlparse(args.gateway_url)
+    if parsed_url.scheme not in ('http', 'https') or not parsed_url.netloc:
+        sys.exit(f'Gateway URL non valido: {args.gateway_url!r} (atteso http(s)://host)')
 
     content_files = sorted(f for f in os.listdir(SEEDS_DIR) if f.endswith('.content'))
     total = len(content_files)
