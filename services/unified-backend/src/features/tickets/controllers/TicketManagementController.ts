@@ -146,72 +146,12 @@ export class TicketManagementController {
       const sortObject: any = {};
       sortObject[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
-      // Count total documents
-      const totalTickets = await Ticket.countDocuments(mongoFilters);
-
-      // Execute query with pagination
-      const tickets = await Ticket.find(mongoFilters)
-        .sort(sortObject)
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
-        .lean();
-
-      // Get message counts for each ticket
-      const ticketIds = tickets.map((ticket: any) => ticket!._id);
-      const messageCounts = await TicketMessage.aggregate([
-        { $match: { ticketId: { $in: ticketIds } } },
-        { $group: { _id: '$ticketId', count: { $sum: 1 } } }
-      ]);
-
-      const messageCountMap = new Map();
-      messageCounts.forEach(({ _id, count }: any) => {
-        messageCountMap.set(_id.toString(), count);
-      });
-
-      // Transform tickets to API format
-      const transformedTickets: TicketManagement[] = tickets.map((ticket: any) => ({
-        id: ticket!._id.toString(),
-        title: ticket!.title,
-        category: ticket!.category,
-        categoryLabel: TICKET_CATEGORIES[ticket!.category as keyof typeof TICKET_CATEGORIES] || ticket!.category,
-        priority: ticket!.priority,
-        status: ticket!.status,
-        department: ticket!.department,
-        createdBy: {
-          id: ticket!.createdBy.toString(),
-          name: ticket!.createdByName
-        },
-        createdAt: ticket.createdAt.toISOString(),
-        assignedTo: ticket!.assignedTo ? {
-          id: ticket!.assignedTo.toString(),
-          name: ticket!.assignedToName || 'Unknown'
-        } : undefined,
-        assignedAt: ticket.assignedAt?.toISOString(),
-        closedAt: ticket.closedAt?.toISOString(),
-        closedBy: ticket.closedBy ? {
-          id: ticket.closedBy.toString(),
-          name: ticket!.closedByName || 'Unknown'
-        } : undefined,
-        escalatedAt: ticket.escalatedAt?.toISOString(),
-        escalationLevel: ticket.escalationLevel,
-        lastReadBy: {
-          character: ticket.lastReadBy?.character?.toISOString(),
-          staff: ticket.lastReadBy?.staff?.toISOString()
-        },
-        tags: ticket.tags,
-        internalNotes: ticket.internalNotes,
-        messageCount: messageCountMap.get(ticket!._id.toString()) || 0
-      }));
-
-      const totalPages = Math.ceil(totalTickets / pageSize);
-      const pagination: PaginationInfo = {
-        currentPage: page,
-        totalPages,
-        totalItems: totalTickets,
-        pageSize,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1
-      };
+      const { tickets: transformedTickets, pagination } = await TicketManagementController.fetchTicketPage(
+        mongoFilters,
+        sortObject,
+        page,
+        pageSize
+      );
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed all tickets', {
@@ -219,7 +159,7 @@ export class TicketManagementController {
         filters,
         currentPage: page,
         pageSize,
-        totalTickets
+        totalTickets: pagination.totalItems
       });
 
       res.json(listResponse(
@@ -278,78 +218,18 @@ export class TicketManagementController {
         query.status = status;
       }
 
-      // Count total documents
-      const totalTickets = await Ticket.countDocuments(query);
-
-      // Execute query with pagination
-      const tickets = await Ticket.find(query)
-        .sort({ priority: -1, createdAt: -1 })
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
-        .lean();
-
-      // Get message counts for each ticket
-      const ticketIds = tickets.map((ticket: any) => ticket!._id);
-      const messageCounts = await TicketMessage.aggregate([
-        { $match: { ticketId: { $in: ticketIds } } },
-        { $group: { _id: '$ticketId', count: { $sum: 1 } } }
-      ]);
-
-      const messageCountMap = new Map();
-      messageCounts.forEach(({ _id, count }: any) => {
-        messageCountMap.set(_id.toString(), count);
-      });
-
-      // Transform tickets to API format
-      const transformedTickets: TicketManagement[] = tickets.map((ticket: any) => ({
-        id: ticket!._id.toString(),
-        title: ticket!.title,
-        category: ticket!.category,
-        categoryLabel: TICKET_CATEGORIES[ticket!.category as keyof typeof TICKET_CATEGORIES] || ticket!.category,
-        priority: ticket!.priority,
-        status: ticket!.status,
-        department: ticket!.department,
-        createdBy: {
-          id: ticket!.createdBy.toString(),
-          name: ticket!.createdByName
-        },
-        createdAt: ticket.createdAt.toISOString(),
-        assignedTo: ticket!.assignedTo ? {
-          id: ticket!.assignedTo.toString(),
-          name: ticket!.assignedToName || 'Unknown'
-        } : undefined,
-        assignedAt: ticket.assignedAt?.toISOString(),
-        closedAt: ticket.closedAt?.toISOString(),
-        closedBy: ticket.closedBy ? {
-          id: ticket.closedBy.toString(),
-          name: 'Staff'
-        } : undefined,
-        escalatedAt: ticket.escalatedAt?.toISOString(),
-        escalationLevel: ticket.escalationLevel,
-        lastReadBy: {
-          character: ticket.lastReadBy?.character?.toISOString(),
-          staff: ticket.lastReadBy?.staff?.toISOString()
-        },
-        tags: ticket.tags,
-        internalNotes: ticket.internalNotes,
-        messageCount: messageCountMap.get(ticket!._id.toString()) || 0
-      }));
-
-      const totalPages = Math.ceil(totalTickets / pageSize);
-      const pagination: PaginationInfo = {
-        currentPage: page,
-        totalPages,
-        totalItems: totalTickets,
-        pageSize,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1
-      };
+      const { tickets: transformedTickets, pagination } = await TicketManagementController.fetchTicketPage(
+        query,
+        { priority: -1, createdAt: -1 },
+        page,
+        pageSize
+      );
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed assigned tickets', {
         ...auditInfo,
         status,
-        totalTickets
+        totalTickets: pagination.totalItems
       });
 
       res.json(listResponse(
@@ -421,78 +301,19 @@ export class TicketManagementController {
         query.status = status;
       }
 
-      // Count total documents
-      const totalTickets = await Ticket.countDocuments(query);
-
-      // Execute query with pagination
-      const tickets = await Ticket.find(query)
-        .sort({ priority: -1, createdAt: -1 })
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
-        .lean();
-
-      // Transform and return similar to getAllTickets
-      const ticketIds = tickets.map((ticket: any) => ticket!._id);
-      const messageCounts = await TicketMessage.aggregate([
-        { $match: { ticketId: { $in: ticketIds } } },
-        { $group: { _id: '$ticketId', count: { $sum: 1 } } }
-      ]);
-
-      const messageCountMap = new Map();
-      messageCounts.forEach(({ _id, count }: any) => {
-        messageCountMap.set(_id.toString(), count);
-      });
-
-      const transformedTickets: TicketManagement[] = tickets.map((ticket: any) => ({
-        id: ticket!._id.toString(),
-        title: ticket!.title,
-        category: ticket!.category,
-        categoryLabel: TICKET_CATEGORIES[ticket!.category as keyof typeof TICKET_CATEGORIES] || ticket!.category,
-        priority: ticket!.priority,
-        status: ticket!.status,
-        department: ticket!.department,
-        createdBy: {
-          id: ticket!.createdBy.toString(),
-          name: ticket!.createdByName
-        },
-        createdAt: ticket.createdAt.toISOString(),
-        assignedTo: ticket!.assignedTo ? {
-          id: ticket!.assignedTo.toString(),
-          name: ticket!.assignedToName || 'Unknown'
-        } : undefined,
-        assignedAt: ticket.assignedAt?.toISOString(),
-        closedAt: ticket.closedAt?.toISOString(),
-        closedBy: ticket.closedBy ? {
-          id: ticket.closedBy.toString(),
-          name: 'Staff'
-        } : undefined,
-        escalatedAt: ticket.escalatedAt?.toISOString(),
-        escalationLevel: ticket.escalationLevel,
-        lastReadBy: {
-          character: ticket.lastReadBy?.character?.toISOString(),
-          staff: ticket.lastReadBy?.staff?.toISOString()
-        },
-        tags: ticket.tags,
-        internalNotes: ticket.internalNotes,
-        messageCount: messageCountMap.get(ticket!._id.toString()) || 0
-      }));
-
-      const totalPages = Math.ceil(totalTickets / pageSize);
-      const pagination: PaginationInfo = {
-        currentPage: page,
-        totalPages,
-        totalItems: totalTickets,
-        pageSize,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1
-      };
+      const { tickets: transformedTickets, pagination } = await TicketManagementController.fetchTicketPage(
+        query,
+        { priority: -1, createdAt: -1 },
+        page,
+        pageSize
+      );
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed department tickets', {
         ...auditInfo,
         accessibleDepartments,
         status,
-        totalTickets
+        totalTickets: pagination.totalItems
       });
 
       res.json(successResponse(
@@ -576,76 +397,19 @@ export class TicketManagementController {
         query.status = status;
       }
 
-      // Execute similar logic to getDepartmentTickets but for specific department
-      const totalTickets = await Ticket.countDocuments(query);
-
-      const tickets = await Ticket.find(query)
-        .sort({ priority: -1, createdAt: -1 })
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
-        .lean();
-
-      const ticketIds = tickets.map((ticket: any) => ticket!._id);
-      const messageCounts = await TicketMessage.aggregate([
-        { $match: { ticketId: { $in: ticketIds } } },
-        { $group: { _id: '$ticketId', count: { $sum: 1 } } }
-      ]);
-
-      const messageCountMap = new Map();
-      messageCounts.forEach(({ _id, count }: any) => {
-        messageCountMap.set(_id.toString(), count);
-      });
-
-      const transformedTickets: TicketManagement[] = tickets.map((ticket: any) => ({
-        id: ticket!._id.toString(),
-        title: ticket!.title,
-        category: ticket!.category,
-        categoryLabel: TICKET_CATEGORIES[ticket!.category as keyof typeof TICKET_CATEGORIES] || ticket!.category,
-        priority: ticket!.priority,
-        status: ticket!.status,
-        department: ticket!.department,
-        createdBy: {
-          id: ticket!.createdBy.toString(),
-          name: ticket!.createdByName
-        },
-        createdAt: ticket.createdAt.toISOString(),
-        assignedTo: ticket!.assignedTo ? {
-          id: ticket!.assignedTo.toString(),
-          name: ticket!.assignedToName || 'Unknown'
-        } : undefined,
-        assignedAt: ticket.assignedAt?.toISOString(),
-        closedAt: ticket.closedAt?.toISOString(),
-        closedBy: ticket.closedBy ? {
-          id: ticket.closedBy.toString(),
-          name: 'Staff'
-        } : undefined,
-        escalatedAt: ticket.escalatedAt?.toISOString(),
-        escalationLevel: ticket.escalationLevel,
-        lastReadBy: {
-          character: ticket.lastReadBy?.character?.toISOString(),
-          staff: ticket.lastReadBy?.staff?.toISOString()
-        },
-        tags: ticket.tags,
-        internalNotes: ticket.internalNotes,
-        messageCount: messageCountMap.get(ticket!._id.toString()) || 0
-      }));
-
-      const totalPages = Math.ceil(totalTickets / pageSize);
-      const pagination: PaginationInfo = {
-        currentPage: page,
-        totalPages,
-        totalItems: totalTickets,
-        pageSize,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1
-      };
+      const { tickets: transformedTickets, pagination } = await TicketManagementController.fetchTicketPage(
+        query,
+        { priority: -1, createdAt: -1 },
+        page,
+        pageSize
+      );
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
       logger.info('Admin viewed specific department tickets', {
         ...auditInfo,
         targetDepartment,
         status,
-        totalTickets
+        totalTickets: pagination.totalItems
       });
 
       res.json(listResponse(
@@ -842,40 +606,11 @@ export class TicketManagementController {
         .sort({ sentAt: 1 })
         .lean();
 
-      // Transform ticket to API format
-      const ticketDetails: TicketManagement = {
-        id: ticketData._id.toString(),
-        title: ticketData.title,
-        category: ticketData.category,
-        categoryLabel: TICKET_CATEGORIES[ticketData.category as keyof typeof TICKET_CATEGORIES] || ticketData.category,
-        priority: ticketData.priority,
-        status: ticketData.status,
-        department: ticketData.department,
-        createdBy: {
-          id: ticketData.createdBy.toString(),
-          name: ticketData.createdByName
-        },
-        createdAt: ticketData.createdAt.toISOString(),
-        assignedTo: ticketData.assignedTo ? {
-          id: ticketData.assignedTo.toString(),
-          name: ticketData.assignedToName || 'Unknown'
-        } : undefined,
-        assignedAt: ticket.assignedAt?.toISOString(),
-        closedAt: ticket.closedAt?.toISOString(),
-        closedBy: ticket.closedBy ? {
-          id: ticket.closedBy.toString(),
-          name: 'Staff'
-        } : undefined,
-        escalatedAt: ticket.escalatedAt?.toISOString(),
-        escalationLevel: ticket.escalationLevel,
-        lastReadBy: {
-          character: ticket.lastReadBy?.character?.toISOString(),
-          staff: ticket.lastReadBy?.staff?.toISOString()
-        },
-        tags: ticket.tags,
-        internalNotes: ticket.internalNotes,
-        messageCount: messages.length
-      };
+      // Transform ticket to API format (sorgente unica: toTicketManagement)
+      const ticketDetails: TicketManagement = TicketManagementController.toTicketManagement(
+        ticketData,
+        messages.length
+      );
 
       // Transform messages
       const transformedMessages: TicketMessageResponse[] = messages.map((message: any) => ({
@@ -1898,5 +1633,99 @@ export class TicketManagementController {
         getRequestId(req)
       ));
     }
+  }
+
+  // ===========================================================================
+  // Helper privati — sorgente unica per blocchi prima duplicati negli handler
+  // ===========================================================================
+
+  /**
+   * Trasforma un documento Ticket (lean) nel formato API `TicketManagement`.
+   * Prima era ripetuto ~5 volte quasi identico (liste + dettaglio).
+   *
+   * NB: `closedBy.name` usa `closedByName || 'Unknown'` (come `getAllTickets`).
+   * Tre handler + il dettaglio mostravano `'Staff'` hardcoded: era copia-incolla,
+   * non una scelta — `closeTicket` popola `closedByName` apposta per mostrarlo.
+   */
+  private static toTicketManagement(ticket: any, messageCount: number): TicketManagement {
+    return {
+      id: ticket._id.toString(),
+      title: ticket.title,
+      category: ticket.category,
+      categoryLabel: TICKET_CATEGORIES[ticket.category as keyof typeof TICKET_CATEGORIES] || ticket.category,
+      priority: ticket.priority,
+      status: ticket.status,
+      department: ticket.department,
+      createdBy: {
+        id: ticket.createdBy.toString(),
+        name: ticket.createdByName
+      },
+      createdAt: ticket.createdAt.toISOString(),
+      assignedTo: ticket.assignedTo ? {
+        id: ticket.assignedTo.toString(),
+        name: ticket.assignedToName || 'Unknown'
+      } : undefined,
+      assignedAt: ticket.assignedAt?.toISOString(),
+      closedAt: ticket.closedAt?.toISOString(),
+      closedBy: ticket.closedBy ? {
+        id: ticket.closedBy.toString(),
+        name: ticket.closedByName || 'Unknown'
+      } : undefined,
+      escalatedAt: ticket.escalatedAt?.toISOString(),
+      escalationLevel: ticket.escalationLevel,
+      lastReadBy: {
+        character: ticket.lastReadBy?.character?.toISOString(),
+        staff: ticket.lastReadBy?.staff?.toISOString()
+      },
+      tags: ticket.tags,
+      internalNotes: ticket.internalNotes,
+      messageCount
+    };
+  }
+
+  /**
+   * Carica una pagina di ticket: count + find paginata + conteggio messaggi
+   * per ticket + trasformazione + oggetto di paginazione.
+   * Prima era ripetuto 4 volte (getAllTickets, getMyTickets, getDepartmentTickets,
+   * getSpecificDepartmentTickets), l'unica differenza era il `sort`.
+   */
+  private static async fetchTicketPage(
+    query: Record<string, unknown>,
+    sort: Record<string, 1 | -1>,
+    page: number,
+    pageSize: number
+  ): Promise<{ tickets: TicketManagement[]; pagination: PaginationInfo }> {
+    const totalTickets = await Ticket.countDocuments(query);
+
+    const tickets = await Ticket.find(query)
+      .sort(sort)
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .lean();
+
+    const ticketIds = tickets.map((t: any) => t._id);
+    const messageCounts = await TicketMessage.aggregate([
+      { $match: { ticketId: { $in: ticketIds } } },
+      { $group: { _id: '$ticketId', count: { $sum: 1 } } }
+    ]);
+    const messageCountMap = new Map<string, number>();
+    messageCounts.forEach(({ _id, count }: any) => messageCountMap.set(_id.toString(), count));
+
+    const transformed = tickets.map((t: any) =>
+      TicketManagementController.toTicketManagement(t, messageCountMap.get(t._id.toString()) || 0)
+    );
+
+    const totalPages = Math.ceil(totalTickets / pageSize);
+    return {
+      tickets: transformed,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: totalTickets,
+        pageSize,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
+      }
+    };
   }
 }
