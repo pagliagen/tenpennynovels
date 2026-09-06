@@ -212,12 +212,12 @@ export class CharacterCreationController {
           resolvedBase = skill.baseValue;
         } else if (typeof skill.baseValue === 'string') {
           if (skill.baseValue.startsWith('VALUE:')) {
-            resolvedBase = parseInt(skill.baseValue.replace('VALUE:', '')) || 0;
+            resolvedBase = Number.parseInt(skill.baseValue.replace('VALUE:', '')) || 0;
           } else if (skill.baseValue.startsWith('FORMULA:')) {
             baseFormula = skill.baseValue;
             resolvedBase = 0;
           } else {
-            resolvedBase = parseInt(skill.baseValue) || 0;
+            resolvedBase = Number.parseInt(skill.baseValue) || 0;
           }
         } else {
           resolvedBase = 0;

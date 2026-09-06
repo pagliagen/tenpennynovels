@@ -203,13 +203,13 @@ export class ChatModerationController {
         .populate('reviewedBy', 'name')
         .populate('moderationActionIds')
         .sort(sortOption)
-        .limit(parseInt(limit as string))
-        .skip(parseInt(skip as string));
+        .limit(Number.parseInt(limit as string))
+        .skip(Number.parseInt(skip as string));
       
       const totalCount = await MessageReport.countDocuments(filter);
       
-      const skipNum = parseInt(skip as string);
-      const limitNum = parseInt(limit as string);
+      const skipNum = Number.parseInt(skip as string);
+      const limitNum = Number.parseInt(limit as string);
       const pageNum = Math.floor(skipNum / limitNum) + 1;
       const totalPages = Math.ceil(totalCount / limitNum);
 
@@ -355,7 +355,7 @@ export class ChatModerationController {
         targetCharacterId: senderId?._id,
         targetCharacterName: senderName,
         targetUserId: senderUserId,
-        duration: duration ? parseInt(duration) : undefined,
+        duration: duration ? Number.parseInt(duration) : undefined,
         isAutomaticAction: false,
         escalationLevel: 'none'
       });
@@ -470,13 +470,13 @@ export class ChatModerationController {
         .populate('moderatorId', 'name')
         .populate('targetCharacterId', 'name')
         .sort(sortOption)
-        .limit(parseInt(limit as string))
-        .skip(parseInt(skip as string));
+        .limit(Number.parseInt(limit as string))
+        .skip(Number.parseInt(skip as string));
       
       const totalCount = await ChatModerationAction.countDocuments(filter);
       
-      const skipNum = parseInt(skip as string);
-      const limitNum = parseInt(limit as string);
+      const skipNum = Number.parseInt(skip as string);
+      const limitNum = Number.parseInt(limit as string);
       const pageNum = Math.floor(skipNum / limitNum) + 1;
       const totalPages = Math.ceil(totalCount / limitNum);
 
@@ -559,7 +559,7 @@ export class ChatModerationController {
           .populate('senderId', 'name')
           .populate('recipientId', 'name')
           .sort({ sentAt: -1 })
-          .limit(Math.min(parseInt(limit as string), 50));
+          .limit(Math.min(Number.parseInt(limit as string), 50));
 
         results.push(...ongameMessages.map(msg => ({
           messageType: 'ongame',
@@ -588,7 +588,7 @@ export class ChatModerationController {
           .populate('senderId', 'name')
           .populate('chatId', 'name')
           .sort({ sentAt: -1 })
-          .limit(Math.min(parseInt(limit as string), 50));
+          .limit(Math.min(Number.parseInt(limit as string), 50));
         
         results.push(...offgameMessages.map(msg => ({
           messageType: 'offgame',
@@ -607,7 +607,7 @@ export class ChatModerationController {
       
       res.json(successResponse(
         {
-          messages: results.slice(0, parseInt(limit as string)),
+          messages: results.slice(0, Number.parseInt(limit as string)),
           totalFound: results.length,
           searchQuery: query
         },

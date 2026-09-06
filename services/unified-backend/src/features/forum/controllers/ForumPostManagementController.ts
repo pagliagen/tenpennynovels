@@ -23,8 +23,8 @@ export class ForumPostManagementController {
    */
   static async getPosts(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 25;
       const search = req.query.search as string;
       const topicSlug = req.query.topicSlug as string;
       const discussionSlug = req.query.discussionSlug as string;

@@ -945,7 +945,7 @@ export class CharacterController {
             }
             if (typeof skill.baseValue === 'string') {
               if (skill.baseValue.startsWith('VALUE:')) {
-                return parseInt(skill.baseValue.replace('VALUE:', '')) || 0;
+                return Number.parseInt(skill.baseValue.replace('VALUE:', '')) || 0;
               }
               if (skill.baseValue.startsWith('FORMULA:')) {
                 const formula = skill.baseValue.replace('FORMULA:', '');
@@ -1400,8 +1400,8 @@ export class CharacterController {
    */
   static async getCharacterDirectory(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 25, 100);
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Math.min(Number.parseInt(req.query.pageSize as string) || 25, 100);
       const sortBy = (req.query.sortBy as string) || 'name';
       const sortOrder = (req.query.sortOrder as string) === 'desc' ? -1 : 1;
       const search = req.query.search as string;

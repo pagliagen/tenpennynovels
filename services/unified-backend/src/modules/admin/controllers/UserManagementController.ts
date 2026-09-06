@@ -67,8 +67,8 @@ export class UserManagementController {
    */
   static async getUsers(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Number.parseInt(req.query.pageSize as string) || 25;
       const search = req.query.search as string;
       const status = req.query.status as string;
       const role = req.query.role as string;
@@ -1525,7 +1525,7 @@ export class UserManagementController {
   static async searchUsers(req: Request, res: Response): Promise<void> {
     try {
       const query = req.query.q as string;
-      const limit = parseInt(req.query.limit as string) || 10;
+      const limit = Number.parseInt(req.query.limit as string) || 10;
 
       if (!query || query.trim().length < 2) {
         res.status(400).json(errorResponse(

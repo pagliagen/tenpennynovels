@@ -52,9 +52,9 @@ export class LocationManagementController {
    */
   static async getLocations(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 25;
-      const pageSize = parseInt(req.query.pageSize as string) || limit;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 25;
+      const pageSize = Number.parseInt(req.query.pageSize as string) || limit;
       const district = req.query.district as string;
       const showHidden = req.query.showHidden === 'true';
       const sortBy = req.query.sortBy as string || 'name';

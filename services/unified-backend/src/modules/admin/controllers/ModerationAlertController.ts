@@ -12,12 +12,12 @@ export class ModerationAlertController {
    */
   static async getAlerts(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Math.min(Number.parseInt(req.query.limit as string) || 20, 100);
       const source = req.query.source as string;
       const status = req.query.status as string;
       const characterId = req.query.characterId as string;
-      const minScore = parseFloat(req.query.minScore as string);
+      const minScore = Number.parseFloat(req.query.minScore as string);
       const dateFrom = req.query.dateFrom ? new Date(req.query.dateFrom as string) : undefined;
       const dateTo = req.query.dateTo ? new Date(req.query.dateTo as string) : undefined;
 
@@ -33,7 +33,7 @@ export class ModerationAlertController {
       if (characterId) {
         query.characterId = characterId;
       }
-      if (!isNaN(minScore)) {
+      if (!Number.isNaN(minScore)) {
         query.toxicityScore = { $gte: minScore };
       }
       if (dateFrom || dateTo) {

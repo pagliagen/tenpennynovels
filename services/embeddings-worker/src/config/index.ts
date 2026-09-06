@@ -45,7 +45,7 @@ export const config = {
       think: process.env.OLLAMA_THINK === 'true',
       // Context window esplicita: senza questo Ollama applica il proprio default
       // (2048/4096 a seconda della versione) e tronca il prompt in silenzio.
-      numCtx: parseInt(process.env.OLLAMA_NUM_CTX || '4096', 10),
+      numCtx: Number.parseInt(process.env.OLLAMA_NUM_CTX || '4096', 10),
     },
   },
 
@@ -53,17 +53,17 @@ export const config = {
   // Vincolo a monte: unified-backend aborta /ask dopo 60s (AbortSignal.timeout),
   // quindi prefill + decode devono stare sotto quella soglia su hardware CPU-only.
   qa: {
-    maxAnswerTokens: parseInt(process.env.QA_MAX_ANSWER_TOKENS || '250', 10),
-    maxContextChars: parseInt(process.env.QA_MAX_CONTEXT_CHARS || '6000', 10),
-    maxChunkChars: parseInt(process.env.QA_MAX_CHUNK_CHARS || '1500', 10),
+    maxAnswerTokens: Number.parseInt(process.env.QA_MAX_ANSWER_TOKENS || '250', 10),
+    maxContextChars: Number.parseInt(process.env.QA_MAX_CONTEXT_CHARS || '6000', 10),
+    maxChunkChars: Number.parseInt(process.env.QA_MAX_CHUNK_CHARS || '1500', 10),
     // Arricchimento progressivo (Bibliotecario): risposta più breve della
     // principale, è un'aggiunta puntuale non un altro paragrafo completo.
-    maxEnrichmentTokens: parseInt(process.env.QA_MAX_ENRICHMENT_TOKENS || '150', 10),
+    maxEnrichmentTokens: Number.parseInt(process.env.QA_MAX_ENRICHMENT_TOKENS || '150', 10),
   },
 
   // HTTP server
   http: {
-    port: parseInt(process.env.HTTP_PORT || '5001', 10),
+    port: Number.parseInt(process.env.HTTP_PORT || '5001', 10),
     // SECURITY: nel deploy bare-metal (PM2 su VPS) il default va a 127.0.0.1 via
     // HTTP_BIND_HOST (vedi ecosystem.config.js). In Docker Compose l'isolamento è
     // già garantito dalla rete bridge privata: bindare a 127.0.0.1 lì impedisce
@@ -82,7 +82,7 @@ export const config = {
     // oltre questa soglia il subprocess Python rifiuta il testo (nessun
     // troncamento). embedding-worker.ts spezza i chunk di sezione (H2/H3)
     // troppo lunghi PRIMA di arrivare qui, per non perdere contenuto.
-    maxTextChars: parseInt(process.env.EMBEDDING_MAX_TEXT_CHARS || '10000', 10),
+    maxTextChars: Number.parseInt(process.env.EMBEDDING_MAX_TEXT_CHARS || '10000', 10),
   },
 
   // Moderation constants

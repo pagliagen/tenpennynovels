@@ -268,20 +268,20 @@ export class ChatModerationController {
       const reports = await MessageReport.find(filter)
         .select('messageType reportReason reportDescription status priority reportedAt reviewedAt resolution resolutionNotes')
         .sort({ reportedAt: -1 })
-        .limit(parseInt(limit as string))
-        .skip(parseInt(skip as string));
+        .limit(Number.parseInt(limit as string))
+        .skip(Number.parseInt(skip as string));
 
       const totalCount = await MessageReport.countDocuments(filter);
 
       res.json(listResponse(
         reports,
         {
-          currentPage: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
-          pageSize: parseInt(limit as string),
+          currentPage: Math.floor(Number.parseInt(skip as string) / Number.parseInt(limit as string)) + 1,
+          pageSize: Number.parseInt(limit as string),
         totalItems: totalCount,
-          totalPages: Math.ceil(totalCount / parseInt(limit as string)),
-          hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
-          hasPreviousPage: parseInt(skip as string) > 0
+          totalPages: Math.ceil(totalCount / Number.parseInt(limit as string)),
+          hasNextPage: totalCount > Number.parseInt(skip as string) + Number.parseInt(limit as string),
+          hasPreviousPage: Number.parseInt(skip as string) > 0
         },
         undefined,
         getRequestId(req)
@@ -325,8 +325,8 @@ export class ChatModerationController {
       const actions = await ChatModerationAction.find(filter)
         .select('action reason severity actionTakenAt duration expiresAt moderatorUsername')
         .sort({ actionTakenAt: -1 })
-        .limit(parseInt(limit as string))
-        .skip(parseInt(skip as string));
+        .limit(Number.parseInt(limit as string))
+        .skip(Number.parseInt(skip as string));
 
       const totalCount = await ChatModerationAction.countDocuments(filter);
 
@@ -341,12 +341,12 @@ export class ChatModerationController {
       res.json(listResponse(
         actionsWithTimeRemaining,
         {
-          currentPage: Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1,
-          pageSize: parseInt(limit as string),
+          currentPage: Math.floor(Number.parseInt(skip as string) / Number.parseInt(limit as string)) + 1,
+          pageSize: Number.parseInt(limit as string),
         totalItems: totalCount,
-          totalPages: Math.ceil(totalCount / parseInt(limit as string)),
-          hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
-          hasPreviousPage: parseInt(skip as string) > 0
+          totalPages: Math.ceil(totalCount / Number.parseInt(limit as string)),
+          hasNextPage: totalCount > Number.parseInt(skip as string) + Number.parseInt(limit as string),
+          hasPreviousPage: Number.parseInt(skip as string) > 0
         },
         undefined,
         getRequestId(req)

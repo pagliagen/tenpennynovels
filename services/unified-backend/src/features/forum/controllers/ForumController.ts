@@ -321,8 +321,8 @@ export class ForumController {
   static async getDiscussions(req: Request, res: Response) {
     try {
       const { topicSlug } = req.params;
-      const page = Math.max(1, parseInt(req.query.page as string) || 1);
-      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
+      const page = Math.max(1, Number.parseInt(req.query.page as string) || 1);
+      const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit as string) || 20));
       const skip = (page - 1) * limit;
 
       const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
@@ -781,8 +781,8 @@ export class ForumController {
   static async getPosts(req: Request, res: Response) {
     try {
       const { topicSlug, discussionSlug } = req.params;
-      const page = Math.max(1, parseInt(req.query.page as string) || 1);
-      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
+      const page = Math.max(1, Number.parseInt(req.query.page as string) || 1);
+      const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit as string) || 20));
       const skip = (page - 1) * limit;
 
       const topic = await ForumTopic.findOne({ slug: topicSlug, isVisible: true });
@@ -1472,7 +1472,7 @@ export class ForumController {
 
   static async getRecentDiscussions(req: Request, res: Response) {
     try {
-      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
+      const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit as string) || 20));
       const character = req.character;
 
       const charCtx = toCharCtx(character);
@@ -1501,7 +1501,7 @@ export class ForumController {
 
   static async getPopularDiscussions(req: Request, res: Response) {
     try {
-      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
+      const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit as string) || 20));
       const timeframe = req.query.timeframe as string || 'week';
       const character = req.character;
 
@@ -1551,8 +1551,8 @@ export class ForumController {
         return res.status(400).json({ success: false, error: 'La query di ricerca è obbligatoria', code: 'MISSING_QUERY' });
       }
 
-      const page = Math.max(1, parseInt(req.query.page as string) || 1);
-      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
+      const page = Math.max(1, Number.parseInt(req.query.page as string) || 1);
+      const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit as string) || 20));
       const skip = (page - 1) * limit;
 
       // Parsed once, applied uniformly to whichever search path ran (see the

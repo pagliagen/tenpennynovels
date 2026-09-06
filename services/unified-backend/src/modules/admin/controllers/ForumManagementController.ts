@@ -31,8 +31,8 @@ export class ForumManagementController {
         sortOrder = 'desc'
       } = req.query;
 
-      const pageNum = parseInt(page as string);
-      const limitNum = parseInt(limit as string);
+      const pageNum = Number.parseInt(page as string);
+      const limitNum = Number.parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
       // Build filter query

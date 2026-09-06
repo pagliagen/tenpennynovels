@@ -37,8 +37,8 @@ export class SocialClassManagementController {
       }
 
       // Pagination
-      const pageNum = Math.max(1, parseInt(page as string));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit as string)));
+      const pageNum = Math.max(1, Number.parseInt(page as string));
+      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit as string)));
       const skip = (pageNum - 1) * limitNum;
 
       // Sorting
@@ -965,8 +965,8 @@ export class SocialClassManagementController {
       } = req.query;
 
       // Pagination
-      const pageNum = Math.max(1, parseInt(page as string));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit as string)));
+      const pageNum = Math.max(1, Number.parseInt(page as string));
+      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit as string)));
       const skip = (pageNum - 1) * limitNum;
 
       // Build aggregation pipeline

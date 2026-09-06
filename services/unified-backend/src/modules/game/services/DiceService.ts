@@ -59,9 +59,9 @@ export class DiceService {
       return { count: 1, type: 100, modifier: 0, isValid: false };
     }
 
-    const count = parseInt(match[1], 10);
-    const type = parseInt(match[2], 10);
-    const modifier = match[3] ? parseInt(match[3], 10) : 0;
+    const count = Number.parseInt(match[1], 10);
+    const type = Number.parseInt(match[2], 10);
+    const modifier = match[3] ? Number.parseInt(match[3], 10) : 0;
 
     const validTypes = [4, 6, 8, 10, 12, 20, 100];
     const isValid =

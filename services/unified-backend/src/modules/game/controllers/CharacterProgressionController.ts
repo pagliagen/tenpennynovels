@@ -11,7 +11,7 @@ function calculateSkillBaseValue(skill: any, character: any): number {
   }
   if (typeof skill.baseValue === 'string') {
     if (skill.baseValue.startsWith('VALUE:')) {
-      return parseInt(skill.baseValue.replace('VALUE:', '')) || 0;
+      return Number.parseInt(skill.baseValue.replace('VALUE:', '')) || 0;
     }
     if (skill.baseValue.startsWith('FORMULA:')) {
       const characteristic = skill.baseValue.replace('FORMULA:', '');

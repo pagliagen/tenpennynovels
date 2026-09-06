@@ -578,7 +578,7 @@ export class DocumentManagementController {
         return;
       }
 
-      const depth = parseInt(req.query.depth as string) || 10;
+      const depth = Number.parseInt(req.query.depth as string) || 10;
 
       const rootDoc = await Document.findById(id).lean();
 

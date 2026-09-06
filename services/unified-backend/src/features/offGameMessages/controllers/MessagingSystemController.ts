@@ -31,8 +31,8 @@ export class MessagingSystemController {
         sortOrder = 'desc'
       } = req.query;
 
-      const pageNum = parseInt(page as string);
-      const limitNum = parseInt(limit as string);
+      const pageNum = Number.parseInt(page as string);
+      const limitNum = Number.parseInt(limit as string);
       const skip = (pageNum - 1) * limitNum;
 
       // CWE-943: type/search/sortBy da req.query finiscono nel filtro/sort
@@ -74,8 +74,8 @@ export class MessagingSystemController {
       // Participants count filter
       filter.$expr = {
         $and: [
-          { $gte: [{ $size: '$participants' }, parseInt(minParticipants as string)] },
-          { $lte: [{ $size: '$participants' }, parseInt(maxParticipants as string)] }
+          { $gte: [{ $size: '$participants' }, Number.parseInt(minParticipants as string)] },
+          { $lte: [{ $size: '$participants' }, Number.parseInt(maxParticipants as string)] }
         ]
       };
 
@@ -369,8 +369,8 @@ export class MessagingSystemController {
       }
 
       // Get recent messages with pagination
-      const messagesPageNum = parseInt(messagesPage as string);
-      const messagesLimitNum = parseInt(messagesLimit as string);
+      const messagesPageNum = Number.parseInt(messagesPage as string);
+      const messagesLimitNum = Number.parseInt(messagesLimit as string);
       const skip = (messagesPageNum - 1) * messagesLimitNum;
 
       const [messages, messageCount, participants] = await Promise.all([

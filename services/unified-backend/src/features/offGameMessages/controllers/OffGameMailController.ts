@@ -19,8 +19,8 @@ export class OffGameMailController {
         dateTo
       } = req.query;
 
-      const pageNum = parseInt(page as string, 10);
-      const limitNum = parseInt(limit as string, 10);
+      const pageNum = Number.parseInt(page as string, 10);
+      const limitNum = Number.parseInt(limit as string, 10);
 
       // Build filter query
       const filter: any = {};

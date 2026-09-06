@@ -90,8 +90,8 @@ export class CharacterValidationMiddleware {
       .trim()
       .custom((value) => {
         if (!value) return true;
-        const num = parseFloat(value);
-        if (isNaN(num) || num < 50 || num > 300) {
+        const num = Number.parseFloat(value);
+        if (Number.isNaN(num) || num < 50 || num > 300) {
           throw new Error('Altezza non valida (atteso: 50–300 cm)');
         }
         return true;
@@ -103,8 +103,8 @@ export class CharacterValidationMiddleware {
       .trim()
       .custom((value) => {
         if (!value) return true;
-        const num = parseFloat(value);
-        if (isNaN(num) || num < 10 || num > 500) {
+        const num = Number.parseFloat(value);
+        if (Number.isNaN(num) || num < 10 || num > 500) {
           throw new Error('Peso non valido (atteso: 10–500 kg)');
         }
         return true;

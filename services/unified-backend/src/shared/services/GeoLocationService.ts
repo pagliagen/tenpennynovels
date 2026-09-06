@@ -12,7 +12,7 @@ function isValidIPAddress(ip: string): boolean {
   const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/;
   if (ipv4.test(ip)) {
     return ip.split('.').every(octet => {
-      const num = parseInt(octet, 10);
+      const num = Number.parseInt(octet, 10);
       return num >= 0 && num <= 255;
     });
   }

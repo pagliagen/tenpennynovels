@@ -149,8 +149,8 @@ export class SystemConfigController {
   static async getAuditLogs(req: Request, res: Response): Promise<void> {
     try {
       // Parse query parameters
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 50;
       const category = req.query.category as string;
       const adminUserId = req.query.adminUserId as string;
       const severity = req.query.severity as string;
@@ -692,8 +692,8 @@ export class SystemConfigController {
    */
   static async getBroadcastHistory(req: Request, res: Response): Promise<void> {
     try {
-      const limit = parseInt(req.query.limit as string) || 10;
-      const offset = parseInt(req.query.offset as string) || 0;
+      const limit = Number.parseInt(req.query.limit as string) || 10;
+      const offset = Number.parseInt(req.query.offset as string) || 0;
       const type = req.query.type as string; // Optional filter by type
 
       // Dynamic import to avoid circular dependencies

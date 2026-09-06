@@ -697,7 +697,7 @@ export function calculateStatFormula(formula: string, token: string, statValue: 
 
   // Constant formula: "constant:25"
   if (formula.startsWith('constant:')) {
-    const value = parseInt(formula.replace('constant:', '')) || 0;
+    const value = Number.parseInt(formula.replace('constant:', '')) || 0;
     return Math.floor(value);
   }
 
@@ -845,7 +845,7 @@ export function calculateDerivedStat(formula: string, stats: CharacterStats): nu
 
   // Handle constant formulas
   if (formula.startsWith('constant:')) {
-    const value = parseInt(formula.replace('constant:', '')) || 0;
+    const value = Number.parseInt(formula.replace('constant:', '')) || 0;
     return Math.floor(value);
   }
 
@@ -887,8 +887,8 @@ export function validateDerivedFormula(formula: string): { valid: boolean; error
 
   // Check constant formula
   if (formula.startsWith('constant:')) {
-    const value = parseInt(formula.replace('constant:', ''));
-    if (isNaN(value)) {
+    const value = Number.parseInt(formula.replace('constant:', ''));
+    if (Number.isNaN(value)) {
       return { valid: false, error: 'Costante non valida' };
     }
     return { valid: true };

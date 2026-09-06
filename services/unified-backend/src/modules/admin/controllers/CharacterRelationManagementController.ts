@@ -73,8 +73,8 @@ export class CharacterRelationManagementController {
       }
 
       // Pagination
-      const pageNum = Math.max(1, parseInt(page as string));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit as string)));
+      const pageNum = Math.max(1, Number.parseInt(page as string));
+      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit as string)));
       const skip = (pageNum - 1) * limitNum;
 
       // Sorting
@@ -307,8 +307,8 @@ export class CharacterRelationManagementController {
       }
 
       // Pagination
-      const pageNum = Math.max(1, parseInt(page as string));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit as string)));
+      const pageNum = Math.max(1, Number.parseInt(page as string));
+      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit as string)));
       const skip = (pageNum - 1) * limitNum;
 
       // Sorting
@@ -421,8 +421,8 @@ export class CharacterRelationManagementController {
       }
 
       // Pagination
-      const pageNum = Math.max(1, parseInt(page as string));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit as string)));
+      const pageNum = Math.max(1, Number.parseInt(page as string));
+      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit as string)));
       const skip = (pageNum - 1) * limitNum;
 
       // Sorting

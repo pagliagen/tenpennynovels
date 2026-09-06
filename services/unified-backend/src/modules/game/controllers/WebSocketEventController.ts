@@ -23,11 +23,11 @@ export class WebSocketEventController {
     try {
       const { lastEventId } = req.params;
       const characterId = req.character!.characterId;
-      const limit = parseInt(req.query.limit as string) || 100;
+      const limit = Number.parseInt(req.query.limit as string) || 100;
 
       // Validate lastEventId
-      const lastEventIdNum = parseInt(lastEventId);
-      if (isNaN(lastEventIdNum) || lastEventIdNum < 0) {
+      const lastEventIdNum = Number.parseInt(lastEventId);
+      if (Number.isNaN(lastEventIdNum) || lastEventIdNum < 0) {
         res.status(400).json(errorResponse(
           'Invalid lastEventId - must be a positive number',
           'INVALID_EVENT_ID',

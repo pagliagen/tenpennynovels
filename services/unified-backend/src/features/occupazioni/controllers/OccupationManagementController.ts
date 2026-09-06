@@ -15,8 +15,8 @@ export class OccupationManagementController {
    */
   static async getOccupations(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 25;
       // CWE-943: `as string` è solo un cast a compile-time — a runtime
       // req.query.category può essere un oggetto (?category[$where]=...,
       // qs lo trasforma), e finirebbe diretto nel filtro Mongo. Guardia

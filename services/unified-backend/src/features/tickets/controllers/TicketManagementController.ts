@@ -67,8 +67,8 @@ export class TicketManagementController {
    */
   static async getAllTickets(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Number.parseInt(req.query.pageSize as string) || 25;
       const sortBy = req.query.sortBy as string || 'createdAt';
       const sortOrder = req.query.sortOrder as string || 'desc';
 
@@ -266,8 +266,8 @@ export class TicketManagementController {
         return;
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Number.parseInt(req.query.pageSize as string) || 25;
       // CWE-943: vedi guardia di tipo in getAllTickets.
       const status = typeof req.query.status === 'string' ? req.query.status : undefined;
 
@@ -409,8 +409,8 @@ export class TicketManagementController {
         return;
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Number.parseInt(req.query.pageSize as string) || 25;
       // CWE-943: vedi guardia di tipo in getAllTickets.
       const status = typeof req.query.status === 'string' ? req.query.status : undefined;
 
@@ -561,8 +561,8 @@ export class TicketManagementController {
         return;
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Number.parseInt(req.query.pageSize as string) || 25;
       // CWE-943: vedi guardia di tipo in getAllTickets. targetDepartment è
       // un req.params (sempre stringa, Express non lo trasforma mai in
       // oggetto) ed è già validato contro DEPARTMENT_ROLES_MAPPING sopra —

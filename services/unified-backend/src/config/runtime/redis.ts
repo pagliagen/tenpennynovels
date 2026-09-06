@@ -120,7 +120,7 @@ export class RedisConnection {
 
   async getRateLimit(key: string): Promise<number> {
     const value = await this.mainClient.get(`ratelimit:${key}`);
-    return value ? parseInt(value, 10) : 0;
+    return value ? Number.parseInt(value, 10) : 0;
   }
 
   async resetRateLimit(key: string): Promise<void> {
