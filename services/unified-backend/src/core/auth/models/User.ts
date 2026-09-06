@@ -81,7 +81,7 @@ const UserSchema = new Schema<IUser>({
     unique: true,
     lowercase: true,
     trim: true,
-    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    match: /^[^\s@]+@[^\s.@]+\.[^\s@]+$/ // dominio senza "." per evitare backtracking super-lineare (S8786)
   },
   displayName: {
     type: String,

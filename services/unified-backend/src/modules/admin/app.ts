@@ -54,7 +54,8 @@ app.use((req, res, next) => {
   const startTime = Date.now();
   const timestamp = new Date().toISOString();
   const method = req.method;
-  const url = req.originalUrl || req.url;
+  // no CR/LF: l'URL finisce nei log, evita log forging (S5145)
+  const url = (req.originalUrl || req.url).replace(/[\r\n]+/g, ' ');
   const clientIP = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
   const userAgent = req.get('User-Agent') || 'Unknown';
   const origin = req.get('Origin') || 'No origin';
@@ -67,7 +68,7 @@ app.use((req, res, next) => {
     const duration = Date.now() - startTime;
     const statusCode = res.statusCode;
 
-    logger.info(`CallInfo: ${req.method} ${req.originalUrl} | Duration: ${duration}ms`);
+    logger.info(`CallInfo: ${req.method} ${url} | Duration: ${duration}ms`);
     logger.info(`RESPONSE: ${statusCode} | Duration: ${duration}ms`);
 
     // Calculate data size - handle objects by stringifying them first

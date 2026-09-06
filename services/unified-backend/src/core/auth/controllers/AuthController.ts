@@ -110,7 +110,6 @@ export class AuthController {
           },
           401));
         return;
-        return;
       }
 
       // Ban di gioco/chat/forum sono sul singolo personaggio (e legacy sullo User): non si blocca il login qui.
@@ -144,7 +143,6 @@ export class AuthController {
           },
           401));
         return;
-        return;
       }
 
       // Check if email is verified (only after password is correct)
@@ -157,7 +155,6 @@ export class AuthController {
             verificationUrl: '/auth/resend-verification'
           },
           400));
-        return;
         return;
       }
 
@@ -420,7 +417,6 @@ export class AuthController {
           undefined,
           404));
         return;
-        return;
       }
 
       if (character.status === 'DELETED') {
@@ -435,7 +431,6 @@ export class AuthController {
             }
           },
           404));
-        return;
         return;
       }
 
@@ -578,7 +573,6 @@ export class AuthController {
           undefined,
           400));
         return;
-        return;
       }
 
       // Check if character name already exists for this user (exclude deleted)
@@ -593,7 +587,6 @@ export class AuthController {
           'CHARACTER_NAME_EXISTS',
           undefined,
           400));
-        return;
         return;
       }
 
@@ -655,7 +648,6 @@ export class AuthController {
           details,
           400));
         return;
-        return;
       }
       
       // Handle duplicate name errors
@@ -665,7 +657,6 @@ export class AuthController {
           'CHARACTER_NAME_EXISTS',
           undefined,
           400));
-        return;
         return;
       }
       

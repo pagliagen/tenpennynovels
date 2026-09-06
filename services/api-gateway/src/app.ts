@@ -360,7 +360,11 @@ app.use('/game', gameRateLimitGateway);
 app.use('/webhooks', (req, res, next) => {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
   if (!config.webhooks.secret || token !== config.webhooks.secret) {
-    logger.warn(`[WEBHOOKS] Accesso non autorizzato: ${req.method} ${req.originalUrl} da ${req.ip}`);
+    logger.warn('[WEBHOOKS] Accesso non autorizzato', {
+      method: req.method,
+      url: req.originalUrl.replace(/[\r\n]+/g, ' '), // no CR/LF: evita log forging (S5145)
+      ip: req.ip,
+    });
     res.status(401).json({ result: false, error: 'Non autorizzato', code: 'INVALID_WEBHOOK_SECRET' });
     return;
   }
