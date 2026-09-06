@@ -171,14 +171,6 @@ export function validateUsername(username: string): {
   };
 }
 
-// ✅ Sanitize user input (rimuove HTML, trim whitespace)
-export function sanitizeInput(input: string): string {
-  return input
-    .trim()
-    .replace(/<[^<>]*>/g, '') // Remove HTML tags (classe senza "<" per evitare backtracking, S8786)
-    .replace(/[<>]/g, '');   // Remove angle brackets
-}
-
 // ✅ Validate ObjectId format
 export function isValidObjectId(id: string): boolean {
   return /^[0-9a-fA-F]{24}$/.test(id);
