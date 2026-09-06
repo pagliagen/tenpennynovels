@@ -26,8 +26,8 @@ export function getNumber(
   defaultValue = 0
 ): number {
   const str = getString(value);
-  const num = parseInt(str, 10);
-  return isNaN(num) ? defaultValue : num;
+  const num = Number.parseInt(str, 10);
+  return Number.isNaN(num) ? defaultValue : num;
 }
 
 /**
@@ -72,8 +72,8 @@ export function getOptionalNumber(
 ): number | undefined {
   const str = getOptionalString(value);
   if (!str) return undefined;
-  const num = parseInt(str, 10);
-  return isNaN(num) ? undefined : num;
+  const num = Number.parseInt(str, 10);
+  return Number.isNaN(num) ? undefined : num;
 }
 
 /**

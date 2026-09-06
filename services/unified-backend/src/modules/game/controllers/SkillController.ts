@@ -651,7 +651,7 @@ function calculateSkillBaseValue(skill: any, character: any): number {
 
   if (typeof skill.baseValue === 'string') {
     if (skill.baseValue.startsWith('VALUE:')) {
-      return parseInt(skill.baseValue.replace('VALUE:', ''));
+      return Number.parseInt(skill.baseValue.replace('VALUE:', ''));
     }
     
     if (skill.baseValue.startsWith('FORMULA:')) {

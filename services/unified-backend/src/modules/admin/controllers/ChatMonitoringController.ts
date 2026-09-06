@@ -390,8 +390,8 @@ export class ChatMonitoringController {
         .populate('reportedCharacterId', 'name surname')
         .populate('assignedTo', 'name surname')
         .sort({ priorityScore: -1, createdAt: -1 })
-        .skip((parseInt(page as string) - 1) * parseInt(limit as string))
-        .limit(parseInt(limit as string))
+        .skip((Number.parseInt(page as string) - 1) * Number.parseInt(limit as string))
+        .limit(Number.parseInt(limit as string))
         .lean();
 
       const auditInfo = AdminAuthMiddleware.getAuditInfo(req);
@@ -403,8 +403,8 @@ export class ChatMonitoringController {
         totalResults: totalItems
       });
 
-      const pageNum = parseInt(page as string);
-      const limitNum = parseInt(limit as string);
+      const pageNum = Number.parseInt(page as string);
+      const limitNum = Number.parseInt(limit as string);
       const pagination = {
         currentPage: pageNum,
         totalPages: Math.ceil(totalItems / limitNum),
@@ -451,8 +451,8 @@ export class ChatMonitoringController {
       })
         .populate('moderatorId', 'name surname')
         .sort({ actionTakenAt: -1 })
-        .limit(parseInt(limit as string))
-        .skip(parseInt(skip as string))
+        .limit(Number.parseInt(limit as string))
+        .skip(Number.parseInt(skip as string))
         .lean();
 
       const totalCount = await ChatModerationAction.countDocuments({
@@ -466,15 +466,15 @@ export class ChatMonitoringController {
         category: 'chat_monitoring'
       });
 
-      const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
+      const page = Math.floor(Number.parseInt(skip as string) / Number.parseInt(limit as string)) + 1;
       res.json(successResponse(
         {
           history: moderationHistory,
           pagination: {
             total: totalCount,
-            pageSize: parseInt(limit as string),
-            skip: parseInt(skip as string),
-            hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
+            pageSize: Number.parseInt(limit as string),
+            skip: Number.parseInt(skip as string),
+            hasNextPage: totalCount > Number.parseInt(skip as string) + Number.parseInt(limit as string),
             hasPreviousPage: page > 1
           }
         },

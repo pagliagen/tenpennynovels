@@ -29,7 +29,7 @@ export const DEFAULT_BASE_SKILL_POINTS = 200;
 
 export function parseBaseSkillPoints(formula: string | undefined): number {
   if (formula?.startsWith('constant:')) {
-    const parsed = parseInt(formula.replace('constant:', ''), 10);
+    const parsed = Number.parseInt(formula.replace('constant:', ''), 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_BASE_SKILL_POINTS;
   }
   if (formula) {
@@ -149,7 +149,7 @@ function resolveBaseValue(baseValue: string | number, characterStats?: Record<st
   if (typeof baseValue !== 'string') return 0;
 
   if (baseValue.startsWith('VALUE:')) {
-    return parseInt(baseValue.replace('VALUE:', '')) || 0;
+    return Number.parseInt(baseValue.replace('VALUE:', '')) || 0;
   }
 
   if (baseValue.startsWith('FORMULA:')) {
@@ -164,8 +164,8 @@ function resolveBaseValue(baseValue: string | number, characterStats?: Record<st
     return characterStats[fullStat] || characterStats[stat] || 0;
   }
 
-  const parsed = parseInt(baseValue);
-  return isNaN(parsed) ? 0 : parsed;
+  const parsed = Number.parseInt(baseValue);
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 /**

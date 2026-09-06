@@ -22,8 +22,8 @@ export class ForumTopicManagementController {
    */
   static async getTopics(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 25;
       const search = req.query.search as string;
       const sortBy = (req.query.sortBy as string) || 'sortOrder';
       const sortOrder = (req.query.sortOrder as string) === 'desc' ? -1 : 1;

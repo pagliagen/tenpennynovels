@@ -221,8 +221,8 @@ export class OnGameMessageController {
         return;
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 25;
       const skip = (page - 1) * limit;
 
       // Query: received messages (NOT deleted by recipient, deliveredAt exists)
@@ -281,8 +281,8 @@ export class OnGameMessageController {
         return;
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 25;
       const skip = (page - 1) * limit;
 
       // Query: sent messages (NOT deleted by sender)
@@ -489,8 +489,8 @@ export class OnGameMessageController {
         return;
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 25;
       const skip = (page - 1) * limit;
 
       // Query: sent messages (NOT deleted by sender)
@@ -642,8 +642,8 @@ export class OnGameMessageController {
         return;
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 25;
 
       const threads = await OnGameThreadService.listThreads(
         new mongoose.Types.ObjectId(req.character.characterId),
@@ -694,8 +694,8 @@ export class OnGameMessageController {
       }
 
       const partnerId = req.params.partnerId as string;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 50;
       const skip = (page - 1) * limit;
 
       // Find or create thread with partner

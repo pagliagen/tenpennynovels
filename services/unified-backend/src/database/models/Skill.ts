@@ -52,8 +52,8 @@ const skillSchema = new Schema<ISkill>({
         }
         // Accept VALUE:XX format
         if (typeof v === 'string' && v.startsWith('VALUE:')) {
-          const num = parseInt(v.replace('VALUE:', ''));
-          return !isNaN(num) && num >= 0 && num <= 100;
+          const num = Number.parseInt(v.replace('VALUE:', ''));
+          return !Number.isNaN(num) && num >= 0 && num <= 100;
         }
         // Accept FORMULA:CHAR format
         if (typeof v === 'string' && v.startsWith('FORMULA:')) {

@@ -16,8 +16,8 @@ export class CorporationManagementController {
    */
   static async getAllCorporations(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Number.parseInt(req.query.pageSize as string) || 25;
       const status = req.query.status as string;
 
       const skip = (page - 1) * pageSize;
@@ -309,8 +309,8 @@ export class CorporationManagementController {
    */
   static async getMembershipRequests(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 20;
       // CWE-943: `as string` è solo un cast a compile-time — a runtime
       // req.query.corporationId può essere un oggetto (?corporationId[$where]=...,
       // qs lo trasforma), e finirebbe diretto nel filtro Mongo. Guardia typeof reale.
@@ -1092,8 +1092,8 @@ export class CorporationManagementController {
   static async getCorporationMembershipRequests(req: Request<{ corporationId: string }>, res: Response): Promise<void> {
     try {
       const corporationId = req.params.corporationId;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 20;
 
       const skip = (page - 1) * limit;
 
@@ -1209,7 +1209,8 @@ export class CorporationManagementController {
         return;
       }
 
-      if (!amount || isNaN(amount) || amount <= 0) {
+      // Number(amount) preserva la coercizione del vecchio isNaN(amount) (S7773)
+      if (!amount || Number.isNaN(Number(amount)) || amount <= 0) {
         res.status(400).json(errorResponse(
           'Importo non valido. Deve essere un numero positivo',
           'INVALID_AMOUNT',
@@ -1364,7 +1365,7 @@ export class CorporationManagementController {
       switch (operation) {
         case 'treasury_adjustment':
           const { amount, reason } = operationData;
-          if (!amount || isNaN(amount)) {
+          if (!amount || Number.isNaN(Number(amount))) {
             res.status(400).json(errorResponse(
               'Importo non valido per l\'adeguamento della tesoreria',
               'INVALID_TREASURY_AMOUNT',
@@ -1607,8 +1608,8 @@ export class CorporationManagementController {
    */
   static async getAllMembershipRequests(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = Math.min(parseInt(req.query.pageSize as string) || 20, 100);
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Math.min(Number.parseInt(req.query.pageSize as string) || 20, 100);
       const corporationFilter = req.query.corporationId as string;
 
       const skip = (page - 1) * pageSize;

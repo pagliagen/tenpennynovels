@@ -282,6 +282,6 @@ export class CharacterSessionManager {
     }
 
     const [, value, unit] = match;
-    return parseInt(value) * timeMap[unit];
+    return Number.parseInt(value) * timeMap[unit];
   }
 }

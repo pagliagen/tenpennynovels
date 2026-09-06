@@ -23,8 +23,8 @@ export class CharacterApprovalController {
    */
   static async getAllCharacters(req: Request, res: Response): Promise<void> {
     try {
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Number.parseInt(req.query.pageSize as string) || 25;
       const statusFilter = req.query.status as string;
       const userId = req.query.userId as string;
       const characterType = req.query.characterType as string;
@@ -193,8 +193,8 @@ export class CharacterApprovalController {
   static async getPendingCharacters(req: Request, res: Response): Promise<void> {
     try {
       const { Character: CharacterModel } = await import('@core/character/models/Character');
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 20;
       const priority = req.query.priority as string;
       const sortBy = req.query.sortBy as string || 'submittedAt';
       const sortOrder = req.query.sortOrder as string || 'desc';
@@ -1455,7 +1455,7 @@ export class CharacterApprovalController {
    */
   static async getPendingCharactersForMe(req: Request, res: Response): Promise<void> {
     try {
-      const limit = parseInt(req.query.limit as string) || 10;
+      const limit = Number.parseInt(req.query.limit as string) || 10;
 
       // Use local model with proper imports
       const { Character } = await import('@core/character/models/Character');

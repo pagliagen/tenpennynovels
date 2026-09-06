@@ -18,8 +18,8 @@ export class ForumNotificationController {
       }
 
       const characterId = new mongoose.Types.ObjectId(character.characterId);
-      const page = Math.max(1, parseInt(String(req.query.page ?? 1), 10));
-      const pageSize = Math.min(50, Math.max(1, parseInt(String(req.query.pageSize ?? 20), 10)));
+      const page = Math.max(1, Number.parseInt(String(req.query.page ?? 1), 10));
+      const pageSize = Math.min(50, Math.max(1, Number.parseInt(String(req.query.pageSize ?? 20), 10)));
       const skip = (page - 1) * pageSize;
 
       const [notifications, total] = await Promise.all([

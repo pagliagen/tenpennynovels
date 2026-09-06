@@ -265,8 +265,8 @@ export class OffGameChatController {
   static async getChats(req: Request, res: Response): Promise<void> {
     try {
       const characterId = req.character!.characterId;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 20;
       const skip = (page - 1) * limit;
 
       // Convert to ObjectId explicitly and use direct query
@@ -349,8 +349,8 @@ export class OffGameChatController {
     try {
       const chatId = req.params.id;
       const characterId = req.character!.characterId;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 50;
       const skip = (page - 1) * limit;
 
       // Verify chat exists and user is participant

@@ -38,8 +38,8 @@ export function parseDamageBonus(damageBonusStr: string): number {
   const diceMatch = damageBonusStr.match(/([+-])?(\d+)d(\d+)/);
   if (diceMatch) {
     const sign = diceMatch[1] === '-' ? -1 : 1;
-    const numDice = parseInt(diceMatch[2], 10);
-    const diceSize = parseInt(diceMatch[3], 10);
+    const numDice = Number.parseInt(diceMatch[2], 10);
+    const diceSize = Number.parseInt(diceMatch[3], 10);
 
     // Roll the dice
     let total = 0;
@@ -54,7 +54,7 @@ export function parseDamageBonus(damageBonusStr: string): number {
   const numericMatch = damageBonusStr.match(/([+-])?(\d+)/);
   if (numericMatch) {
     const sign = numericMatch[1] === '-' ? -1 : 1;
-    const value = parseInt(numericMatch[2], 10);
+    const value = Number.parseInt(numericMatch[2], 10);
     return sign * value;
   }
 
@@ -108,9 +108,9 @@ export function calculateDamage(
     throw new Error(`Invalid damage formula: ${damageFormula}`);
   }
 
-  const numDice = parseInt(formulaMatch[1], 10);
-  const diceSize = parseInt(formulaMatch[2], 10);
-  const staticModifier = formulaMatch[3] ? parseInt(formulaMatch[3], 10) : 0;
+  const numDice = Number.parseInt(formulaMatch[1], 10);
+  const diceSize = Number.parseInt(formulaMatch[2], 10);
+  const staticModifier = formulaMatch[3] ? Number.parseInt(formulaMatch[3], 10) : 0;
   const includesDamageBonus = !!formulaMatch[4];
 
   // Roll base damage

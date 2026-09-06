@@ -95,8 +95,8 @@ export class OffGameMessageController {
         return;
       }
 
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 25;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 25;
       const includeDeleted = req.query.includeDeleted === 'true';
 
       const result = await OffGameThreadService.listThreads(
@@ -143,8 +143,8 @@ export class OffGameMessageController {
       }
 
       const threadId = req.params.id as string;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 50;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const limit = Number.parseInt(req.query.limit as string) || 50;
       const skip = (page - 1) * limit;
 
       const { OffGameThread } = await import('../models/OffGameThread');

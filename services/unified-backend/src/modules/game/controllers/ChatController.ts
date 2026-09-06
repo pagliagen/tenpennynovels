@@ -555,9 +555,9 @@ export class ChatController {
       }
 
       const { locationId } = req.params;
-      const hours = parseInt(req.query.hours as string) || 3;
-      const limit = Math.min(200, Math.max(10, parseInt(req.query.limit as string) || 100));
-      const offset = Math.max(0, parseInt(req.query.offset as string) || 0);
+      const hours = Number.parseInt(req.query.hours as string) || 3;
+      const limit = Math.min(200, Math.max(10, Number.parseInt(req.query.limit as string) || 100));
+      const offset = Math.max(0, Number.parseInt(req.query.offset as string) || 0);
 
       // Calculate time threshold
       const timeThreshold = new Date();
@@ -1013,8 +1013,8 @@ export class ChatController {
         return;
       }
 
-      const page = Math.max(1, parseInt(req.query.page as string) || 1);
-      const limit = Math.min(100, Math.max(10, parseInt(req.query.limit as string) || 20));
+      const page = Math.max(1, Number.parseInt(req.query.page as string) || 1);
+      const limit = Math.min(100, Math.max(10, Number.parseInt(req.query.limit as string) || 20));
       const skip = (page - 1) * limit;
 
       // Build filters object

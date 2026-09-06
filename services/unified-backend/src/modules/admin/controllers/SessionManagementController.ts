@@ -210,8 +210,8 @@ export class SessionManagementController {
         .populate('masterId', 'name')
         .populate('primaryLocation', 'name description')
         .sort(sortOption)
-        .limit(parseInt(limit as string))
-        .skip(parseInt(skip as string));
+        .limit(Number.parseInt(limit as string))
+        .skip(Number.parseInt(skip as string));
       
       // Get session management data for each session
       const sessionIds = sessions.map(s => s._id);
@@ -232,13 +232,13 @@ export class SessionManagementController {
       
       const totalCount = await GamingSession.countDocuments(filter);
 
-      const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
+      const page = Math.floor(Number.parseInt(skip as string) / Number.parseInt(limit as string)) + 1;
       const pagination = {
         currentPage: page,
-        totalPages: Math.ceil(totalCount / parseInt(limit as string)),
+        totalPages: Math.ceil(totalCount / Number.parseInt(limit as string)),
         totalItems: totalCount,
-        pageSize: parseInt(limit as string),
-        hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
+        pageSize: Number.parseInt(limit as string),
+        hasNextPage: totalCount > Number.parseInt(skip as string) + Number.parseInt(limit as string),
         hasPreviousPage: page > 1
       };
 
@@ -367,8 +367,8 @@ export class SessionManagementController {
       const templates = await SessionTemplate.find(filter)
         .populate('createdBy', 'name gameplayRoles')
         .sort({ timesUsed: -1, averageRating: -1 })
-        .limit(parseInt(limit as string))
-        .skip(parseInt(skip as string));
+        .limit(Number.parseInt(limit as string))
+        .skip(Number.parseInt(skip as string));
       
       const totalCount = await SessionTemplate.countDocuments(filter);
       
@@ -391,13 +391,13 @@ export class SessionManagementController {
         })
       );
 
-      const page = Math.floor(parseInt(skip as string) / parseInt(limit as string)) + 1;
+      const page = Math.floor(Number.parseInt(skip as string) / Number.parseInt(limit as string)) + 1;
       const pagination = {
         currentPage: page,
-        totalPages: Math.ceil(totalCount / parseInt(limit as string)),
+        totalPages: Math.ceil(totalCount / Number.parseInt(limit as string)),
         totalItems: totalCount,
-        pageSize: parseInt(limit as string),
-        hasNextPage: totalCount > parseInt(skip as string) + parseInt(limit as string),
+        pageSize: Number.parseInt(limit as string),
+        hasNextPage: totalCount > Number.parseInt(skip as string) + Number.parseInt(limit as string),
         hasPreviousPage: page > 1
       };
 
@@ -656,7 +656,7 @@ export class SessionManagementController {
    */
   static async getPendingXPAssignment(req: Request, res: Response): Promise<void> {
     try {
-      const limit = parseInt(req.query.limit as string) || 10;
+      const limit = Number.parseInt(req.query.limit as string) || 10;
 
       // Get masterId from authenticated user
       const masterId = req.character?.characterId;

@@ -582,7 +582,7 @@ export class DocumentController {
       const displayResults = validResults.slice(0, displayLimit);
 
       const MIN_AI_SCORE = 35;
-      const relevantResults = validResults.filter(r => parseInt(r.matchScore) >= MIN_AI_SCORE).slice(0, aiLimit);
+      const relevantResults = validResults.filter(r => Number.parseInt(r.matchScore) >= MIN_AI_SCORE).slice(0, aiLimit);
       const shouldUseAI = isQuestion(query) && relevantResults.length > 0;
 
       if (!shouldUseAI) {
