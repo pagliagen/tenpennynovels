@@ -29,6 +29,7 @@ node .claude/skills/sonarcloud/scripts/sonar.mjs <comando> [opzioni]
 | `measures [--keys=a,b,c]` | Valori grezzi delle metriche |
 | `quality-gate` | JSON completo dello stato del quality gate |
 | `projects` | Elenco progetti dell'organization (usa solo `SONAR_ORGANIZATION`) |
+| `transition --to=<t> (--rule=repo:key [--component=substr] \| --issues=k1,k2) --comment="…" [--apply]` | Marca issue con una transizione. `t`: `falsepositive`, `accept`, `wontfix`, `confirm`, `reopen`. Dry-run senza `--apply`. `bulk_change`, max 500 per chiamata. Richiede permesso "Administer Issues" sul progetto. |
 | `raw <endpoint> [k=v …]` | Chiamata arbitraria alla Web API, es. `raw project_branches/list project=KEY` |
 
 ## Esempi
@@ -39,6 +40,10 @@ node .claude/skills/sonarcloud/scripts/sonar.mjs issues --types=BUG,VULNERABILIT
 node .claude/skills/sonarcloud/scripts/sonar.mjs issues --severities=BLOCKER,CRITICAL
 node .claude/skills/sonarcloud/scripts/sonar.mjs measures --keys=coverage,ncloc,new_bugs
 node .claude/skills/sonarcloud/scripts/sonar.mjs raw project_branches/list project=$SONAR_PROJECT_KEY
+
+# Marca come falso positivo tutte le S2245 in un file (prima in dry-run, poi --apply)
+node .claude/skills/sonarcloud/scripts/sonar.mjs transition --rule=typescript:S2245 --component=game/services/DiceService --to=falsepositive --comment="tiri di dado, non serve CSPRNG"
+node .claude/skills/sonarcloud/scripts/sonar.mjs transition --rule=typescript:S2245 --component=game/services/DiceService --to=falsepositive --comment="tiri di dado, non serve CSPRNG" --apply
 ```
 
 ## Note

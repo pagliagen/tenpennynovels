@@ -38,12 +38,13 @@ const PROJECT = process.env.SONAR_PROJECT_KEY;
 
 if (!TOKEN) fail('SONAR_TOKEN non impostato nel .env');
 
-async function api(path, params = {}) {
+async function api(path, params = {}, method = 'GET') {
   const url = new URL(`${HOST}/api/${path}`);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
   }
   const res = await fetch(url, {
+    method,
     headers: { Authorization: `Bearer ${TOKEN}` },
   });
   const text = await res.text();
@@ -192,6 +193,59 @@ async function cmdProjects() {
   }
 }
 
+// Marca issue con una transizione (falsepositive, accept, wontfix, confirm, reopen).
+// Selezione per rule + filtro component opzionale, oppure lista esplicita di key.
+// Dry-run di default: serve --apply per eseguire davvero.
+async function cmdTransition(args) {
+  requireProject();
+  const opts = parseFlags(args);
+  const to = opts.to;
+  const valid = ['falsepositive', 'accept', 'wontfix', 'confirm', 'reopen'];
+  if (!valid.includes(to)) fail(`--to obbligatorio, uno di: ${valid.join(', ')}`);
+  if (!opts.apply && !opts.comment) fail('--comment obbligatorio (motiva la marcatura)');
+
+  let issues;
+  if (opts.issues) {
+    issues = opts.issues.split(',').map((s) => s.trim()).filter(Boolean);
+  } else {
+    if (!opts.rule) fail('serve --rule=<repo:key> oppure --issues=key1,key2');
+    const params = {
+      componentKeys: PROJECT,
+      organization: ORG,
+      rules: opts.rule,
+      resolved: 'false',
+      ps: '500',
+    };
+    const data = await api('issues/search', params);
+    let list = data.issues || [];
+    if (opts.component) list = list.filter((i) => i.component.includes(opts.component));
+    issues = list.map((i) => i.key);
+    console.log(`\nMatch: ${issues.length} issue OPEN per rule=${opts.rule}${opts.component ? ` component~"${opts.component}"` : ''}`);
+    for (const i of list) {
+      if (opts.component && !i.component.includes(opts.component)) continue;
+      console.log(`  ${i.component.replace(`${PROJECT}:`, '')}:${i.line ?? '?'}`);
+    }
+  }
+
+  if (!issues.length) {
+    console.log('Niente da fare.');
+    return;
+  }
+  if (!opts.apply) {
+    console.log(`\n[dry-run] userei transition="${to}" su ${issues.length} issue. Aggiungi --apply per eseguire.`);
+    return;
+  }
+
+  // bulk_change accetta max 500 issue per chiamata
+  const chunk = issues.slice(0, 500);
+  const res = await api('issues/bulk_change', {
+    issues: chunk.join(','),
+    do_transition: to,
+    comment: opts.comment || `Marcato ${to} via skill sonarcloud`,
+  }, 'POST');
+  console.log(`\napplicato: ${JSON.stringify(res.success ?? res, null, 2)}`);
+}
+
 async function cmdRaw(args) {
   const [path, ...rest] = args;
   if (!path) fail('uso: raw <endpoint> [chiave=valore ...]  (es. raw project_branches/list project=' + (PROJECT || 'KEY') + ')');
@@ -204,7 +258,12 @@ function parseFlags(args) {
   const out = {};
   for (const a of args) {
     const m = a.match(/^--([a-z-]+)=(.*)$/);
-    if (m) out[m[1].replace(/-/g, '')] = m[2];
+    if (m) {
+      out[m[1].replace(/-/g, '')] = m[2];
+      continue;
+    }
+    const b = a.match(/^--([a-z-]+)$/);
+    if (b) out[b[1].replace(/-/g, '')] = true;
   }
   return out;
 }
@@ -217,6 +276,7 @@ const commands = {
   issues: cmdIssues,
   'quality-gate': cmdQualityGate,
   projects: cmdProjects,
+  transition: cmdTransition,
   raw: cmdRaw,
 };
 
