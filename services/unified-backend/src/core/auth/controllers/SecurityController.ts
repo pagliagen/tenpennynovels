@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
+import { randomUUID } from 'crypto';
 import { User } from '../models/User';
 import { CharacterSession } from '../models/CharacterSession';
 import { SecurityAlert } from '@database/models/SecurityAlert';
@@ -17,8 +18,8 @@ export class SecurityController {
   static async getSessions(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user!.userId;
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 10;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Number.parseInt(req.query.pageSize as string) || 10;
 
       // ✅ VERA QUERY al database (NO MOCK)
       const total = await CharacterSession.countDocuments({ userId, isActive: true });
@@ -149,8 +150,8 @@ export class SecurityController {
   static async getLoginHistory(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user!.userId;
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 20;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Number.parseInt(req.query.pageSize as string) || 20;
 
       // ✅ VERA QUERY - include TUTTE le sessioni (attive + terminate)
       const total = await CharacterSession.countDocuments({ userId });
@@ -203,8 +204,8 @@ export class SecurityController {
   static async getSecurityAlerts(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user!.userId;
-      const page = parseInt(req.query.page as string) || 1;
-      const pageSize = parseInt(req.query.pageSize as string) || 10;
+      const page = Number.parseInt(req.query.page as string) || 1;
+      const pageSize = Number.parseInt(req.query.pageSize as string) || 10;
 
       const userObjectId = new mongoose.Types.ObjectId(userId);
 
@@ -266,7 +267,7 @@ export class SecurityController {
       }
 
       // Genera ID report univoco
-      const reportId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const reportId = `${Date.now()}-${randomUUID().slice(0, 8)}`;
       const ticketNumber = `SEC-${new Date().getFullYear()}-${reportId.toUpperCase()}`;
 
       logger.warn(`[${userId}] Suspicious activity reported:`, {
