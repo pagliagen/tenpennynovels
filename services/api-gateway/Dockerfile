@@ -11,8 +11,10 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies dal lockfile (versioni bloccate — S8543).
-# tsx è già in devDependencies: niente `npm install -g`.
-RUN npm ci
+# --ignore-scripts: nessun lifecycle script dalle dipendenze transitive (S6505).
+# tsx/esbuild funzionano lo stesso: i binari nativi arrivano da optionalDependencies
+# prebuilt, non da postinstall (verificato con build+run). tsx è già in devDependencies.
+RUN npm ci --ignore-scripts
 
 # Copy source code (esplicito: niente COPY . . — S6470)
 COPY tsconfig.json ./
