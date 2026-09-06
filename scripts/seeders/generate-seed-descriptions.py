@@ -7,11 +7,13 @@ estrae il testo dal TipTap JSON, chiama il gateway SEO per ogni documento
 e scrive la description generata in {name}.description.
 
 Uso:
+  export SEO_API_KEY=...            # oppure passa --api-key
+  export SEO_GATEWAY_URL=http://... # opzionale, default http://localhost:8000
   python3 scripts/seeders/generate-seed-descriptions.py [--gateway-url URL] [--api-key KEY] [--force]
 
-Default gateway: https://onomatopoeically-unforgeable-ozie.ngrok-free.dev
-Default api-key:  f4af240c291f57bcc23384bff9abcc4ce89f8257974b80e6179f88edd5f4a2f9
---force:          sovrascrive anche i .description già esistenti
+--force: sovrascrive anche i .description già esistenti
+
+La api-key NON ha un default hardcoded: va da SEO_API_KEY o --api-key.
 """
 
 import json
@@ -24,8 +26,9 @@ import urllib.parse
 import time
 
 SEEDS_DIR = os.path.join(os.path.dirname(__file__), 'data', 'documents')
-DEFAULT_GATEWAY = 'https://onomatopoeically-unforgeable-ozie.ngrok-free.dev'
-DEFAULT_API_KEY = 'f4af240c291f57bcc23384bff9abcc4ce89f8257974b80e6179f88edd5f4a2f9'
+# Nessun segreto committato: gateway con default locale, api-key solo da env/CLI.
+DEFAULT_GATEWAY = os.environ.get('SEO_GATEWAY_URL', 'http://localhost:8000')
+DEFAULT_API_KEY = os.environ.get('SEO_API_KEY', '')
 
 
 def extract_text(node: dict, depth: int = 0) -> str:
@@ -82,10 +85,15 @@ def title_from_filename(filename: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description='Generate SEO descriptions for document seeds')
-    parser.add_argument('--gateway-url', default=DEFAULT_GATEWAY)
-    parser.add_argument('--api-key', default=DEFAULT_API_KEY)
+    parser.add_argument('--gateway-url', default=DEFAULT_GATEWAY,
+                        help='URL del gateway SEO (default: $SEO_GATEWAY_URL o http://localhost:8000)')
+    parser.add_argument('--api-key', default=DEFAULT_API_KEY,
+                        help='API key del gateway (default: $SEO_API_KEY). Obbligatoria.')
     parser.add_argument('--force', action='store_true', help='Overwrite existing .description files')
     args = parser.parse_args()
+
+    if not args.api_key:
+        sys.exit('API key mancante: passa --api-key oppure esporta SEO_API_KEY')
 
     # Valida l'URL prima di usarlo in richieste di rete (pythonsecurity:S8703):
     # solo http/https con host esplicito.
