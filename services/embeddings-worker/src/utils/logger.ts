@@ -9,6 +9,10 @@ import { config } from '../config';
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
+// Caratteri di controllo C0 + DEL: CR/LF forgiano righe di log, ESC inietta
+// sequenze ANSI nel terminale. Rimossi da ogni messaggio prima di stamparlo.
+const CONTROL_CHARS = /[\u0000-\u001f\u007f]/g;
+
 class Logger {
   private logLevel: LogLevel;
 
@@ -23,8 +27,9 @@ class Logger {
 
   private format(level: LogLevel, message: string, context?: Record<string, any>): string {
     const timestamp = new Date().toISOString();
-    // Rimuove CR/LF dal messaggio: evita log injection / forging di righe (S5145)
-    const safeMessage = String(message).replace(/[\r\n]+/g, ' ');
+    // message può contenere dati non fidati (tssecurity:S5145). context è già
+    // neutralizzato da JSON.stringify (\n -> \\n).
+    const safeMessage = String(message).replace(CONTROL_CHARS, ' ');
     const contextStr = context ? ` ${JSON.stringify(context)}` : '';
     return `[${timestamp}] [${level.toUpperCase()}] ${safeMessage}${contextStr}`;
   }

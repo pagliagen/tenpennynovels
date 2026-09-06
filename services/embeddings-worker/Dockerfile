@@ -40,8 +40,11 @@ COPY python/ /app/python
 COPY package.json package-lock.json tsconfig.json ./
 COPY src ./src
 
-# Install ALL dependencies (including devDependencies for build)
-RUN npm ci
+# Install ALL dependencies (including devDependencies for build).
+# --ignore-scripts: nessun lifecycle script dalle dipendenze transitive
+# (docker:S6505). Il build usa tsc, esbuild arriva da optionalDependencies
+# prebuilt — verificato con build+run.
+RUN npm ci --ignore-scripts
 
 # Build TypeScript
 RUN npm run build
