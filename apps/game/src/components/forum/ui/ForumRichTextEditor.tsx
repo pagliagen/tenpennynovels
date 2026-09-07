@@ -6,7 +6,7 @@ import FontFamily from '@tiptap/extension-font-family';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import TextAlign from '@tiptap/extension-text-align';
-import TextStyle from '@tiptap/extension-text-style';
+import { TextStyle } from '@tiptap/extension-text-style';
 import Underline from '@tiptap/extension-underline';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -103,6 +103,10 @@ export function ForumRichTextEditor({ content, onChange, placeholder, disabled }
         bulletList: false,
         orderedList: false,
         listItem: false,
+        // link e underline sono forniti sotto con la nostra config (StarterKit
+        // v3 li include di default e altrimenti darebbe nomi di estensione duplicati)
+        link: false,
+        underline: false,
       }),
       Underline,
       TextStyle,
@@ -133,7 +137,7 @@ export function ForumRichTextEditor({ content, onChange, placeholder, disabled }
       return;
     }
     if (editor && !editor.isFocused && editor.getHTML() !== content) {
-      editor.commands.setContent(content, false);
+      editor.commands.setContent(content, { emitUpdate: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, mode]);

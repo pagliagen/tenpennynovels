@@ -7,10 +7,10 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import Image from '@tiptap/extension-image';
-import TextStyle from '@tiptap/extension-text-style';
+import { TextStyle } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
-import Table from '@tiptap/extension-table';
+import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
@@ -36,7 +36,11 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
       StarterKit.configure({
         heading: {
           levels: [2, 3]
-        }
+        },
+        // link e underline sono forniti sotto con la nostra config (StarterKit
+        // v3 li include di default e altrimenti darebbe nomi di estensione duplicati)
+        link: false,
+        underline: false
       }),
       Link.configure({
         openOnClick: false,
