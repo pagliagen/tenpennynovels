@@ -166,41 +166,45 @@ export class SessionManagementController {
    */
   static async getSessions(req: Request, res: Response): Promise<void> {
     try {
-      const { 
-        status, 
-        masterId, 
-        sessionType, 
-        difficultyLevel,
-        startDate,
-        endDate,
-        limit = 20, 
+      const {
+        limit = 20,
         skip = 0,
         sortBy = 'sessionDate',
         sortOrder = 'desc'
       } = req.query;
-      
+
+      // CWE-943: `as string` è solo un cast a compile-time — a runtime i valori
+      // possono essere oggetti (?status[$where]=..., qs li trasforma), e
+      // finirebbero diretti nel filtro Mongo. Guardia typeof reale.
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const masterId = typeof req.query.masterId === 'string' ? req.query.masterId : undefined;
+      const sessionType = typeof req.query.sessionType === 'string' ? req.query.sessionType : undefined;
+      const difficultyLevel = typeof req.query.difficultyLevel === 'string' ? req.query.difficultyLevel : undefined;
+      const startDate = typeof req.query.startDate === 'string' ? req.query.startDate : undefined;
+      const endDate = typeof req.query.endDate === 'string' ? req.query.endDate : undefined;
+
       let filter: any = {};
-      
+
       if (status) {
         filter.status = status;
       }
-      
+
       if (masterId) {
         filter.masterId = masterId;
       }
-      
+
       if (sessionType) {
         filter.sessionType = sessionType;
       }
-      
+
       if (difficultyLevel) {
         filter.difficultyLevel = difficultyLevel;
       }
-      
+
       if (startDate || endDate) {
         filter.sessionDate = {};
-        if (startDate) filter.sessionDate.$gte = new Date(startDate as string);
-        if (endDate) filter.sessionDate.$lte = new Date(endDate as string);
+        if (startDate) filter.sessionDate.$gte = new Date(startDate);
+        if (endDate) filter.sessionDate.$lte = new Date(endDate);
       }
       
       const sortOption: any = {};

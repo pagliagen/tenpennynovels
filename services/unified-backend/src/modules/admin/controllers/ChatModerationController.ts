@@ -172,21 +172,25 @@ export class ChatModerationController {
    */
   static async getReports(req: Request, res: Response): Promise<void> {
     try {
-      const { 
-        status, 
-        priority, 
-        reportReason, 
-        messageType,
-        reportedBy,
-        senderId,
+      const {
         limit = 50,
         skip = 0,
         sortBy = 'reportedAt',
         sortOrder = 'desc'
       } = req.query;
-      
+
+      // CWE-943: `as string` è solo un cast a compile-time — a runtime i valori
+      // possono essere oggetti (?status[$where]=..., qs li trasforma), e
+      // finirebbero diretti nel filtro Mongo. Guardia typeof reale.
+      const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+      const priority = typeof req.query.priority === 'string' ? req.query.priority : undefined;
+      const reportReason = typeof req.query.reportReason === 'string' ? req.query.reportReason : undefined;
+      const messageType = typeof req.query.messageType === 'string' ? req.query.messageType : undefined;
+      const reportedBy = typeof req.query.reportedBy === 'string' ? req.query.reportedBy : undefined;
+      const senderId = typeof req.query.senderId === 'string' ? req.query.senderId : undefined;
+
       let filter: any = {};
-      
+
       if (status) filter.status = status;
       if (priority) filter.priority = priority;
       if (reportReason) filter.reportReason = reportReason;
@@ -435,20 +439,24 @@ export class ChatModerationController {
    */
   static async getModerationActions(req: Request, res: Response): Promise<void> {
     try {
-      const { 
-        action,
-        severity,
-        moderatorId,
-        targetCharacterId,
-        isActive,
+      const {
         limit = 50,
         skip = 0,
         sortBy = 'actionTakenAt',
         sortOrder = 'desc'
       } = req.query;
-      
+
+      // CWE-943: `as string` è solo un cast a compile-time — a runtime i valori
+      // possono essere oggetti (?action[$where]=..., qs li trasforma), e
+      // finirebbero diretti nel filtro Mongo. Guardia typeof reale.
+      const action = typeof req.query.action === 'string' ? req.query.action : undefined;
+      const severity = typeof req.query.severity === 'string' ? req.query.severity : undefined;
+      const moderatorId = typeof req.query.moderatorId === 'string' ? req.query.moderatorId : undefined;
+      const targetCharacterId = typeof req.query.targetCharacterId === 'string' ? req.query.targetCharacterId : undefined;
+      const isActive = typeof req.query.isActive === 'string' ? req.query.isActive : undefined;
+
       let filter: any = {};
-      
+
       if (action) filter.action = action;
       if (severity) filter.severity = severity;
       if (moderatorId) filter.moderatorId = moderatorId;
