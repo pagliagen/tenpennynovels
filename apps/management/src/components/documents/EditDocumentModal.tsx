@@ -29,7 +29,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   onClose
 }) => {
   const { data: document, isLoading, isError, error } = useDocument(documentId);
-  const [contentDelta, setContentDelta] = useState<any>(null);
+  const [contentDelta, setContentDelta] = useState<any>({ type: 'doc', content: [] });
   const [title, setTitle] = useState('');
   const [subtypeId, setSubtypeId] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);

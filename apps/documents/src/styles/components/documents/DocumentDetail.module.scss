@@ -6,7 +6,8 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: $spacing-md;
+  padding: $spacing-md; 
+  user-select: text;
 }
 
 // ========== STICKY HEADER (title + favorites) ==========
@@ -38,7 +39,8 @@
   letter-spacing: $letter-spacing-wide;
   text-align: center;
   flex: 1;
-  text-transform: uppercase;
+  text-transform: uppercase; 
+  user-select: text;
 
   @include mobile {
     font-size: $font-size-xl;
