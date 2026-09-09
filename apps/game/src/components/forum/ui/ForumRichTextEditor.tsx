@@ -120,7 +120,10 @@ export function ForumRichTextEditor({ content, onChange, placeholder, disabled }
       Color,
       FontSize,
       FontFamily,
-      Link.configure({ openOnClick: false, autolink: false }),
+      // autolink:false blocca l'autolink mentre si scrive, ma linkOnPaste
+      // di default resta true: incollare un URL nudo lo trasformava
+      // comunque in link senza passare dal bottone "Link".
+      Link.configure({ openOnClick: false, autolink: false, linkOnPaste: false }),
       TextAlign.configure({ types: ['paragraph'] }),
       Image.configure({ inline: true }),
       // Dopo TextStyle/Color: ripulisce i colori che quelli hanno appena

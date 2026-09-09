@@ -47,6 +47,13 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
       }),
       Link.configure({
         openOnClick: false,
+        // Di default TipTap crea un link automaticamente mentre scrivi o
+        // incolli testo che sembra un URL - un redattore vede comparire un
+        // link "da solo" senza aver mai premuto il comando Link, e senza
+        // un bottone di rimozione dedicato (v. sotto) non c'era modo di
+        // toglierlo dall'interfaccia.
+        autolink: false,
+        linkOnPaste: false,
         HTMLAttributes: {
           target: '_blank',
           rel: 'noopener noreferrer'
@@ -145,16 +152,23 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
 
           <div className={styles.separator} />
 
-          {/* Link */}
+          {/* Link: se il cursore è già dentro un link il bottone lo rimuove
+              invece di chiedere un altro URL - prima non c'era alcun modo
+              di togliere un link dall'interfaccia. */}
           <button
             onClick={() => {
+              if (editor.isActive('link')) {
+                editor.chain().focus().extendMarkRange('link').unsetLink().run();
+                return;
+              }
               const url = window.prompt('URL:');
               if (url) {
-                editor.chain().focus().setLink({ href: url }).run();
+                editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
               }
             }}
             className={editor.isActive('link') ? styles.active : ''}
             type="button"
+            title={editor.isActive('link') ? 'Rimuovi link' : 'Inserisci link'}
           >
             🔗 Link
           </button>
