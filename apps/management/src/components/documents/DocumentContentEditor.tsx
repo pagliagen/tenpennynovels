@@ -14,6 +14,9 @@ import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
+
+import { PasteColorCleanup } from '@/lib/tiptap/pasteColorCleanup';
+
 import styles from './DocumentContentEditor.module.scss';
 
 interface DocumentContentEditorProps {
@@ -62,7 +65,10 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
       Table.configure({ resizable: true }),
       TableRow,
       TableCell,
-      TableHeader
+      TableHeader,
+      // Deve stare dopo TextStyle/Color/Highlight: ripulisce i mark che quelli
+      // hanno appena parsato dall'HTML incollato.
+      PasteColorCleanup
     ],
     content: contentDelta,
     editable: !readOnly,
@@ -222,6 +228,29 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
             className={styles.colorPicker}
             title="Text Color"
           />
+
+          {/* Reset colore: recupera i documenti dove il colore di Word era gia'
+              stato salvato prima dell'introduzione di PasteColorCleanup. Senza
+              selezione agisce sull'intero documento. */}
+          <button
+            onClick={() => {
+              const { from, empty } = editor.state.selection;
+              const chain = editor.chain().focus();
+              // Ripristina il cursore dopo il selectAll: lasciare tutto il
+              // documento selezionato significa che il tasto successivo lo
+              // cancella.
+              if (empty) {
+                chain.selectAll().unsetColor().unsetHighlight().setTextSelection(from);
+              } else {
+                chain.unsetColor().unsetHighlight();
+              }
+              chain.run();
+            }}
+            type="button"
+            title="Rimuovi i colori dal testo selezionato (o da tutto il documento)"
+          >
+            🚫 Colore
+          </button>
 
           {/* Highlight */}
           <button

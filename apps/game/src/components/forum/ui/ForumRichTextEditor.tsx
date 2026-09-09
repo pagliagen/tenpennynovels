@@ -13,6 +13,7 @@ import StarterKit from '@tiptap/starter-kit';
 import { useEffect, useRef, useState } from 'react';
 
 import { bbcodeToHtml, htmlToBBCode } from '@/lib/forum/bbcode';
+import { PasteColorCleanup } from '@/lib/tiptap/pasteColorCleanup';
 import styles from '@/styles/components/forum/ForumRichTextEditor.module.scss';
 
 /**
@@ -116,6 +117,11 @@ export function ForumRichTextEditor({ content, onChange, placeholder, disabled }
       Link.configure({ openOnClick: false, autolink: false }),
       TextAlign.configure({ types: ['paragraph'] }),
       Image.configure({ inline: true }),
+      // Dopo TextStyle/Color: ripulisce i colori che quelli hanno appena
+      // parsato dall'HTML incollato (Word incolla il proprio nero assoluto,
+      // illeggibile sul fondo scuro e comunque scartato da
+      // ForumContentSanitizer al submit).
+      PasteColorCleanup,
     ],
     content,
     editable: !disabled,
