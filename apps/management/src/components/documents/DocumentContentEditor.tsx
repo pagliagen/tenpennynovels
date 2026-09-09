@@ -229,9 +229,12 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
             title="Text Color"
           />
 
-          {/* Reset colore: recupera i documenti dove il colore di Word era gia'
-              stato salvato prima dell'introduzione di PasteColorCleanup. Senza
-              selezione agisce sull'intero documento. */}
+          {/* Rimuovi colore: l'<input type="color"> nativo non ha uno stato
+              "nessun colore", mostra sempre un hex - una volta scelto un
+              colore lo swatch non lo toglie più. Serve anche a recuperare i
+              documenti dove il colore di Word era già stato salvato prima
+              dell'introduzione di PasteColorCleanup. Senza selezione agisce
+              sull'intero documento. */}
           <button
             onClick={() => {
               const { from, empty } = editor.state.selection;
@@ -249,7 +252,7 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
             type="button"
             title="Rimuovi i colori dal testo selezionato (o da tutto il documento)"
           >
-            🚫 Colore
+            ✕ Rimuovi colore
           </button>
 
           {/* Highlight */}

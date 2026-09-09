@@ -91,6 +91,12 @@ export function ForumRichTextEditor({ content, onChange, placeholder, disabled }
   const [mode, setMode] = useState<'visual' | 'bbcode'>('visual');
   const [bbcodeDraft, setBbcodeDraft] = useState('');
   const bbcodeRef = useRef<HTMLTextAreaElement>(null);
+  // La select colore è non controllata (v. `handleColorChange`): dopo aver
+  // scelto un colore il browser continua a mostrarlo come selezionato,
+  // niente nella UI dice che si può tornare indietro. Il bottone "Rimuovi
+  // colore" deve anche far ricomparire il placeholder "Colore" nella
+  // select, non solo togliere il mark: la si rimonta cambiando `key`.
+  const [colorSelectKey, setColorSelectKey] = useState(0);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -341,6 +347,7 @@ export function ForumRichTextEditor({ content, onChange, placeholder, disabled }
         <span className={styles.toolbarDivider} />
 
         <select
+          key={colorSelectKey}
           className={styles.select}
           onChange={(e) => handleColorChange(e.target.value)}
           disabled={disabled}
@@ -352,6 +359,17 @@ export function ForumRichTextEditor({ content, onChange, placeholder, disabled }
             <option key={c.value} value={c.value}>{c.label}</option>
           ))}
         </select>
+        <button
+          type="button"
+          onClick={() => {
+            handleColorChange('');
+            setColorSelectKey((k) => k + 1);
+          }}
+          disabled={disabled}
+          title="Rimuovi il colore dal testo selezionato"
+        >
+          ✕ Rimuovi colore
+        </button>
         <select
           className={styles.select}
           onChange={(e) => handleFontSizeChange(e.target.value)}
