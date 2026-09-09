@@ -7,6 +7,10 @@ dist/
 !services/unified-backend/bootstrap.js
 !services/api-gateway/bootstrap.js
 !ecosystem.config.js
+# Config Jest per-app: sono sorgenti, non output di build (il *.js sopra le
+# escluderebbe silenziosamente e le suite tornerebbero a non partire altrove)
+!apps/*/jest.config.js
+!apps/*/jest.setup.js
 *.d.ts
 !**/src/types/*.d.ts
 *.d.ts.map 
@@ -51,3 +55,6 @@ apps/landing/public/landing-sitemap-lastmod.txt
 # Claude Code: override locali per-macchina e artefatti runtime (NON versionare)
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# Cache incrementale di tsc: artefatto di build, macchina-locale
+*.tsbuildinfo
