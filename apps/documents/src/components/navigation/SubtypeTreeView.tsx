@@ -2,10 +2,12 @@
  * SubtypeTreeView Component
  *
  * Renders subtypes with hierarchical document tree navigation.
- * Replicates the management app's DocumentNode tree structure:
- * - Documents with children: toggleable (expand/collapse), not navigable
- * - Documents without children: navigable links
- * - Icons, badges, indentation matching management tree
+ * Ogni documento è sempre un link navigabile (mostra il proprio contenuto,
+ * se ne ha) e, se ha figli, ha ANCHE un pulsante separato per
+ * espandere/comprimere il sottoalbero - le due azioni sono indipendenti.
+ * Un documento padre con contenuto proprio (es. una FAQ con una singola
+ * sotto-pagina di approfondimento) non deve sparire dietro il solo toggle.
+ * Icons, badges, indentation matching management tree.
  *
  * @module components/navigation/SubtypeTreeView
  * @since 2.0.0
@@ -126,25 +128,29 @@ export function SubtypeTreeView({ subtypes, type, currentPath }: SubtypeTreeView
           className={styles.documentNode}
           style={{ '--depth': depth } as CSSProperties}
         >
-          <div className={styles.documentRow}> 
-            {hasChildren ? (
+          <div className={styles.documentRow}>
+            {hasChildren && (
               <button
                 type="button"
-                className={`${styles.docToggle} ${isExpanded ? styles.expanded : ''}`}
-                onClick={() => toggle(doc._id, setExpandedDocs)}
+                className={styles.expandButton}
+                onClick={(e) => {
+                  // Non deve navigare: è un'azione indipendente dal link sotto.
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggle(doc._id, setExpandedDocs);
+                }}
+                aria-label={isExpanded ? 'Comprimi' : 'Espandi'}
               >
-                <span className={styles.docTitle}>{doc.title}</span>
-                {!doc.isPublic && <span className={styles.privateBadge}>🔒</span>}
+                {isExpanded ? '▼' : '▶'}
               </button>
-            ) : (
-              <Link
-                href={docPath}
-                className={`${styles.docLink} ${isActive ? styles.active : ''}`}
-              >
-                <span className={styles.docTitle} title={doc.title}>{doc.title}</span>
-                {!doc.isPublic && <span className={styles.privateBadge}>🔒</span>}
-              </Link>
             )}
+            <Link
+              href={docPath}
+              className={`${styles.docLink} ${isActive ? styles.active : ''}`}
+            >
+              <span className={styles.docTitle} title={doc.title}>{doc.title}</span>
+              {!doc.isPublic && <span className={styles.privateBadge}>🔒</span>}
+            </Link>
           </div>
         </div>
 
