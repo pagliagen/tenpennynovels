@@ -41,6 +41,11 @@ import {
   validateChatEvent,
 } from '../utils/validation';
 
+// Lock Redis per documentId: v. handleDocumentEvent per il perché.
+const DOCUMENT_LOCK_TTL_MS = 60_000; // margine ampio: un documento con molte sezioni non in cache può richiedere diversi secondi
+const DOCUMENT_LOCK_MAX_WAIT_MS = 30_000; // entro la finestra di retry di BullMQ (3 tentativi, backoff da 2s)
+const DOCUMENT_LOCK_POLL_INTERVAL_MS = 250;
+
 export class EmbeddingWorker {
   private subscriber: any; // Redis subscriber
   private redis: any; // Redis client for caching
@@ -562,8 +567,81 @@ export class EmbeddingWorker {
 
   /**
    * Handle document embedding event
+   *
+   * Il jobId include `Date.now()` (v. subscribe in `start()`), quindi due
+   * save ravvicinati sullo stesso documento (autosave!) finiscono in due job
+   * BullMQ distinti, potenzialmente eseguiti in concorrenza sui 5 worker
+   * slot. Senza serializzazione, due job concorrenti sullo stesso
+   * documentId possono: (a) far vincere una race sull'upsert non atomico in
+   * `saveDocumentChunk` (nessun indice unico su documentId+slug+splitIndex),
+   * creando righe duplicate; (b) farsi cancellare a vicenda i chunk appena
+   * scritti via `pruneStaleChunks`, basata sullo snapshot di currentChunkKeys
+   * dell'ALTRO job. Un lock Redis per documentId elimina entrambe le classi
+   * di bug processando un documento alla volta, in ordine di acquisizione
+   * (non necessariamente l'ordine di invio - accettabile: l'ultimo save
+   * vince comunque sul contenuto, qui si serializza solo il chunking).
    */
   private async handleDocumentEvent(event: DocumentEmbeddingEvent): Promise<void> {
+    const lockToken = crypto.randomUUID();
+    const locked = await this.acquireDocumentLock(event.documentId, lockToken);
+    if (!locked) {
+      // Un altro job sta ancora processando lo stesso documento oltre il
+      // tempo massimo di attesa: non è un errore del contenuto, va solo
+      // ritentato (stesso meccanismo di retry usato sotto per gli altri
+      // errori di questa funzione).
+      throw new Error(`Timeout in attesa del lock di embedding per il documento ${event.documentId} (un altro job lo sta ancora processando)`);
+    }
+
+    try {
+      await this.processDocumentEvent(event);
+    } finally {
+      await this.releaseDocumentLock(event.documentId, lockToken);
+    }
+  }
+
+  /**
+   * Acquisisce il lock per `documentId`, attendendo con polling fino a
+   * `DOCUMENT_LOCK_MAX_WAIT_MS` se già occupato da un altro job. Se il
+   * client Redis di cache non è disponibile (v. `initRedisCache`), non
+   * blocca il job: nessuna serializzazione, ma non peggio del comportamento
+   * precedente all'introduzione del lock.
+   */
+  private async acquireDocumentLock(documentId: string, token: string): Promise<boolean> {
+    if (!this.redis) return true;
+
+    const lockKey = `lock:document-embedding:${documentId}`;
+    const deadline = Date.now() + DOCUMENT_LOCK_MAX_WAIT_MS;
+
+    while (Date.now() < deadline) {
+      const acquired = await this.redis.set(lockKey, token, { NX: true, PX: DOCUMENT_LOCK_TTL_MS });
+      if (acquired) return true;
+      await new Promise((resolve) => setTimeout(resolve, DOCUMENT_LOCK_POLL_INTERVAL_MS));
+    }
+
+    return false;
+  }
+
+  /**
+   * Rilascia il lock solo se è ancora il nostro (token invariato): se nel
+   * frattempo è scaduto per TTL ed è stato riacquisito da un altro job,
+   * cancellarlo comunque libererebbe IL SUO lock, riaprendo la stessa race
+   * che il lock dovrebbe impedire.
+   */
+  private async releaseDocumentLock(documentId: string, token: string): Promise<void> {
+    if (!this.redis) return;
+
+    const lockKey = `lock:document-embedding:${documentId}`;
+    try {
+      await this.redis.eval(
+        'if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("DEL", KEYS[1]) else return 0 end',
+        { keys: [lockKey], arguments: [token] }
+      );
+    } catch (err) {
+      logger.error(`❌ Impossibile rilasciare il lock di embedding per il documento ${documentId}:`, err);
+    }
+  }
+
+  private async processDocumentEvent(event: DocumentEmbeddingEvent): Promise<void> {
     try {
       logger.info(`📄 Processing document: ${event.title} (${event.documentId})`);
 

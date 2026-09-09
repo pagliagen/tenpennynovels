@@ -128,10 +128,10 @@ export class DocumentController {
       throw new Error('Database connection not available');
     }
 
-    const rootChunks = await db.collection('documentchunks').find({
+    const rootChunks = DocumentController.mergeSplitChunks(await db.collection('documentchunks').find({
       documentId: doc._id.toString(),
       isActive: true
-    }).sort({ order: 1 }).toArray();
+    }).sort({ order: 1 }).toArray());
 
     const document = {
       _id: doc._id.toString(),
@@ -198,10 +198,10 @@ export class DocumentController {
     const allSections: Record<string, unknown>[] = rootChunks.map(c => ({ ...convertChunk(c as unknown as Parameters<typeof convertChunk>[0]), isRootChunk: true }));
 
     for (const { document: childDoc, depth, order } of childrenWithDepth) {
-      const childChunks = await db.collection('documentchunks').find({
+      const childChunks = DocumentController.mergeSplitChunks(await db.collection('documentchunks').find({
         documentId: childDoc._id.toString(),
         isActive: true
-      }).sort({ order: 1 }).toArray();
+      }).sort({ order: 1 }).toArray());
 
       allSections.push({
         _id: childDoc._id.toString(),
@@ -789,6 +789,37 @@ export class DocumentController {
   }
 
   // ========== PRIVATE HELPERS ==========
+
+  /**
+   * Un H2/H3 troppo lungo per il subprocess Python (config.embeddings.maxTextChars
+   * in embeddings-worker) viene spezzato in più righe di `documentchunks`:
+   * stesso slug/headingLevel, splitIndex crescente (ChunkParser.splitOversizedChunk,
+   * introdotto in 809b9381 il 2026-08-15). Mappare ogni riga 1:1 su una sezione
+   * fa comparire quell'intestazione più volte nell'indice di apps/documents -
+   * lo split non era mai stato propagato qui. Le si ricompone in una sola voce
+   * per slug, concatenando il contenuto nell'ordine dei pezzi.
+   */
+  private static mergeSplitChunks(chunks: Array<Record<string, unknown>>): Array<Record<string, unknown>> {
+    const bySlug = new Map<string, Array<Record<string, unknown>>>();
+    const slugOrder: string[] = [];
+
+    for (const chunk of chunks) {
+      const slug = chunk.slug as string;
+      if (!bySlug.has(slug)) {
+        bySlug.set(slug, []);
+        slugOrder.push(slug);
+      }
+      bySlug.get(slug)!.push(chunk);
+    }
+
+    return slugOrder.map((slug) => {
+      const pieces = bySlug.get(slug)!.sort(
+        (a, b) => ((a.splitIndex as number) ?? 0) - ((b.splitIndex as number) ?? 0)
+      );
+      if (pieces.length === 1) return pieces[0]!;
+      return { ...pieces[0], content: pieces.map((p) => p.content as string).join('\n\n') };
+    });
+  }
 
   private static convertPlainTextToHTML(content: string, headingLevel: number): string {
     if (!content || !content.trim()) return '<p>Contenuto non disponibile.</p>';

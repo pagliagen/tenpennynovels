@@ -112,7 +112,11 @@ Il permesso vive sul **personaggio**, quindi richiede `X-Session-Id`: le route p
 
 ## embeddings-worker (5001)
 
-**Bull queue**: concorrenza 5, 3 tentativi, backoff esponenziale da 5s. I job falliti finiscono in una **Dead Letter Queue** con flag `retryable` (errori di validazione/modello = permanenti, rete/timeout = ritentabili). Bull v3 non supporta processor tipizzati: processor generico + validazione manuale di `job.data`.
+**Coda embedding**: **BullMQ** (non Bull v3, migrato in #31 - la vecchia nota su "Bull v3 non supporta processor tipizzati" era superata), concorrenza 5, 3 tentativi, backoff esponenziale da 2s (`config.queue`). I job falliti finiscono in una **Dead Letter Queue** con flag `retryable` (errori di validazione/modello = permanenti, rete/timeout = ritentabili).
+
+**Un documento alla volta**: gli eventi Redis `embeddings:document:*` includono `Date.now()` nel `jobId` (`start()` in `embedding-worker.ts`), quindi due save ravvicinati sullo stesso documento (autosave!) finiscono in due job BullMQ distinti, potenzialmente eseguiti in concorrenza sui 5 worker slot. `handleDocumentEvent()` acquisisce un lock Redis per `documentId` prima di processare (rilasciato in `finally`): senza, due job concorrenti sullo stesso documento possono creare righe duplicate in `documentchunks` (`updateOne(...,{upsert:true})` su una chiave senza indice unico non è atomico sotto concorrenza) o farsi cancellare a vicenda i chunk appena scritti via `pruneStaleChunks()`.
+
+**Incidente 2026-09-09** — l'indice (TOC) di `apps/documents` mostrava H2 duplicati o, in alcuni casi, l'indice non compariva. Causa reale (diversa da quella temuta): non era la race di cui sopra, ma `DocumentController.sendDetailResponse()` che mappava 1:1 ogni riga di `documentchunks` su una sezione dell'indice, senza tenere conto che `ChunkParser.splitOversizedChunk()` (introdotto in 809b9381, 2026-08-15) spezza un H2/H3 troppo lungo in più righe con lo stesso slug (`splitIndex` crescente) - un'intestazione lunga appariva quindi ripetuta una volta per pezzo. Fix: `DocumentController.mergeSplitChunks()` ricompone i pezzi in una sola sezione per slug prima di rispondere. La race sull'upsert concorrente è comunque reale (mai riprodotta con dati concreti, ma il gap architetturale c'è) ed è stata chiusa nello stesso commit col lock Redis per documento.
 
 **Qdrant — regole che hanno già causato bug**:
 
