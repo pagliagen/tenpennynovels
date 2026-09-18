@@ -66,6 +66,14 @@ router.put('/reorder',
   DocumentManagementController.reorderSiblings
 );
 
+// Move document (change parent and/or position among siblings)
+router.patch('/:id/move',
+  AdminAuthMiddleware.requireGranularPermission('documents.update'),
+  AdminAuthMiddleware.logAdminAction('document.move', 'document_management'),
+  autoLogOutcome,
+  DocumentManagementController.moveDocument
+);
+
 // Update document
 router.patch('/:id',
   AdminAuthMiddleware.requireGranularPermission('documents.update'),

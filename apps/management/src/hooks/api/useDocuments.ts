@@ -10,6 +10,7 @@
 
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import * as documentAPI from '@/lib/api/documents';
+import { applyMove, type MoveTarget } from '@/lib/documentTree';
 import type {
   Document,
   DocumentListParams,
@@ -200,6 +201,44 @@ export function useReorderSiblings() {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: documentKeys.lists(), refetchType: 'active' });
+    }
+  });
+}
+
+/**
+ * Hook per spostare un documento (cambio di genitore e/o posizione).
+ *
+ * Aggiornamento ottimistico con rollback su errore e SENZA invalidate in
+ * onSuccess: un refetch subito dopo il drop sovrascriverebbe l'albero con la
+ * cache vecchia e il documento "tornerebbe indietro" per un istante.
+ */
+export function useMoveDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ documentId, parentId, beforeId }: { documentId: string } & MoveTarget) =>
+      documentAPI.moveDocument(documentId, parentId, beforeId),
+
+    onMutate: async ({ documentId, parentId, beforeId }) => {
+      await queryClient.cancelQueries({ queryKey: documentKeys.lists() });
+      const previousLists = queryClient.getQueriesData({ queryKey: documentKeys.lists() });
+
+      previousLists.forEach(([queryKey, cached]) => {
+        const response = cached as DocumentTreeResponse | undefined;
+        if (!response || !Array.isArray(response.data)) return;
+        queryClient.setQueryData(queryKey, {
+          ...response,
+          data: applyMove(response.data, documentId, { parentId, beforeId })
+        });
+      });
+
+      return { previousLists };
+    },
+
+    onError: (_error, _variables, context) => {
+      context?.previousLists.forEach(([queryKey, data]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
     }
   });
 }

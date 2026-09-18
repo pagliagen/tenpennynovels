@@ -8,6 +8,7 @@
 import mongoose from 'mongoose';
 import Document from '../models/Document';
 import type { DocumentType } from '../constants/documentTypes';
+import { MAX_DOCUMENT_DEPTH } from '../utils/documentMove';
 
 export class HierarchyService {
   /**
@@ -16,7 +17,7 @@ export class HierarchyService {
   static async fetchChildDocuments(
     parentDocId: mongoose.Types.ObjectId,
     currentDepth: number = 0,
-    maxDepth: number = 5
+    maxDepth: number = MAX_DOCUMENT_DEPTH
   ): Promise<Array<{ document: any; depth: number; order: number }>> {
     if (currentDepth >= maxDepth) return [];
 
@@ -56,7 +57,7 @@ export class HierarchyService {
     parentPath: string,
     type: DocumentType,
     currentDepth: number = 0,
-    maxDepth: number = 5
+    maxDepth: number = MAX_DOCUMENT_DEPTH
   ): Promise<any[]> {
     if (currentDepth >= maxDepth) return [];
 

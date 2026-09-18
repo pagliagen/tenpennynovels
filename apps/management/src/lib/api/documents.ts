@@ -145,6 +145,26 @@ export async function reorderSiblings(parentId: string | null, orderedIds: strin
 }
 
 /**
+ * Sposta un documento: nuovo genitore (null = primo livello) e posizione fra i
+ * fratelli (`beforeId`; null = in coda). Il server valida cicli, sottotipo e
+ * profondità. Niente retry: una violazione non si risolve riprovando.
+ */
+export async function moveDocument(
+  documentId: string,
+  parentId: string | null,
+  beforeId: string | null
+): Promise<void> {
+  const response = await apiClient.patch<ApiResponse<void>>(`/admin/documents/${documentId}/move`, {
+    parentId,
+    beforeId
+  });
+
+  if (!response.data.success) {
+    throw new Error(response.data.error || 'Errore nello spostamento del documento');
+  }
+}
+
+/**
  * Reorder single document (update order and optionally parentId)
  */
 export async function reorderDocument(documentId: string, order: number, parentId: string): Promise<void> {

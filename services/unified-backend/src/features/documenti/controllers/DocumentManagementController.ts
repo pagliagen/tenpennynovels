@@ -3,6 +3,8 @@ import { db } from '@database/models';
 import Document from '../models/Document';
 import DocumentSubtype from '../models/DocumentSubtype';
 import { PreviewTokenService } from '../services/PreviewTokenService';
+import { DocumentMoveError, DocumentMoveService, type MoveErrorCode } from '../services/DocumentMoveService';
+import { validateReparent, type DocumentNodeLite } from '../utils/documentMove';
 import { generateHtml } from '../services/HtmlGenerator';
 import { logger } from '@modules/admin/utils/logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
@@ -32,6 +34,43 @@ function isValidObjectId(id: unknown): boolean {
  */
 function isValidDocumentType(value: unknown): value is DocumentType {
   return isDocumentType(value);
+}
+
+/** Messaggi (italiano, per l'utente) e status HTTP degli errori di spostamento. */
+const MOVE_ERRORS: Record<MoveErrorCode, { status: number; code: string; message: string }> = {
+  DOCUMENT_NOT_FOUND: { status: 404, code: 'DOCUMENT_NOT_FOUND', message: 'Documento non trovato' },
+  PARENT_NOT_FOUND: { status: 404, code: 'PARENT_DOCUMENT_NOT_FOUND', message: 'Documento di destinazione non trovato' },
+  BEFORE_SIBLING_NOT_FOUND: {
+    status: 400,
+    code: 'BEFORE_SIBLING_NOT_FOUND',
+    message: 'La posizione di destinazione non è più valida: ricarica la pagina e riprova'
+  },
+  SELF_PARENT: { status: 400, code: 'DOCUMENT_MOVE_CYCLE', message: 'Un documento non può essere figlio di se stesso' },
+  CYCLE: {
+    status: 400,
+    code: 'DOCUMENT_MOVE_CYCLE',
+    message: 'Non puoi spostare un documento dentro uno dei suoi sottodocumenti'
+  },
+  TYPE_MISMATCH: {
+    status: 400,
+    code: 'DOCUMENT_MOVE_TYPE_MISMATCH',
+    message: 'Il documento di destinazione appartiene a un altro tipo'
+  },
+  SUBTYPE_MISMATCH: {
+    status: 400,
+    code: 'DOCUMENT_MOVE_SUBTYPE_MISMATCH',
+    message: 'Il documento di destinazione appartiene a un altro sottotipo: cambia prima il sottotipo dalla modifica del documento'
+  },
+  TOO_DEEP: {
+    status: 400,
+    code: 'DOCUMENT_MOVE_TOO_DEEP',
+    message: 'Troppi livelli di annidamento: i documenti più profondi non comparirebbero sul sito'
+  }
+};
+
+function sendMoveError(res: Response, req: Request, code: MoveErrorCode): void {
+  const { status, code: errorCode, message } = MOVE_ERRORS[code];
+  res.status(status).json(errorResponse(message, errorCode, undefined, status, getRequestId(req)));
 }
 
 /**
@@ -200,6 +239,51 @@ export class DocumentManagementController {
   }
 
   /**
+   * Sposta un documento: cambia genitore e/o posizione fra i fratelli.
+   * PATCH /admin/documents/:id/move
+   * Body: { parentId: string | null, beforeId?: string | null }
+   *   parentId  → nuovo genitore (null = documento di primo livello)
+   *   beforeId  → fratello di destinazione davanti a cui inserire (assente/null = in coda)
+   */
+  static async moveDocument(req: Request, res: Response): Promise<void> {
+    try {
+      const id = req.params.id as string;
+      const { parentId = null, beforeId = null } = req.body ?? {};
+
+      if (!isValidObjectId(id)) {
+        res.status(400).json(errorResponse(
+          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+      if (parentId !== null && !isValidObjectId(parentId)) {
+        res.status(400).json(errorResponse(
+          'ID parent documento non valido', 'INVALID_PARENT_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+      if (beforeId !== null && !isValidObjectId(beforeId)) {
+        res.status(400).json(errorResponse(
+          'ID documento di riferimento non valido', 'INVALID_BEFORE_ID', undefined, 400, getRequestId(req)
+        ));
+        return;
+      }
+
+      const result = await DocumentMoveService.move(id, parentId, beforeId);
+      res.json(successResponse(result, undefined, getRequestId(req)));
+    } catch (error: any) {
+      if (error instanceof DocumentMoveError) {
+        sendMoveError(res, req, error.code);
+        return;
+      }
+      logger.error('Error moving document:', error);
+      res.status(500).json(errorResponse(
+        'Errore nello spostamento del documento', 'MOVE_DOCUMENT_ERROR', undefined, 500, getRequestId(req)
+      ));
+    }
+  }
+
+  /**
    * Update document
    * PATCH /admin/documents/:id
    */
@@ -223,6 +307,37 @@ export class DocumentManagementController {
           'Documento non trovato', 'DOCUMENT_NOT_FOUND', undefined, 404, getRequestId(req)
         ));
         return;
+      }
+
+      // parentId non passa da qui senza controlli: un ciclo o un padre di un altro
+      // sottotipo romperebbe l'albero pubblico. Lo spostamento "vero" (con
+      // posizione fra i fratelli) è PATCH /:id/move; questa resta per chi
+      // imposta parentId insieme a order (HierarchicalDocumentEditor).
+      if (updates.parentId !== undefined) {
+        const nextParentId: unknown = updates.parentId;
+        if (nextParentId !== null && !isValidObjectId(nextParentId)) {
+          res.status(400).json(errorResponse(
+            'ID parent documento non valido', 'INVALID_PARENT_ID', undefined, 400, getRequestId(req)
+          ));
+          return;
+        }
+        if ((nextParentId ?? null) !== (document.parentId?.toString() ?? null)) {
+          const siblings = await Document.find({ type: document.type }).select('parentId subtypeId type').lean();
+          const nodes = new Map<string, DocumentNodeLite>(siblings.map((d) => [
+            d._id.toString(),
+            {
+              id: d._id.toString(),
+              parentId: d.parentId ? d.parentId.toString() : null,
+              subtypeId: d.subtypeId.toString(),
+              type: d.type
+            }
+          ]));
+          const violation = validateReparent(nodes, id, nextParentId as string | null);
+          if (violation) {
+            sendMoveError(res, req, violation);
+            return;
+          }
+        }
       }
 
       const allowedFields = [

@@ -341,6 +341,7 @@ Administrative operations: user management, character approval, locations, docum
 | GET | `/admin/documents/:id` | Get document |
 | GET | `/admin/documents/:id/with-children` | Get with children |
 | PUT | `/admin/documents/reorder` | Reorder documents |
+| PATCH | `/admin/documents/:id/move` | Sposta un documento: body `{ parentId: string \| null, beforeId?: string \| null }` (nuovo genitore, `null` = primo livello; `beforeId` = fratello davanti a cui inserire, assente = in coda). Errori 400: `DOCUMENT_MOVE_CYCLE`, `DOCUMENT_MOVE_SUBTYPE_MISMATCH`, `DOCUMENT_MOVE_TYPE_MISMATCH`, `DOCUMENT_MOVE_TOO_DEEP`, `BEFORE_SIBLING_NOT_FOUND` |
 | PATCH | `/admin/documents/:id` | Update document |
 | DELETE | `/admin/documents/:id` | Delete document |
 | PATCH | `/admin/documents/:id/toggle-visibility` | Toggle visibility |

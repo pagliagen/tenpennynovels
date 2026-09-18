@@ -225,6 +225,58 @@
   margin-top: $spacing-xs;
 }
 
+// Drag & drop: la riga è trascinabile e bersaglio di drop. L'indicatore dice
+// dove finirà il documento: linea sopra/sotto = fratello, riquadro = figlio.
+.dragRow {
+  position: relative;
+  cursor: grab;
+
+  &.dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+  }
+
+  &.dropBefore::before,
+  &.dropAfter::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 2px;
+    background-color: $color-primary;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  &.dropBefore::before {
+    top: -2px;
+  }
+
+  &.dropAfter::after {
+    bottom: -2px;
+  }
+
+  &.dropInside {
+    background-color: rgba($color-primary, 0.18);
+    outline: 1px dashed $color-primary;
+    outline-offset: -1px;
+    border-radius: $radius-sm;
+  }
+}
+
+.dragOverlay {
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-md;
+  background-color: $color-bg-tertiary;
+  border: 1px solid $color-primary;
+  color: $color-text-primary;
+  font-size: 14px;
+  box-shadow: $shadow-lg;
+  cursor: grabbing;
+  white-space: nowrap;
+}
+
 .emptyState {
   padding: $spacing-xl;
   text-align: center;

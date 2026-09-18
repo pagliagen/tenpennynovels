@@ -16,7 +16,7 @@ import { useConfirm } from '@/hooks/useConfirm';
 import {
   useDocuments,
   useSubtypes,
-  useReorderSiblings,
+  useMoveDocument,
   useDeleteDocument,
   useToggleDocumentVisibility,
   useToggleDocumentDraft,
@@ -25,6 +25,7 @@ import {
 import { useNotificationStore } from '@/store/notificationStore';
 import { useURLFilter } from '@/hooks/useURLFilter';
 import { setFilterInHash } from '@/lib/utils/urlFilters';
+import type { MoveTarget } from '@/lib/documentTree';
 import type { DocumentTreeNode, DocumentType } from '@/types/api/Document';
 import { DOCUMENT_TYPES, DOCUMENT_TYPE_LABELS } from '@/types/api/Document';
 import styles from '@/styles/pages/DocumentList.module.scss';
@@ -43,7 +44,7 @@ export default function DocumentList() {
 
   const { data, isLoading, error } = useDocuments({ type: typeFilter });
   const { data: subtypes = [] } = useSubtypes(typeFilter);
-  const reorderSiblings = useReorderSiblings();
+  const moveDocument = useMoveDocument();
   const deleteDocument = useDeleteDocument();
   const toggleDocumentVisibility = useToggleDocumentVisibility();
   const toggleDocumentDraft = useToggleDocumentDraft();
@@ -99,14 +100,14 @@ export default function DocumentList() {
     setCreateDocModalOpen(true);
   };
 
-  const handleReorderSiblings = async (parentId: string | null, orderedIds: string[]) => {
+  const handleMoveDocument = async (documentId: string, target: MoveTarget) => {
     try {
-      await reorderSiblings.mutateAsync({ parentId, orderedIds });
-      addNotification({ type: 'success', message: `${orderedIds.length} documenti riordinati` });
+      await moveDocument.mutateAsync({ documentId, ...target });
+      addNotification({ type: 'success', message: 'Documento spostato' });
     } catch (error) {
       addNotification({
         type: 'error',
-        message: error instanceof Error ? error.message : 'Errore nel riordinamento'
+        message: error instanceof Error ? error.message : 'Errore nello spostamento del documento'
       });
     }
   };
@@ -258,7 +259,7 @@ export default function DocumentList() {
             onToggleDocumentVisibility={handleToggleDocumentVisibility}
             onToggleDocumentDraft={handleToggleDocumentDraft}
             onToggleDocumentPublic={handleToggleDocumentPublic}
-            onReorderSiblings={handleReorderSiblings}
+            onMoveDocument={handleMoveDocument}
           />
         )}
 
