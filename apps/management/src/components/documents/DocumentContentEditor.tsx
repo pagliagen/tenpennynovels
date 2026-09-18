@@ -15,6 +15,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 
+import { PasteHardBreakSplit, toggleHeadingOnLine } from '@/lib/tiptap/hardBreaks';
 import { PasteColorCleanup } from '@/lib/tiptap/pasteColorCleanup';
 
 import styles from './DocumentContentEditor.module.scss';
@@ -75,7 +76,10 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
       TableHeader,
       // Deve stare dopo TextStyle/Color/Highlight: ripulisce i mark che quelli
       // hanno appena parsato dall'HTML incollato.
-      PasteColorCleanup
+      PasteColorCleanup,
+      // Word esporta "titolo⏎body" come un solo <p> con <br>: senza questo
+      // split H2 si applicherebbe a tutto il blocco (v. lib/tiptap/hardBreaks.ts).
+      PasteHardBreakSplit
     ],
     content: contentDelta,
     editable: !readOnly,
@@ -111,14 +115,14 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
         <div className={styles.toolbar}>
           {/* Headings (H2-H6 only, H1 reserved for document title) */}
           <button
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            onClick={() => toggleHeadingOnLine(editor, 2)}
             className={editor.isActive('heading', { level: 2 }) ? styles.active : ''}
             type="button"
           >
             H2
           </button>
           <button
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+            onClick={() => toggleHeadingOnLine(editor, 3)}
             className={editor.isActive('heading', { level: 3 }) ? styles.active : ''}
             type="button"
           >
