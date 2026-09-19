@@ -88,18 +88,24 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
     }
   });
 
+  // Sincronizza l'editor con la prop. `emitUpdate: false` è essenziale: in
+  // TipTap v3 setContent emette `update` per default (in v2 no), quindi una
+  // sincronizzazione programmatica sarebbe scambiata per una modifica
+  // dell'utente. Se la prop è ancora la bozza vuota iniziale, onChange
+  // sovrascriveva il documento appena caricato con un paragrafo vuoto e
+  // l'autosave lo scriveva sul DB (perdita del contenuto, 2026-09-18).
   useEffect(() => {
     if (!editor || !contentDelta) return;
 
     if (htmlMode) {
       const currentHtml = editor.getHTML();
       if (currentHtml !== contentDelta) {
-        editor.commands.setContent(contentDelta);
+        editor.commands.setContent(contentDelta, { emitUpdate: false });
       }
     } else {
       const currentContent = editor.getJSON();
       if (JSON.stringify(currentContent) !== JSON.stringify(contentDelta)) {
-        editor.commands.setContent(contentDelta);
+        editor.commands.setContent(contentDelta, { emitUpdate: false });
       }
     }
   }, [contentDelta, editor, htmlMode]);

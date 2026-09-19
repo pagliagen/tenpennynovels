@@ -16,6 +16,9 @@ const createJestConfig = nextJest({ dir: './' });
 const config = {
   testEnvironment: 'jest-environment-jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  // Alias `@/*` di tsconfig: next/jest non lo risolve nei test che montano
+  // componenti reali (gli altri test usano solo import relativi).
+  moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' },
   testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts']
 };
