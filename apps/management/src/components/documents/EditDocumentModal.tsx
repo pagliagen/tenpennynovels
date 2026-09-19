@@ -29,7 +29,10 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   onClose
 }) => {
   const { data: document, isLoading, isError, error } = useDocument(documentId);
-  const [contentDelta, setContentDelta] = useState<any>({ type: 'doc', content: [] });
+  // null finché non è stato inizializzato dal documento caricato: il guard di
+  // caricamento più sotto (`!contentDelta`) impedisce di montare l'editor prima,
+  // altrimenti parte con una bozza vuota che poi finisce sul DB via autosave.
+  const [contentDelta, setContentDelta] = useState<any>(null);
   const [title, setTitle] = useState('');
   const [subtypeId, setSubtypeId] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);

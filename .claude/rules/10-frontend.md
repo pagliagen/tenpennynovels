@@ -82,6 +82,9 @@ Dettaglio delle responsabilità: `docs/tecnica/frontend/game-app.md`.
 
 **Documenti**: si creano sempre atomicamente documento + route via `POST /admin/routes`. `CreateRouteModal` è stato rimosso (2026-03-02): non reintrodurlo. La voce "crea rotta" nel context menu serve solo a recuperare documenti orfani.
 
+**TipTap v3: `setContent` emette `update` per default** (in v2 no). Ogni sincronizzazione programmatica di un editor controllato va con `{ emitUpdate: false }`, altrimenti `onChange` la scambia per una modifica dell'utente (`apps/game` `ForumRichTextEditor` lo faceva già).
+**Incidente 2026-09-18** — aprendo un documento esistente da gestionale, l'effect di sync in `DocumentContentEditor` spingeva nell'editor lo stato iniziale vuoto di `EditDocumentModal`; l'`update` emesso sovrascriveva il contenuto appena caricato e l'autosave (1s dopo, senza digitare) lo scriveva vuoto sul DB. Sintomo: il testo originale spariva al primo salvataggio, mentre i documenti *nuovi* (dove si digita dopo il load) sembravano funzionare. Regressione dalla migrazione a v3 (2026-09-07). Fix: `emitUpdate: false` + stato iniziale `null` nella modale (il guard di caricamento non montava l'editor prima del dato). Test: `EditDocumentModal.test.tsx`.
+
 **Cell renderer**: registry centralizzato in `apps/management/src/lib/cellRenderers/` (è una **directory**, non un singolo file) per formattazione uniforme di date, booleani, stati e azioni nelle tabelle.
 
 ### Aggiungere una pagina — checklist obbligatoria
