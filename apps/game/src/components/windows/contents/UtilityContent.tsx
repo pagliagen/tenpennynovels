@@ -19,6 +19,7 @@ import { WindowData } from '@/types/window-manager';
 import { CharacterDirectoryContent } from './CharacterDirectoryContent';
 import { CharacterFaceClaimContent } from './CharacterFaceClaimContent';
 import { MarketContent } from './MarketContent';
+import { PresenceContent } from './PresenceContent';
 
 /**
  * Utility Content Props
@@ -61,6 +62,9 @@ export function UtilityContent({ utilityName, data }: UtilityContentProps): JSX.
 
     case 'market':
       return <MarketContent />;
+
+    case 'presenti':
+      return <PresenceContent />;
 
     default:
       // Stub for unknown utility types (fallback for extensibility)

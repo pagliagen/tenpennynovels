@@ -173,6 +173,8 @@ export function Window({ windowState, children }: WindowProps): JSX.Element {
               return '📖 Anagrafica Personaggi';
             case 'character-faceclaim':
               return '🎭 Gestione Prestavolto';
+            case 'presenti':
+              return 'Presenti';
             default:
               return windowState.data.utilityName;
           }

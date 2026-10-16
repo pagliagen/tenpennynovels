@@ -58,14 +58,12 @@ export interface GlobalPresence {
  * @property {Date | null} lastUpdated - Timestamp of last API fetch
  * @property {boolean} isLoading - Whether initial fetch is in progress
  * @property {string | null} error - Error message if fetch failed
- * @property {boolean} isModalOpen - Whether presence modal is open
  */
 interface PresenceState {
   globalPresence: GlobalPresence[];
   lastUpdated: Date | null;
   isLoading: boolean;
   error: string | null;
-  isModalOpen: boolean;
 }
 
 /**
@@ -176,20 +174,6 @@ interface PresenceActions {
   getLocationPresence: (locationId: string | null) => GlobalPresence[];
 
   /**
-   * Open presence modal
-   *
-   * @returns {void}
-   */
-  openModal: () => void;
-
-  /**
-   * Close presence modal
-   *
-   * @returns {void}
-   */
-  closeModal: () => void;
-
-  /**
    * Reset store to initial state
    *
    * Used on logout or character switch.
@@ -207,7 +191,6 @@ const initialState: PresenceState = {
   lastUpdated: null,
   isLoading: false,
   error: null,
-  isModalOpen: false,
 };
 
 /**
@@ -425,14 +408,6 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
     const targetLocationId = locationId || '';
 
     return globalPresence.filter((p) => p.locationId === targetLocationId);
-  },
-
-  openModal: () => {
-    set({ isModalOpen: true });
-  },
-
-  closeModal: () => {
-    set({ isModalOpen: false });
   },
 
   reset: () => {

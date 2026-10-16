@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1050; // sopra ForumModal/PresenceModal (1000)
+  z-index: 1050; // sopra ForumModal e finestre (zIndex dal window manager, parte da 1001)
   display: flex;
   height: 56px;
   padding-bottom: env(safe-area-inset-bottom, 0);

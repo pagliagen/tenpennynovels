@@ -40,7 +40,6 @@ import type { AuthSessionApiResponse, CharacterBanSessionPayload } from '@/types
 import { CharacterReviewOutcomeModal } from '../character/CharacterReviewOutcomeModal';
 import { ConnectionStatus } from '../connection/ConnectionStatus';
 import { ForumModal } from '../forum/ForumModal';
-import { PresenceModal } from '../presence/PresenceModal';
 import { CharacterProfile } from '../sidebar/CharacterProfile';
 import { CharactersList } from '../sidebar/CharactersList';
 import { DateDisplay } from '../sidebar/DateDisplay';
@@ -585,9 +584,6 @@ export function GameLayout({ children }: GameLayoutProps): JSX.Element {
 
       {/* Forum Modal - Full screen overlay */}
       {isForumOpen && <ForumModal />}
-
-      {/* Presence Modal - Side drawer */}
-      <PresenceModal />
 
       {/* Esito approvazione/rifiuto personaggio non ancora confermato */}
       {activeReviewNotification && selectedCharacter && (

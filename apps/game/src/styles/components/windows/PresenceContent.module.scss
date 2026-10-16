@@ -1,92 +1,10 @@
-@use './variables' as *;
+@use '../../variables' as *;
 
-$gold-line: #8c6a2c;
-$gold-title: #b8923a;
-$orange-name: #f0a24a;
-$teal: #0a5c55;
-$teal-dim: #0e3a36;
-$surface: #121212;
-$muted: #a8a496;
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-lg;
-  animation: fadeIn 0.3s ease-out;
-
-  &.closing {
-    animation: fadeOut 0.3s ease-in forwards;
-  }
-}
-
-.modal {
-  position: relative;
-  width: min(680px, 100%);
-  max-height: min(760px, 100%);
+.root {
   display: flex;
   flex-direction: column;
-  background: #000;
-  border: 1px solid $gold-line;
-  border-radius: 28px;
-  overflow: hidden;
-  animation: popIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-
-  &.closing {
-    animation: popOut 0.25s ease-in forwards;
-  }
-}
-
-.header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid $gold-line;
-}
-
-.title {
-  margin: 0;
-  font-family: 'Les Mystères de Paris', serif;
-  font-weight: 400;
-  font-size: 34px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: $gold-title;
-}
-
-.closeButton {
-  position: absolute;
-  right: $spacing-md;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  font-size: 28px;
-  line-height: 1;
-  color: $muted;
-  cursor: pointer;
-  transition: color 0.2s;
-
-  &:hover {
-    color: $gold-title;
-  }
-}
-
-.panel {
-  display: flex;
-  flex-direction: column;
+  height: 100%;
   min-height: 0;
-  margin: $spacing-md;
-  padding: $spacing-lg $spacing-md $spacing-lg $spacing-lg;
-  background: $surface;
-  border: 1px solid $gold-line;
-  border-radius: 28px;
 }
 
 .tabs {
@@ -98,13 +16,13 @@ $muted: #a8a496;
 .tab {
   padding: 6px 18px;
   background: transparent;
-  border: 1px solid $gold-line;
+  border: 1px solid $frame-gold-line;
   border-radius: 4px;
   font-family: 'Bahnschrift SemiLight', $font-sans;
   font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: $muted;
+  color: $frame-muted;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 
@@ -113,14 +31,14 @@ $muted: #a8a496;
   }
 
   &:focus-visible {
-    outline: 2px solid $gold-title;
+    outline: 2px solid $frame-gold-title;
     outline-offset: 2px;
   }
 }
 
 .tabActive {
-  background: $teal-dim;
-  border-color: $teal;
+  background: $frame-teal-dim;
+  border-color: $frame-teal;
   color: $text-primary;
 }
 
@@ -129,13 +47,13 @@ $muted: #a8a496;
   align-items: center;
   gap: $spacing-md;
   margin: $spacing-md 0 $spacing-sm;
-  color: $gold-title;
+  color: $frame-gold-title;
 }
 
 .dividerLine {
   flex: 1;
   height: 1px;
-  background: $gold-line;
+  background: $frame-gold-line;
 }
 
 .dividerIcon {
@@ -165,13 +83,13 @@ $muted: #a8a496;
   font-size: 22px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: $teal;
+  color: $frame-teal;
 
   &::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: $teal-dim;
+    background: $frame-teal-dim;
   }
 }
 
@@ -214,7 +132,7 @@ $muted: #a8a496;
   width: 26px;
   height: 26px;
   transform: translateY(-50%);
-  fill: $teal;
+  fill: $frame-teal;
 }
 
 .avatarButton {
@@ -232,7 +150,7 @@ $muted: #a8a496;
   }
 
   &:focus-visible {
-    outline: 2px solid $gold-title;
+    outline: 2px solid $frame-gold-title;
     outline-offset: 2px;
     border-radius: 50%;
   }
@@ -245,7 +163,7 @@ $muted: #a8a496;
   border-radius: 50%;
   object-fit: cover;
   background: #1c1c1c;
-  border: 1px solid $orange-name;
+  border: 1px solid $frame-orange;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
@@ -260,7 +178,7 @@ $muted: #a8a496;
   padding: 0 $spacing-lg 0 calc(28px + #{$spacing-md});
   height: 52px;
   background: #101010;
-  border: 1px solid $gold-line;
+  border: 1px solid $frame-gold-line;
   border-radius: 14px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
@@ -269,7 +187,7 @@ $muted: #a8a496;
   flex-shrink: 0;
   font-family: 'Thrifted Attire', serif;
   font-size: 20px;
-  color: $orange-name;
+  color: $frame-orange;
   white-space: nowrap;
 }
 
@@ -290,7 +208,7 @@ $muted: #a8a496;
   white-space: nowrap;
   font-family: 'Bahnschrift SemiLight', $font-sans;
   font-size: 14px;
-  color: $muted;
+  color: $frame-muted;
 }
 
 .mailButton {
@@ -315,7 +233,7 @@ $muted: #a8a496;
 .empty {
   padding: $spacing-xl;
   text-align: center;
-  color: $muted;
+  color: $frame-muted;
   font-size: 15px;
 }
 
@@ -328,46 +246,5 @@ $muted: #a8a496;
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-}
-
-// Animations
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes popIn {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes popOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.96);
   }
 }

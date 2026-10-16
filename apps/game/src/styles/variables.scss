@@ -38,6 +38,15 @@ $parchment-50: rgba(232, 212, 160, 0.5);
 $parchment-60: rgba(232, 212, 160, 0.6);
 $parchment-70: rgba(232, 212, 160, 0.7);
 
+/* Window frame (shell `Window` + contenuti, layout dei Presenti) */
+$frame-gold-line: #8c6a2c;    // bordi dorati sottili
+$frame-gold-title: #b8923a;   // titoli
+$frame-surface: #121212;      // pannello interno
+$frame-muted: #a8a496;        // testo secondario
+$frame-orange: #f0a24a;       // nomi dei personaggi
+$frame-teal: #0a5c55;         // accenti (stella staff, titoli di gruppo)
+$frame-teal-dim: #0e3a36;
+
 /* Text Colors */
 $text-primary: #e8d4a0;    // Parchment color for primary text
 $text-secondary: #c9c6ad;  // Darker parchment for secondary text
