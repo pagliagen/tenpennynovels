@@ -39,7 +39,7 @@ test('limite di lunghezza dopo la normalizzazione', () => {
 });
 
 test('rimuove i caratteri di controllo', () => {
-  const r = parsePresenceStatus({ availableToPlay: true, reason: 'a\u0000b‮c' });
+  const r = parsePresenceStatus({ availableToPlay: true, reason: 'a\u0000b\u202Ec' });
   assert.equal(r.ok && r.value.reason, 'a b c');
 });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/router';
-import { useCallback, useState, useMemo, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 
 import { MAX_PRESENCE_REASON_LENGTH, type PresenceStatus } from '@/lib/api/presence';
 import { logger } from '@/lib/logger';
@@ -41,6 +41,12 @@ export function PresenceContent(): JSX.Element {
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [draft, setDraft] = useState<PresenceStatus>({ availableToPlay: true, reason: '' });
   const [isSaving, setIsSaving] = useState(false);
+  const reasonInputRef = useRef<HTMLInputElement>(null);
+
+  // L'editor si apre su azione dell'utente: il focus passa al campo (senza autoFocus)
+  useEffect(() => {
+    if (isEditingStatus) reasonInputRef.current?.focus();
+  }, [isEditingStatus]);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const openStatusEditor = (current: PresenceStatus) => {
@@ -252,8 +258,8 @@ export function PresenceContent(): JSX.Element {
                             maxLength={MAX_PRESENCE_REASON_LENGTH}
                             placeholder="Motivazione (facoltativa)"
                             aria-label="Motivazione"
+                            ref={reasonInputRef}
                             onChange={(e) => setDraft({ ...draft, reason: e.target.value })}
-                            autoFocus
                           />
                           <div className={styles.editorActions}>
                             <button type="submit" className={styles.editorSave} disabled={isSaving}>
