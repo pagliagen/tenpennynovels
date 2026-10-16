@@ -46,6 +46,11 @@ export const config = {
       // Context window esplicita: senza questo Ollama applica il proprio default
       // (2048/4096 a seconda della versione) e tronca il prompt in silenzio.
       numCtx: Number.parseInt(process.env.OLLAMA_NUM_CTX || '4096', 10),
+      // Quanto il modello resta in RAM dopo l'ultima richiesta. Con -1 il runner
+      // del 4b è arrivato a 7 GB residenti in 6 ore (VPS da 11 GB, niente swap):
+      // il Bibliotecario è opzionale e non deve mettere a rischio Mongo/ES. Costo:
+      // dopo una pausa la prima risposta paga ~10s di caricamento.
+      keepAlive: process.env.OLLAMA_KEEP_ALIVE || '15m',
     },
   },
 

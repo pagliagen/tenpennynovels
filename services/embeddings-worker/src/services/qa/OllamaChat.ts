@@ -87,7 +87,7 @@ export class OllamaChat {
         num_predict: maxTokens,
         num_ctx: config.services.ollama.numCtx,
       },
-      keep_alive: -1,
+      keep_alive: config.services.ollama.keepAlive,
     });
 
     return {
@@ -114,7 +114,7 @@ export class OllamaChat {
         num_ctx: config.services.ollama.numCtx,
       },
       format: 'json',
-      keep_alive: -1,
+      keep_alive: config.services.ollama.keepAlive,
     });
 
     return {
@@ -126,8 +126,8 @@ export class OllamaChat {
   }
 
   /**
-   * Warms up the model so it stays resident in Ollama's memory (keep_alive: -1),
-   * avoiding a cold-start delay on the first real request after boot.
+   * Warms up the model so the first real request after boot does not pay the load
+   * time. It stays resident for `keepAlive` after the last request, then Ollama frees it.
    */
   async warmup(): Promise<void> {
     await this.client.chat({
@@ -135,7 +135,7 @@ export class OllamaChat {
       messages: [{ role: 'user', content: 'hi' }],
       think: config.services.ollama.think,
       options: { num_predict: 1, num_ctx: config.services.ollama.numCtx },
-      keep_alive: -1,
+      keep_alive: config.services.ollama.keepAlive,
     });
   }
 }
