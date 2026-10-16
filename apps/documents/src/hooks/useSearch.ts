@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/router';
 import { useState, useCallback, useEffect, useRef } from 'react';
 
 import { API_CONFIG } from '@/constants/config';
 import { api } from '@/lib/api/client';
 import { logger } from '@/lib/logger';
 import type { DocumentType } from '@/types/document';
+import { searchScopeForPath } from '@/utils/documentSection';
 
 const SEARCH_DEBOUNCE_MS = 400;
 
@@ -340,6 +342,9 @@ function useSSESearch(query: string, options: UseSearchOptions = {}) {
  * standard JSON search and SSE search based on query type.
  */
 export function useSearchState() {
+  const router = useRouter();
+  // Ricerca e Bibliotecario restano dentro la sezione che si sta leggendo.
+  const scope = searchScopeForPath(router.asPath);
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -357,10 +362,12 @@ export function useSearchState() {
   const searchEnabled = isOpen && debouncedQuery.length >= 2;
 
   const standardSearch = useSearch(debouncedQuery, {
+    type: scope,
     enabled: searchEnabled && !isQuestionQuery,
   });
 
   const sseSearch = useSSESearch(debouncedQuery, {
+    type: scope,
     enabled: searchEnabled && isQuestionQuery,
   });
 
