@@ -16,7 +16,7 @@
     "health": "curl -s http://localhost:9000/health | jq"
   },
   "devDependencies": {
-    "concurrently": "^10.0.4",
+    "concurrently": "^10.0.6",
     "patch-package": "^8.0.1",
     "qs": "^6.16.0"
   },
