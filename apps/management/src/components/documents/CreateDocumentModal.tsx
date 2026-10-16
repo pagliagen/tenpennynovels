@@ -10,6 +10,7 @@ import { useNotificationStore } from '@/store/notificationStore';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import styles from '@/styles/components/Modal.module.scss';
 import type { DocumentType } from '@/types/api/Document';
+import { slugify } from '@/lib/utils/slug';
 
 interface CreateDocumentModalProps {
   isOpen: boolean;
@@ -50,15 +51,7 @@ export function CreateDocumentModal({
 
   const handleTitleChange = (value: string) => {
     setTitle(value);
-    const autoValue = value
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .trim()
-      .replace(/\s+/g, '-');
-
-    if (!slugManuallyEdited) setSlug(autoValue);
+    if (!slugManuallyEdited) setSlug(slugify(value));
   };
 
   const handleSlugChange = (value: string) => {

@@ -10,6 +10,7 @@ import { DocumentIframePreview } from './DocumentIframePreview';
 import { useDocument, useUpdateDocument, useAutosaveDocument, useSubtypes, documentKeys } from '@/hooks/api/useDocuments';
 import { useNotificationStore } from '@/store/notificationStore';
 import { useConfirm } from '@/hooks/useConfirm';
+import { slugify, isValidSlug } from '@/lib/utils/slug';
 import styles from './EditDocumentModal.module.scss';
 
 interface EditDocumentModalProps {
@@ -35,6 +36,11 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   const [contentDelta, setContentDelta] = useState<any>(null);
   const [title, setTitle] = useState('');
   const [subtypeId, setSubtypeId] = useState('');
+  // Lo slug è l'URL pubblico: segue il titolo (come nella creazione) finché non
+  // viene modificato a mano, ma si scrive solo con "Salva", mai con l'autosave.
+  const [slug, setSlug] = useState('');
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [originalSlug, setOriginalSlug] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [refreshSignal, setRefreshSignal] = useState(0);
   const updateDocument = useUpdateDocument();
@@ -79,6 +85,9 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
       setContentDelta(initialContentDelta);
       setTitle(initialTitle);
       setSubtypeId(initialSubtypeId);
+      setSlug(document.slug || '');
+      setSlugManuallyEdited(false);
+      setOriginalSlug(document.slug || '');
       originalSnapshotRef.current = { title: initialTitle, contentDelta: initialContentDelta };
       hasAutosavedRef.current = false;
     }
@@ -147,11 +156,47 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
+    const value = e.target.value;
+    setTitle(value);
+    if (!slugManuallyEdited) {
+      // Titolo svuotato o fatto solo di simboli: lo slug resta com'è, mai vuoto.
+      const next = slugify(value);
+      if (next) setSlug(next);
+    }
     scheduleAutosave();
   };
 
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSlug(e.target.value);
+    setSlugManuallyEdited(true);
+  };
+
+  const slugChanged = slug !== originalSlug;
+  const subtypeSlug = subtypes.find((st) => st._id === subtypeId)?.slug;
+  const urlOf = (value: string) => `/${document?.type ?? ''}/${subtypeSlug ?? '…'}/${value}`;
+
   const handleSave = async () => {
+    if (slugChanged && !isValidSlug(slug)) {
+      addNotification({
+        type: 'error',
+        message: 'Slug non valido: usa solo lettere minuscole, numeri e trattini singoli (es. epoca-vittoriana)'
+      });
+      return;
+    }
+
+    // Su un documento già pubblicato il cambio di slug rompe il vecchio URL
+    // (nessun redirect): va confermato esplicitamente.
+    if (slugChanged && document && !document.isDraft) {
+      const confirmed = await confirm({
+        title: 'Cambiare l\'URL del documento?',
+        message: `Il documento è pubblicato: l'indirizzo passerà da ${urlOf(originalSlug)} a ${urlOf(slug)}. Il vecchio indirizzo smetterà di funzionare e i link esistenti (anche di Google) non porteranno più qui.`,
+        confirmLabel: 'Cambia URL',
+        cancelLabel: 'Annulla',
+        type: 'danger'
+      });
+      if (!confirmed) return;
+    }
+
     try {
       // Cancella un autosave pendente e attende uno già in volo, così "Salva"
       // è sempre l'ultima scrittura (mai sovrascritto da un autosave in ritardo).
@@ -163,6 +208,8 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
         data: {
           contentDelta,
           title,
+          // Solo se cambiato: un salvataggio senza modifiche allo slug non lo tocca.
+          ...(slugChanged ? { slug } : {}),
           subtypeId,
           lastUpdated: new Date().toISOString()
         }
@@ -304,6 +351,27 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
             className={styles.titleInput}
             placeholder="Inserisci titolo..."
           />
+        </div>
+
+        {/* Slug (URL pubblico) */}
+        <div className={styles.titleSection}>
+          <label htmlFor="doc-slug">Slug (URL)</label>
+          <input
+            id="doc-slug"
+            type="text"
+            value={slug}
+            onChange={handleSlugChange}
+            className={styles.titleInput}
+            placeholder="slug-documento"
+          />
+          <small className={styles.slugHint}>
+            {urlOf(slug)} · {slugManuallyEdited ? 'modificato a mano' : 'segue il titolo'}
+          </small>
+          {slugChanged && !document.isDraft && (
+            <p className={styles.slugWarning} role="alert">
+              Il documento è pubblicato: cambiando lo slug il vecchio URL smetterà di funzionare.
+            </p>
+          )}
         </div>
 
         {/* Subtype Selector */}

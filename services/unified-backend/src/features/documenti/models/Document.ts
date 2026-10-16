@@ -261,9 +261,21 @@ DocumentSchema.post('save', async function(doc) {
   // Solo per i tipi pubblici: le pagine dei tipi riservati sono client-only
   // (niente getStaticProps), quindi non c'è nessuna cache ISR da rigenerare.
   if (publicType !== null) {
-    import('@shared/services/DocumentsRevalidator').then(({ revalidateDocumentPaths }) => {
+    import('@shared/services/DocumentsRevalidator').then(async ({ revalidateDocumentPaths }) => {
       const previousPath = (doc as any)._previousPath;
-      revalidateDocumentPaths(doc.type, [doc.path, previousPath]);
+
+      // La pagina del padre elenca titolo e link dei figli: va rigenerata anche lei,
+      // altrimenti una rinomina compare lì solo allo scadere di revalidate (1h).
+      // Si rigenera a ogni save e non solo se title/slug risultano modificati:
+      // l'autosave scrive il titolo con updateOne (senza hook), quindi quando
+      // arriva "Salva" il titolo è già uguale a quello su DB e isModified è false.
+      let parentPath: string | undefined;
+      if (doc.parentId) {
+        const parent = await doc.model('Document').findById(doc.parentId).select('path').lean<{ path?: string }>();
+        parentPath = parent?.path;
+      }
+
+      revalidateDocumentPaths(doc.type, [doc.path, previousPath, parentPath]);
     }).catch((error) => {
       logger.error('[Document] Failed to load DocumentsRevalidator:', error);
     });

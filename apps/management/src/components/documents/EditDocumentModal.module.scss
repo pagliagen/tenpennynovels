@@ -64,6 +64,23 @@
   }
 }
 
+.slugHint {
+  display: block;
+  margin-top: $spacing-sm;
+  font-size: 12px;
+  opacity: 0.7;
+  word-break: break-all;
+}
+
+.slugWarning {
+  margin: $spacing-sm 0 0;
+  padding: $spacing-sm $spacing-md;
+  border-left: 3px solid $color-warning;
+  border-radius: $radius-md;
+  background-color: rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+}
+
 .cancelButton,
 .saveButton {
   padding: $spacing-sm $spacing-lg;

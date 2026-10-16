@@ -133,6 +133,8 @@ export interface CreateDocumentData {
 
 export interface UpdateDocumentData {
   title?: string;
+  /** Cambia l'URL pubblico: solo dal "Salva" esplicito, mai dall'autosave. */
+  slug?: string;
   content?: string;
   contentDelta?: any;
   lastUpdated?: string;

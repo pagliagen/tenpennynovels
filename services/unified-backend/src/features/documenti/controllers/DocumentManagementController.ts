@@ -13,6 +13,7 @@ import { appConfig } from '@config/runtime';
 import { aiGatewayClient } from '@modules/game/services/AIGatewayClient';
 import { Types } from 'mongoose';
 import { ALL_DOCUMENT_TYPES, isDocumentType, type DocumentType } from '../constants/documentTypes';
+import { validateSlug } from '../utils/slugValidation';
 
 const mongoose = db.getMongoose();
 
@@ -337,6 +338,29 @@ export class DocumentManagementController {
             sendMoveError(res, req, violation);
             return;
           }
+        }
+      }
+
+      // Cambio slug = cambio di URL pubblico. A differenza della creazione, qui
+      // nessuno lo controllava: un duplicato dava un 500 generico da indice
+      // unico Mongo, e un formato non valido veniva scartato in silenzio dalla
+      // revalidation ISR (apps/documents/src/pages/api/revalidate.ts).
+      if (updates.slug !== undefined && updates.slug !== document.slug) {
+        const slugError = validateSlug(updates.slug);
+        if (slugError) {
+          res.status(400).json(errorResponse(
+            slugError, 'INVALID_SLUG', undefined, 400, getRequestId(req)
+          ));
+          return;
+        }
+
+        const clash = await Document.findOne({ slug: updates.slug as string, _id: { $ne: id } }).select('_id').lean();
+        if (clash) {
+          res.status(409).json(errorResponse(
+            'Esiste già un documento con questo slug',
+            'DUPLICATE_SLUG', undefined, 409, getRequestId(req)
+          ));
+          return;
         }
       }
 
