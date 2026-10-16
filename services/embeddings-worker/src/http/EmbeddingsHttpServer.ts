@@ -381,7 +381,10 @@ export class EmbeddingsHttpServer {
           heading: r.payload.heading ?? '',
           type: r.payload.documentType ?? '',
           parentSlug: r.payload.parentSlug,
-          rank: i + 1
+          rank: i + 1,
+          // Coseno grezzo di Qdrant: l'RRF sotto è basato sul rank, quindi il
+          // primo risultato è sempre ~100% anche per una query senza risposta.
+          vectorScore: r.score
         };
       }).filter((item): item is NonNullable<typeof item> => item !== null);
     } catch (error: any) {
@@ -676,10 +679,10 @@ export class EmbeddingsHttpServer {
 
   private mergeWithRRF(keywordResults: any[], semanticResults: any[], limit: number) {
     const k = 60;
-    const scoreMap = new Map<string, { data: any; score: number }>();
+    const scoreMap = new Map<string, { data: any; score: number; vectorScore?: number; keywordHit: boolean }>();
 
     for (const r of keywordResults) {
-      scoreMap.set(r.chunkId, { data: r, score: 1 / (k + r.rank) });
+      scoreMap.set(r.chunkId, { data: r, score: 1 / (k + r.rank), keywordHit: true });
     }
 
     for (const r of semanticResults) {
@@ -687,8 +690,9 @@ export class EmbeddingsHttpServer {
       const existing = scoreMap.get(r.chunkId);
       if (existing) {
         existing.score += rrfScore;
+        existing.vectorScore = r.vectorScore;
       } else {
-        scoreMap.set(r.chunkId, { data: r, score: rrfScore });
+        scoreMap.set(r.chunkId, { data: r, score: rrfScore, vectorScore: r.vectorScore, keywordHit: false });
       }
     }
 
@@ -701,6 +705,9 @@ export class EmbeddingsHttpServer {
         slug: item.data.slug,
         heading: item.data.heading,
         score: item.score,
+        // Additivi: assenti se il chunk è arrivato solo dalla ricerca keyword.
+        vectorScore: item.vectorScore,
+        keywordHit: item.keywordHit,
         type: item.data.type,
         parentSlug: item.data.parentSlug
       }));

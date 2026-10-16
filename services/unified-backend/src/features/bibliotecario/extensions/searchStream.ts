@@ -11,23 +11,21 @@
  * handler, un errore qui viene loggato dal registry e il flusso del core
  * prosegue comunque.
  *
- * Risposta progressiva rank-per-rank (non un'unica chiamata con tutto il
- * contesto): `chunks` arriva già ordinato per rilevanza da
- * DocumentController.semanticSearch. Il rank più alto genera la risposta
- * principale (ai_answer) da solo — non l'intero contesto insieme, altrimenti
- * il giocatore aspetta l'intera generazione multi-fonte prima di vedere
- * qualunque cosa. I rank successivi arrivano uno alla volta come blocchi di
- * arricchimento separati (ai_reading prima della chiamata per mostrare quale
- * fonte si sta leggendo, poi ai_enrichment col risultato) — mai un'unica
- * risposta che si riscrive da capo ad ogni fonte, il contratto del frontend
- * (apps/documents/src/hooks/useSearch.ts) già accumula blocchi in lista.
- * Se il rank più alto fallisce o è vuoto, l'intero flusso si ferma qui:
- * mostrare arricchimenti senza una risposta base non avrebbe senso.
+ * Prima di qualunque chiamata al modello `decideRoute` sceglie tra risposta
+ * diretta (nessuna AI: il link alla sezione è già in cima), sintesi su più
+ * documenti, o messaggio statico "non coperta" (vedi utils/answerRouting.ts).
+ * La sintesi manda all'AI fino a 3 chunk di documenti diversi.
+ *
+ * Gli arricchimenti rank-per-rank (ai_reading / ai_enrichment) restano nel
+ * codice ma sono spenti da MAX_ENRICHMENT_STEPS = 0: su CPU ogni chiamata
+ * sfora il timeout di 30s. Il contratto del frontend (useSearch.ts) accumula
+ * già blocchi in lista, quindi riaccenderli non richiede modifiche lato UI.
  */
 
 import { logger } from '@shared/utils/logger';
 import type { HookMap, ContextChunk } from '@core/extensions/points';
 import { KeeperClient } from '../services/KeeperClient';
+import { decideRoute, notCoveredMessage } from '../utils/answerRouting';
 
 // Rank 1 (risposta principale) + al più questi arricchimenti: oltre un certo
 // punto ogni fonte in più allunga la sequenza di chiamate LLM sequenziali
@@ -46,8 +44,30 @@ function sourceLabel(chunk: ContextChunk): { title: string; fullPath?: string } 
   };
 }
 
-export async function onSearchStream({ question, chunks, sse, signal }: HookMap['documents.search.stream']): Promise<void> {
-  if (signal.aborted || chunks.length === 0) return;
+export async function onSearchStream({ question, chunks, scope, sse, signal }: HookMap['documents.search.stream']): Promise<void> {
+  if (signal.aborted) return;
+
+  // Il routing viene prima di tutto, anche del health check dell'AI: due esiti
+  // su tre non la usano. Decisioni loggate per ritarare le soglie con traffico vero.
+  const route = decideRoute(question, chunks);
+  logger.info('[Bibliotecario] route', {
+    mode: route.mode,
+    question: question.slice(0, 120),
+    scope,
+    topCosine: Math.max(0, ...chunks.map((c) => c.vectorScore ?? 0)),
+    candidates: chunks.length,
+    ...(route.mode === 'direct' ? { matchedHeading: route.matchedHeading } : {}),
+    ...(route.mode === 'synthesis' ? { contextChunks: route.chunks.length } : {}),
+  });
+
+  if (route.mode === 'direct') return; // il link alla sezione è già in cima ai risultati
+
+  if (route.mode === 'not_covered') {
+    // Stesso evento della risposta vera: la UI lo mostra senza modifiche e anche
+    // nelle schede con il JS vecchio. Nessuna chiamata al modello.
+    sse.send('ai_answer', { answer: notCoveredMessage(scope), sources: [], model: 'static' });
+    return;
+  }
 
   const healthy = await KeeperClient.isAiAvailable();
   if (!healthy) {
@@ -55,12 +75,13 @@ export async function onSearchStream({ question, chunks, sse, signal }: HookMap[
     return;
   }
 
-  const [topChunk, ...restChunks] = chunks;
-
+  // Sintesi: più documenti, un chunk ciascuno. maxTokens non si passa, vale
+  // QA_MAX_ANSWER_TOKENS del worker: l'800 che c'era prima sovrascriveva il
+  // tetto e, a ~8 tok/s su CPU, poteva sforare il timeout di 60s.
   const answer = await KeeperClient.ask({
     question,
-    context: [topChunk!],
-    options: { maxTokens: 800, locale: 'it' },
+    context: route.chunks,
+    options: { locale: 'it' },
   });
 
   if (signal.aborted) return;
@@ -78,6 +99,7 @@ export async function onSearchStream({ question, chunks, sse, signal }: HookMap[
 
   let runningAnswer = answer.answer;
 
+  const restChunks = chunks.filter((c) => !route.chunks.includes(c));
   for (const [index, chunk] of restChunks.slice(0, MAX_ENRICHMENT_STEPS).entries()) {
     if (signal.aborted) return;
 

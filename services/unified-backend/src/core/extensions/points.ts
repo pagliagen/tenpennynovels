@@ -21,6 +21,8 @@ export interface ContextChunk {
     title?: string;
     subtypeTitle?: string;
   };
+  /** Coseno grezzo della ricerca vettoriale (non l'RRF): assente per i match solo keyword. */
+  vectorScore?: number;
 }
 
 /**
@@ -43,6 +45,8 @@ export interface HookMap {
   'documents.search.stream': {
     question: string;
     chunks: ContextChunk[];
+    /** Tipo di documento a cui è limitata la ricerca, se il client l'ha chiesto. */
+    scope?: string;
     sse: SseWriter;
     signal: AbortSignal;
   };

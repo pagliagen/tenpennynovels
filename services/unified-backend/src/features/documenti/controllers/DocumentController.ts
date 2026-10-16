@@ -24,6 +24,12 @@ import { isDocumentType, type DocumentType } from '../constants/documentTypes';
 import { extensions } from '@core/extensions/registry';
 import type { ContextChunk } from '@core/extensions/points';
 
+/**
+ * Soglia di fetch vettoriale per le domande. Deve restare sotto NOT_COVERED_BELOW
+ * (features/bibliotecario/utils/answerRouting.ts): il core non importa dalle feature.
+ */
+const QUESTION_FETCH_MIN_SIMILARITY = 0.1;
+
 export class DocumentController {
   // ========== PUBLIC ROUTES ==========
 
@@ -463,14 +469,24 @@ export class DocumentController {
       const aiLimit = 10;
       const fetchLimit = Math.max(displayLimit, aiLimit);
 
+      const questionQuery = isQuestion(query);
+      const clientMinSimilarity = Number(minSimilarity);
+      const scope = isDocumentType(type) && canReadDocumentType(req, type) ? type : undefined;
+
       const searchResults = await EmbeddingService.semanticSearch(
         query,
-        isDocumentType(type) && canReadDocumentType(req, type) ? type : undefined,
+        scope,
         fetchLimit,
-        Number(minSimilarity)
+        // Per le domande il Bibliotecario decide in base al coseno grezzo, anche
+        // nella fascia 0.1-0.3 che il client (minSimilarity=0.3) taglierebbe a
+        // monte: sotto, la lista mostrata viene comunque filtrata come prima.
+        questionQuery ? Math.min(clientMinSimilarity, QUESTION_FETCH_MIN_SIMILARITY) : clientMinSimilarity
       );
 
-      if (searchResults.length === 0) {
+      // Una domanda senza risultati resta in SSE: il client di useSSESearch non
+      // sa leggere una risposta JSON, e il Bibliotecario deve poter rispondere
+      // "non coperta" anche qui.
+      if (searchResults.length === 0 && !questionQuery) {
         res.json({ result: true, data: { results: [], totalResults: 0, query } });
         return;
       }
@@ -544,6 +560,9 @@ export class DocumentController {
       const RRF_K = 60;
       const maxRrfScore = 2 / (RRF_K + 1);
 
+      // Risultato mostrato → match di ricerca da cui deriva (coseno, keyword).
+      const sourceOf = new Map<object, { chunkId?: string; vectorScore?: number; keywordHit?: boolean }>();
+
       const results = searchResults.map(result => {
         const chunk = chunks.find(c => c.chunkId === result.chunkId);
         if (!chunk) return null;
@@ -555,7 +574,7 @@ export class DocumentController {
         const subtype = subtypeMap.get(doc.subtypeId.toString());
         const normalizedScore = Math.min((result.score / maxRrfScore) * 100, 100);
 
-        return {
+        const item = {
           document: {
             _id: doc._id,
             slug: doc.slug,
@@ -576,14 +595,27 @@ export class DocumentController {
           similarity: result.score,
           matchScore: normalizedScore.toFixed(0) + '%'
         };
+        sourceOf.set(item, result);
+        return item;
       }).filter(Boolean);
 
       const validResults = results.filter((r): r is NonNullable<typeof r> => r !== null);
-      const displayResults = validResults.slice(0, displayLimit);
 
-      const MIN_AI_SCORE = 35;
-      const relevantResults = validResults.filter(r => Number.parseInt(r.matchScore) >= MIN_AI_SCORE).slice(0, aiLimit);
-      const shouldUseAI = isQuestion(query) && relevantResults.length > 0;
+      // Lista mostrata: per le domande, stesso criterio di prima (match vettoriale ≥
+      // minSimilarity oppure keyword). Un worker senza i nuovi campi non filtra.
+      const displayCandidates = questionQuery
+        ? validResults.filter(r => {
+            const match = sourceOf.get(r);
+            if (!match || !('keywordHit' in match)) return true;
+            return match.keywordHit === true || (match.vectorScore ?? 0) >= clientMinSimilarity;
+          })
+        : validResults;
+      const displayResults = displayCandidates.slice(0, displayLimit);
+
+      // Nessuna soglia sull'RRF: normalizzato è ~95-100% anche per query senza
+      // risposta. Chi decide se serve l'AI è il router del Bibliotecario.
+      const relevantResults = validResults.slice(0, aiLimit);
+      const shouldUseAI = questionQuery;
 
       if (!shouldUseAI) {
         res.json({
@@ -622,7 +654,8 @@ export class DocumentController {
       });
 
       const contextChunks: ContextChunk[] = relevantResults.map(r => {
-        const chunkId = searchResults.find(sr => sr.heading === r.matchHeading && sr.slug === r.route?.anchor?.replace('#', ''))?.chunkId;
+        const match = sourceOf.get(r);
+        const chunkId = match?.chunkId;
         const chunk = chunkId ? chunks.find(c => c.chunkId === chunkId) : null;
         return {
           heading: r.matchHeading,
@@ -634,12 +667,14 @@ export class DocumentController {
             title: r.document?.title,
             subtypeTitle: r.route?.subtypeTitle || '',
           },
+          vectorScore: match?.vectorScore,
         };
       });
 
       await extensions.emit('documents.search.stream', {
         question: query,
         chunks: contextChunks,
+        scope,
         sse: { send: sendSSE },
         signal: abortController.signal,
       });
