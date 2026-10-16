@@ -3,7 +3,8 @@
 /**
  * Window Component Styles
  *
- * Victorian aesthetic: gold (#ff9500), dark backgrounds, serif fonts
+ * Cornice nera con filetti dorati, titolo centrato, pannello interno arrotondato
+ * (layout nato per i Presenti, valido per tutte le finestre).
  *
  * @module styles/components/windows/Window
  * @since 2.0.0
@@ -11,18 +12,13 @@
 
 .window {
   position: fixed;
-  background: linear-gradient(135deg, rgba(20, 20, 20, 0.98), rgba(40, 30, 20, 0.98));
-  border: 2px solid rgba(255, 149, 0, 0.8);
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 149, 0, 0.3);
+  background: #000;
+  border: 1px solid $frame-gold-line;
+  border-radius: 28px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
   overflow: visible; /* Allow tabs to extend outside window */
-  transition: box-shadow 0.3s ease;
-
-  &:hover {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 149, 0, 0.5);
-  }
 
   /* Mobile: fullscreen */
   &.mobile {
@@ -31,17 +27,17 @@
   }
 }
 
+/* Titolo centrato, azioni a destra. Le colonne laterali sono uguali, così
+   il titolo resta al centro anche quando le azioni sono più d'una. */
 .header {
-  background: linear-gradient(135deg, rgba(139, 69, 19, 0.95), rgba(184, 134, 11, 0.95));
-  border-bottom: 2px solid rgba(255, 149, 0, 0.8);
-  padding: 12px 16px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid $frame-gold-line;
   user-select: none;
   flex-shrink: 0;
 
-  /* Draggable cursor */
   &:active {
     cursor: grabbing;
   }
@@ -60,19 +56,22 @@
 }
 
 .title {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 18px;
-  font-weight: 600;
-  color: #ffe4b5;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  grid-column: 2;
+  font-family: 'Les Mystères de Paris', 'Georgia', serif;
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $frame-gold-title;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 1;
-  margin-right: 16px;
+  text-align: center;
 }
 
 .actions {
+  grid-column: 3;
+  justify-self: end;
   display: flex;
   gap: 8px;
 }
@@ -81,10 +80,10 @@
 .closeBtn {
   width: 32px;
   height: 32px;
-  border: 1px solid rgba(255, 149, 0, 0.6);
+  border: 1px solid $frame-gold-line;
   border-radius: 4px;
-  background: rgba(60, 40, 20, 0.8);
-  color: #ffd700;
+  background: transparent;
+  color: $frame-gold-title;
   font-size: 20px;
   font-weight: bold;
   line-height: 1;
@@ -92,18 +91,17 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease;
   padding: 0;
 
   &:hover {
-    background: rgba(80, 50, 30, 0.9);
-    border-color: rgba(255, 149, 0, 0.9);
-    box-shadow: 0 0 8px rgba(255, 149, 0, 0.5);
-    transform: translateY(-1px);
+    background: rgba(184, 146, 58, 0.15);
+    color: $text-primary;
   }
 
-  &:active {
-    transform: translateY(0);
+  &:focus-visible {
+    outline: 2px solid $frame-gold-title;
+    outline-offset: 2px;
   }
 
   span {
@@ -114,38 +112,24 @@
 
 .closeBtn {
   &:hover {
-    background: rgba(139, 0, 0, 0.8);
-    border-color: rgba(220, 20, 60, 0.9);
-    box-shadow: 0 0 8px rgba(220, 20, 60, 0.5);
+    background: rgba(139, 0, 0, 0.5);
+    border-color: rgba(220, 20, 60, 0.8);
   }
 }
 
+/* Pannello interno: i contenuti vivono qui dentro, non a filo cornice. */
 .body {
   flex: 1;
+  min-height: 0;
+  margin: 12px;
   overflow: auto;
-  background: rgba(30, 30, 30, 0.95);
+  background: $frame-surface;
+  border: 1px solid $frame-gold-line;
+  border-radius: 28px;
   color: #e8e0d5;
   font-family: 'Georgia', 'Times New Roman', serif;
 
-  /* Custom scrollbar (Victorian themed) */
-  &::-webkit-scrollbar {
-    width: 12px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(20, 20, 20, 0.8);
-    border-left: 1px solid rgba(255, 149, 0, 0.3);
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(184, 134, 11, 0.8), rgba(139, 69, 19, 0.8));
-    border-radius: $radius-md;
-    border: 1px solid rgba(255, 149, 0, 0.5);
-
-    &:hover {
-      background: linear-gradient(180deg, rgba(255, 149, 0, 0.9), rgba(184, 134, 11, 0.9));
-    }
-  }
+  @include victorian-scrollbar;
 }
 
 /* Mobile responsive */

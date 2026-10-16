@@ -202,6 +202,9 @@ export const useWindowManagerStore = create<WindowManagerStore>()((set) => ({
           case 'market':
             windowSize = { width: 900, height: 650 };
             break;
+          case 'presenti':
+            windowSize = { width: 680, height: 720 };
+            break;
           // Add more custom utility sizes here as needed
         }
       }

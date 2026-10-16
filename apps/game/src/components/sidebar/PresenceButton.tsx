@@ -1,7 +1,7 @@
 /**
  * Presence Button Component
  *
- * Simple sidebar button that opens presence modal.
+ * Simple sidebar button that opens the presence window.
  *
  * @module components/sidebar/PresenceButton
  * @since 2.0.0
@@ -9,7 +9,7 @@
 
 'use client';
 
-import { usePresenceStore } from '@/store/presenceStore';
+import { usePresenceWindow } from '@/hooks/usePresenceWindow';
 import styles from '@/styles/components/PresenceSection.module.scss';
 
 /**
@@ -21,17 +21,13 @@ import styles from '@/styles/components/PresenceSection.module.scss';
  * @returns {JSX.Element} Presence button
  */
 export function PresenceButton(): JSX.Element {
-  const openModal = usePresenceStore((s) => s.openModal);
-
-  const handleClick = () => {
-    openModal();
-  };
+  const { open } = usePresenceWindow();
 
   return (
     <button
       type="button"
       className={styles.presenceButton}
-      onClick={handleClick}
+      onClick={open}
       aria-label="Vedi lista presenti online"
     >
       Presenze

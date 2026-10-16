@@ -3,8 +3,8 @@
  *
  * Sotto MOBILE_SHELL_BREAKPOINT (useIsCompactLayout.ts), Presenti e Bacheca
  * non hanno più un'icona propria in TopBar: si raggiungono da qui. Non sono
- * pannelli nuovi - sono i PresenceModal/ForumModal esistenti, riusati così
- * come sono (overlay `position: fixed` sopra la vista Game, che resta
+ * pannelli nuovi - sono la finestra Presenti (window manager) e il
+ * ForumModal esistenti, riusati così come sono (sopra la vista Game, che resta
  * sempre montata sotto qualunque tab sia "attiva" - nessun problema di
  * perdita di stato/scroll/bozze da gestire).
  *
@@ -18,8 +18,8 @@
 
 'use client';
 
+import { usePresenceWindow } from '@/hooks/usePresenceWindow';
 import { useForumStore } from '@/store/forumStore';
-import { usePresenceStore } from '@/store/presenceStore';
 import styles from '@/styles/components/layout/MobileTabBar.module.scss';
 
 interface MobileTabBarProps {
@@ -33,26 +33,28 @@ export function MobileTabBar({ unreadForumCount = 0 }: MobileTabBarProps): JSX.E
   const openForum = useForumStore((s) => s.openForum);
   const collapseForum = useForumStore((s) => s.collapseForum);
 
-  const isPresenceModalOpen = usePresenceStore((s) => s.isModalOpen);
-  const openPresenceModal = usePresenceStore((s) => s.openModal);
-  const closePresenceModal = usePresenceStore((s) => s.closeModal);
+  const {
+    isOpen: isPresenceWindowOpen,
+    open: openPresenceWindow,
+    close: closePresenceWindow,
+  } = usePresenceWindow();
 
   const isForumActive = isForumOpen && !isForumCollapsed;
-  const isPresenceActive = isPresenceModalOpen;
+  const isPresenceActive = isPresenceWindowOpen;
   const isGameActive = !isForumActive && !isPresenceActive;
 
   const handleGameClick = () => {
-    if (isPresenceModalOpen) closePresenceModal();
+    if (isPresenceWindowOpen) closePresenceWindow();
     if (isForumOpen && !isForumCollapsed) collapseForum();
   };
 
   const handlePresenzeClick = () => {
     if (isForumOpen && !isForumCollapsed) collapseForum();
-    openPresenceModal();
+    openPresenceWindow();
   };
 
   const handleBachecaClick = () => {
-    if (isPresenceModalOpen) closePresenceModal();
+    if (isPresenceWindowOpen) closePresenceWindow();
     openForum();
   };
 
