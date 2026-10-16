@@ -64,6 +64,13 @@ export interface GlobalPresence {
   avatar: string | null;
   /** Staff = personaggio approvato con gestore/master/moderatore (i poteri valgono solo su approved) */
   isStaff: boolean;
+  /** Stato mostrato nei Presenti */
+  status: PresenceStatus;
+}
+
+export interface PresenceStatus {
+  availableToPlay: boolean;
+  reason: string;
 }
 
 export class LocationService {
@@ -245,7 +252,7 @@ export class LocationService {
       // FIX: Removed `isInLocation` bug - characters with stale lastActive are now correctly excluded
       const recentCharacters = await Character.find({
         lastActive: { $gte: cutoffTime }
-      }).select('id name surname currentLocation lastActive avatar playerStatus isGestore gameplayRoles');
+      }).select('id name surname currentLocation lastActive avatar playerStatus isGestore gameplayRoles presenceStatus');
 
       logger.debug(`[getGlobalPresence] Query returned ${recentCharacters.length} recently active characters`);
 
@@ -290,7 +297,11 @@ export class LocationService {
           isStaff:
             character.playerStatus === 'approved' &&
             (character.isGestore === true ||
-              (character.gameplayRoles ?? []).some((r: string) => r === 'master' || r === 'moderatore'))
+              (character.gameplayRoles ?? []).some((r: string) => r === 'master' || r === 'moderatore')),
+          status: {
+            availableToPlay: character.presenceStatus?.availableToPlay ?? true,
+            reason: character.presenceStatus?.reason ?? ''
+          }
         });
       }
 

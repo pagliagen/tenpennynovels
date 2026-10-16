@@ -3,6 +3,8 @@ import { Character } from '@core/character/models/Character';
 import { Location } from '@core/location/models/Location';
 import { logger } from '../logger';
 import { getSocketIO } from '../websocket/socketInstance';
+import { errorResponse, getRequestId, successResponse } from '@shared/utils/apiResponse';
+import { parsePresenceStatus } from '../utils/presenceStatus';
 
 /**
  * Presence Controller
@@ -11,6 +13,56 @@ import { getSocketIO } from '../websocket/socketInstance';
  * Heartbeat is handled via WebSocket ping (see gameHandlers.ts).
  */
 export class PresenceController {
+  /**
+   * PATCH /game/presence/status
+   *
+   * Cambia lo stato del PROPRIO personaggio nei Presenti (disponibilità a giocare
+   * + motivazione). Il personaggio viene dalla sessione, mai dal body: nessuno può
+   * scrivere lo stato di un altro. Broadcast `presence_status_update` a tutti.
+   */
+  static async updateStatus(req: Request, res: Response): Promise<void> {
+    const requestId = getRequestId(req);
+    try {
+      const characterId = req.character?.characterId;
+      if (!characterId) {
+        res.status(401).json(errorResponse('Personaggio non selezionato', 'CHARACTER_NOT_SELECTED', undefined, 401, requestId));
+        return;
+      }
+
+      const parsed = parsePresenceStatus(req.body);
+      if (!parsed.ok) {
+        res.status(400).json(errorResponse(parsed.error, 'VALIDATION_ERROR', undefined, 400, requestId));
+        return;
+      }
+      const status = parsed.value;
+
+      const updated = await Character.findByIdAndUpdate(
+        characterId,
+        { $set: { presenceStatus: status } },
+        { new: true }
+      ).select('_id');
+      if (!updated) {
+        res.status(404).json(errorResponse('Personaggio non trovato', 'CHARACTER_NOT_FOUND', undefined, 404, requestId));
+        return;
+      }
+
+      try {
+        getSocketIO()?.emit('presence_status_update', {
+          characterId,
+          status,
+          timestamp: new Date().toISOString()
+        });
+      } catch (err) {
+        logger.warn('[PresenceController] presence_status_update emit failed (non-critical):', err);
+      }
+
+      res.status(200).json(successResponse({ characterId, status }, undefined, requestId));
+    } catch (error: unknown) {
+      logger.error('[PresenceController] updateStatus error:', error);
+      res.status(500).json(errorResponse('Impossibile aggiornare lo stato', 'INTERNAL_SERVER_ERROR', undefined, 500, requestId));
+    }
+  }
+
   /**
    * POST /game/presence/leave
    *

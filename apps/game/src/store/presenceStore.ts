@@ -16,6 +16,7 @@
 import { create } from 'zustand';
 
 import { api } from '@/lib/api/client';
+import { presenceApi, type PresenceStatus } from '@/lib/api/presence';
 import { logger } from '@/lib/logger';
 
 /**
@@ -35,6 +36,7 @@ import { logger } from '@/lib/logger';
  * @property {boolean} isCurrentCharacter - Whether this is the requesting character
  * @property {string | null} avatar - Avatar URL (optional)
  * @property {boolean} isStaff - Approved character with gestore/master/moderatore powers
+ * @property {PresenceStatus} status - Availability to play + free-text reason
  */
 export interface GlobalPresence {
   characterId: string;
@@ -46,7 +48,10 @@ export interface GlobalPresence {
   isCurrentCharacter: boolean;
   avatar: string | null;
   isStaff: boolean;
+  status: PresenceStatus;
 }
+
+export const DEFAULT_PRESENCE_STATUS: PresenceStatus = { availableToPlay: true, reason: '' };
 
 /**
  * Presence Store State
@@ -174,6 +179,24 @@ interface PresenceActions {
   getLocationPresence: (locationId: string | null) => GlobalPresence[];
 
   /**
+   * Handle presence_status_update event (stato di un personaggio cambiato)
+   *
+   * @param {object} event - presence_status_update event data
+   * @returns {void}
+   */
+  handleStatusUpdate: (event: { characterId: string; status: PresenceStatus }) => void;
+
+  /**
+   * Cambia lo stato del PROPRIO personaggio.
+   *
+   * Update ottimistico con rollback su errore; il broadcast WS conferma agli altri.
+   *
+   * @param {PresenceStatus} status - Nuovo stato
+   * @returns {Promise<void>} Rigetta in caso di errore (dopo il rollback)
+   */
+  updateMyStatus: (status: PresenceStatus) => Promise<void>;
+
+  /**
    * Reset store to initial state
    *
    * Used on logout or character switch.
@@ -223,7 +246,11 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
       const response = await api.get<{ success: boolean; data: { globalPresence: GlobalPresence[] } }>('/game/presence');
 
       if (response.success && response.data) {
-        const presenceArray = response.data.globalPresence ?? [];
+        // `status` può mancare se il frontend è più nuovo del backend (deploy non simultaneo)
+        const presenceArray = (response.data.globalPresence ?? []).map((p) => ({
+          ...p,
+          status: p.status ?? DEFAULT_PRESENCE_STATUS,
+        }));
 
         if (!Array.isArray(presenceArray)) {
           logger.error('❌ initialize: presenceArray is not an array!', { presenceArray });
@@ -284,6 +311,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
             isCurrentCharacter: false,
             avatar: null,
             isStaff: false, // WebSocket events don't carry roles - updated by API refetch
+            status: DEFAULT_PRESENCE_STATUS, // idem: arriva con il refetch o con presence_status_update
           },
         ],
       });
@@ -370,7 +398,8 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
           locationSlug: '',
           isCurrentCharacter: false,
           avatar: null, // Will be filled by API refetch
-          isStaff: false // Will be filled by API refetch
+          isStaff: false, // Will be filled by API refetch
+          status: DEFAULT_PRESENCE_STATUS // Will be filled by API refetch
         }
       ]
     });
@@ -408,6 +437,29 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
     const targetLocationId = locationId || '';
 
     return globalPresence.filter((p) => p.locationId === targetLocationId);
+  },
+
+  handleStatusUpdate: (event) => {
+    set({
+      globalPresence: get().globalPresence.map((p) =>
+        p.characterId === event.characterId ? { ...p, status: event.status } : p
+      ),
+    });
+  },
+
+  updateMyStatus: async (status) => {
+    const mine = get().globalPresence.find((p) => p.isCurrentCharacter);
+    if (!mine) throw new Error('Il tuo personaggio non è tra i presenti');
+
+    const previous = mine.status;
+    get().handleStatusUpdate({ characterId: mine.characterId, status });
+    try {
+      const saved = await presenceApi.updateStatus(status);
+      get().handleStatusUpdate({ characterId: mine.characterId, status: saved });
+    } catch (error) {
+      get().handleStatusUpdate({ characterId: mine.characterId, status: previous });
+      throw error;
+    }
   },
 
   reset: () => {

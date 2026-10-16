@@ -65,6 +65,7 @@ export const GamePermissions = {
   // Environment
   ENVIRONMENT_READ: 'game:environment:read',
   PRESENCE_READ: 'game:presence:read',
+  PRESENCE_STATUS_UPDATE: 'game:presence:status:update',
 
   // Locations
   LOCATIONS_LIST: 'game:locations:list',
@@ -249,6 +250,7 @@ export const GameRolePermissions: Record<string, GamePermission[]> = {
     GamePermissions.CHARACTER_CREATION_SKILLS,
     GamePermissions.ENVIRONMENT_READ,
     GamePermissions.PRESENCE_READ,
+    GamePermissions.PRESENCE_STATUS_UPDATE,
     GamePermissions.LOCATIONS_LIST,
     GamePermissions.POSTAL_READ,
     GamePermissions.POSTAL_TYPES,

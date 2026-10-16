@@ -254,6 +254,14 @@ Core gameplay: characters, locations, housing, sessions, messaging, economy, and
 |--------|------|-------------|
 | POST | `/game/webhooks/bot-response` | Bot response callback (Local AI) |
 
+### Presence
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/game/presence` | Global presence (include `isStaff` e `status`) |
+| PATCH | `/game/presence/status` | Cambia lo stato del PROPRIO personaggio: body `{ availableToPlay: boolean, reason?: string (max 80) }`. Permesso `game:presence:status:update`. Broadcast `presence_status_update` |
+| POST | `/game/presence/leave` | Cleanup alla chiusura della tab (sendBeacon) |
+
 ### Other Game Routes
 
 | Method | Path | Description |

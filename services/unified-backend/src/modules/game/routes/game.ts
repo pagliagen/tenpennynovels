@@ -21,6 +21,12 @@ router.get('/presence',
   GameController.getGlobalPresence
 );
 
+router.patch('/presence/status',
+  AuthMiddleware.requireCharacterAuth,
+  requireGamePermission('game:presence:status:update'),
+  PresenceController.updateStatus
+);
+
 router.post('/presence/leave',
   AuthMiddleware.requireCharacterAuth,
   PresenceController.leave
