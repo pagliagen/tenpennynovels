@@ -32,6 +32,17 @@ function truncateAtBoundary(text: string, maxChars: number): string {
 }
 
 /**
+ * Budget di parole da dichiarare nel prompt. Il limite non si impone tagliando
+ * l'output (una risposta troncata a metà frase è peggio di una corta): lo si
+ * chiede al modello, a metà di num_predict per lasciare margine. Per l'italiano
+ * con questi modelli ~1.7 token/parola (misurato: 125 token ≈ 70 parole).
+ */
+const TOKENS_PER_WORD = 1.7;
+function answerWordBudget(maxTokens: number): number {
+  return Math.max(20, Math.floor(maxTokens / 2 / TOKENS_PER_WORD / 5) * 5);
+}
+
+/**
  * I chunk sono sezioni H2/H3 di documento, di lunghezza non limitata: cinque
  * sezioni lunghe sfondano la context window e vengono troncate in silenzio da
  * Ollama, con il doppio costo di un prefill lento e di un contesto mutilato in
@@ -75,6 +86,7 @@ export async function askWithContext(
   const { kept, contextText, droppedChunks } = fitContextToBudget(contextChunks);
 
   const lang = locale === 'it' ? 'italiano' : 'English';
+  const wordBudget = answerWordBudget(maxTokens);
 
   // CRITICAL: If no context provided, be explicit that answer cannot be given
   const hasContext = kept.length > 0 && contextText.trim().length > 0;
@@ -82,11 +94,11 @@ export async function askWithContext(
   const systemPrompt = hasContext
     ? `Sei il Bibliotecario, l'assistente esperto di un gioco di ruolo play-by-chat ambientato nell'epoca vittoriana (Londra, 1885-1895).
 
-Rispondi alla domanda del giocatore usando SOLO le informazioni nel contesto.
+Rispondi alla domanda del giocatore usando SOLO le informazioni nel contesto. Non aggiungere luoghi, nomi, date o regole che nel contesto non compaiono: se un dettaglio non c'è, non c'è.
 Scrivi una risposta fluida e naturale come se fosse conoscenza tua: MAI dire "il documento", "nel contesto", "secondo le fonti" o simili.
-Sii esauriente: usa i dettagli rilevanti presenti nel contesto invece di riassumerli via, così il giocatore non deve andare a leggere le fonti per capire il quadro.
-Se il contesto non contiene abbastanza informazioni, dillo.
-Rispondi in ${lang}, in un paragrafo completo (indicativamente 5-8 frasi).`
+Vai dritto al punto: al massimo ${wordBudget} parole (2-3 frasi), senza premesse né riassunto finale. Il giocatore può aprire le pagine per i dettagli.
+Se il contesto non contiene abbastanza informazioni, dillo in una frase.
+Rispondi in ${lang}.`
     : `ISTRUZIONE CRITICA: Non hai alcuna documentazione di contesto fornita.
 DEVI RISPONDERE OBBLIGATORIAMENTE CON: "Non dispongo di informazioni nel contesto fornito per rispondere a questa domanda. Ti prego di fornire la documentazione rilevante."
 NON PUOI usare conoscenza generale o storica.
@@ -98,7 +110,7 @@ Rispondi in ${lang}.`;
     : `Domanda del giocatore: ${question}`;
 
   const startMs = Date.now();
-  const { text, tokensUsed, metrics } = await ollamaChat.chat(systemPrompt, userMessage, maxTokens);
+  const { text, tokensUsed, metrics, truncated } = await ollamaChat.chat(systemPrompt, userMessage, maxTokens);
   const elapsed = Date.now() - startMs;
 
   // Prefill e decode vanno letti separati: sono i due numeri che dicono se il
@@ -114,6 +126,8 @@ Rispondi in ${lang}.`;
     promptEvalMs: metrics.promptEvalMs,
     evalMs: metrics.evalMs,
     tokensPerSecond: metrics.answerTokensPerSecond,
+    // Se compare, il prompt non sta contenendo la lunghezza: ridurre wordBudget.
+    truncated,
   });
 
   const answer = text.replace(/\[\d+\]/g, '').replace(/  +/g, ' ').trim();

@@ -33,6 +33,16 @@ export const NOT_COVERED_BELOW = 0.27;
 export const SYNTHESIS_MIN_COSINE = 0.25;
 
 /**
+ * Con una sola fonte il contesto deve essere forte. Il 2026-10-16 "Dove posso
+ * giocare una quest in un posto poco frequentato?" in ambientazione (coseno
+ * 0.298, un solo chunk: l'intro di un documento) ha prodotto una risposta con
+ * Lambeth, Stepney e "foreste vicine a Londra", nessuna presente nei
+ * documenti: il 4b riempie i vuoti. Sotto questa soglia serve convergenza di
+ * almeno due documenti, altrimenti la domanda è di fatto non coperta.
+ */
+export const SINGLE_SOURCE_MIN_COSINE = 0.4;
+
+/**
  * Quanto servono più chunk: oltre 3 il prefill su CPU (~30 tok/s) sfora il
  * timeout di 60s di KeeperClient.ask; con budget 2500/800 ne entrano 3.
  */
@@ -137,6 +147,8 @@ export function decideRoute(question: string, chunks: ScoredChunk[]): AnswerRout
     picked.push(chunk);
     if (picked.length === MAX_SYNTHESIS_CHUNKS) break;
   }
+
+  if (picked.length < 2 && topCosine < SINGLE_SOURCE_MIN_COSINE) return { mode: 'not_covered' };
 
   return { mode: 'synthesis', chunks: picked };
 }

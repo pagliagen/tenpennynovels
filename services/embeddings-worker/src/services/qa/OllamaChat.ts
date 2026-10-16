@@ -21,6 +21,8 @@ export interface ChatResult {
   text: string;
   tokensUsed: number;
   metrics: ChatMetrics;
+  /** True se la generazione si è fermata per num_predict e non per fine naturale. */
+  truncated: boolean;
 }
 
 /** Ollama riporta le durate in nanosecondi. */
@@ -92,6 +94,7 @@ export class OllamaChat {
       text: stripThinking(response.message.content),
       tokensUsed: (response.eval_count || 0) + (response.prompt_eval_count || 0),
       metrics: buildMetrics(response),
+      truncated: response.done_reason === 'length',
     };
   }
 
@@ -118,6 +121,7 @@ export class OllamaChat {
       text: stripThinking(response.message.content),
       tokensUsed: (response.eval_count || 0) + (response.prompt_eval_count || 0),
       metrics: buildMetrics(response),
+      truncated: response.done_reason === 'length',
     };
   }
 

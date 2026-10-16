@@ -32,7 +32,7 @@ describe('decideRoute', () => {
 
   it('"Come si gioca?" ≠ "Cosa si gioca?": le parole interrogative contano', () => {
     const route = decideRoute('Come si gioca?', [chunk('', 0.307, 'd1', 'Introduzione'), chunk('Cosa si gioca?', 0.138, 'd2')]);
-    assert.equal(route.mode, 'synthesis');
+    assert.notEqual(route.mode, 'direct');
   });
 
   it('trasversale: fino a 3 chunk da documenti diversi, mai due dello stesso', () => {
@@ -49,10 +49,26 @@ describe('decideRoute', () => {
     assert.deepEqual(route.chunks.map((c) => c.source.documentId), ['d1', 'd2', 'd3']);
   });
 
-  it('borderline coperta (0.298) va in sintesi, non scartata', () => {
+  it('una sola fonte debole (0.298) non basta: era la quest in ambientazione, risposta inventata', () => {
     const route = decideRoute('Dove posso giocare una quest in un posto poco frequentato?', [
       chunk('', 0.298, 'd1', 'Londra'),
       chunk('', 0.248, 'd2', 'Quartieri'),
+    ]);
+    assert.deepEqual(route, { mode: 'not_covered' });
+  });
+
+  it('due documenti che convergono, anche deboli, vanno in sintesi', () => {
+    const route = decideRoute('Per cosa si usava il laudano?', [
+      chunk('Cure, medicina e igiene', 0.31, 'd1'),
+      chunk('', 0.3, 'd2', 'Farmacie'),
+    ]);
+    assert.equal(route.mode, 'synthesis');
+  });
+
+  it('una sola fonte forte (0.45) va in sintesi', () => {
+    const route = decideRoute('Cosa succede se il mio personaggio è assente a lungo?', [
+      chunk('Contenuto principale', 0.553, 'd1'),
+      chunk('PNG legati ai PG', 0.331, 'd1'),
     ]);
     assert.equal(route.mode, 'synthesis');
   });
