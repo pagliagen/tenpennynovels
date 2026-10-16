@@ -34,6 +34,7 @@ import { logger } from '@/lib/logger';
  * @property {string} locationSlug - Location slug for navigation (empty string = London)
  * @property {boolean} isCurrentCharacter - Whether this is the requesting character
  * @property {string | null} avatar - Avatar URL (optional)
+ * @property {boolean} isStaff - Approved character with gestore/master/moderatore powers
  */
 export interface GlobalPresence {
   characterId: string;
@@ -44,6 +45,7 @@ export interface GlobalPresence {
   locationSlug: string;
   isCurrentCharacter: boolean;
   avatar: string | null;
+  isStaff: boolean;
 }
 
 /**
@@ -298,6 +300,7 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
             locationSlug: '', // WebSocket events don't have slug
             isCurrentCharacter: false,
             avatar: null,
+            isStaff: false, // WebSocket events don't carry roles - updated by API refetch
           },
         ],
       });
@@ -383,7 +386,8 @@ export const usePresenceStore = create<PresenceState & PresenceActions>((set, ge
           locationName: 'London',
           locationSlug: '',
           isCurrentCharacter: false,
-          avatar: null // Will be filled by API refetch
+          avatar: null, // Will be filled by API refetch
+          isStaff: false // Will be filled by API refetch
         }
       ]
     });

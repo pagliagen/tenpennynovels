@@ -62,6 +62,8 @@ export interface GlobalPresence {
   locationSlug: string;
   isCurrentCharacter: boolean;
   avatar: string | null;
+  /** Staff = personaggio approvato con gestore/master/moderatore (i poteri valgono solo su approved) */
+  isStaff: boolean;
 }
 
 export class LocationService {
@@ -243,7 +245,7 @@ export class LocationService {
       // FIX: Removed `isInLocation` bug - characters with stale lastActive are now correctly excluded
       const recentCharacters = await Character.find({
         lastActive: { $gte: cutoffTime }
-      }).select('id name surname currentLocation lastActive avatar');
+      }).select('id name surname currentLocation lastActive avatar playerStatus isGestore gameplayRoles');
 
       logger.debug(`[getGlobalPresence] Query returned ${recentCharacters.length} recently active characters`);
 
@@ -284,7 +286,11 @@ export class LocationService {
           locationName: locationName,
           locationSlug: locationSlug,
           isCurrentCharacter: character.id === characterId,
-          avatar: character.avatar || null
+          avatar: character.avatar || null,
+          isStaff:
+            character.playerStatus === 'approved' &&
+            (character.isGestore === true ||
+              (character.gameplayRoles ?? []).some((r: string) => r === 'master' || r === 'moderatore'))
         });
       }
 
