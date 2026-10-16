@@ -7,9 +7,11 @@ description: Connessione SSH al server "Server 1" di TenpennyNovels (51.83.47.10
 
 Esegue comandi remoti via SSH su `51.83.47.109`. Storia recente: fino al 06/08/2026 era la VPS condivisa che ospitava TenPenny + MysteryInvestigation + TheKeeperArchive + siti statici; quel giorno è stata **reinstallata da zero** (immagine Ubuntu pulita) per diventare "Server 1" del piano di migrazione (MIGRAZIONE-SERVER.md), temporaneamente su hardware più piccolo di quanto pianificato.
 
-> ⚠️ **Non è ancora il SYS-1**: il piano originale prevedeva un dedicato da 32GB RAM / 6c12t per Server 1 (per via di `qwen3:8b`, che da solo vuole ~5-6GB caricato). Questa è una VPS OVH da **7.6GB RAM totali, 75GB disco** (hostname `vps753946` prima del rename) — l'utente ha deciso di usarla come ripiego temporaneo, con switch al SYS-1 vero "il mese prossimo" (confermato 06/08/2026). Elasticsearch (JVM, pesante) + Ollama con `qwen3:8b` insieme sono al limite su questa RAM — da verificare col carico reale, non dare per scontato che regga come sul SYS-1.
+> ⚠️ **Non è ancora il SYS-1**: il piano prevedeva un dedicato da 32GB RAM / 6c12t. Questa è una VPS OVH da **11GB RAM, 6 core, 96GB disco, senza swap** (verificato 16/10/2026; la skill diceva 7.6GB, era datato). Ospita anche le app **Keeper** (`keeper-server`, `keeper-discord-bot`, `keeper-management-server` sotto PM2), oltre a Mongo, Elasticsearch, Qdrant e Ollama. L'utente prevede lo switch al SYS-1.
 >
-> **TenPennyNovels non è ancora live**: deployato ma non ha mai avuto traffico/utenti reali (confermato dall'utente il 06/08/2026) — un errore di configurazione qui non impatta utenti veri, a differenza di quanto la documentazione più vecchia lasciava intendere.
+> **Senza swap, un modello troppo grande non rallenta: fa intervenire l'OOM killer su Mongo/Elasticsearch.** Ollama è CPU-only con prefill di ~30-40 tok/s: vedi `20-backend.md` (Bibliotecario) prima di cambiare modello o budget. Qualunque confronto di modelli va misurato **qui**, non sul Mac.
+>
+> **Trattalo come produzione**: `documenti.tenpennynovels.com` e `api.tenpennynovels.com` puntano a questo server e l'utente lo prova dal vivo.
 
 ## Setup (una volta sola)
 
@@ -23,8 +25,9 @@ Le credenziali SSH stanno in un file `.env` **dedicato a questa skill**. Non va 
 - Host: `51.83.47.109`
 - Utente: `ubuntu` (pre-esistente sull'immagine OVH dopo il reinstall, sudo NOPASSWD — stesso pattern di `server-ovh-2`, non root diretto nonostante il primo login SSH accetti `root@`)
 - Autenticazione: chiave SSH dedicata `~/.ssh/server1-deploy` (diversa da `server-ovh-2`)
-- Stack previsto: PM2 (4 app Next.js, api-gateway, unified-backend, embeddings-worker di TenPenny), MongoDB, Redis, Qdrant (Docker), Elasticsearch (dual-write con Qdrant, da provisionare — vedi MIGRAZIONE-SERVER.md), Ollama (`qwen3:8b`, RAG "Bibliotecario")
-- **Stato reale verificato il 15/08/2026**: `pm2` non è installato (`command not found`) — le 4 app Next.js + api-gateway/unified-backend/embeddings-worker **non girano ancora** su questo server. In Docker (`sudo docker ps`) ci sono solo `elasticsearch` (porta 9200, loopback) e `qdrant` (porte 6333-6334, loopback). MongoDB **non è in Docker**: è un servizio nativo (`systemctl is-active mongod` → `active`), `mongosh` è già installato globalmente (`/usr/bin/mongosh`). Redis non verificato.
+- SSH sulla porta **31904** (non 22; è nel `.env` della skill).
+- **Stato reale verificato il 16/10/2026**: `pm2` gira come utente `ubuntu` ma non è nel `PATH` di una sessione non interattiva: serve `source ~/.nvm/nvm.sh` (Node v24.18.0) prima di `pm2`/`node`. App PM2: `tenpennynovels-{landing,game,documenti,gestione}`, `api-gateway` (cluster ×2), `unified-backend`, `embeddings-worker`, più le 3 app Keeper. Docker: `elasticsearch` e `qdrant` (loopback). MongoDB nativo (`mongod`, `mongosh` in `/usr/bin`), Redis con password. Ollama è un servizio systemd (`OLLAMA_MAX_LOADED_MODELS=2`). Il repo è in `~/tenpennynovels`.
+- **Bibliotecario**: modello `qwen3.5:4b`, config in `~/tenpennynovels/services/embeddings-worker/.env.production` (`OLLAMA_MODEL`, `QA_MAX_*`). Riavvio del solo worker: `source ~/.nvm/nvm.sh; cd ~/tenpennynovels; pm2 startOrRestart ecosystem.config.js --only tenpennynovels-embeddings-worker --update-env --env production`. Il flag `keeper_qa_enabled` e il suo caching sono in `20-backend.md`.
 
 ## Uso
 
@@ -64,6 +67,10 @@ print(EJSON.stringify(db.characters.findOne({name:\"testuser\"})));
 ```
 
 Per liste complete di collezioni (es. tutte le skill, tutte le occupation) usa `EJSON.stringify(db.<coll>.find({},{name:1}).toArray())` così ottieni `_id` + `name` in un colpo solo — utile per rimappare gli ObjectId quando copi dati da qui al DB locale (gli ID non coincidono tra ambienti, il seed è indipendente: **serve sempre remap per nome**, mai copiare gli ObjectId as-is tra prod e locale).
+
+**Collection di configurazione: `system_configurations`** (con underscore, 52 documenti), non `systemconfigurations`. Il modello Mongoose fissa il nome: verifica sempre `collection:` nel modello prima di scrivere a mano su Mongo, altrimenti la scrittura va in una collection che l'app non legge e non dà alcun errore. Dopo aver cambiato un valore di config, la cache Redis `system_config:<key>` (TTL 1h) va svuotata.
+
+**Redis**: `redis-cli -u "$REDIS_URL"` fallisce con WRONGPASS (la password nell'URL ha caratteri che `redis-cli` non decodifica). Per leggere/cancellare chiavi usa un one-liner `node` con `ioredis` lanciato **dentro** `services/unified-backend` (così risolve `dotenv`/`ioredis` e usa le credenziali dell'app); cancella il file temporaneo dopo.
 
 Nessun mongo-express/Compass esposto: solo CLI via SSH.
 

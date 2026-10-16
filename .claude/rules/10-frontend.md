@@ -116,6 +116,7 @@ Il `sessionId` arriva solo dal link nella TopBar del game (`?sessionId=`) ed è 
 **Il tipo di documento non si deduce con un ternario.** `Sidebar`/`HamburgerMenu` usavano `isOnRegolamento ? 'regolamento' : 'ambientazione'`: usare `resolveDocumentSection()` (`utils/documentSection.ts`).
 
 **Ricerca semantica**: endpoint dedicato con fallback su ricerca testuale. Query minima 3 caratteri.
+**Ricerca e Bibliotecario sono limitati alla sezione corrente.** `useSearchState()` ricava il tipo dal path con `searchScopeForPath()` (`utils/documentSection.ts`) e lo passa come `type` a `useSearch`/`useSSESearch`; fuori da `ambientazione`/`regolamento` (home, preferiti, manuale-master) cerca su tutto. Senza, una domanda in ambientazione riceveva risposte dal regolamento (2026-10-16: "Come si gioca?" rispondeva con la pagina Ticket). La stessa domanda deve avere risposta diversa per sezione: ambientazione = interpretazione, regolamento = regole. Dopo un deploy una scheda già aperta continua a girare col JS vecchio finché non si ricarica: verificare in un browser pulito.
 
 **Font vittoriani** via `next/font/local` con variabili CSS. Nessun CDN esterno.
 
