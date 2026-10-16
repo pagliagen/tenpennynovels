@@ -1,12 +1,22 @@
 @use './variables' as *;
 
+$gold-line: #8c6a2c;
+$gold-title: #b8923a;
+$orange-name: #f0a24a;
+$teal: #0a5c55;
+$teal-dim: #0e3a36;
+$surface: #121212;
+$muted: #a8a496;
+
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-lg;
   animation: fadeIn 0.3s ease-out;
 
   &.closing {
@@ -15,186 +25,310 @@
 }
 
 .modal {
-  min-width: 500px;
-  height: 100%;
-  background: $dark-bg;
+  position: relative;
+  width: min(680px, 100%);
+  max-height: min(760px, 100%);
   display: flex;
   flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
-  animation: slideInFromRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  border: 1px solid $dark-border;
+  background: #000;
+  border: 1px solid $gold-line;
+  border-radius: 28px;
+  overflow: hidden;
+  animation: popIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
   &.closing {
-    animation: slideOutToRight 0.3s cubic-bezier(0.55, 0.06, 0.68, 0.19) forwards;
-  }
-
-  // Stessa soglia di ForumModal (useIsCompactLayout.ts) - sotto i 1024 il
-  // pannello è a schermo intero, coerente col modello "3 pannelli" della
-  // MobileTabBar. min-width va azzerato qui: altrimenti su un telefono
-  // (~375-414px) il floor di 500px vincerebbe su width:100% e causerebbe
-  // overflow orizzontale.
-  @media (max-width: 1023px) {
-    width: 100%;
-    min-width: 0;
-    height: 100%;
+    animation: popOut 0.25s ease-in forwards;
   }
 }
 
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid $dark-border;
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.title {
-  font-size: $font-size-lg;
-  font-weight: 600;
-  color: $text-primary;
-  margin: 0;
-}
-
-.closeButton {
-  background: none;
-  border: none;
-  font-size: 32px;
-  color: $text-secondary;
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid $gold-line;
+}
+
+.title {
+  margin: 0;
+  font-family: 'Les Mystères de Paris', serif;
+  font-weight: 400;
+  font-size: 34px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $gold-title;
+}
+
+.closeButton {
+  position: absolute;
+  right: $spacing-md;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  color: $muted;
+  cursor: pointer;
   transition: color 0.2s;
+
+  &:hover {
+    color: $gold-title;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: $spacing-md;
+  padding: $spacing-lg $spacing-md $spacing-lg $spacing-lg;
+  background: $surface;
+  border: 1px solid $gold-line;
+  border-radius: 28px;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: $spacing-sm;
+}
+
+.tab {
+  padding: 6px 18px;
+  background: transparent;
+  border: 1px solid $gold-line;
+  border-radius: 4px;
+  font-family: 'Bahnschrift SemiLight', $font-sans;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $muted;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
 
   &:hover {
     color: $text-primary;
   }
+
+  &:focus-visible {
+    outline: 2px solid $gold-title;
+    outline-offset: 2px;
+  }
 }
 
-.search {
-  padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid $dark-border;
-}
-
-.searchInput {
-  width: 100%;
-  padding: $spacing-sm $spacing-md;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid $dark-border;
-  border-radius: 4px;
+.tabActive {
+  background: $teal-dim;
+  border-color: $teal;
   color: $text-primary;
-  font-size: $font-size-md;
+}
 
-  &::placeholder {
-    color: $text-secondary;
-  }
+.divider {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin: $spacing-md 0 $spacing-sm;
+  color: $gold-title;
+}
 
-  &:focus {
-    outline: none;
-    border-color: $accent-color;
-  }
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: $gold-line;
+}
+
+.dividerIcon {
+  font-size: 22px;
+  line-height: 1;
 }
 
 .content {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  scrollbar-gutter: auto;
+  padding-right: $spacing-md;
   @include victorian-scrollbar;
+}
+
+.group {
+  margin-bottom: $spacing-md;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin: $spacing-md 0 $spacing-sm;
+  font-family: 'Les Mystères de Paris', serif;
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: $teal;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $teal-dim;
+  }
+}
+
+.groupLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .list {
   list-style: none;
   margin: 0;
   padding: 0;
-}
-
-.item {
   display: flex;
   flex-direction: column;
-  gap: $spacing-xs;
-  padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  transition: background 0.2s;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.03);
-  }
-}
-
-.itemMain {
-  display: flex;
-  align-items: center;
   gap: $spacing-md;
 }
 
+// Spazio a sinistra per la stella, che sta fuori dall'avatar
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-left: 40px;
+}
+
+.staffStar {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  transform: translateY(-50%);
+  fill: $teal;
+}
+
 .avatarButton {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  padding: 0;
   background: none;
   border: none;
-  padding: 0;
   cursor: pointer;
   transition: opacity 0.2s;
 
   &:hover {
-    opacity: 0.8;
+    opacity: 0.85;
   }
 
   &:focus-visible {
-    outline: 2px solid $accent-color;
+    outline: 2px solid $gold-title;
     outline-offset: 2px;
     border-radius: 50%;
   }
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  display: block;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid $dark-border;
-  display: block;
+  background: #1c1c1c;
+  border: 1px solid $orange-name;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
-.info {
+// La riga passa sotto l'avatar: margine negativo per l'effetto "sporgente"
+.row {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-left: -28px;
+  padding: 0 $spacing-lg 0 calc(28px + #{$spacing-md});
+  height: 52px;
+  background: #101010;
+  border: 1px solid $gold-line;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .name {
-  font-size: $font-size-md;
-  font-weight: 500;
-  color: $text-primary;
+  flex-shrink: 0;
+  font-family: 'Thrifted Attire', serif;
+  font-size: 20px;
+  color: $orange-name;
+  white-space: nowrap;
 }
 
-.locationButton {
-  align-self: flex-start;
+.statusDot {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #0f7a3c;
+  box-shadow: 0 0 8px rgba(15, 122, 60, 0.6);
+}
+
+.status {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Bahnschrift SemiLight', $font-sans;
+  font-size: 14px;
+  color: $muted;
+}
+
+.mailButton {
+  flex-shrink: 0;
+  width: 44px;
+  padding: 0;
   background: none;
   border: none;
-  color: $accent-color;
-  font-size: $font-size-sm;
-  cursor: pointer;
-  padding: $spacing-xs 0;
-  transition: opacity 0.2s;
+  color: #cfcabb;
 
-  &:hover {
-    opacity: 0.8;
-    text-decoration: underline;
+  svg {
+    display: block;
+    width: 100%;
   }
-}
 
-.locationText {
-  color: $text-secondary;
-  font-size: $font-size-sm;
-  padding: $spacing-xs 0;
+  &:disabled {
+    cursor: default;
+    opacity: 0.85;
+  }
 }
 
 .empty {
   padding: $spacing-xl;
   text-align: center;
-  color: $text-secondary;
-  font-size: $font-size-md;
+  color: $muted;
+  font-size: 15px;
+}
+
+@media (max-width: 560px) {
+  .status {
+    display: none;
+  }
+
+  .name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 // Animations
@@ -216,20 +350,24 @@
   }
 }
 
-@keyframes slideInFromRight {
+@keyframes popIn {
   from {
-    transform: translateX(100%);
+    opacity: 0;
+    transform: scale(0.96);
   }
   to {
-    transform: translateX(0);
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
-@keyframes slideOutToRight {
+@keyframes popOut {
   from {
-    transform: translateX(0);
+    opacity: 1;
+    transform: scale(1);
   }
   to {
-    transform: translateX(100%);
+    opacity: 0;
+    transform: scale(0.96);
   }
 }
