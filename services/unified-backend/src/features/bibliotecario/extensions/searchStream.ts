@@ -32,7 +32,12 @@ import { KeeperClient } from '../services/KeeperClient';
 // Rank 1 (risposta principale) + al più questi arricchimenti: oltre un certo
 // punto ogni fonte in più allunga la sequenza di chiamate LLM sequenziali
 // senza aggiungere molto al giocatore, che nel frattempo aspetta.
-const MAX_ENRICHMENT_STEPS = 3;
+// 0 = arricchimenti disattivati: sulla CPU del server (qwen3.5:4b, prefill
+// ~30 tok/s) ogni chiamata sfora il timeout di 30s di KeeperClient.enrich,
+// quindi il giocatore vedeva "sto leggendo" per 90s senza alcun risultato,
+// mentre il worker continuava a generare per richieste già abbandonate.
+// Da riportare a 3 su hardware più veloce (SYS-1 / GPU).
+const MAX_ENRICHMENT_STEPS = 0;
 
 function sourceLabel(chunk: ContextChunk): { title: string; fullPath?: string } {
   return {
