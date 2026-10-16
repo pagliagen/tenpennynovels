@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import nodemailer, { type Transporter } from 'nodemailer';
 import { logger } from '../logger';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { appConfig } from '@config/runtime';
@@ -6,7 +6,7 @@ import { appConfig } from '@config/runtime';
 type ConfigServiceRedisClient = ConstructorParameters<typeof ConfigurationService>[0];
 
 export class EmailService {
-  private static transporter: nodemailer.Transporter;
+  private static transporter: Transporter;
   private static isMockMode: boolean;
   private static configService: ConfigurationService;
 
