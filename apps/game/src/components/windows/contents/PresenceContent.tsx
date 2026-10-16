@@ -1,8 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/router';
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 
+import { MAX_PRESENCE_REASON_LENGTH, type PresenceStatus } from '@/lib/api/presence';
+import { logger } from '@/lib/logger';
 import { useAuthStore } from '@/store/authStore';
 import { usePresenceStore, type GlobalPresence } from '@/store/presenceStore';
 import { useWindowManagerStore } from '@/store/windowManagerStore';
@@ -19,8 +21,11 @@ const TABS: ReadonlyArray<{ key: PresenceTab; label: string }> = [
   { key: 'staff', label: 'Staff' },
 ];
 
-// TODO: placeholder finché non esiste un campo di stato per personaggio
-const PLACEHOLDER_STATUS = 'status presenti scritto fin qui';
+/** Testo mostrato quando la motivazione è vuota */
+function statusText(status: PresenceStatus): string {
+  if (status.reason) return status.reason;
+  return status.availableToPlay ? 'Disponibile a giocare' : 'Non disponibile';
+}
 
 /**
  * Contenuto della finestra "Presenti" (utility `presenti` del window manager).
@@ -32,6 +37,38 @@ export function PresenceContent(): JSX.Element {
   const openWindow = useWindowManagerStore((s) => s.openWindow);
   const { selectedCharacter, hasGamePermission } = useAuthStore();
   const [tab, setTab] = useState<PresenceTab>('all');
+  const updateMyStatus = usePresenceStore((s) => s.updateMyStatus);
+  const [isEditingStatus, setIsEditingStatus] = useState(false);
+  const [draft, setDraft] = useState<PresenceStatus>({ availableToPlay: true, reason: '' });
+  const [isSaving, setIsSaving] = useState(false);
+  const reasonInputRef = useRef<HTMLInputElement>(null);
+
+  // L'editor si apre su azione dell'utente: il focus passa al campo (senza autoFocus)
+  useEffect(() => {
+    if (isEditingStatus) reasonInputRef.current?.focus();
+  }, [isEditingStatus]);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const openStatusEditor = (current: PresenceStatus) => {
+    setDraft(current);
+    setSaveError(null);
+    setIsEditingStatus(true);
+  };
+
+  const handleSaveStatus = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await updateMyStatus({ availableToPlay: draft.availableToPlay, reason: draft.reason.trim() });
+      setIsEditingStatus(false);
+    } catch (error) {
+      logger.error('Aggiornamento stato presenti fallito', { error });
+      setSaveError('Non è stato possibile salvare lo stato. Riprova.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const filteredPresence = useMemo(() => {
     const all = globalPresence || [];
@@ -167,9 +204,24 @@ export function PresenceContent(): JSX.Element {
                       </button>
                       <div className={styles.row}>
                         <span className={styles.name}>{fullName}</span>
-                        {/* TODO: pallino di stato reale (verde/arancione) */}
-                        <span className={styles.statusDot} aria-hidden="true" />
-                        <span className={styles.status}>{PLACEHOLDER_STATUS}</span>
+                        <span
+                          className={`${styles.statusDot} ${presence.status.availableToPlay ? styles.statusDotOn : styles.statusDotOff}`}
+                          role="img"
+                          aria-label={presence.status.availableToPlay ? 'Disponibile a giocare' : 'Non disponibile'}
+                        />
+                        {presence.isCurrentCharacter ? (
+                          <button
+                            type="button"
+                            className={`${styles.status} ${styles.statusEditable}`}
+                            onClick={() => (isEditingStatus ? setIsEditingStatus(false) : openStatusEditor(presence.status))}
+                            aria-expanded={isEditingStatus}
+                            title="Cambia il tuo stato"
+                          >
+                            {statusText(presence.status)}
+                          </button>
+                        ) : (
+                          <span className={styles.status}>{statusText(presence.status)}</span>
+                        )}
                         {/* TODO: collegare al messaggio privato e sostituire con l'icona busta */}
                         <button
                           type="button"
@@ -183,6 +235,52 @@ export function PresenceContent(): JSX.Element {
                           </svg>
                         </button>
                       </div>
+                      {presence.isCurrentCharacter && isEditingStatus && (
+                        <form
+                          className={styles.editor}
+                          onSubmit={handleSaveStatus}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Escape') setIsEditingStatus(false);
+                          }}
+                        >
+                          <label className={styles.editorToggle}>
+                            <input
+                              type="checkbox"
+                              checked={draft.availableToPlay}
+                              onChange={(e) => setDraft({ ...draft, availableToPlay: e.target.checked })}
+                            />
+                            <span>Disponibile a giocare</span>
+                          </label>
+                          <input
+                            type="text"
+                            className={styles.editorInput}
+                            value={draft.reason}
+                            maxLength={MAX_PRESENCE_REASON_LENGTH}
+                            placeholder="Motivazione (facoltativa)"
+                            aria-label="Motivazione"
+                            ref={reasonInputRef}
+                            onChange={(e) => setDraft({ ...draft, reason: e.target.value })}
+                          />
+                          <div className={styles.editorActions}>
+                            <button type="submit" className={styles.editorSave} disabled={isSaving}>
+                              {isSaving ? 'Salvo…' : 'Salva'}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.editorCancel}
+                              onClick={() => setIsEditingStatus(false)}
+                              disabled={isSaving}
+                            >
+                              Annulla
+                            </button>
+                          </div>
+                          {saveError && (
+                            <p className={styles.editorError} role="alert">
+                              {saveError}
+                            </p>
+                          )}
+                        </form>
+                      )}
                     </li>
                   );
                 })}

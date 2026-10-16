@@ -586,6 +586,31 @@ socket.on('character_active', (data) => {
 
 ---
 
+### Server → Client: `presence_status_update`
+
+**Trigger**: Un personaggio cambia il proprio stato nei Presenti (`PATCH /game/presence/status`)
+
+**Room**: `broadcast` (all connected users)
+
+**Payload**:
+```typescript
+{
+  characterId: string;
+  status: {
+    availableToPlay: boolean; // true = disponibile a giocare
+    reason: string;           // motivazione libera, max 80 caratteri, può essere ''
+  };
+  timestamp: string; // ISO 8601
+}
+```
+
+**Frontend Handling**: `WebSocketContext` → `onGlobalEvent` → `usePresence` → `presenceStore.handleStatusUpdate`.
+
+**File**: [services/unified-backend/src/modules/game/controllers/PresenceController.ts](../../../services/unified-backend/src/modules/game/controllers/PresenceController.ts)
+
+---
+
+
 ### Server → Client: `character_inactive`
 
 **Trigger**: Character becomes inactive (logged out or switched character)

@@ -512,6 +512,12 @@ export function WebSocketProvider({ children }: WebSocketProviderProps): JSX.Ele
       );
     });
 
+    socket.on('presence_status_update', (data) => {
+      globalCallbacksRef.current.forEach((callback) =>
+        callback({ type: 'presence_status_update', data })
+      );
+    });
+
     socket.on('character_ban_updated', (data) => {
       globalCallbacksRef.current.forEach((callback) =>
         callback({ type: 'character_ban_updated', data })

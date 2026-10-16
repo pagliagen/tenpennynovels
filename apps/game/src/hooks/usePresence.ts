@@ -85,6 +85,7 @@ export function usePresence(): UsePresenceReturn {
     handlePlayerLeft,
     handleGlobalPresenceUpdate,
     handleCharacterActive,
+    handleStatusUpdate,
     handleCharacterInactive,
     getLocationPresence,
   } = usePresenceStore();
@@ -158,6 +159,11 @@ export function usePresence(): UsePresenceReturn {
           handleCharacterInactive(event.data);
           break;
 
+        case 'presence_status_update':
+          // Un personaggio ha cambiato disponibilità/motivazione
+          handleStatusUpdate(event.data);
+          break;
+
         case 'user_status_change':
           // DEPRECATED for presence - kept for other systems
           logger.info('📥 usePresence: user_status_change event (ignored for presence)');
@@ -171,7 +177,7 @@ export function usePresence(): UsePresenceReturn {
 
     // Cleanup subscription on unmount
     return unsubscribe;
-  }, [onGlobalEvent, handleGlobalPresenceUpdate]);
+  }, [onGlobalEvent, handleGlobalPresenceUpdate, handleStatusUpdate]);
 
   // Refetch presence on WebSocket connect/reconnect. The initial fetch above
   // fires as soon as this hook mounts, which can race ahead of the rest of

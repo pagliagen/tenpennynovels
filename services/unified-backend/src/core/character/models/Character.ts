@@ -246,6 +246,12 @@ export interface ICharacter extends Document, SoftDeleteMethods {
   
   // Activity tracking
   lastActive: Date;
+
+  /** Stato mostrato nei Presenti: disponibilità a giocare + motivazione libera (testo semplice) */
+  presenceStatus?: {
+    availableToPlay: boolean;
+    reason: string;
+  };
   
   // Timestamps
   createdAt: Date;
@@ -541,6 +547,12 @@ const CharacterSchema = new Schema<ICharacter>({
       min: 0
     },
     lastForumActivityAt: Date
+  },
+
+  // Stato nei Presenti (default: disponibile, nessuna motivazione)
+  presenceStatus: {
+    availableToPlay: { type: Boolean, default: true },
+    reason: { type: String, trim: true, maxlength: 80, default: '' }
   },
 
   // Character appearance

@@ -117,10 +117,12 @@
   gap: $spacing-md;
 }
 
-// Spazio a sinistra per la stella, che sta fuori dall'avatar
+// Spazio a sinistra per la stella, che sta fuori dall'avatar.
+// flex-wrap: l'editor dello stato va a capo sotto la riga.
 .item {
   position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   padding-left: 40px;
 }
@@ -196,8 +198,18 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #0f7a3c;
-  box-shadow: 0 0 8px rgba(15, 122, 60, 0.6);
+}
+
+// Disponibile: verde acceso con alone
+.statusDotOn {
+  background: #19d35f;
+  box-shadow: 0 0 8px rgba(25, 211, 95, 0.75);
+}
+
+// Non disponibile: lo stesso verde, spento
+.statusDotOff {
+  background: #1d4a30;
+  box-shadow: none;
 }
 
 .status {
@@ -209,6 +221,118 @@
   font-family: 'Bahnschrift SemiLight', $font-sans;
   font-size: 14px;
   color: $frame-muted;
+}
+
+// Solo per il proprio personaggio: il testo è un pulsante
+.statusEditable {
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline dotted rgba(168, 164, 150, 0.5);
+  text-underline-offset: 3px;
+
+  &:hover {
+    color: $text-primary;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $frame-gold-title;
+    outline-offset: 2px;
+  }
+}
+
+// Editor dello stato, sotto la riga del proprio personaggio
+.editor {
+  flex: 0 0 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm $spacing-md;
+  margin: $spacing-sm 0 0 28px;
+  padding: $spacing-md;
+  background: #0b0b0b;
+  border: 1px solid $frame-gold-line;
+  border-radius: 14px;
+}
+
+.editorToggle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  font-family: 'Bahnschrift SemiLight', $font-sans;
+  font-size: 14px;
+  color: $text-primary;
+  cursor: pointer;
+
+  input {
+    accent-color: #19d35f;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.editorInput {
+  flex: 1 1 200px;
+  min-width: 0;
+  padding: 6px 10px;
+  background: #151515;
+  border: 1px solid $frame-gold-line;
+  border-radius: 6px;
+  color: $text-primary;
+  font-family: 'Bahnschrift SemiLight', $font-sans;
+  font-size: 14px;
+
+  &::placeholder {
+    color: $frame-muted;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $frame-gold-title;
+    outline-offset: 1px;
+  }
+}
+
+.editorActions {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.editorSave,
+.editorCancel {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid $frame-gold-line;
+  border-radius: 4px;
+  font-family: 'Bahnschrift SemiLight', $font-sans;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $frame-muted;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: $text-primary;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.editorSave {
+  background: $frame-teal-dim;
+  border-color: $frame-teal;
+  color: $text-primary;
+}
+
+.editorError {
+  flex: 0 0 100%;
+  margin: 0;
+  font-size: 13px;
+  color: #e07a7a;
 }
 
 .mailButton {
