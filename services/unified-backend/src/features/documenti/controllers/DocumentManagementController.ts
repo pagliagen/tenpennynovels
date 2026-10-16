@@ -354,7 +354,7 @@ export class DocumentManagementController {
           return;
         }
 
-        const clash = await Document.findOne({ slug: updates.slug as string, _id: { $ne: id } }).select('_id').lean();
+        const clash = await Document.findOne({ slug: { $eq: updates.slug }, _id: { $ne: id } }).select('_id').lean();
         if (clash) {
           res.status(409).json(errorResponse(
             'Esiste già un documento con questo slug',
