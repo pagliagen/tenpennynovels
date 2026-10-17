@@ -287,7 +287,10 @@ export class AuthMiddleware {
 
   /**
    * Combined middleware: Requires both auth_token and character_context (or sessionId)
-   * Plus character must be APPROVED status
+   *
+   * NON filtra per stato: verifica solo che il personaggio esista e sia dell'utente, e
+   * aggiorna req.character con playerStatus/isApproved freschi dal DB. Chi deve negare
+   * i draft lo fa a valle (permessi di stato o `requireApproved`).
    */
   static requireCharacterAuth(req: Request, res: Response, next: NextFunction): void {
     // Chain the middlewares

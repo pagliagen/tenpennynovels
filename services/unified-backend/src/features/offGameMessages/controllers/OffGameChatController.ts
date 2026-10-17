@@ -94,47 +94,10 @@ export class OffGameChatController {
       const participantIds = participants.map(id => new mongoose.Types.ObjectId(id));
       const allParticipants = [...participantIds, currentCharacterObjectId];
 
-      // First fetch initiator to check status
-      const initiator = await Character.findById(characterId);
-      if (!initiator) {
-        res.status(404).json(errorResponse(
-          'Personaggio iniziatore non trovato',
-          'INITIATOR_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // CUSTOM LOGIC: DRAFT characters can only chat with APPROVED characters
-      if (initiator.playerStatus === 'draft') {
-        const otherParticipants = await Character.find({
-          _id: { $in: participantIds }
-        });
-
-        const nonApprovedParticipants = otherParticipants.filter(p => p.playerStatus !== 'approved');
-
-        if (nonApprovedParticipants.length > 0) {
-          logger.warn('SECURITY: DRAFT character attempted to chat with non-APPROVED', {
-            initiatorId: characterId,
-            initiatorPlayerStatus: initiator.playerStatus,
-            nonApprovedParticipants: nonApprovedParticipants.map(p => ({
-              id: p._id,
-              playerStatus: p.playerStatus
-            })),
-            userId: req.user?.userId
-          });
-          res.status(403).json(errorResponse(
-            'I personaggi DRAFT possono chattare solo con personaggi APPROVATI',
-            'DRAFT_CHAT_RESTRICTION',
-            undefined,
-            403,
-            getRequestId(req)
-          ));
-          return;
-        }
-      }
+      // Nessun vincolo sullo stato del mittente: i personaggi DRAFT possono usare le chat
+      // OFF-GAME (regolamento, creazione del personaggio, ecc.), anche con non approvati.
+      // L'esistenza del mittente è già verificata da requireCharacterAuth e dal controllo
+      // sui partecipanti qui sotto (il mittente fa parte di allParticipants).
 
       // Now fetch all participants for final validation
       const characters = await Character.find({
@@ -506,51 +469,6 @@ export class OffGameChatController {
           getRequestId(req)
         ));
         return;
-      }
-
-      // Defense in depth: Verify sender character status (DRAFT restriction)
-      const { Character } = await import('@core/character/models/Character');
-      const senderCharacter = await Character.findById(characterId);
-
-      if (!senderCharacter) {
-        res.status(404).json(errorResponse(
-          'Personaggio mittente non trovato',
-          'SENDER_NOT_FOUND',
-          undefined,
-          404,
-          getRequestId(req)
-        ));
-        return;
-      }
-
-      // CUSTOM LOGIC: DRAFT characters can only send messages in chats with APPROVED participants
-      if (senderCharacter.playerStatus === 'draft') {
-        const allParticipants = await Character.find({
-          _id: { $in: chat.participants }
-        });
-
-        const nonApprovedParticipants = allParticipants.filter(p => p.playerStatus !== 'approved');
-
-        if (nonApprovedParticipants.length > 0) {
-          logger.warn('SECURITY: DRAFT character attempted to send message to non-APPROVED chat', {
-            senderId: characterId,
-            senderPlayerStatus: senderCharacter.playerStatus,
-            chatId,
-            nonApprovedParticipants: nonApprovedParticipants.map(p => ({
-              id: p._id,
-              playerStatus: p.playerStatus
-            })),
-            userId: req.user?.userId
-          });
-          res.status(403).json(errorResponse(
-            'I personaggi DRAFT possono inviare messaggi solo in chat con personaggi APPROVATI',
-            'DRAFT_CHAT_RESTRICTION',
-            undefined,
-            403,
-            getRequestId(req)
-          ));
-          return;
-        }
       }
 
       // Create message
