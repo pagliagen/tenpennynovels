@@ -9,6 +9,7 @@
  */
 
 import type {
+  ChatMessage,
   ChatPreview,
   ChatDetail,
   CreateChatPayload,
@@ -16,6 +17,7 @@ import type {
 } from '@/types/offGameChat';
 
 import { api } from './client';
+import { toChatMessage, type OffGameMessageDoc } from './offGameChatMapper';
 import { logger } from '@/lib/logger';
 
 /** Payload lista chat (corpo HTTP dopo un livello di unwrap dal client). */
@@ -25,7 +27,7 @@ interface OffGameChatsListBody {
 
 interface OffGameMessagesBody {
   data?: {
-    messages?: ChatDetail['messages'];
+    messages?: OffGameMessageDoc[];
   };
 }
 
@@ -69,7 +71,7 @@ export const offGameChatApi = {
    */
   async getChatMessages(chatId: string): Promise<ChatDetail> {
     const body = await api.get<OffGameMessagesBody>(`/game/offgame-chats/${chatId}/messages`);
-    const messages = body.data?.messages ?? [];
+    const messages = (body.data?.messages ?? []).map(toChatMessage);
 
     // Fetch chat metadata from chats list
     const chatsResponse = await this.getChats();
@@ -112,8 +114,12 @@ export const offGameChatApi = {
    * @param {SendMessagePayload} payload - Message data
    * @returns {Promise<any>} Sent message
    */
-  async sendMessage(chatId: string, payload: SendMessagePayload) {
-    return api.post(`/game/offgame-chats/${chatId}/messages`, payload);
+  async sendMessage(chatId: string, payload: SendMessagePayload): Promise<ChatMessage> {
+    const body = await api.post<{ data: OffGameMessageDoc }>(
+      `/game/offgame-chats/${chatId}/messages`,
+      payload
+    );
+    return toChatMessage(body.data);
   },
 
   /**
