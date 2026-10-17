@@ -48,6 +48,12 @@ export type WindowData =
       initialView?: 'list' | 'thread' | 'new';
       prefilledRecipientId?: string;
       prefilledRecipientName?: string;
+      /**
+       * Timestamp della richiesta di apertura. La finestra è un singleton: senza un
+       * valore che cambia a ogni richiesta, riaprirla per lo stesso destinatario non
+       * produce nessun cambio di dati e la vista "nuova chat" non riparte.
+       */
+      openedAt?: number;
     }
   | {
       type: 'utility';

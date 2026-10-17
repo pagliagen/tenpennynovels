@@ -68,6 +68,7 @@ export function WindowRenderer(): JSX.Element | null {
               initialView={window.data.initialView}
               prefilledRecipientId={window.data.prefilledRecipientId}
               prefilledRecipientName={window.data.prefilledRecipientName}
+              openedAt={window.data.openedAt}
             />
           )}
 

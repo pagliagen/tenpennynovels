@@ -30,6 +30,9 @@ interface MessageOffGameContentProps {
 
   /** Pre-filled recipient name (for display) */
   prefilledRecipientName?: string;
+
+  /** Timestamp della richiesta di apertura (vedi WindowData) */
+  openedAt?: number;
 }
 
 /**
@@ -44,12 +47,14 @@ export function MessageOffGameContent({
   initialView = 'list',
   prefilledRecipientId,
   prefilledRecipientName,
+  openedAt,
 }: MessageOffGameContentProps): JSX.Element {
   return (
     <OffGameChatPanel
       initialView={initialView}
       prefilledRecipientId={prefilledRecipientId}
       prefilledRecipientName={prefilledRecipientName}
+      openedAt={openedAt}
     />
   );
 }
