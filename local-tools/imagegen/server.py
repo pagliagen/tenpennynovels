@@ -24,6 +24,7 @@
 import base64
 import io
 import os
+import traceback
 
 import torch
 from fastapi import FastAPI, HTTPException, Response
@@ -43,6 +44,11 @@ LORA_SCALE = float(os.environ.get("IMAGEGEN_LORA_SCALE", "0.8"))
 CPU_OFFLOAD = os.environ.get("IMAGEGEN_CPU_OFFLOAD", "") == "1"
 
 IS_FLUX = "flux" in MODEL_ID.lower()
+IS_QWEN = "qwen-image" in MODEL_ID.lower()
+# Qwen-Image-2.1: transformer opzionalmente da GGUF quantizzato (path locale o
+# "repo::file"), es. IMAGEGEN_GGUF=unsloth/Qwen-Image-2.1-GGUF::qwen-image-2.1-Q8_0.gguf.
+# Serve perché text encoder (17.5 GB) + transformer bf16 (14 GB) non stanno in 24 GB.
+GGUF_REF = os.environ.get("IMAGEGEN_GGUF", "").strip()
 
 
 def pick_device() -> str:
@@ -69,7 +75,7 @@ _dtype_env = os.environ.get("IMAGEGEN_DTYPE", "").lower()
 _IS_XL = "xl" in MODEL_ID.lower()
 if _dtype_env in _DTYPE_MAP:
     DTYPE = _DTYPE_MAP[_dtype_env]
-elif IS_FLUX:
+elif IS_FLUX or IS_QWEN:
     DTYPE = torch.bfloat16 if DEVICE in ("cuda", "mps") else torch.float32
 elif DEVICE == "cuda":
     DTYPE = torch.float16
@@ -85,7 +91,46 @@ scheduler_name = "default"
 print(f"[imagegen] carico {MODEL_ID} — tipo={'flux' if IS_FLUX else 'sdxl/sd'} "
       f"device={DEVICE} dtype={DTYPE} …", flush=True)
 
-if IS_FLUX:
+if IS_QWEN:
+    from diffusers import GGUFQuantizationConfig, QwenImage21Pipeline, QwenImage21Transformer2DModel
+
+    transformer = None
+    if GGUF_REF:
+        gguf_path = GGUF_REF
+        if "::" in GGUF_REF:
+            from huggingface_hub import hf_hub_download
+            repo, fname = GGUF_REF.split("::", 1)
+            gguf_path = hf_hub_download(repo, fname)
+        transformer = QwenImage21Transformer2DModel.from_single_file(
+            gguf_path,
+            quantization_config=GGUFQuantizationConfig(compute_dtype=DTYPE),
+            torch_dtype=DTYPE,
+            config=MODEL_ID,
+            subfolder="transformer",
+        )
+        print(f"[imagegen] transformer da GGUF: {gguf_path}", flush=True)
+        # I tensori BF16 del GGUF (le norme) restano byte grezzi (uint8, forma doppia) e
+        # le RMSNorm li leggono direttamente: vanno dequantizzati a mano, altrimenti
+        # "size of tensor a (4096) must match tensor b (8192)" (diffusers 0.41).
+        import torch.nn as nn
+        from diffusers.quantizers.gguf.utils import GGUFParameter, dequantize_gguf_tensor
+
+        fixed = 0
+        for module in transformer.modules():
+            for pname, param in list(module._parameters.items()):
+                if isinstance(param, GGUFParameter) and param.dtype == torch.uint8 \
+                        and param.quant_type.name == "BF16":
+                    module._parameters[pname] = nn.Parameter(
+                        dequantize_gguf_tensor(param).to(DTYPE), requires_grad=False)
+                    fixed += 1
+        print(f"[imagegen] tensori BF16 del GGUF dequantizzati: {fixed}", flush=True)
+    qwen_kwargs = {"transformer": transformer} if transformer is not None else {}
+    txt2img = QwenImage21Pipeline.from_pretrained(MODEL_ID, torch_dtype=DTYPE, **qwen_kwargs)
+    # Mai tutto in memoria insieme: i moduli passano al device solo mentre servono.
+    txt2img.enable_model_cpu_offload(device=DEVICE)
+    img2img = None  # non usato: il Qwen accetta immagini di riferimento via `image` in txt2img
+    scheduler_name = type(txt2img.scheduler).__name__
+elif IS_FLUX:
     from diffusers import FluxImg2ImgPipeline, FluxPipeline
 
     txt2img = FluxPipeline.from_pretrained(MODEL_ID, torch_dtype=DTYPE)
@@ -121,7 +166,9 @@ else:
             print(f"[imagegen] ⚠️  LoRA non caricato ({LORA_ID}): {e} — proseguo prompt-only", flush=True)
 
 # Ottimizzazioni memoria (soprattutto MPS / FLUX)
-if CPU_OFFLOAD:
+if IS_QWEN:
+    pass  # offload già configurato sopra
+elif CPU_OFFLOAD:
     try:
         txt2img.enable_sequential_cpu_offload()
     except Exception:
@@ -140,7 +187,7 @@ if not IS_FLUX and _IS_XL and DEVICE == "mps" and DTYPE != torch.float32:
     except Exception as e:  # noqa: BLE001
         print(f"[imagegen] ⚠️  upcast_vae fallito: {e}", flush=True)
 
-for p in (txt2img, img2img):
+for p in (() if IS_QWEN else (txt2img, img2img)):
     try:
         p.enable_attention_slicing()
     except Exception:
@@ -176,6 +223,10 @@ class Txt2ImgRequest(BaseModel):
     seed: int = 0
     width: int = 1024
     height: int = 768
+    # Solo Qwen: immagini di riferimento (PNG/WebP base64) che ancorano lo stile, e
+    # risoluzione a cui vengono date in pasto al modello (più bassa = più veloce).
+    images: list[str] = []
+    output_resolution: int = 512
 
 
 class Img2ImgRequest(BaseModel):
@@ -208,7 +259,7 @@ def health():
     return {
         "ok": True,
         "model": MODEL_ID,
-        "type": "flux" if IS_FLUX else "sdxl/sd",
+        "type": "qwen" if IS_QWEN else "flux" if IS_FLUX else "sdxl/sd",
         "lora": LORA_ID or None,
         "lora_loaded": lora_loaded,
         "scheduler": scheduler_name,
@@ -222,7 +273,26 @@ def txt2img_endpoint(req: Txt2ImgRequest):
     steps = max(1, min(100, int(req.steps)))
     guidance = max(0.0, min(20.0, float(req.guidance)))
     try:
-        if IS_FLUX:
+        if IS_QWEN:
+            qwen_kwargs = {}
+            if req.images:
+                qwen_kwargs["image"] = [
+                    Image.open(io.BytesIO(base64.b64decode(b))).convert("RGB") for b in req.images]
+                qwen_kwargs["output_resolution"] = req.output_resolution
+            # Qwen-Image 2.1 è pensato senza guidance: true_cfg_scale=1 (CFG off, metà del
+            # costo per step). >1 attiva il CFG con negative prompt e raddoppia i forward.
+            if guidance > 1:
+                qwen_kwargs["negative_prompt"] = req.negative_prompt or " "
+            image = txt2img(
+                prompt=req.prompt,
+                true_cfg_scale=guidance,
+                num_inference_steps=steps,
+                width=width,
+                height=height,
+                generator=_gen(req.seed),
+                **qwen_kwargs,
+            ).images[0]
+        elif IS_FLUX:
             image = txt2img(
                 prompt=req.prompt,
                 num_inference_steps=steps,
@@ -243,12 +313,15 @@ def txt2img_endpoint(req: Txt2ImgRequest):
                 generator=_gen(req.seed),
             ).images[0]
     except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
     return Response(content=_to_png(image), media_type="image/png")
 
 
 @app.post("/img2img")
 def img2img_endpoint(req: Img2ImgRequest):
+    if img2img is None:
+        raise HTTPException(status_code=501, detail="img2img non supportato con questo modello")
     steps = max(1, min(100, int(req.steps)))
     guidance = max(0.0, min(20.0, float(req.guidance)))
     strength = max(0.05, min(1.0, float(req.strength)))
@@ -282,5 +355,6 @@ def img2img_endpoint(req: Img2ImgRequest):
                 **kwargs,
             ).images[0]
     except Exception as e:  # noqa: BLE001
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
     return Response(content=_to_png(image), media_type="image/png")

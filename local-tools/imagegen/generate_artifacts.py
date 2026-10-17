@@ -26,9 +26,13 @@ vedi server.py). Avviare prima il server con: bash run.sh
 """
 
 import argparse
+import base64
 import csv
 import hashlib
 import io
+import json
+import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -55,6 +59,24 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = ROOT / "scripts" / "seeders" / "data"
 ARTIFACTS_DIR = ROOT / "apps" / "game" / "public" / "artifacts"
 
+# Stile delle scene location, estratto dalle 13 immagini già presenti in
+# apps/game/public/artifacts/locations/ (NON toccarle: sono il riferimento).
+# Tratti ricorrenti: illustrazione 2D grafica/noir (non pittura a olio, non foto),
+# forme piatte e silhouette scure, palette teal-verde scurissimo + nero con
+# UNICA fonte di luce calda ambra (lampioni a gas, finestre accese), grana da
+# stampa, prospettiva centrale, inquadratura ampia 3:2, mai persone né testo.
+LOCATION_STYLE = (
+    "Victorian London 1889, night. Flat 2D graphic illustration, noir graphic-novel poster style, "
+    "bold dark silhouettes, minimal texture, subtle film grain and vignette. Strictly limited palette: "
+    "deep teal-green and near-black, with warm amber-yellow glow from gas lamps and lit windows as the "
+    "only light, softly reflected on the ground in the foreground (wet cobblestones, planks, pavement) so the "
+    "lower part of the image is not pitch black. One-point perspective, wide cinematic composition, foggy "
+    "distance, completely empty of people, no text"
+)
+LOCATION_NEGATIVE = ("photo, photorealistic, oil painting, 3d render, people, person, crowd, face, "
+                      "text, letters, watermark, frame, border, blurry, low quality, deformed, "
+                      "bright colors, daylight, multiple copies")
+
 # Config per tipo: csv sorgente, cartella output, dimensione icona di default.
 # Aggiungere qui nuovi tipi (es. "characters") quando servirà.
 TYPE_CONFIG = {
@@ -66,7 +88,14 @@ TYPE_CONFIG = {
     "locations": {
         "csv": DATA_DIR / "locations.csv",
         "output_dir": ARTIFACTS_DIR / "locations",
-        "size": 1024,
+        # Le immagini esistenti sono 1536x1024 (3:2). SD1.5 regge bene ~768x512
+        # (oltre duplica i soggetti): si genera piccolo e si porta a 1536x1024
+        # in uscita. Con FLUX/SDXL si può generare nativo (--width/--height).
+        "size": (768, 512),
+        "output_size": (1536, 1024),
+        "source": "db",
+        "style": LOCATION_STYLE,
+        "negative": LOCATION_NEGATIVE,
     },
     "occupations": {
         "csv": DATA_DIR / "occupations.csv",
@@ -85,6 +114,15 @@ STYLE_SUFFIX = "oil painting, moody dramatic lighting, muted colors"
 # default del server (DEFAULT_NEG) ma esplicito qui per chiarezza/override facile.
 NEGATIVE_PROMPT = ("cartoon, flat colors, vector art, anime, comic, sticker, "
                     "text, watermark, frame, border, blurry, low quality, deformed")
+
+
+# Parole che nel soggetto spingono il modello a popolare la scena (verificato su
+# Borough Market: "crowded" → folla di sagome, battendo "empty of people").
+_PEOPLE_WORDS = re.compile(r"\b(crowded|busy|bustling|packed|crowd|people|merchants|shoppers)\b,?\s*", re.I)
+
+
+def clean_subject(prompt):
+    return _PEOPLE_WORDS.sub("", prompt).strip(" ,")
 
 
 def stable_seed(filename, salt=0):
@@ -110,13 +148,71 @@ def read_rows(csv_path):
     return list(reader)
 
 
+# Prompt del soggetto scritti a mano (15-25 parole concrete) per location: quelli del
+# CSV (3-6 parole) vengono sovrastati dallo stile. Chiave = filename. Fallback: CSV.
+RICH_PROMPTS_FILE = Path(__file__).resolve().parent / "location_prompts.json"
+
+# Immagini esistenti usate come riferimento di stile (solo Qwen). Una esterna, una interna.
+REFERENCE_IMAGES = ["wapping-docks.webp", "british-museum.webp"]
+REFERENCE_STYLE = (
+    "Create a new scene in exactly the same illustration style, color palette, amber lighting, "
+    "film grain and flat graphic look as the reference images, but showing a different place: "
+)
+REFERENCE_SUFFIX = ". Wide cinematic composition, no people, no text"
+
+
+def load_reference_images(max_side=768):
+    out = []
+    for name in REFERENCE_IMAGES:
+        img = Image.open(ARTIFACTS_DIR / "locations" / name).convert("RGB")
+        img.thumbnail((max_side, max_side))
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        out.append(base64.b64encode(buf.getvalue()).decode())
+    return out
+
+
+def read_location_rows_from_db(csv_path):
+    """Elenco location dal DB (fonte di verità), prompt dal CSV.
+
+    Il DB ha name/image ma non il prompt (esiste solo per pilotare la
+    generazione, vedi README): lo si recupera dal CSV via `filename`, con
+    fallback sul nome della location se la riga non c'è (location create da
+    gestionale). Nessuna scrittura sul DB: solo lettura.
+    """
+    try:
+        from pymongo import MongoClient
+    except ImportError:
+        print("❌ manca pymongo: cd local-tools/imagegen && .venv/bin/pip install -r requirements.txt")
+        sys.exit(1)
+
+    uri = os.environ.get(
+        "MONGODB_URI", "mongodb://admin:admin123@localhost:27017/tenpennynovels?authSource=admin")
+    db = MongoClient(uri, serverSelectionTimeoutMS=5000).get_default_database()
+    docs = list(db.locations.find(
+        {"deletedAt": None, "image": {"$nin": [None, ""]}},
+        {"name": 1, "image": 1, "parentLocationId": 1}).sort("_id", 1))
+    names = {d["_id"]: d["name"] for d in db.locations.find({}, {"name": 1})}
+
+    rich = json.loads(RICH_PROMPTS_FILE.read_text(encoding="utf-8")) if RICH_PROMPTS_FILE.exists() else {}
+    csv_prompts = {(r.get("filename") or "").strip(): (r.get("prompt") or "").strip()
+                   for r in read_rows(csv_path)}
+    rows = []
+    for d in docs:
+        filename = d["image"].strip()
+        prompt = rich.get(filename) or csv_prompts.get(filename) or d["name"]
+        rows.append({"name": d["name"], "filename": filename, "prompt": prompt,
+                     "parent": names.get(d.get("parentLocationId"), "")})
+    return rows
+
+
 def _looks_black(img_bytes):
     """True se l'immagine è (quasi) tutta nera — sintomo di NaN nel VAE su MPS."""
     if not HAS_PIL:
         return False
     try:
         img = Image.open(io.BytesIO(img_bytes)).convert("L").resize((64, 64))
-        return ImageStat.Stat(img).mean[0] < 4.0
+        return ImageStat.Stat(img).mean[0] < 1.5
     except Exception:  # noqa: BLE001
         return False
 
@@ -137,17 +233,22 @@ def post_txt2img(payload, timeout, retries=2):
     return _post("txt2img", payload, timeout, retries)
 
 
-def save_as_webp(png_bytes, out_path):
+def save_as_webp(png_bytes, out_path, output_size=None):
     """Il server risponde sempre in PNG (vedi server.py); qui si converte e
     si salva in WebP, che per queste illustrazioni pesa 60-80% in meno a
     parità di qualità percepita. Niente canale alpha: sono scene/icone
     opache in stile pittorico, RGB piatto risparmia ulteriore spazio."""
     img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+    if output_size and img.size != tuple(output_size):
+        img = img.resize(tuple(output_size), Image.LANCZOS)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    # Rete di sicurezza: le immagini esistenti non si sovrascrivono MAI.
+    if out_path.exists():
+        raise FileExistsError(f"{out_path.name} esiste già, non lo sovrascrivo")
     img.save(out_path, "WEBP", quality=WEBP_QUALITY, method=WEBP_METHOD)
 
 
-def run_row(row, output_dir, width, height, args):
+def run_row(row, config, width, height, args):
     """Genera l'artifact per una riga di CSV. Ritorna 'ok' | 'skip' | motivo."""
     filename = (row.get("filename") or "").strip()
     prompt = (row.get("prompt") or "").strip()
@@ -157,14 +258,24 @@ def run_row(row, output_dir, width, height, args):
     if not prompt:
         return "no-prompt"
 
-    out_path = output_dir / filename
-    if args.skip_existing and out_path.exists():
+    out_path = config["output_dir"] / filename
+    # Le location esistenti non vanno toccate: per quel tipo si salta sempre.
+    if (args.skip_existing or config.get("source") == "db") and out_path.exists():
         return "skip"
 
-    full_prompt = f"{prompt}, {STYLE_SUFFIX}"
+    refs = getattr(args, "references", None)
+    if config.get("source") == "db":
+        prompt = clean_subject(prompt)
+    if refs:
+        full_prompt = f"{REFERENCE_STYLE}{prompt}{REFERENCE_SUFFIX}"
+    elif config.get("source") == "db":
+        full_prompt = f"{prompt}. {config.get('style', STYLE_SUFFIX)}"
+    else:
+        full_prompt = f"{prompt}, {config.get('style', STYLE_SUFFIX)}"
     data = post_txt2img({
+        **({"images": refs} if refs else {}),
         "prompt": full_prompt,
-        "negative_prompt": NEGATIVE_PROMPT,
+        "negative_prompt": config.get("negative", NEGATIVE_PROMPT),
         "steps": args.steps,
         "guidance": args.guidance,
         "seed": stable_seed(filename),
@@ -172,17 +283,29 @@ def run_row(row, output_dir, width, height, args):
         "height": height,
     }, args.timeout)
 
-    save_as_webp(data, out_path)
+    save_as_webp(data, out_path, config.get("output_size"))
     return "ok"
 
 
 def generate_type(artifact_type, args):
     """Genera tutti gli elementi di un tipo. Ritorna (ok, skipped, failed)."""
     config = TYPE_CONFIG[artifact_type]
-    width = args.width if args.width is not None else config["size"]
-    height = args.height if args.height is not None else config["size"]
+    if args.out_dir:
+        config = {**config, "output_dir": Path(args.out_dir)}
+    size = config["size"]
+    default_w, default_h = size if isinstance(size, tuple) else (size, size)
+    width = args.width if args.width is not None else default_w
+    height = args.height if args.height is not None else default_h
 
-    rows = read_rows(config["csv"])
+    if config.get("source") == "db":
+        rows = read_location_rows_from_db(config["csv"])
+        # Solo quelle senza file su disco: le esistenti non rientrano nemmeno nel conteggio.
+        rows = [r for r in rows if not (config["output_dir"] / r["filename"]).exists()]
+    else:
+        rows = read_rows(config["csv"])
+    if args.only:
+        wanted = args.only.strip().lower()
+        rows = [r for r in rows if wanted in ((r.get("name") or "").lower(), (r.get("filename") or "").lower())]
     if args.test:
         rows = rows[:1]
     elif args.limit:
@@ -202,7 +325,7 @@ def generate_type(artifact_type, args):
         print(f"[{i}/{total}] {name} …", end=" ", flush=True)
         tc = time.time()
         try:
-            res = run_row(row, config["output_dir"], width, height, args)
+            res = run_row(row, config, width, height, args)
             dt = time.time() - tc
             if res == "ok":
                 print(f"✅ ({dt:.0f}s)"); ok += 1
@@ -225,9 +348,12 @@ def main():
                      help="Tipo di artifact da generare, o 'all' per farli tutti in sequenza")
     ap.add_argument("--test", action="store_true", help="Solo 1 elemento (per tipo, se --type all)")
     ap.add_argument("--limit", type=int, help="Massimo N elementi (per tipo, se --type all)")
+    ap.add_argument("--only", help="Solo la location/item con questo name o filename (es. \"Borough Market\")")
+    ap.add_argument("--out-dir", help="Scrivi qui invece che in apps/game/public/artifacts/<tipo> (per i giri di prova)")
+    ap.add_argument("--no-reference", action="store_true", help="Qwen: non usare le immagini di riferimento di stile")
     ap.add_argument("--skip-existing", action="store_true", help="Salta elementi il cui file esiste già")
-    ap.add_argument("--steps", type=int, default=30, help="Step di inferenza (test: 8-10)")
-    ap.add_argument("--guidance", type=float, default=7.5)
+    ap.add_argument("--steps", type=int, default=None, help="Step di inferenza (default: 30, 20 con Qwen)")
+    ap.add_argument("--guidance", type=float, default=None, help="Guidance (default: 7.5, 1.0 con Qwen = senza CFG)")
     ap.add_argument("--width", type=int, help="Larghezza (default: dipende dal tipo)")
     ap.add_argument("--height", type=int, help="Altezza (default: dipende dal tipo)")
     ap.add_argument("--timeout", type=int, default=3600, help="Timeout HTTP per richiesta (s)")
@@ -236,6 +362,15 @@ def main():
     try:
         h = requests.get(f"{API_BASE}/health", timeout=10).json()
         print(f"✅ Server: {h}\n")
+        is_qwen = h.get("type") == "qwen"
+        if args.steps is None:
+            args.steps = 20 if is_qwen else 30
+        if args.guidance is None:
+            args.guidance = 1.0 if is_qwen else 7.5
+        # Qwen regge una risoluzione di generazione più alta di SD1.5; si porta comunque a 1536x1024.
+        if is_qwen and args.width is None and args.height is None:
+            args.width, args.height = 1152, 768
+        args.references = load_reference_images() if is_qwen and not args.no_reference else None
     except Exception as e:  # noqa: BLE001
         print(f"❌ Server non raggiungibile: {e}\n   Avvia: cd local-tools/imagegen && bash run.sh")
         sys.exit(1)

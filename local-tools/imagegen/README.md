@@ -107,3 +107,28 @@ comunque provare SDXL o FLUX, sapendo che potresti rivedere artefatti.
 - Vedi `server.py` per il contratto HTTP completo (`/health`, `/txt2img`,
   `/img2img` — quest'ultimo non usato dalla pipeline attuale, tenuto per
   eventuali raffinamenti futuri).
+
+## Locations: fonte DB, stile di riferimento
+
+`--type locations` legge l'elenco dal **DB** (collection `locations`, solo lettura,
+`MONGODB_URI` o default del compose locale) e genera **solo** le location il cui
+file `image` non esiste ancora in `apps/game/public/artifacts/locations/`. I file
+esistenti non vengono mai sovrascritti (guardia anche in `save_as_webp`). Il
+`prompt` del soggetto arriva dal CSV (match su `filename`), fallback sul nome.
+
+```bash
+bash run_pipeline.sh --type locations --only "Borough Market" --out-dir /tmp/prova   # giro di prova fuori dal repo
+bash run_pipeline.sh --type locations --limit 5                                      # le prime 5 mancanti
+```
+
+Stile estratto dalle 13 immagini esistenti (1536x1024, 3:2) — `LOCATION_STYLE` in
+`generate_artifacts.py`: illustrazione 2D grafica/noir (non olio, non foto), forme
+piatte e silhouette scure, palette teal-verde scurissimo + nero, **unica** luce
+calda ambra (lampioni a gas, finestre accese), grana da stampa, prospettiva
+centrale, mai persone né testo. Prompt completo per altri generatori:
+
+> Flat 2D graphic illustration of {soggetto}, Victorian London 1889, night. Noir
+> graphic-novel poster style, bold dark silhouettes, minimal texture, subtle film
+> grain and vignette. Strictly limited palette: deep teal-green and near-black,
+> with warm amber-yellow glow from gas lamps and lit windows as the only light.
+> One-point perspective, wide cinematic 3:2, foggy distance, empty of people, no text.
