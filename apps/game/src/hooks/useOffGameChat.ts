@@ -79,7 +79,12 @@ export function useOffGameUnreadCount(): UseQueryResult<number, Error> {
 /**
  * Send message mutation
  *
- * Sends a message to a chat. Invalidates chat list and unread count on success.
+ * Sends a message to a chat. Il messaggio restituito dal server viene aggiunto alla
+ * cache del thread: il backend non manda l'evento WebSocket `offgame_message_received`
+ * al mittente, quindi senza questo chi scrive non rivede il proprio messaggio finché
+ * qualcos'altro non ricarica il thread. Niente invalidate sul thread (stessa logica
+ * della rule 5: un refetch subito dopo rischia di sovrascrivere/sfarfallare).
+ * Invalida lista chat e contatore non letti (anteprima e badge).
  *
  * @returns {UseMutationResult}
  */
@@ -89,7 +94,13 @@ export function useSendOffGameMessage() {
   return useMutation({
     mutationFn: ({ chatId, payload }: { chatId: string; payload: SendMessagePayload }) =>
       offGameChatApi.sendMessage(chatId, payload),
-    onSuccess: () => {
+    onSuccess: (saved, { chatId }) => {
+      queryClient.setQueryData<ChatDetail>(queryKeys.offGameChat.chat(chatId), (current) => {
+        if (!current) return current;
+        // Evita il doppione se lo stesso messaggio è già arrivato (refetch o evento)
+        if (current.messages.some((m) => m._id === saved._id)) return current;
+        return { ...current, messages: [...current.messages, saved] };
+      });
       queryClient.invalidateQueries({ queryKey: queryKeys.offGameChat.chats });
       queryClient.invalidateQueries({ queryKey: queryKeys.offGameChat.unreadCount });
     },
