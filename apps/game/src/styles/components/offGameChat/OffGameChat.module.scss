@@ -388,6 +388,12 @@ $border-color: #2a3942; // Subtle borders
     }
   }
 
+  .formError {
+    margin: 0;
+    font-size: 14px;
+    color: #e07a7a;
+  }
+
   .actions {
     display: flex;
     gap: 12px;

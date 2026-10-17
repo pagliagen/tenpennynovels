@@ -15,6 +15,8 @@ interface RecipientSelectorProps {
   onChange: (recipients: string[]) => void;
   maxRecipients?: number;
   allowMultiple?: boolean;
+  /** Nomi già noti (id -> nome), usati prima del fallback sull'ID: la query dell'anagrafica parte solo a menu aperto */
+  knownNames?: Record<string, string>;
 }
 
 export function RecipientSelector({
@@ -22,6 +24,7 @@ export function RecipientSelector({
   onChange,
   maxRecipients = 1,
   allowMultiple = false,
+  knownNames,
 }: RecipientSelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -43,8 +46,8 @@ export function RecipientSelector({
   // Get character display name
   const getCharacterName = useCallback((characterId: string) => {
     const character = directoryData?.data.characters.find((c) => c._id === characterId);
-    return character ? character.name : characterId; // Fallback to ID if not found
-  }, [directoryData]);
+    return character ? character.name : (knownNames?.[characterId] ?? characterId); // Fallback to ID if not found
+  }, [directoryData, knownNames]);
 
   const handleSelect = (character: CharacterListItem) => {
     if (!allowMultiple && value.length >= 1) {

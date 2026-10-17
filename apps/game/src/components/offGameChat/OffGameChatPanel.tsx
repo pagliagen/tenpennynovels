@@ -35,6 +35,9 @@ interface OffGameChatPanelProps {
 
   /** Pre-filled recipient name (for display) */
   prefilledRecipientName?: string;
+
+  /** Timestamp della richiesta di apertura: cambia a ogni clic su "scrivi a..." */
+  openedAt?: number;
 }
 
 type ViewState = 'list' | 'thread' | 'new';
@@ -51,19 +54,31 @@ export function OffGameChatPanel({
   initialView = 'list',
   prefilledRecipientId,
   prefilledRecipientName,
+  openedAt,
 }: OffGameChatPanelProps): JSX.Element {
   const [currentView, setCurrentView] = useState<ViewState>(initialView);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 
+  // Destinatario precompilato attivo. Vive nello stato (non solo nelle props) perché
+  // i dati della finestra restano gli stessi dopo l'uso: senza azzerarlo, "Nuova chat"
+  // dalla lista ripresenterebbe il vecchio destinatario.
+  const [prefill, setPrefill] = useState<{ id: string; name: string; key: number } | null>(() =>
+    prefilledRecipientId && prefilledRecipientName
+      ? { id: prefilledRecipientId, name: prefilledRecipientName, key: openedAt ?? 0 }
+      : null
+  );
+
   // WebSocket subscription for real-time updates
   useOffGameChatWebSocket(selectedChatId);
 
-  // Handle prefilled recipient (from CharacterSheet entry point)
+  // Nuova richiesta "scrivi a..." (scheda personaggio, Presenti): vale anche per lo
+  // stesso destinatario, grazie a openedAt che cambia a ogni apertura.
   useEffect(() => {
     if (prefilledRecipientId && prefilledRecipientName) {
+      setPrefill({ id: prefilledRecipientId, name: prefilledRecipientName, key: openedAt ?? 0 });
       setCurrentView('new');
     }
-  }, [prefilledRecipientId, prefilledRecipientName]);
+  }, [prefilledRecipientId, prefilledRecipientName, openedAt]);
 
   // Handle chat selection from list
   const handleChatSelect = (chatId: string) => {
@@ -75,15 +90,18 @@ export function OffGameChatPanel({
   const handleBackToList = () => {
     setCurrentView('list');
     setSelectedChatId(null);
+    setPrefill(null);
   };
 
   // Handle new chat
   const handleNewChat = (_type: 'direct' | 'group') => {
+    setPrefill(null);
     setCurrentView('new');
   };
 
   // Handle chat created
   const handleChatCreated = (chatId: string) => {
+    setPrefill(null);
     setSelectedChatId(chatId);
     setCurrentView('thread');
   };
@@ -100,8 +118,9 @@ export function OffGameChatPanel({
 
       {currentView === 'new' && (
         <OffGameNewChatView
-          initialRecipientId={prefilledRecipientId}
-          initialRecipientName={prefilledRecipientName}
+          key={prefill ? `${prefill.id}-${prefill.key}` : 'manual'}
+          initialRecipientId={prefill?.id}
+          initialRecipientName={prefill?.name}
           onBack={handleBackToList}
           onCreated={handleChatCreated}
         />

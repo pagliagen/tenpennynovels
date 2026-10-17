@@ -11,10 +11,11 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import { RecipientSelector } from '@/components/RecipientSelector';
 import { useCreateOffGameChat } from '@/hooks/useOffGameChat';
+import { parseError } from '@/lib/api/errors';
 import { queryKeys } from '@/lib/api/queryClient';
 import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
 import { logger } from '@/lib/logger';
@@ -43,7 +44,7 @@ function extractCreatedOffGameChatId(payload: unknown): string | undefined {
 
 export function OffGameNewChatView({
   initialRecipientId,
-  initialRecipientName: _initialRecipientName,
+  initialRecipientName,
   onBack,
   onCreated,
 }: OffGameNewChatViewProps): JSX.Element {
@@ -52,6 +53,11 @@ export function OffGameNewChatView({
     initialRecipientId ? [initialRecipientId] : []
   );
   const [groupName, setGroupName] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const knownNames = useMemo(
+    () => (initialRecipientId && initialRecipientName ? { [initialRecipientId]: initialRecipientName } : undefined),
+    [initialRecipientId, initialRecipientName]
+  );
   const createChat = useCreateOffGameChat();
   const queryClient = useQueryClient();
 
@@ -73,6 +79,7 @@ export function OffGameNewChatView({
   const handleCreate = async () => {
     if (!isValid || createChat.isPending) return;
 
+    setErrorMessage(null);
     try {
       const response = await createChat.mutateAsync({
         type: chatType,
@@ -93,6 +100,7 @@ export function OffGameNewChatView({
       }
     } catch (error) {
       logger.error('Failed to create chat:', { error });
+      setErrorMessage(parseError(error).getUserMessage());
     }
   };
 
@@ -127,6 +135,7 @@ export function OffGameNewChatView({
           onChange={setRecipients}
           maxRecipients={maxRecipients}
           allowMultiple={chatType === 'group'}
+          knownNames={knownNames}
         />
 
         {/* Group Name (only for groups) */}
@@ -141,6 +150,12 @@ export function OffGameNewChatView({
               maxLength={50}
             />
           </div>
+        )}
+
+        {errorMessage && (
+          <p className={styles.formError} role="alert">
+            {errorMessage}
+          </p>
         )}
 
         {/* Actions */}

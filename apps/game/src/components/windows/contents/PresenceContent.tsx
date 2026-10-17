@@ -111,6 +111,23 @@ export function PresenceContent(): JSX.Element {
     });
   }, [openWindow, selectedCharacter, hasGamePermission, router]);
 
+  // Stesso permesso della route di creazione chat (backend: game:offgame-chat:create)
+  const canWriteOffGame = hasGamePermission('game:offgame-chat:create');
+
+  // Apre la finestra OFF-GAME su "nuova chat 1 a 1" col destinatario precompilato.
+  // openedAt cambia a ogni clic: la finestra è un singleton e senza di esso un secondo
+  // clic sullo stesso destinatario non produrrebbe nessun cambio.
+  const handleMailClick = (characterId: string, fullName: string) => {
+    openWindow('messageOffGame', {
+      conversationId: 'offgame-main',
+      conversationTitle: `Messaggio OFF-GAME a ${fullName}`,
+      initialView: 'new',
+      prefilledRecipientId: characterId,
+      prefilledRecipientName: fullName,
+      openedAt: Date.now(),
+    });
+  };
+
   const handleLocationClick = (locationSlug: string, _locationName: string) => {
     if (!locationSlug) {
       // London (no specific location chat)
@@ -222,18 +239,21 @@ export function PresenceContent(): JSX.Element {
                         ) : (
                           <span className={styles.status}>{statusText(presence.status)}</span>
                         )}
-                        {/* TODO: collegare al messaggio privato e sostituire con l'icona busta */}
-                        <button
-                          type="button"
-                          className={styles.mailButton}
-                          disabled
-                          aria-label={`Scrivi a ${fullName}`}
-                        >
-                          <svg viewBox="0 0 24 16" aria-hidden="true">
-                            <rect x="1" y="1" width="22" height="14" rx="1" fill="none" stroke="currentColor" />
-                            <path d="M1 1l11 8 11-8M1 15l8-7M23 15l-8-7" fill="none" stroke="currentColor" />
-                          </svg>
-                        </button>
+                        {/* TODO: sostituire l'SVG con l'icona busta definitiva */}
+                        {canWriteOffGame && !presence.isCurrentCharacter && (
+                          <button
+                            type="button"
+                            className={styles.mailButton}
+                            onClick={() => handleMailClick(presence.characterId, fullName)}
+                            aria-label={`Scrivi a ${fullName}`}
+                            title={`Scrivi a ${fullName}`}
+                          >
+                            <svg viewBox="0 0 24 16" aria-hidden="true">
+                              <rect x="1" y="1" width="22" height="14" rx="1" fill="none" stroke="currentColor" />
+                              <path d="M1 1l11 8 11-8M1 15l8-7M23 15l-8-7" fill="none" stroke="currentColor" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                       {presence.isCurrentCharacter && isEditingStatus && (
                         <form
