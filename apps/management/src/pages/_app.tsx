@@ -90,7 +90,7 @@ export default function App({ Component, pageProps }: AppProps) {
   if (!isSessionReady) {
     return (
       <div className={sessionBootStyles.root}>
-        Initializing...
+        Avvio sessione...
       </div>
     );
   }
