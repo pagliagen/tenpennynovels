@@ -52,21 +52,22 @@ function generateId(): string {
 }
 
 /**
- * Calculate cascade position for new window
+ * Position for a new window: centered in the viewport.
  *
- * Offset from previous windows to avoid complete overlap.
+ * Una finestra nuova nasce sempre al centro dello schermo (non a cascata): è quella su
+ * cui l'utente sta lavorando. Se la finestra è più grande del viewport resta ancorata
+ * in alto a sinistra, così l'header (da cui si trascina) è sempre raggiungibile.
+ * Sotto i 768px lo shell `Window` ignora la posizione (schermo intero).
  *
- * @param {number} index - Window index in windows array
+ * @param {{ width: number; height: number }} size - Window size
  * @returns {{ x: number; y: number }} Position
  */
-function getCascadePosition(index: number): { x: number; y: number } {
-  const baseX = 100;
-  const baseY = 100;
-  const offset = 40; // Cascade offset
+function getCenteredPosition(size: { width: number; height: number }): { x: number; y: number } {
+  if (typeof window === 'undefined') return { x: 0, y: 0 };
 
   return {
-    x: baseX + (index * offset),
-    y: baseY + (index * offset),
+    x: Math.max(0, Math.round((window.innerWidth - size.width) / 2)),
+    y: Math.max(0, Math.round((window.innerHeight - size.height) / 2)),
   };
 }
 
@@ -213,7 +214,7 @@ export const useWindowManagerStore = create<WindowManagerStore>()((set) => ({
         id: generateId(),
         type,
         data: { type, ...data } as WindowData, // Merge type into data
-        position: getCascadePosition(state.windows.length),
+        position: getCenteredPosition(windowSize),
         size: windowSize,
         isMinimized: false,
         zIndex: nextZIndex,

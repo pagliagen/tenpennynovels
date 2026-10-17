@@ -143,9 +143,14 @@ export function Window({ windowState, children }: WindowProps): JSX.Element {
   }, [isDragging, windowState.id, windowState.size.width, updatePosition]);
 
   /**
-   * Handle Focus Click (Bring to Front)
+   * Bring to Front al mousedown, non al click.
+   *
+   * Il click risale dai figli verso questo elemento DOPO i loro handler: una finestra
+   * aperta da un pulsante interno a un'altra (es. la busta nei Presenti apre i messaggi
+   * OFF-GAME) veniva subito scavalcata dal focus della finestra di partenza. Il mousedown
+   * invece precede il click del pulsante, quindi la finestra appena aperta resta in primo piano.
    */
-  const handleFocusClick = () => {
+  const handleFocus = () => {
     focusWindow(windowState.id);
   };
 
@@ -195,7 +200,7 @@ export function Window({ windowState, children }: WindowProps): JSX.Element {
         height: isMobile ? '100vh' : windowState.size.height,
         zIndex: windowState.zIndex,
       }}
-      onClick={handleFocusClick}
+      onMouseDown={handleFocus}
     >
       {/* Window Header */}
       <div
