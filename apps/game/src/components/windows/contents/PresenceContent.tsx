@@ -114,7 +114,8 @@ export function PresenceContent(): JSX.Element {
   // Stesso permesso della route di creazione chat (backend: game:offgame-chat:create)
   const canWriteOffGame = hasGamePermission('game:offgame-chat:create');
 
-  // Apre la finestra OFF-GAME su "nuova chat 1 a 1" col destinatario precompilato.
+  // Apre la finestra OFF-GAME direttamente sul thread 1 a 1 col destinatario (crea la chat
+  // o riapre quella esistente), pronto per scrivere.
   // openedAt cambia a ogni clic: la finestra è un singleton e senza di esso un secondo
   // clic sullo stesso destinatario non produrrebbe nessun cambio.
   const handleMailClick = (characterId: string, fullName: string) => {
@@ -125,6 +126,7 @@ export function PresenceContent(): JSX.Element {
       prefilledRecipientId: characterId,
       prefilledRecipientName: fullName,
       openedAt: Date.now(),
+      autoStart: true,
     });
   };
 

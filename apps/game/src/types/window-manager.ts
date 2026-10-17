@@ -54,6 +54,8 @@ export type WindowData =
        * produce nessun cambio di dati e la vista "nuova chat" non riparte.
        */
       openedAt?: number;
+      /** Con un destinatario precompilato: crea (o riapre) subito la chat 1 a 1 e vai al thread */
+      autoStart?: boolean;
     }
   | {
       type: 'utility';

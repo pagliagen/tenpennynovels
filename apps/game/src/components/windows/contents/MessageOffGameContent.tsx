@@ -33,6 +33,9 @@ interface MessageOffGameContentProps {
 
   /** Timestamp della richiesta di apertura (vedi WindowData) */
   openedAt?: number;
+
+  /** Crea/riapre subito la chat 1 a 1 col destinatario precompilato (vedi WindowData) */
+  autoStart?: boolean;
 }
 
 /**
@@ -48,6 +51,7 @@ export function MessageOffGameContent({
   prefilledRecipientId,
   prefilledRecipientName,
   openedAt,
+  autoStart,
 }: MessageOffGameContentProps): JSX.Element {
   return (
     <OffGameChatPanel
@@ -55,6 +59,7 @@ export function MessageOffGameContent({
       prefilledRecipientId={prefilledRecipientId}
       prefilledRecipientName={prefilledRecipientName}
       openedAt={openedAt}
+      autoStart={autoStart}
     />
   );
 }
