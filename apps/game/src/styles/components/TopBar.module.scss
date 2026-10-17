@@ -88,10 +88,20 @@
     content: '';
     position: absolute;
     width: 10px;
-    height: 155px;
     top: 0;
     background: black;
     z-index: 0;
+  } 
+
+  // Black bars on sides
+  &::after {
+    height: 155px;
+  } 
+
+  // Black bars on sides
+  &::before {
+    height: 147px;
+    transform: skewY(-5deg);
   } 
 
   &::before {
