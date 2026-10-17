@@ -10,41 +10,27 @@
 
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, useEffect } from 'react';
 
 import { RecipientSelector } from '@/components/RecipientSelector';
-import { useCreateOffGameChat } from '@/hooks/useOffGameChat';
+import { useCreateOffGameChatAndSync } from '@/hooks/useOffGameChat';
 import { parseError } from '@/lib/api/errors';
-import { queryKeys } from '@/lib/api/queryClient';
 import styles from '@/styles/components/offGameChat/OffGameChat.module.scss';
 import { logger } from '@/lib/logger';
 
 interface OffGameNewChatViewProps {
   initialRecipientId?: string;
   initialRecipientName?: string;
+  /** Errore da mostrare subito (es. apertura diretta della chat fallita) */
+  initialError?: string | null;
   onBack: () => void;
   onCreated: (chatId: string) => void;
-}
-
-/** Supporta risposte `{ data: { _id } }` e `{ data: { data: { _id } } }` dal gateway. */
-function extractCreatedOffGameChatId(payload: unknown): string | undefined {
-  if (payload === null || typeof payload !== 'object') return undefined;
-  const root = payload as { data?: unknown };
-  const layer1 = root.data;
-  if (!layer1 || typeof layer1 !== 'object') return undefined;
-  const o1 = layer1 as { _id?: unknown; data?: unknown };
-  if (typeof o1._id === 'string') return o1._id;
-  const layer2 = o1.data;
-  if (layer2 && typeof layer2 === 'object' && typeof (layer2 as { _id?: unknown })._id === 'string') {
-    return (layer2 as { _id: string })._id;
-  }
-  return undefined;
 }
 
 export function OffGameNewChatView({
   initialRecipientId,
   initialRecipientName,
+  initialError = null,
   onBack,
   onCreated,
 }: OffGameNewChatViewProps): JSX.Element {
@@ -53,13 +39,12 @@ export function OffGameNewChatView({
     initialRecipientId ? [initialRecipientId] : []
   );
   const [groupName, setGroupName] = useState('');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(initialError);
   const knownNames = useMemo(
     () => (initialRecipientId && initialRecipientName ? { [initialRecipientId]: initialRecipientName } : undefined),
     [initialRecipientId, initialRecipientName]
   );
-  const createChat = useCreateOffGameChat();
-  const queryClient = useQueryClient();
+  const { createAndSync, isPending } = useCreateOffGameChatAndSync();
 
   // Update chat type based on recipient count
   useEffect(() => {
@@ -77,22 +62,17 @@ export function OffGameNewChatView({
 
   // Handle create
   const handleCreate = async () => {
-    if (!isValid || createChat.isPending) return;
+    if (!isValid || isPending) return;
 
     setErrorMessage(null);
     try {
-      const response = await createChat.mutateAsync({
+      const chatId = await createAndSync({
         type: chatType,
         name: chatType === 'group' ? groupName.trim() : undefined,
         participants: recipients,
       });
 
-      // Wait for chats list to refetch before navigating
-      await queryClient.invalidateQueries({ queryKey: queryKeys.offGameChat.chats });
-      await queryClient.refetchQueries({ queryKey: queryKeys.offGameChat.chats });
-
       // Navigate to the created chat
-      const chatId = extractCreatedOffGameChatId(response);
       if (chatId) {
         onCreated(chatId);
       } else {
@@ -160,15 +140,15 @@ export function OffGameNewChatView({
 
         {/* Actions */}
         <div className={styles.actions}>
-          <button className="cancel" onClick={onBack} disabled={createChat.isPending}>
+          <button className="cancel" onClick={onBack} disabled={isPending}>
             Annulla
           </button>
           <button
             className="submit"
             onClick={handleCreate}
-            disabled={!isValid || createChat.isPending}
+            disabled={!isValid || isPending}
           >
-            {createChat.isPending ? 'Creazione...' : 'Crea Chat'}
+            {isPending ? 'Creazione...' : 'Crea Chat'}
           </button>
         </div>
       </div>

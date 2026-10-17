@@ -9,10 +9,10 @@
  */
 
 import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 
 import { useWebSocket } from '@/contexts/WebSocketContext';
-import { offGameChatApi } from '@/lib/api/offGameChat';
+import { extractCreatedOffGameChatId, offGameChatApi } from '@/lib/api/offGameChat';
 import { queryKeys } from '@/lib/api/queryClient';
 import type {
   ChatPreview,
@@ -127,6 +127,36 @@ export function useCreateOffGameChat() {
       queryClient.invalidateQueries({ queryKey: queryKeys.offGameChat.chats });
     },
   });
+}
+
+/**
+ * Crea una chat e aspetta che la lista sia aggiornata, poi restituisce l'id.
+ *
+ * Il refetch PRIMA di navigare serve: la vista thread legge la chat dalla lista, e
+ * aprirla prima che la lista la contenga la mostrerebbe vuota. Se la chat diretta
+ * esiste già il backend restituisce quella esistente (stesso flusso).
+ *
+ * Usata sia dal form "Nuova chat" sia dall'apertura diretta ("scrivi a..." dai Presenti).
+ * Rigetta in caso di errore: chi chiama decide come mostrarlo.
+ *
+ * @returns {{ createAndSync: (payload: CreateChatPayload) => Promise<string | undefined>; isPending: boolean }}
+ */
+export function useCreateOffGameChatAndSync() {
+  const queryClient = useQueryClient();
+  const createChat = useCreateOffGameChat();
+  const { mutateAsync } = createChat;
+
+  const createAndSync = useCallback(
+    async (payload: CreateChatPayload): Promise<string | undefined> => {
+      const response = await mutateAsync(payload);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.offGameChat.chats });
+      await queryClient.refetchQueries({ queryKey: queryKeys.offGameChat.chats });
+      return extractCreatedOffGameChatId(response);
+    },
+    [mutateAsync, queryClient]
+  );
+
+  return { createAndSync, isPending: createChat.isPending };
 }
 
 /**

@@ -236,9 +236,18 @@ export class OffGameChatController {
       const characterObjectId = new mongoose.Types.ObjectId(characterId);
 
       // Get chats where character is participant - raw query approach
+      // Una chat diretta ancora senza messaggi è visibile solo a chi l'ha creata: la UI la
+      // apre al clic su "scrivi a..." (es. dai Presenti), prima che esista un messaggio, e
+      // il destinatario non deve ritrovarsi conversazioni vuote che non ha avviato.
+      // I gruppi hanno sempre il messaggio di sistema di creazione.
       const chats = await OffGameChat.find({
         participants: characterObjectId,
-        isActive: true
+        isActive: true,
+        $or: [
+          { type: 'group' },
+          { lastMessage: { $exists: true, $ne: null } },
+          { createdBy: characterObjectId }
+        ]
       })
       .populate('participants', 'name avatar')
       .populate('lastMessage')
