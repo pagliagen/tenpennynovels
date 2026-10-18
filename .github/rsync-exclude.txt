@@ -114,5 +114,5 @@ Dockerfile
 apps/landing/public/sitemap.xml
 apps/documents/public/sitemap.xml
 
-# Local AI Folder
-local-ai/
+# Servizio bot locale (solo macchina di sviluppo, non va in produzione)
+bot-service/

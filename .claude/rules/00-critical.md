@@ -26,7 +26,7 @@ Verifica: `grep -rn "id:" services/*/src/ --include="*.ts" | grep -v "_id"`
 |---|---|
 | `services/api-gateway`, `services/unified-backend` | Winston — `@shared/utils/logger` o `./utils/logger` |
 | `services/embeddings-worker` | logger custom `src/utils/logger.ts` (**non** Winston, stessi livelli) |
-| `local-ai/*` | `local-ai/shared/logger.ts` (wrapper Winston) |
+| `bot-service` | `bot-service/src/logger.ts` (Winston) |
 | `apps/game`, `apps/management`, `apps/documents`, `apps/landing` | `@/lib/logger` — `debug`/`info` no-op in produzione |
 
 **Eccezioni legittime**: script one-shot (`src/scripts/*`), build tool, e l'implementazione del logger stesso.
@@ -44,7 +44,7 @@ Le 3 app con config (`game`, `management`, `documents`) usano tutte flat config 
 
 **Incidente 2026-08-17** — `management` e `documents` avevano `eslint` pinnato a `^10.8.0` ma config legacy `.eslintrc.json` (formato che ESLint 10 non supporta più): `npx eslint`/`next lint` fallivano all'avvio con "couldn't find eslint.config.js", quindi **nessuna regola ESLint girava** in queste due app (probabilmente da quando `eslint` era stato bumpato a `^10`). Scoperto indagando un log di debug in `apps/documents` che sembrava anomalo ma non lo era. Fix: migrazione a flat config + downgrade `eslint` a `^9.39.x` in entrambe (vedi sopra). `next lint` inoltre non esiste più in Next.js 16: gli script `lint`/`lint:fix` in `package.json` usano `eslint .` direttamente.
 
-**Non** è enforced nei `services/*` e `local-ai/*`: nessuno ha config ESLint. Va verificato in code review.
+**Non** è enforced nei `services/*` e in `bot-service`: nessuno ha config ESLint. Va verificato in code review.
 
 **Incidente 2026-03-03** — api-gateway mescolava `console.log` e Winston: nessun timestamp, log non filtrabili, niente access log HTTP. Fix: tutto su Winston + Morgan con stream verso il logger.
 

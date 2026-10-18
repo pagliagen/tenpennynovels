@@ -1,102 +1,33 @@
 ---
 name: generate-bot
-description: Generate AI bots for locations. Use when you need to create NPC bots, populate a location with characters, or activate bot system for a location.
+description: Create a chat bot for a location. Use when you need to add an NPC that answers players in a location chat (bot-service), or populate a location with characters.
 user-invocable: true
 ---
 
 ## Overview
-Generate AI-powered NPC bots for a specific location. Creates bots via the Local AI gateway's BotAI service (Ollama-powered, zero API costs).
+Add a bot to `bot-service/`: a game character (owned by the `system-bot` user) plus a bot sheet (persona + psychology) and a mapping to a location. The bot answers with a local LLM (Ollama) in that location's chat only.
 
 ## Usage Pattern
-/generate-bot [location_name] [num_bots]
+/generate-bot [location_name] [description]
 
 Parameters:
-- **location_name**: Exact name of the location (e.g., "Borough Market", "The Blind Beggar")
-- **num_bots**: Number of bots to generate (positive integer)
+- **location_name**: name of the location (e.g. "Ten Bells Public House")
+- **description**: who the bot is (role, age, temperament) — you turn it into a persona and a psychological sheet
 
-Examples:
-- /generate-bot "Borough Market" 3
-- /generate-bot "The Blind Beggar" 5
+Example:
+- /generate-bot "Ten Bells Public House" "una cameriera sbrigativa, vedova, che sa tutto del quartiere"
 
-## Architecture
+## Steps
 
-The bot generation now uses the **Local AI platform** (`local-ai/`):
-
-```
-unified-backend (or CLI script)
-  → AI Gateway (:9001 dev / :9000 prod via ngrok)
-    → BotAI service (:8080)
-      → Ollama (mistral:7b-instruct)
-```
-
-### API Endpoints
-
-- **Gateway Health**: `GET http://localhost:9001/health`
-- **Generate Bot**: `POST http://localhost:9001/botai/bots/generate`
-- **Create Bot**: `POST http://localhost:9001/botai/bots`
-- **List Bots**: `GET http://localhost:9001/botai/bots`
-
-### Authentication
-
-All requests require `X-API-Key` header with the value from `local-ai/.env` → `API_KEY`.
-
-### Generate Bot API
-
-```bash
-curl -X POST http://localhost:9001/botai/bots/generate \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
-  -d '{
-    "description": "Un barista irlandese, veterano di guerra, con un segreto oscuro",
-    "style": "vittoriano",
-    "locale": "it"
-  }'
-```
-
-### Create Bot Manually
-
-```bash
-curl -X POST http://localhost:9001/botai/bots \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
-  -d '{
-    "name": "Detective Morrison",
-    "personality": {
-      "traits": ["cinico", "osservatore", "solitario"],
-      "speech_style": "frasi brevi, tono asciutto",
-      "background": "Ex poliziotto, investigatore privato"
-    },
-    "systemPrompt": "Sei Detective Morrison, un investigatore privato..."
-  }'
-```
+1. **Find the location** (`/manage-db tenpennynovels`): `db.locations.findOne({ name: '...' }, { _id: 1, slug: 1, positions: 1 })`.
+2. **Define the bot** in `BOT_CHARACTERS` in `scripts/seeders/seeders/BotCharacterSeeder.ts`:
+   - character fields (name, gender, age, appearance...) — no location: the association lives in `mapping.json`;
+   - `persona`: 5-8 sentences in Italian, second person ("Sei..."), role, temperament, how they treat strangers, what they know and share. No proper names of other characters.
+   - `psyche`: Big Five 1-100 (`ocean` O C E A N), Enneagram (`type`, `fear`, `desire`), baseline mood `pad` (p, a, d in -1..1). See `bot-service/README.md` for how numbers become behaviour.
+3. **Run the seeder**: `cd scripts/seeders && npm run seed:dev:bots` (idempotent). It prints the full `bots/<name>.json` with the new `characterId`.
+4. **Save** that JSON as `bot-service/bots/<name>.json` and add `{ "locationId": "<_id>", "botId": "<characterId>" }` to `bot-service/mapping.json` (one bot per location).
+5. **Restart** `bot-service` (`npm run bot-service:dev`) and try it: `cd bot-service && npm run simulate -- <locationId> "Buonasera" Tester Ingresso`.
 
 ## Prerequisites
-
-1. **Local AI stack running**: `cd local-ai && docker compose up -d`
-2. **Ollama model pulled**: `docker compose exec ollama ollama pull mistral:7b-instruct`
-3. **Verify health**: `curl http://localhost:9001/health`
-
-## After Creating Bots
-
-1. Set `bot_enabled: true` on the location in the game database
-2. Associate bot character IDs with the location
-3. The bot will respond automatically when players interact in the location
-
-## MongoDB
-
-Bot data is stored in the **local-ai MongoDB** (port 27030), NOT the game database:
-- Database: `local-ai`
-- Collections: `bots`, `memories`, `relationships`
-
-## Environment Variables
-
-Located in `local-ai/.env`:
-- `API_KEY`: API key for gateway authentication
-- `OLLAMA_MODEL`: LLM model (default: `mistral:7b-instruct`)
-- `MONGODB_URI`: Internal MongoDB connection
-
-## Related Files
-- Local AI platform: `local-ai/`
-- BotAI service: `local-ai/services/botai/`
-- Gateway: `local-ai/gateway/`
-- Old archived code: `_archive/botai-backend/`
+- User `system-bot` seeded (`seed:dev:users`) and `BOT_SERVICE_SECRET` set (see `bot-service/README.md`).
+- Ollama running with the model in `bot-service/.env` (`OLLAMA_MODEL`, default `gemma4:12b`).

@@ -100,7 +100,7 @@ function walk(router: RouterHandle | undefined, prefix: string, out: RouteEntry[
 
 /**
  * Importare app.ts inizializza servizi che loggano su Winston (che scrive
- * su stdout) come side-effect — CRON, ChatMessageService, AIGatewayClient...
+ * su stdout) come side-effect — CRON, ChatMessageService...
  * Va zittito per non inquinare l'inventario, ma solo durante l'import: se
  * l'import lancia un errore, deve restare visibile.
  */

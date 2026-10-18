@@ -14,7 +14,7 @@ Terminologia Victorian e tecnica usata nel progetto TenPennyNovels.
 
 **Master** / **Mistress**
 - Appellativo formale per personaggi di alto status sociale
-- Utilizzato in dialoghi bot AI per mantenere l'ambientazione
+- Utilizzato nei dialoghi dei bot per mantenere l'ambientazione
 - Esempio: "Good evening, Master Smith"
 
 **Esquire** (Esq.)
@@ -24,7 +24,7 @@ Terminologia Victorian e tecnica usata nel progetto TenPennyNovels.
 
 **Guillemets** (« »)
 - Virgolette francesi usate nei dialoghi Victorian
-- Standard nei testi bot AI
+- Standard nei testi dei bot
 - Esempio: « I shall consider your proposal, sir »
 
 **Victorian Narrative Style**
@@ -154,38 +154,33 @@ Terminologia Victorian e tecnica usata nel progetto TenPennyNovels.
 
 ---
 
-### Bot AI System
+### Bot di chat (bot-service)
 
-**Psychology Axes**
-- 6 assi psicologici (-3 to +3):
-  - Rational/Emotional
-  - Controlled/Impulsive
-  - Cynical/Idealist
-  - Proud/Submissive
-  - Prudent/Paranoid
-  - Direct/Allusive
+**Scheda del bot**
+- Un file `bot-service/bots/<nome>.json`: persona (testo), scheda psicologica e stile
+- La mappatura bot → location sta in `bot-service/mapping.json`
 
-**Central Wound**
-- Ferita psicologica profonda che guida comportamento bot
-- Trigger emotivi e difese psicologiche
-- Deve essere visibile nelle risposte bot
+**Big Five (OCEAN)**
+- Apertura, Coscienziosità, Estroversione, Gradevolezza, Nevroticismo, ciascuno 1-100
+- Il carattere di fondo: non cambia. I numeri non arrivano mai al modello, sono tradotti in frasi
 
-**Duality System**
-- Maschera pubblica vs verità privata
-- Trust levels (0-100) determinano rivelazione:
-  - <30: Maschera rigida
-  - 30-60: Primi hints
-  - 60-80: Maschera scivola
-  - 80+: Rivelazione completa
+**Enneagramma (paura e desiderio)**
+- La motivazione profonda del bot: ciò che teme e ciò che vuole di più
 
-**Relationship Archetype**
-- Tipo di relazione bot-character: mentor, rival, romantic, suspicious
-- Influenza tone e content interazioni
+**PAD (Piacere, Attivazione, Dominanza)**
+- Umore del bot, tre valori in -1..1, uno per bot
+- Cambia dopo ogni scambio e decade verso l'umore di base col tempo
 
-**Sentiment Analysis**
-- Analisi tono emotivo delle interazioni
-- Score: -1 (negative) to +1 (positive)
-- Stored in BotMemory collection
+**Rapporto (fiducia, rispetto, sospetto)**
+- Tre punteggi 0-100 per ogni coppia bot-giocatore, più conteggio incontri, data, fatti appresi
+- Primo incontro / già visto è deterministico; il nome e i fatti li ricava l'AI
+
+**Straniero**
+- Come il bot vede un giocatore che non si è mai presentato, anche se il suo nome è visibile in chat
+- Il nome entra solo se il giocatore lo dice e compare davvero nel suo testo
+
+**Position (tag di posizione)**
+- Tag libero di un messaggio ("Ingresso", "Bancone"); il bot risponde nello stesso tag
 
 ---
 
@@ -308,5 +303,5 @@ Terminologia Victorian e tecnica usata nel progetto TenPennyNovels.
 - [Documentazione tecnica](./tecnica/README.md)
 - [Documentazione funzionale](./funzionale/README.md)
 - [Deploy / produzione](../deploy/README.md)
-- [Stack AI locale (opzionale)](../local-ai/README.md)
-- Terminologia di gioco (CoC, skill, occupation): sezioni **Game System Terminology** e **Bot AI System** in questo glossario
+- [Bot di chat locale (opzionale)](../bot-service/README.md)
+- Terminologia di gioco (CoC, skill, occupation): sezioni **Game System Terminology** e **Bot di chat** in questo glossario

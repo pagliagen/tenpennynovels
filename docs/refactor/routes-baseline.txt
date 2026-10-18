@@ -168,7 +168,6 @@ GET /auth/security/login-history
 GET /auth/security/sessions
 GET /auth/session
 GET /auth/verify-email/:token
-GET /character-gen/config
 GET /documents/:type/:category/:slug
 GET /documents/:type/:path
 GET /documents/ai-status
@@ -202,7 +201,6 @@ GET /game/block-notes
 GET /game/character-creation-config
 GET /game/character-creation-config/occupations
 GET /game/character-creation-config/skills
-GET /game/character-gen/config
 GET /game/characters/:characterId
 GET /game/characters/:characterId/chat-scenes
 GET /game/characters/:characterId/chat-scenes/:sceneId/transcript
@@ -337,7 +335,6 @@ POST /admin/deleted-records/:id/restore
 POST /admin/deleted-records/bulk-permanent-delete
 POST /admin/documents
 POST /admin/documents/:id/regenerate-chunks
-POST /admin/documents/:id/regenerate-seo
 POST /admin/forum-categories
 POST /admin/forum-discussions/:discussionId/restore
 POST /admin/forum-posts/:postId/restore
@@ -464,6 +461,7 @@ POST /game/presence/leave
 POST /game/relationships
 POST /game/tickets
 POST /game/tickets/:id/messages
+POST /internal/bot-chat/messages
 PUT /admin/character-sessions/:sessionId/invalidate
 PUT /admin/character-sessions/character/:characterId/invalidate-all
 PUT /admin/chat/moderation-actions/:actionId/resolve-appeal

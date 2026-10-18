@@ -90,8 +90,6 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 8000,
         CDN_STORAGE_PATH: '/var/www/cdn-cache',
-        // AI_GATEWAY_WEBHOOK_SECRET: caricato da services/api-gateway/.env via bootstrap.js
-        // (rimosso da qui: era un segreto committato in git — RUOTARLO).
       },
     },
 

@@ -559,6 +559,46 @@ ChatSchema.post('save', async function(doc) {
   }
 });
 
+// Evento per il servizio bot locale: solo messaggi nuovi di tipo standard.
+// Fire-and-forget e a parte dal ramo embedding sopra (che per standard
+// pubblica comunque, ma senza visibility/isHidden).
+ChatSchema.pre('save', function() {
+  // In post('save') isNew è già false: lo stato va catturato prima.
+  this.$locals.wasNew = this.isNew;
+});
+
+ChatSchema.post('save', async function(doc) {
+  if (!doc.$locals.wasNew || doc.actionType !== ChatActionType.STANDARD) return;
+  try {
+    const { publishBotChatEvent } = await import('@shared/services/BotChatEventPublisher');
+
+    // La descrizione della posizione serve al bot per rispondere in modo coerente
+    // (es. chi è all'Ingresso non è ancora entrato). Una query, solo se c'è un tag.
+    let positionDescription: string | undefined;
+    if (doc.position) {
+      const { Location } = await import('@core/location/models/Location');
+      const loc = await Location.findById(doc.locationId).select('positions').lean();
+      positionDescription = loc?.positions?.find((p: { name: string }) => p.name === doc.position)?.description;
+    }
+
+    await publishBotChatEvent({
+      _id: doc._id.toString(),
+      characterId: doc.characterId,
+      characterName: doc.characterName,
+      locationId: doc.locationId,
+      content: doc.content,
+      actionType: doc.actionType,
+      visibility: doc.visibility,
+      isHidden: doc.isHidden,
+      position: doc.position,
+      positionDescription,
+      timestamp: doc.timestamp,
+    });
+  } catch (error) {
+    logger.error('[Chat] Failed to publish bot chat event:', error);
+  }
+});
+
 ChatSchema.post('deleteOne', async function(doc) {
   try {
     const { publishChatDeletedEvent } = await import('@shared/services/EmbeddingEventPublisher');

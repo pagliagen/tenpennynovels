@@ -6,7 +6,7 @@
  *
  * classifySceneContinuation/summarizeScene sono debito dichiarato: 100% chat-only
  * (unico chiamante: features/fineSessione/services/ChatSceneService.ts), parcheggiati qui
- * perché la destinazione originale del piano generale (core/ai/AiGatewayClient.ts)
+ * perché la destinazione originale del piano generale (un client AI condiviso in core/ai/)
  * non esiste ancora — deciso con l'utente in Fase 6.5, non creato in questa fase.
  */
 

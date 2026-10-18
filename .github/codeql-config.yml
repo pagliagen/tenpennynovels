@@ -30,6 +30,6 @@ paths-ignore:
   - coverage
   - ".next"
 
-# Python analysis (local-ai services)
+# Python analysis
 python-setup:
   setup-tests: false

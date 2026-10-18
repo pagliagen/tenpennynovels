@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Setup ambiente locale TenpennyNovels: installa TUTTE le dipendenze npm
-# (root, apps/*, services/*, local-ai, scripts/*) e crea il venv Python
+# (root, apps/*, services/*, bot-service, scripts/*) e crea il venv Python
 # per embeddings-worker. Lanciare una volta sola dopo un checkout pulito
 # o dopo un cambio di versione Node/Python.
 #
@@ -49,10 +49,6 @@ echo "=================================================================="
 echo "📦 npm install su tutte le app/servizi"
 echo "=================================================================="
 
-# NOTA: "local-ai" usa npm workspaces reali (gateway + services/*), quindi
-# un solo "npm install" nella sua root installa anche gateway e tutti i
-# services/* — NON vanno installati separatamente (a differenza del resto
-# del monorepo, che non usa workspaces npm, vedi .claude/rules/40-workflow.md).
 NPM_DIRS=(
   "."
   "apps/landing"
@@ -62,7 +58,7 @@ NPM_DIRS=(
   "services/api-gateway"
   "services/unified-backend"
   "services/embeddings-worker"
-  "local-ai"
+  "bot-service"
   "scripts/glass-ball"
   "scripts/seeders"
 )

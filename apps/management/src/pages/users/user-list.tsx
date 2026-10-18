@@ -21,7 +21,6 @@ import { useURLFilter } from '@/hooks/useURLFilter';
 import { encodeFilter, clearFilterHash } from '@/lib/utils/urlFilters';
 import type { User, UserListParams, BanUserData } from '@/types/api/User';
 import styles from '@/styles/pages/UserList.module.scss';
-import { AssignBotPanel } from '@/components/bots/AssignBotPanel';
 
 export default function UserList() {
   // State
@@ -32,7 +31,7 @@ export default function UserList() {
     sortOrder: 'desc'
   });
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
-  const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | 'assign-png' | 'assign-master' | 'assign-bot' | null>(null);
+  const [activeSidePanel, setActiveSidePanel] = useState<'edit' | 'view' | 'assign-png' | 'assign-master' | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Hooks
@@ -107,13 +106,6 @@ export default function UserList() {
         disabled: hasMaster,
       },
       {
-        key: 'assign-bot',
-        label: 'Assegna BOT',
-        icon: '🤖',
-        onClick: () => handleAction('assign-bot', user),
-        dividerAfter: true
-      },
-      {
         key: 'delete',
         label: 'Elimina',
         icon: '🗑️',
@@ -142,11 +134,6 @@ export default function UserList() {
         case 'assign-master':
           setCurrentUser(user);
           setActiveSidePanel('assign-master');
-          break;
-
-        case 'assign-bot':
-          setCurrentUser(user);
-          setActiveSidePanel('assign-bot');
           break;
 
         case 'delete': {
@@ -518,37 +505,6 @@ export default function UserList() {
                 setCurrentUser(null);
               }
             }}
-            onClose={() => {
-              setActiveSidePanel(null);
-              setCurrentUser(null);
-            }}
-          />
-        )}
-
-        {activeSidePanel === 'assign-bot' && (
-          <SidePanel
-            isOpen={true}
-            config={{
-              title: 'Assegna BOT AI',
-              width: 'large',
-              fields: [],
-              actions: []
-            }}
-            data={{}}
-            customContent={
-              <AssignBotPanel
-                onClose={() => {
-                  setActiveSidePanel(null);
-                  setCurrentUser(null);
-                }}
-                onSuccess={(characterId) => {
-                  addNotification({ type: 'success', message: `Bot creato con successo (ID: ${characterId})` });
-                  setActiveSidePanel(null);
-                  setCurrentUser(null);
-                }}
-              />
-            }
-            onAction={() => {}}
             onClose={() => {
               setActiveSidePanel(null);
               setCurrentUser(null);

@@ -1,18 +1,17 @@
 /**
  * SEO Documents Page
  *
- * Gestione SEO documenti con ConfigurableDataTable, ContextMenu e TanStack Query.
+ * Elenco di sola lettura di titoli e descrizioni SEO dei documenti (ConfigurableDataTable + TanStack Query).
+ * Le descrizioni si modificano dalla scheda del documento.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import Head from 'next/head';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
-import { ContextMenu, ContextMenuItem } from '@/components/shared/ContextMenu';
 import { useTableConfig } from '@/hooks/useTableConfig';
 import { useTableFilters } from '@/hooks/useTableFilters';
-import { useSeoDocuments, useRegenerateSeoDescription } from '@/hooks/api/useDocuments';
-import { useNotificationStore } from '@/store/notificationStore';
+import { useSeoDocuments } from '@/hooks/api/useDocuments';
 import type { SeoDocument } from '@/types/api/Document';
 import styles from '@/styles/pages/SeoDocuments.module.scss';
 
@@ -31,12 +30,8 @@ export default function SeoDocumentsPage() {
     sortOrder: 'asc'
   });
 
-  const [pendingId, setPendingId] = useState<string | null>(null);
-
   const { data, isLoading, error } = useSeoDocuments();
   const tableConfig = useTableConfig('seo-documents');
-  const regenerateSeo = useRegenerateSeoDescription();
-  const addNotification = useNotificationStore(state => state.addNotification);
 
   const visibleColumns = useMemo(() => {
     if (!tableConfig.config) return [];
@@ -51,35 +46,6 @@ export default function SeoDocumentsPage() {
     if (!filters.type) return docs;
     return docs.filter(doc => doc.type === filters.type);
   }, [data?.documents, filters.type]);
-
-  const aiGatewayEnabled = data?.aiGatewayEnabled ?? false;
-
-  const getMenuItems = (doc: SeoDocument): ContextMenuItem[] => [
-    {
-      key: 'regenerate-seo',
-      label: pendingId === doc._id ? 'Rigenerazione...' : 'Rigenera SEO',
-      icon: '🤖',
-      disabled: !aiGatewayEnabled || pendingId !== null,
-      onClick: () => handleAction('regenerate-seo', doc)
-    }
-  ];
-
-  const handleAction = async (action: string, doc: SeoDocument) => {
-    if (action !== 'regenerate-seo') return;
-
-    try {
-      setPendingId(doc._id);
-      await regenerateSeo.mutateAsync(doc._id);
-      addNotification({ type: 'success', message: `Descrizione SEO aggiornata per "${doc.title}"` });
-    } catch (err) {
-      addNotification({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Errore nella rigenerazione'
-      });
-    } finally {
-      setPendingId(null);
-    }
-  };
 
   if (error) {
     return (
@@ -104,9 +70,6 @@ export default function SeoDocumentsPage() {
           <h1>SEO Documenti</h1>
           <p>
             Totale: {data?.documents.length ?? 0} documenti
-            {!aiGatewayEnabled && (
-              <span className={styles.gatewayWarning}> · AI Gateway non attivo</span>
-            )}
           </p>
         </header>
 
@@ -114,14 +77,6 @@ export default function SeoDocumentsPage() {
           tableName="seo-documents"
           data={filteredData}
           loading={isLoading || tableConfig.loading}
-          onAction={handleAction}
-          renderActions={(doc) => (
-            <ContextMenu
-              items={getMenuItems(doc)}
-              position="left"
-              ariaLabel={`Menu azioni per ${doc.title}`}
-            />
-          )}
           filters={filters}
           onFilterChange={handleFilterChange}
           externalConfig={tableConfig.config ? {

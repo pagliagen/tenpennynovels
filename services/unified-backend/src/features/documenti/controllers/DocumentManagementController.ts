@@ -9,8 +9,6 @@ import { generateHtml } from '../services/HtmlGenerator';
 import { logger } from '@modules/admin/utils/logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
-import { appConfig } from '@config/runtime';
-import { aiGatewayClient } from '@modules/game/services/AIGatewayClient';
 import { Types } from 'mongoose';
 import { ALL_DOCUMENT_TYPES, isDocumentType, type DocumentType } from '../constants/documentTypes';
 import { validateSlug } from '../utils/slugValidation';
@@ -884,8 +882,6 @@ export class DocumentManagementController {
         .sort({ type: 1, path: 1 })
         .lean();
 
-      const aiGatewayEnabled = !!appConfig.services.aiGateway.url;
-
       res.json(successResponse(
         {
           documents: documents.map(doc => ({
@@ -895,8 +891,7 @@ export class DocumentManagementController {
             type: doc.type,
             path: doc.path,
             description: doc.description || ''
-          })),
-          aiGatewayEnabled
+          }))
         },
         undefined,
         getRequestId(req)
@@ -906,72 +901,6 @@ export class DocumentManagementController {
       res.status(500).json(errorResponse(
         error.message || 'Errore recupero documenti SEO',
         'GET_SEO_DOCUMENTS_ERROR', undefined, 500, getRequestId(req)
-      ));
-    }
-  }
-
-  /**
-   * Regenerate SEO description for a single document via AI gateway
-   * POST /admin/documents/:id/regenerate-seo
-   */
-  static async regenerateSeoDescription(req: Request, res: Response): Promise<void> {
-    try {
-      if (!appConfig.services.aiGateway.url) {
-        res.status(503).json(errorResponse(
-          'AI gateway non configurato',
-          'AI_GATEWAY_NOT_CONFIGURED', undefined, 503, getRequestId(req)
-        ));
-        return;
-      }
-
-      const { id } = req.params as { id: string };
-
-      if (!isValidObjectId(id)) {
-        res.status(400).json(errorResponse(
-          'ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)
-        ));
-        return;
-      }
-
-      const document = await Document.findById(id).lean();
-
-      if (!document) {
-        res.status(404).json(errorResponse(
-          'Documento non trovato', 'DOCUMENT_NOT_FOUND', undefined, 404, getRequestId(req)
-        ));
-        return;
-      }
-
-      if (!document.content) {
-        res.status(400).json(errorResponse(
-          'Il documento non ha contenuto HTML da cui generare la description',
-          'DOCUMENT_NO_CONTENT', undefined, 400, getRequestId(req)
-        ));
-        return;
-      }
-
-      const description = await aiGatewayClient.generateSeoDescription(
-        document.title,
-        document.content || ''
-      );
-
-      if (!description) {
-        res.status(502).json(errorResponse(
-          'Il gateway AI non ha restituito una descrizione valida',
-          'AI_GATEWAY_NO_RESULT', undefined, 502, getRequestId(req)
-        ));
-        return;
-      }
-
-      await Document.updateOne({ _id: id }, { $set: { description } });
-      logger.info(`[SeoDescription] Regenerated for document ${id} (${description.length} chars)`);
-
-      res.json(successResponse({ description }, undefined, getRequestId(req)));
-    } catch (error: any) {
-      logger.error('Error regenerating SEO description:', error);
-      res.status(500).json(errorResponse(
-        error.message || 'Errore rigenerazione descrizione SEO',
-        'REGENERATE_SEO_ERROR', undefined, 500, getRequestId(req)
       ));
     }
   }

@@ -142,7 +142,7 @@ Il permesso vive sul **personaggio**, quindi richiede `X-Session-Id`: le route p
 
 **Python**: subprocess `sentence-transformers` (`paraphrase-multilingual-MiniLM-L12-v2`), ~60s di caricamento modello all'avvio.
 
-**RAG "Bibliotecario"** — migrato qui da `local-ai/services/qa`, è una feature di produzione:
+**RAG "Bibliotecario"** — feature di produzione:
 `POST /ask` (generazione su contesto già recuperato), `POST /ask/enrich` (arricchimento progressivo da fonti successive, max 3 step).
 Il retrieval lo fa unified-backend via `/search`, non `/ask`.
 `/extract-keywords` e `/extract-insight` sono stati **rimossi il 2026-08-16**: nessun chiamante vivo nel repo (dead code post-refactor).

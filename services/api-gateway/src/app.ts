@@ -354,23 +354,6 @@ app.use('/documents', documentsRateLimitUnauth, documentsRateLimitAuth);
 app.use('/auth', authRateLimitGateway);
 app.use('/game', gameRateLimitGateway);
 
-// ---------------------------------------------------------------------------
-// /webhooks — autenticazione via Bearer secret (niente cookie, per callback da servizi interni)
-// ---------------------------------------------------------------------------
-app.use('/webhooks', (req, res, next) => {
-  const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
-  if (!config.webhooks.secret || token !== config.webhooks.secret) {
-    logger.warn('[WEBHOOKS] Accesso non autorizzato', {
-      method: req.method,
-      url: req.originalUrl.replace(/[\r\n]+/g, ' '), // no CR/LF: evita log forging (S5145)
-      ip: req.ip,
-    });
-    res.status(401).json({ result: false, error: 'Non autorizzato', code: 'INVALID_WEBHOOK_SECRET' });
-    return;
-  }
-  next();
-}, createServiceProxy('webhooks', { target: `${BACKEND}/webhooks`, timeout: config.proxy.defaultTimeout }));
-
 // Route proxy verso il backend
 for (const [name, svc] of Object.entries(services)) {
   app.use(`/${name}`, createServiceProxy(name, svc));

@@ -18,8 +18,7 @@ import type {
   DocumentTreeResponse,
   CreateDocumentData,
   UpdateDocumentData,
-  DocumentSubtype,
-  SeoDocument
+  DocumentSubtype
 } from '@/types/api/Document';
 
 /**
@@ -433,31 +432,5 @@ export function useSeoDocuments() {
     queryFn: () => documentAPI.getSeoDocuments(),
     staleTime: 5 * 60 * 1000,
     retry: 3
-  });
-}
-
-/**
- * Hook per rigenerare la description SEO di un documento via AI gateway.
- * Aggiorna ottimisticamente la cache seo dopo il successo.
- */
-export function useRegenerateSeoDescription() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => documentAPI.regenerateSeoDescription(id),
-    onSuccess: (description, id) => {
-      queryClient.setQueryData<{ documents: SeoDocument[]; aiGatewayEnabled: boolean }>(
-        documentKeys.seo,
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            documents: old.documents.map(doc =>
-              doc._id === id ? { ...doc, description } : doc
-            )
-          };
-        }
-      );
-    }
   });
 }

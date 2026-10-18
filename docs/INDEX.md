@@ -57,7 +57,7 @@
 1. Leggi [tecnica/README.md](./tecnica/README.md)
 2. Setup server: [deploy/docs/01-ubuntu-from-zero.md](../deploy/docs/01-ubuntu-from-zero.md)
 3. Riferimenti API: [websocket-events.md](./tecnica/backend/websocket-events.md), [error-codes.md](./tecnica/backend/error-codes.md), [api-endpoints.md](./tecnica/backend/api-endpoints.md)
-4. Bot / AI in locale (opzionale): [local-ai/README.md](../local-ai/README.md)
+4. Bot di chat in locale (opzionale): [bot-service/README.md](../bot-service/README.md)
 
 **Per Utenti/Players**:
 1. [Guida Iscrizione](./guide-utente/iscrizione.md) - Tutorial passo-passo con screenshot

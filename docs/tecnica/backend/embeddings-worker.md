@@ -15,7 +15,6 @@ TenPennyNovels utilizza embeddings vettoriali (vector representations) di testo 
 **Use Cases**:
 - **Documents**: "Come creare un personaggio?" → trova documenti su creazione personaggi
 - **Chat**: "Azioni di Lord Blackwood al pub" → trova tutte le azioni del personaggio in quella location
-- **Bot Memories** (BotAI): Retrieval semantico dei ricordi bot basato su similarity
 
 ---
 
@@ -146,22 +145,6 @@ POST http://localhost:6333/collections/documents/points/search
 **Details**: [Qdrant Vector DB](../01-infrastructure/qdrant-vector-db.md)
 
 ---
-
-### 3. BotAI Embeddings Service (Port 5002) - OPTIONAL
-
-**Purpose**: Dedicated embeddings for BotAI backend (separate database).
-
-**Why Separate?**
-1. **Database Isolation**: BotAI uses separate MongoDB
-2. **Independence**: BotAI can run standalone
-3. **Optimization**: Different models/configs for bot memories
-4. **Scalability**: Independent scaling
-
-**Same Model**: `paraphrase-multilingual-MiniLM-L12-v2` (384D)
-
-**Endpoints**: Same as main service (`/embed`, `/embed/batch`, `/health`, `/similarity`)
-
-**Status**: Currently disabled, BotAI backend needs migration
 
 ---
 
@@ -464,7 +447,7 @@ docker network ls | grep tenpennynovels
 
 Current system only **retrieves** documents. To **generate answers**, integrate LLM:
 
-**Option 1**: Local LLM (Ollama via local-ai Q&A service)
+**Option 1**: Local LLM (Ollama, come fa il Bibliotecario in questo service)
 ```typescript
 // 1. Semantic search
 const docs = await semanticSearch(query);
@@ -543,4 +526,3 @@ const MODEL_CONFIG = {
 - [Qdrant Vector DB](../01-infrastructure/qdrant-vector-db.md) - Vector database setup
 - [Redis Pub/Sub](../01-infrastructure/redis-pubsub.md) - Event channels
 - [Documents App](../frontend/documents-app.md) - UI knowledge base
-- [local-ai README](../../../local-ai/README.md) - stack AI opzionale (bot / gateway)

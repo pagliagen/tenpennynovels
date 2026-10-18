@@ -13,10 +13,10 @@ Monorepo TypeScript/Node.js per un gioco di ruolo vittoriano multiplayer con AI 
 ```
 apps/          4 frontend Next.js: landing(4000) game(4001) documents(4002) management(4003)
 services/      3 backend: api-gateway(8000) unified-backend(3001) embeddings-worker(5001)
-local-ai/      2 AI: botai(8080) character-gen(8130)
+bot-service/  1 servizio locale (solo dev): risponde in chat con un LLM via Ollama
 ```
 
-**Stack**: Next.js 16 Pages Router · React 18 · Express 5 (v4 in embeddings-worker/local-ai) · MongoDB/Mongoose · Redis · Socket.IO · Bull · Ollama · Qdrant · PM2 · Docker
+**Stack**: Next.js 16 Pages Router · React 18 · Express 5 (v4 in embeddings-worker) · MongoDB/Mongoose · Redis · Socket.IO · Bull · Ollama · Qdrant · PM2 · Docker
 
 **Node**: `.nvmrc` è source of truth (`v24.18.0`). **Nessun npm workspace**: ogni app/service ha il proprio `node_modules`, si installa con `cd <dir> && npm install`.
 
@@ -47,7 +47,7 @@ Violarle causa bug in produzione. Dettagli e incidenti reali in [00-critical.md]
 | [00-critical.md](.claude/rules/00-critical.md) | Le 7 regole in dettaglio + incidenti reali — **leggi sempre** |
 | [10-frontend.md](.claude/rules/10-frontend.md) | Regole per le 4 app, ESLint reale, checklist nuova pagina management |
 | [20-backend.md](.claude/rules/20-backend.md) | Regole per i 3 service, auth a due livelli, Qdrant, ordine proxy |
-| [30-ai-services.md](.claude/rules/30-ai-services.md) | botai e character-gen, agent dual-role, p-queue, callback |
+| [30-ai-services.md](.claude/rules/30-ai-services.md) | bot-service: endpoint interno, cosa vede il bot, umore e rapporti, incidenti |
 | [40-workflow.md](.claude/rules/40-workflow.md) | TypeScript, npm senza workspace, git, CI/CD, Docker, deploy |
 
 **`docs/` — descrittivo, da leggere SOLO all'occorrenza.** Architetture, cataloghi, API. Non caricarlo preventivamente: aprilo quando serve il dettaglio su un'area specifica.
@@ -70,12 +70,12 @@ Se rules e `docs/` divergono, **il codice decide**. Correggi quello che è sbagl
 
 ## Porte e infrastruttura
 
-| Frontend | | Backend | | AI | | Data | |
-|---|---|---|---|---|---|---|---|
-| landing | 4000 | api-gateway | 8000 | botai | 8080 | MongoDB | 27017 |
-| game | 4001 | unified-backend | 3001 | character-gen | 8130 | Redis | 6379 |
-| documents | 4002 | embeddings-worker | 5001 | | | Qdrant | 6333 |
-| management | 4003 | | | | | | |
+| Frontend | | Backend | | Data | |
+|---|---|---|---|---|---|
+| landing | 4000 | api-gateway | 8000 | MongoDB | 27017 |
+| game | 4001 | unified-backend | 3001 | Redis | 6379 |
+| documents | 4002 | embeddings-worker | 5001 | Qdrant | 6333 |
+| management | 4003 | | | | |
 
 **Produzione**: `tenpennynovels.com` (landing) · `game.` · `documenti.` · `gestione.` · `api.` · `ws.`
 

@@ -358,12 +358,6 @@ API_GATEWAY_URL=http://api-gateway:8000
 
 # Unified Backend
 UNIFIED_BACKEND_URL=http://unified-backend:3001
- 
-# AI Gateway (local-ai via ngrok)
-AI_GATEWAY_URL=https://your-ngrok-url.ngrok-free.dev
-AI_GATEWAY_HMAC_SECRET=<generate-with-openssl-rand-hex-32>
-AI_GATEWAY_API_KEY=<generate-with-openssl-rand-hex-32>
-AI_GATEWAY_WEBHOOK_SECRET=<generate-with-openssl-rand-hex-32>
 ```
 
 ---
@@ -435,23 +429,22 @@ SMTP_SECURE=false                      # true for port 465, false for 587
 
 ---
 
-## BotAI Configuration (Disabled)
+## Bot Service (solo locale)
+
+Variabili lette da `unified-backend` (in Docker: `docker-compose.yml`, valori dal `.env` della root):
 
 ```bash
-# AI Gateway (local-ai platform via ngrok)
-AI_GATEWAY_URL=https://your-ngrok-url.ngrok-free.dev
-AI_GATEWAY_HMAC_SECRET=<shared-secret-for-hmac-signing>
-AI_GATEWAY_API_KEY=<api-key-for-authentication>
-AI_GATEWAY_WEBHOOK_SECRET=<secret-for-callback-auth>
-# BOT_AI_TEMPERATURE=0.9
+# Abilita POST /internal/bot-chat/messages. Vuoto = endpoint disattivato (404).
+BOT_SERVICE_SECRET=<openssl rand -hex 32>
 
-# System Bot User
-# SYSTEM_BOT_USER_ID=<mongodb-objectid-of-bot-user>
+# Utente proprietario dei personaggi bot (id fisso seedato da UserSeeder)
+SYSTEM_BOT_USER_ID=000000000000000000000001
 ```
 
-**Future**: Riabilitare quando botai-backend migrato a unified-backend paths
+Le variabili del servizio stesso (Redis, backend, Ollama, Mongo `botservice`) sono in `bot-service/.env.example`.
+Il servizio non va in produzione.
 
-**Details**: [local-ai README](../../../local-ai/README.md)
+**Details**: [bot-service README](../../../bot-service/README.md)
 
 ---
 
@@ -727,7 +720,7 @@ MONGODB_URI=mongodb://...@mongodb:27017/tenpennynovels?authSource=admin
 - [Deploy README](../../deploy/README.md) - Produzione
 - [Personaggi (funzionale)](../../funzionale/personaggi.md)
 - [Housing (funzionale)](../../funzionale/housing.md)
-- [local-ai README](../../../local-ai/README.md) - stack AI opzionale in locale
+- [bot-service README](../../../bot-service/README.md) - bot di chat con LLM, solo locale
 
 ---
 

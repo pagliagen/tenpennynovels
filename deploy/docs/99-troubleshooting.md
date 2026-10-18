@@ -274,12 +274,6 @@ ALLOWED_ORIGINS=https://tenpennynovels.com,https://game.tenpennynovels.com,https
 
 # Embeddings
 EMBEDDINGS_SERVICE_URL=http://127.0.0.1:5001
-
-# AI Gateway (local-ai via ngrok)
-AI_GATEWAY_URL=https://onomatopoeically-unforgeable-ozie.ngrok-free.dev
-AI_GATEWAY_HMAC_SECRET=<shared_secret>
-AI_GATEWAY_API_KEY=<api_key>
-AI_GATEWAY_WEBHOOK_SECRET=<webhook_secret>
 ```
 
 ---

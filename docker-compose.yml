@@ -186,12 +186,12 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_refresh_secret_change_in_production}
 
-      # Character Generation Service Token
-      CHARACTER_GEN_SECRET: ${CHARACTER_GEN_SECRET:-default-chargen-secret-key-change-me}
-
       # Utente proprietario dei personaggi bot (isBot: true). ID fisso seedato da
       # UserSeeder — non è un segreto, può stare in chiaro col default qui.
       SYSTEM_BOT_USER_ID: ${SYSTEM_BOT_USER_ID:-000000000000000000000001}
+
+      # Servizio bot locale (bot-service/). Vuoto = endpoint /internal/bot-chat disattivato (404).
+      BOT_SERVICE_SECRET: ${BOT_SERVICE_SECRET:-}
 
       # Frontend URLs
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4000}
@@ -211,15 +211,7 @@ services:
       CDN_BASE_URL: http://localhost:8000/cdn
       CDN_FTP_ENABLED: "false"
 
-      # AI Gateway (local-ai) — valori reali SOLO da .env (mai defaults committati).
-      # API key e URL ngrok erano hardcoded qui: rimossi e da RUOTARE.
-      AI_GATEWAY_URL: ${AI_GATEWAY_URL:-}
-      AI_GATEWAY_CLIENT_ID: ${AI_GATEWAY_CLIENT_ID:-tpn-dev}
-      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-}
-      AI_GATEWAY_HMAC_SECRET: ${AI_GATEWAY_HMAC_SECRET:-}
-      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-}
-
-      # Callback base URL (usata da local-ai botai per richiamare il backend via gateway)
+      # URL base dell'API (appConfig.urls.api)
       API_CALLBACK_BASE_URL: http://tenpennynovels-api-gateway:8000
 
       # Sitemap generation output directory
@@ -282,9 +274,6 @@ services:
 
       TRUST_PROXY: "true"
 
-      # Webhook secret (per validare le callback da servizi interni come local-ai)
-      # Valore reale SOLO da .env — mai default committato.
-      AI_GATEWAY_WEBHOOK_SECRET: ${AI_GATEWAY_WEBHOOK_SECRET:-}
     ports:
       - "8000:8000"
     volumes:

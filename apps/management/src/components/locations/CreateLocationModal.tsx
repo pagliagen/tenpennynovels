@@ -51,8 +51,7 @@ export function CreateLocationModal({
       visible: true,
       chat: true,
       shop: false,
-      private: false,
-      bot_enabled: false
+      private: false
     }
   });
 
@@ -209,13 +208,6 @@ export function CreateLocationModal({
               type="checkbox"
               checked={formData.settings?.private ?? false}
               onChange={(e: any) => handleSettingChange('private', e.target.checked)}
-            />
-            <FormField
-              label="Bot AI abilitato"
-              name="bot_enabled"
-              type="checkbox"
-              checked={formData.settings?.bot_enabled ?? false}
-              onChange={(e: any) => handleSettingChange('bot_enabled', e.target.checked)}
             />
           </div>
         </div>

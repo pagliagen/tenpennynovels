@@ -27,7 +27,7 @@ import gameRoutes from './routes/game';
  * @features/documenti/api per summarizeScene/classifySceneContinuation, i
  * due metodi che il manifest di documenti (Fase 6.5) documenta come
  * "100% chat-only... parcheggiati lì come debito dichiarato" in attesa di
- * un core/ai/AiGatewayClient.ts che non esiste ancora: fineSessione è il
+ * un client AI condiviso in core/ai/ che non esiste ancora: fineSessione è il
  * consumer reale che li usa.
  *
  * Il cron `sceneClosing` si è spostato dentro la feature (services/

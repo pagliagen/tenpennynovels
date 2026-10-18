@@ -23,7 +23,6 @@ export interface LocationSettings {
   chat: boolean;
   shop: boolean;
   private: boolean;
-  bot_enabled: boolean;
 }
 
 export interface LocationStatistics {

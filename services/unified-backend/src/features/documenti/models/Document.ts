@@ -204,8 +204,6 @@ DocumentSchema.pre('save', async function() {
     } catch (error) {
       logger.error('[Document] Failed to generate HTML from contentDelta:', error);
     }
-    // Flag for post-save SEO description generation
-    (this as any)._seoTrigger = true;
   }
 
   // SEO / sitemap: bump lastUpdated when public-facing fields change (not order/parentId alone)
@@ -281,11 +279,6 @@ DocumentSchema.post('save', async function(doc) {
     });
   }
 
-  // Fire-and-forget SEO description generation when content changed
-  if ((doc as any)._seoTrigger && doc.content) {
-    const { SeoDescriptionService } = await import('../services/SeoDescriptionService');
-    SeoDescriptionService.generateAndSave(doc._id.toString(), doc.title, doc.content);
-  }
 });
 
 /**

@@ -185,7 +185,6 @@ async function seedLocations() {
             private: isPrivateLocation(row.name)
           },
           access: isPrivateLocation(row.name) ? { characterAccess: [], corporationAccess: [] } : undefined,
-          bot_enabled: false,
           occupants: [],
           npcs: [],
           statistics: {

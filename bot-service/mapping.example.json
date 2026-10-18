@@ -1,0 +1,6 @@
+[
+  {
+    "locationId": "<_id della Location>",
+    "botId": "<characterId del bot>"
+  }
+]

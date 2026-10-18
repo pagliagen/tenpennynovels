@@ -23,7 +23,7 @@ interface NavItem {
   href?: string;
   permission?: string;
   /** Voce nascosta se il flag corrispondente (featureFlagsStore) è false — feature legate a servizi AI non gestiti dal server */
-  featureFlag?: 'botManagementEnabled' | 'keeperQaEnabled';
+  featureFlag?: 'keeperQaEnabled';
   children?: NavItem[];
 }
 
@@ -46,8 +46,7 @@ const NAV_ITEMS: NavItem[] = [
       { key: 'characters-list', label: 'Lista Personaggi', href: '/characters/character-list', permission: 'characters.list' },
       { key: 'characters-pending', label: 'In Attesa Approvazione', href: '/characters/character-pending', permission: 'characters.approve' },
       { key: 'characters-faceclaims', label: 'Prestavolti', href: '/characters/character-faceclaims', permission: 'characters.approve' },
-      { key: 'characters-permissions', label: 'Permessi', href: '/characters/permissions', permission: 'characters.manage_permissions' },
-      { key: 'characters-bots', label: 'Gestione Bot', href: '/characters/manage-bot', permission: 'characters.list', featureFlag: 'botManagementEnabled' }
+      { key: 'characters-permissions', label: 'Permessi', href: '/characters/permissions', permission: 'characters.manage_permissions' }
     ]
   },
   {
@@ -129,9 +128,9 @@ export function Sidebar(): React.ReactElement {
   const router = useRouter();
   const { sidebarCollapsed, toggleSidebar, expandedCategories, toggleCategory } = useUIStore();
   const { hasPermission } = usePermissionsStore();
-  const { botManagementEnabled, keeperQaEnabled } = useFeatureFlagsStore();
+  const { keeperQaEnabled } = useFeatureFlagsStore();
 
-  const featureFlags = { botManagementEnabled, keeperQaEnabled };
+  const featureFlags = { keeperQaEnabled };
 
   const isNavItemVisible = (item: NavItem): boolean => {
     if (item.permission && !hasPermission(item.permission)) return false;

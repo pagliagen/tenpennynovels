@@ -32,14 +32,14 @@ TenPennyNovels is a web-based RPG platform that brings Victorian London to life 
 - **Cache/Pub-Sub**: Redis 7 for sessions, caching, and real-time events
 - **Search**: Qdrant (vector DB) + ElasticSearch (full-text) for hybrid semantic search
 - **ML**: Python sentence-transformers for document embeddings
-- **AI**: Ollama (local LLM inference) via piattaforma Local AI indipendente
+- **AI**: Ollama (local LLM inference); bot di chat locale in `bot-service/`
 - **Authentication**: Custom JWT with HttpOnly cookies
 
 ## Architecture
 
 ### Overview
 
-The platform consists of 4 frontend applications, 3 backend services, and an independent local AI platform.
+The platform consists of 4 frontend applications, 3 backend services, and an optional local bot service.
 
 ```mermaid
 flowchart TD
@@ -56,9 +56,8 @@ flowchart TD
         Embeddings["Embeddings Worker\n:5001"]
     end
 
-    subgraph localai ["Local AI (standalone, via ngrok)"]
-        AIGateway["AI Gateway\n:9000"]
-        BotAI["BotAI\n:8080"]
+    subgraph botsvc ["Bot Service (locale, opzionale)"]
+        BotService["bot-service"]
         Ollama["Ollama\n:11434"]
     end
 
@@ -75,10 +74,10 @@ flowchart TD
     Unified --> Redis
     Unified --> Qdrant
     Unified --> Embeddings
-    Unified -->|"contesto + callback\n(via ngrok)"| AIGateway
-    AIGateway --> BotAI
-    BotAI --> Ollama
-    BotAI -->|"callback"| Unified
+    Redis -->|"bot:chat:message"| BotService
+    BotService --> Ollama
+    BotService -->|"POST /internal/bot-chat"| Unified
+    BotService -->|"umore e rapporti (db botservice)"| MongoDB
     Embeddings --> Qdrant
     Embeddings --> ES
     Embeddings --> MongoDB
@@ -102,15 +101,14 @@ flowchart TD
 | Unified Backend | 3001 | All modules: auth, game, admin, documents, tickets, forum, WebSocket |
 | Embeddings Worker | 5001 | HTTP API + Python subprocess + Bull queue for semantic embeddings; RAG Q&A ("Bibliotecario") via Ollama |
 
-**Local AI Platform (macchina locale, esposta via ngrok):**
+**Bot Service (macchina locale, opzionale — non va in produzione):**
 
 | Service | Port | Description |
 |---------|------|-------------|
-| AI Gateway | 9000 | Autenticazione multi-client, routing, rate limiting, validazione |
-| BotAI | 8080 | NPC bot responses via Ollama |
-| Ollama | 11434 | LLM inference locale (mistral:7b-instruct) |
+| bot-service | — | Risponde con un LLM ai messaggi di chat di location configurate; si aggancia al Redis del gioco |
+| Ollama | 11434 | LLM inference locale (default `gemma4:12b`) |
 
-> La piattaforma Local AI è **completamente indipendente**: non accede al database del gioco, non importa codice dal backend, funziona standalone. Vedi [local-ai/docs/](local-ai/docs/) per la documentazione completa.
+> Il bot-service è **separato** dal gioco: ascolta un evento Redis e risponde tramite un endpoint interno del backend (`POST /internal/bot-chat/messages`, protetto da `BOT_SERVICE_SECRET`, non esposto dal gateway). Il suo stato (umore dei bot, rapporti coi giocatori) sta in un database Mongo separato. Vedi [bot-service/README.md](bot-service/README.md).
 
 ## Quick Start
 
@@ -119,7 +117,7 @@ flowchart TD
 - Node.js v24.x (see `.nvmrc`)
 - MongoDB 7.x
 - Redis 7.x
-- Docker (per Local AI e infrastruttura)
+- Docker (per l'infrastruttura)
 
 ### Installation
 
@@ -146,27 +144,18 @@ docker compose up -d
 docker compose ps
 ```
 
-### Start Local AI (opzionale)
+### Start the bot service (opzionale)
 
 ```bash
-# Setup e avvio della piattaforma AI locale
-cd local-ai
-cp .env.example .env
-cp clients.json.example clients.json
-# Editare clients.json con le API key (vedi local-ai/docs/setup.md)
-
-docker compose up -d
-docker compose exec ollama ollama pull mistral:7b-instruct
-
-# Verifica
-curl http://localhost:9000/health
+cd bot-service
+cp .env.example .env              # BOT_SERVICE_SECRET uguale a quello del backend
+cp bots/barnaby-finch.example.json bots/barnaby-finch.json
+cp mapping.example.json mapping.json
+ollama pull gemma4:12b
+npm install && npm run dev
 ```
 
-Per esporre il servizio via ngrok (necessario per l'integrazione con il VPS):
-
-```bash
-ngrok start --config ngrok.yml ai-gateway
-```
+Setup completo (personaggio bot, secret, schede): [bot-service/README.md](bot-service/README.md).
 
 ### Start locally (without Docker)
 
@@ -190,7 +179,6 @@ npm run all
 | Documents | http://localhost:4002 |
 | Management | http://localhost:4003 |
 | API Gateway | http://localhost:8000 |
-| AI Gateway Health | http://localhost:9000/health |
 
 ## Project Structure
 
@@ -214,17 +202,10 @@ tenpennynovels/
 │   │       └── forum/           # Community forum
 │   └── embeddings-worker/       # ML embeddings service
 │
-├── local-ai/                    # Local AI platform (indipendente)
-│   ├── gateway/                 # Multi-client gateway + security
-│   ├── services/
-│   │   ├── botai/               # NPC bot AI (Ollama)
-│   │   ├── character-gen/       # Character generation
-│   │   ├── item-image-gen/      # Image gen (stub)
-│   │   ├── location-image-gen/  # Image gen (stub)
-│   │   └── avatar-gen/          # Image gen (stub)
-│   ├── shared/                  # Codice condiviso local-ai
-│   ├── docs/                    # Documentazione local-ai
-│   └── docker-compose.yml       # Stack standalone
+├── bot-service/                 # Bot di chat con LLM locale (opzionale, solo locale)
+│   ├── bots/                    # Una scheda per bot (persona + psicologia)
+│   ├── mapping.json             # location → bot
+│   └── src/                     # Pipeline a step, umore e rapporti
 │
 ├── scripts/                     # Seeders and utility scripts
 ├── deploy/                      # Deployment configs
@@ -249,11 +230,9 @@ npm run backend:all              # All backends
 npm run frontend:all             # All frontends
 npm run all                      # Everything
 
-# Local AI
-npm run local-ai:start           # Start local AI (Docker)
-npm run local-ai:stop            # Stop local AI
-npm run local-ai:dev             # Dev mode (Ollama + MongoDB + servizi)
-npm run local-ai:logs            # View local AI logs
+# Bot service
+npm run bot-service:dev          # Start the bot service
+npm run bot-service:test         # Run its tests
 
 # Build
 npm run build:all                # Build everything for production
@@ -272,12 +251,6 @@ npm run seed:documents           # Seed documents
 docker compose up -d             # Start all services
 docker compose down              # Stop all services
 docker compose ps                # Check status
-
-# Local AI stack (standalone)
-cd local-ai
-docker compose up -d             # Start AI services
-docker compose down              # Stop AI services
-docker compose logs -f           # View logs
 ```
 
 ## Production Deployment
@@ -293,14 +266,9 @@ docker compose logs -f           # View logs
 | api.tenpennynovels.com | API Gateway |
 | ws.tenpennynovels.com | WebSocket |
 
-**Local AI** — runs sulla macchina locale, esposto al VPS via ngrok:
-
-| URL | Service |
-|-----|---------|
-| https://\*.ngrok-free.dev | AI Gateway (porta 9000) |
+**Bot Service** — gira solo in locale e non viene deployato (`bot-service/` è escluso dal rsync).
 
 See [deploy/](deploy/) and [docs/06-operations/deployment-guide.md](docs/06-operations/deployment-guide.md) for game deployment.
-See [local-ai/docs/](local-ai/docs/) for Local AI setup and deployment.
 
 ## Documentation
 
@@ -311,7 +279,7 @@ See [local-ai/docs/](local-ai/docs/) for Local AI setup and deployment.
 - [docs/03-game-systems/](docs/03-game-systems/) — Game mechanics and systems
 - [docs/04-ai-ml/](docs/04-ai-ml/) — AI/ML integrations (embeddings, bots, Q&A)
 - [docs/06-operations/](docs/06-operations/) — Deployment and operations
-- [local-ai/docs/](local-ai/docs/) — Local AI: architettura, sicurezza, API, deployment
+- [bot-service/README.md](bot-service/README.md) — Bot di chat: pipeline, schede, umore e rapporti, modelli
 
 ## Security
 
@@ -320,7 +288,7 @@ See [local-ai/docs/](local-ai/docs/) for Local AI setup and deployment.
 - Granular admin permissions with per-character overrides
 - Rate limiting and input sanitization
 - HTTPS enforcement in production
-- **AI Gateway**: multi-client API key authentication, optional HMAC signing per-client, per-client rate limiting, Zod payload validation
+- **Bot service**: l'endpoint interno `/internal/bot-chat` è disattivato (404) senza `BOT_SERVICE_SECRET`, richiede il secret con confronto a tempo costante e accetta solo personaggi dell'utente di sistema dei bot
 
 ## License
 

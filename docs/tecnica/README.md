@@ -72,4 +72,4 @@
 
 **Last Major Update**: 2026-03-22  
 
-**Monorepo correlato**: stack AI opzionale in [local-ai/README.md](../../local-ai/README.md) (non è avviato da `docker compose` principale).
+**Monorepo correlato**: bot di chat locale in [bot-service/README.md](../../bot-service/README.md) (non è avviato da `docker compose` e non va in produzione).

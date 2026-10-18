@@ -74,12 +74,11 @@ export const appConfig = {
 
   services: {
     embeddingsUrl: process.env.EMBEDDINGS_SERVICE_URL || 'http://127.0.0.1:5001',
-    aiGateway: {
-      url: process.env.AI_GATEWAY_URL,
-      clientId: process.env.AI_GATEWAY_CLIENT_ID,
-      apiKey: process.env.AI_GATEWAY_API_KEY,
-      hmacSecret: process.env.AI_GATEWAY_HMAC_SECRET,
-      webhookSecret: process.env.AI_GATEWAY_WEBHOOK_SECRET,
+    // Servizio bot locale (bot-service/): senza secret l'endpoint interno
+    // /internal/bot-chat risponde 404 (fail-closed, mai attivo in produzione per svista).
+    botService: {
+      secret: process.env.BOT_SERVICE_SECRET,
+      systemUserId: process.env.SYSTEM_BOT_USER_ID || '000000000000000000000001',
     },
     documents: {
       // URL interno (stesso VPS, dietro Nginx solo in produzione): evita il

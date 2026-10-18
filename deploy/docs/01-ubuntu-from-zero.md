@@ -73,7 +73,7 @@ Usa questa checklist per verificare ogni step:
 - [ ] Installa Git
 - [ ] Clone repository tenpennynovels
 - [ ] Setup .env.production (tutti i servizi)
-- [ ] Genera segreti (JWT, AI Gateway)
+- [ ] Genera segreti (JWT)
 - [ ] Build frontend (4 app)
 - [ ] Build backend (3 servizi)
 - [ ] Setup Python venv (embeddings)
@@ -680,13 +680,6 @@ openssl rand -hex 64
 
 openssl rand -hex 64
 # Output: <copia questo valore per JWT_REFRESH_SECRET>
-
-# AI Gateway secrets (64 char hex)
-openssl rand -hex 32
-# Output: <copia questo valore per AI_GATEWAY_API_KEY>
-
-openssl rand -hex 32
-# Output: <copia questo valore per AI_GATEWAY_HMAC_SECRET>
 ```
 
 ### 17.3 Configura Unified Backend
@@ -726,12 +719,6 @@ ALLOWED_ORIGINS=https://tenpennynovels.com,https://game.tenpennynovels.com,https
 # JWT (usa i segreti generati sopra!)
 JWT_SECRET=<inserisci_jwt_secret_64_char>
 JWT_REFRESH_SECRET=<inserisci_jwt_refresh_secret_64_char>
-
-# AI Gateway (se usi local-ai)
-AI_GATEWAY_URL=https://YOUR_NGROK_URL.ngrok.io  # Cambia con URL ngrok reale
-AI_GATEWAY_CLIENT_ID=tpn-prod
-AI_GATEWAY_API_KEY=<inserisci_ai_gateway_api_key_32_char>
-AI_GATEWAY_HMAC_SECRET=<inserisci_ai_gateway_hmac_secret_32_char>
 
 # Email SMTP (configura con provider reale)
 SMTP_HOST=mail.tenpennynovels.com

@@ -53,17 +53,6 @@ JWT_SECRET=<output_comando>
 JWT_REFRESH_SECRET=<output_comando>
 ```
 
-### AI Gateway Secrets
-
-```bash
-# Generate AI Gateway secrets (64 char hex)
-openssl rand -hex 32
-
-# Aggiorna in unified-backend.env:
-AI_GATEWAY_API_KEY=<output_comando>
-AI_GATEWAY_HMAC_SECRET=<output_comando>
-```
-
 ### SMTP Password
 
 Aggiorna `SMTP_PASS` in `unified-backend.env` con password reale.

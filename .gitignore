@@ -28,9 +28,6 @@ __pycache__/
 .env.test.local
 .env.production.local
 
-# Local AI client secrets (NEVER commit)
-local-ai/clients.json
-
 # Deployment credentials (NEVER commit)
 .env.deploy
 .deploy-backup/
@@ -58,3 +55,8 @@ apps/landing/public/landing-sitemap-lastmod.txt
 
 # Cache incrementale di tsc: artefatto di build, macchina-locale
 *.tsbuildinfo
+
+# bot-service: schede e mappatura reali (id specifici dell'ambiente); gli *.example.json restano
+bot-service/bots/*.json
+!bot-service/bots/*.example.json
+bot-service/mapping.json

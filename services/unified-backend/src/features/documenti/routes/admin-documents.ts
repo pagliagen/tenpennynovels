@@ -28,7 +28,7 @@ router.get('/',
   DocumentManagementController.getDocuments
 );
 
-// SEO data list (all documents with title + description + aiGatewayEnabled flag)
+// SEO data list (all documents with title + description)
 router.get('/seo',
   AdminAuthMiddleware.requireGranularPermission('documents.read'),
   DocumentManagementController.getSeoDocuments
@@ -118,14 +118,6 @@ router.patch('/:id/toggle-public',
   AdminAuthMiddleware.logAdminAction('document.toggle_public', 'document_management'),
   autoLogOutcome,
   DocumentManagementController.toggleDocumentPublic
-);
-
-// Regenerate SEO description via AI gateway
-router.post('/:id/regenerate-seo',
-  AdminAuthMiddleware.requireGranularPermission('documents.update'),
-  AdminAuthMiddleware.logAdminAction('document.regenerate_seo', 'document_management'),
-  autoLogOutcome,
-  DocumentManagementController.regenerateSeoDescription
 );
 
 export default router;

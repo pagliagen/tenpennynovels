@@ -96,8 +96,4 @@ export const config = {
     documentsTimeout: 120_000,
     socketTimeout: 60_000,
   },
-
-  webhooks: {
-    secret: process.env.AI_GATEWAY_WEBHOOK_SECRET || '',
-  },
 };

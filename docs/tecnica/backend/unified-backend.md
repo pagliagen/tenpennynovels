@@ -25,7 +25,6 @@ flowchart LR
     GW[API Gateway] --> A[Auth Backend 3000]
     GW --> G[Game Backend 3001]
     GW --> M[Management Backend 3002]
-    GW --> B[BotAI Backend 8080]
 ```
 
 **Current Architecture**:

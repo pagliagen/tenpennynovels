@@ -19,7 +19,6 @@ import { FEATURES } from '@features/index';
 // Import module routes
 import authRoutes from '@core/auth/routes/auth';
 import gameRoutes from '@modules/game/routes';
-import characterGenConfigRoutes from '@modules/game/routes/characterGenConfig';
 import adminRoutes from '@modules/admin/routes';
 
 const app: Application = express();
@@ -127,7 +126,6 @@ const globalLimiter = createGlobalRateLimiter();
 // ===== Module Routes =====
 app.use(globalLimiter);
 app.use('/auth', authRoutes);
-app.use('/character-gen', characterGenConfigRoutes);  // Character Gen config (PUBLIC - no auth)
 app.use('/game', gameRoutes);
 app.use('/admin', adminRoutes);
 

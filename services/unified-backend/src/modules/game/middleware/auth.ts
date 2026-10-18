@@ -540,53 +540,6 @@ export class AuthMiddleware {
   }
 
   /**
-   * Middleware: Validates webhook secret for AI Gateway callbacks (local-ai → unified-backend).
-   */
-  static requireAIGatewayAuth(req: Request, res: Response, next: NextFunction): void {
-    try {
-      const authHeader = req.headers['authorization'] as string;
-      const expectedSecret = appConfig.services.aiGateway.webhookSecret;
-
-      if (!expectedSecret) {
-        logger.error('AI_GATEWAY_WEBHOOK_SECRET non configurato - richiesta rifiutata');
-        const response: ApiResponse = {
-          result: false,
-          error: 'Configurazione webhook mancante',
-          code: 'WEBHOOK_NOT_CONFIGURED',
-          timestamp: new Date().toISOString()
-        };
-        res.status(503).json(response);
-        return;
-      }
-
-      const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
-      if (!token || token !== expectedSecret) {
-        const response: ApiResponse = {
-          result: false,
-          error: 'Autorizzazione webhook non valida',
-          code: 'INVALID_WEBHOOK_AUTH',
-          timestamp: new Date().toISOString()
-        };
-        res.status(401).json(response);
-        return;
-      }
-
-      next();
-
-    } catch (error: unknown) {
-      logger.error('AI Gateway auth validation failed:', error);
-      const response: ApiResponse = {
-        result: false,
-        error: 'Autenticazione fallita',
-        code: 'AUTH_ERROR',
-        timestamp: new Date().toISOString()
-      };
-      res.status(500).json(response);
-    }
-  }
-
-  /**
    * Utility: Extract character ownership from request
    * Used for ownership checks in controllers
    */

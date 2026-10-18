@@ -18,11 +18,6 @@ export function validateEnvironment(): EnvValidationResult {
   if (appConfig.isProduction) {
     if (!appConfig.smtp.user) missing.push('SMTP_USER');
     if (!appConfig.smtp.password) missing.push('SMTP_PASSWORD');
-    if (!appConfig.services.aiGateway.url) missing.push('AI_GATEWAY_URL');
-    if (!appConfig.services.aiGateway.clientId) missing.push('AI_GATEWAY_CLIENT_ID');
-    if (!appConfig.services.aiGateway.apiKey) missing.push('AI_GATEWAY_API_KEY');
-    if (!appConfig.services.aiGateway.hmacSecret) missing.push('AI_GATEWAY_HMAC_SECRET');
-    if (!appConfig.services.aiGateway.webhookSecret) missing.push('AI_GATEWAY_WEBHOOK_SECRET');
   } else {
     if (appConfig.db.redisUrl === 'redis://localhost:6379') {
       warnings.push('REDIS_URL non impostato, uso default locale');

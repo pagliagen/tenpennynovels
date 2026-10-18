@@ -1,6 +1,6 @@
 ---
 name: docker-services
-description: Manage Docker services: start, stop, restart, rebuild, logs, status. Use when the user asks to restart backend, start services, rebuild containers, check logs, stop Docker, activate local-ai, or any Docker/container operation.
+description: Manage Docker services: start, stop, restart, rebuild, logs, status. Use when the user asks to restart backend, start services, rebuild containers, check logs, stop Docker, or any Docker/container operation.
 user-invocable: true
 ---
 
@@ -26,16 +26,8 @@ Tutti i comandi vanno eseguiti dalla root del progetto.
 
 `unified-backend` monta i sorgenti in volume (hot-reload con tsx watch). Un semplice `restart` applica le modifiche al codice senza rebuild.
 
-### Local-AI (`local-ai/docker-compose.yml`)
-
-| Servizio | Porta |
-|----------|-------|
-| gateway | 9000 |
-| botai | 8080 |
-| character-gen | 8130 |
-| mongodb | 27030 |
-
-Profili opzionali: `ollama-docker`, `image-gen`, `test`.
+### bot-service
+Non è in Docker: gira in locale con `npm run bot-service:dev` (vedi `bot-service/README.md`). Usa Ollama dell'host e il Redis del compose (porta 6379).
 
 ## Alias servizi
 
@@ -48,7 +40,6 @@ Riconosci questi nomi informali:
 | mongo, database, db | mongodb |
 | elastic, search | elasticsearch |
 | embeddings, worker | embeddings-worker |
-| local-ai, ai, local ai | stack local-ai (compose separato) |
 
 ## Operazioni -> Comandi
 
@@ -61,17 +52,12 @@ Riconosci questi nomi informali:
 | Ferma tutto / Stop | `docker compose down` |
 | Stato / Status | `docker compose ps` |
 | Log di [servizio] | `docker compose logs --tail=50 [servizio]` |
-| Avvia local-ai | `docker compose -f local-ai/docker-compose.yml up -d` |
-| Ferma local-ai | `docker compose -f local-ai/docker-compose.yml down` |
-| Riavvia local-ai | `docker compose -f local-ai/docker-compose.yml restart` |
-| Log local-ai | `docker compose -f local-ai/docker-compose.yml logs --tail=50` |
-| Stato local-ai | `docker compose -f local-ai/docker-compose.yml ps` |
 
 ## Procedura
 
 1. **Interpreta** la richiesta dell'utente usando la tabella alias e operazioni
 2. **Esegui** il comando con Shell tool (working_directory: root del progetto)
-3. **Verifica** lo stato con `docker compose ps` (o il corrispettivo per local-ai)
+3. **Verifica** lo stato con `docker compose ps`
 4. **Mostra** il risultato all'utente
 
 Per i log, usa `block_until_ms: 5000` e leggi l'output dal file terminale.
@@ -80,5 +66,5 @@ Per i log, usa `block_until_ms: 5000` e leggi l'output dal file terminale.
 
 - Se l'utente chiede di riavviare "i backend" senza specificare, riavvia `unified-backend` e `api-gateway`
 - Se l'utente chiede di riavviare "tutto", riavvia tutti i servizi dello stack principale
-- Per local-ai, usa sempre `-f local-ai/docker-compose.yml`
+- Le **variabili d'ambiente** (`environment:` nel compose, `.env` della root) si rileggono solo ricreando il container: `docker compose up -d <servizio>`. `restart` non le rilegge. Il codice invece si ricarica da solo (volume + `tsx watch`)
 - Il rebuild (`--build`) serve solo quando cambia il Dockerfile o le dipendenze, non per modifiche al codice sorgente

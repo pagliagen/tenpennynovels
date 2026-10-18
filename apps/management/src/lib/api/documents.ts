@@ -293,11 +293,11 @@ export async function reorderSubtypes(type: string, orderedIds: string[]): Promi
 // ========== SEO API ==========
 
 /**
- * Get all documents with SEO fields + aiGatewayEnabled flag
+ * Get all documents with SEO fields
  */
-export async function getSeoDocuments(): Promise<{ documents: SeoDocument[]; aiGatewayEnabled: boolean }> {
+export async function getSeoDocuments(): Promise<{ documents: SeoDocument[] }> {
   const response = await withRetry(() =>
-    apiClient.get<ApiResponse<{ documents: SeoDocument[]; aiGatewayEnabled: boolean }>>('/admin/documents/seo')
+    apiClient.get<ApiResponse<{ documents: SeoDocument[] }>>('/admin/documents/seo')
   );
 
   if (!response.data.success || !response.data.data) {
@@ -305,20 +305,4 @@ export async function getSeoDocuments(): Promise<{ documents: SeoDocument[]; aiG
   }
 
   return response.data.data;
-}
-
-/**
- * Regenerate SEO description for a single document via AI gateway
- * Returns the newly generated description
- */
-export async function regenerateSeoDescription(id: string): Promise<string> {
-  const response = await withRetry(() =>
-    apiClient.post<ApiResponse<{ description: string }>>(`/admin/documents/${id}/regenerate-seo`)
-  );
-
-  if (!response.data.success || !response.data.data) {
-    throw new Error(response.data.error || 'Errore nella rigenerazione descrizione SEO');
-  }
-
-  return response.data.data.description;
 }
