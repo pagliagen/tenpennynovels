@@ -14,6 +14,10 @@ export { EmbeddingService } from './services/EmbeddingService';
 export { searchPublicLore } from './services/PublicLoreSearch';
 export type { LorePassage } from './services/PublicLoreSearch';
 
+/** Lettura in sola lettura dei documenti pubblici per la revisione editoriale (features/editorialAi). */
+export { readDocumentsForReview, htmlToPlainText } from './services/DocumentReviewReader';
+export type { ReviewDocumentRow, ReviewSubtypeRow } from './services/DocumentReviewReader';
+
 /**
  * Tipi documento: sorgente unica in constants/documentTypes.ts, riesposta qui
  * perché serve fuori dalla feature (tipi del gestionale, SitemapService). Sono

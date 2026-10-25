@@ -23,7 +23,7 @@ interface NavItem {
   href?: string;
   permission?: string;
   /** Voce nascosta se il flag corrispondente (featureFlagsStore) è false — feature legate a servizi AI non gestiti dal server */
-  featureFlag?: 'keeperQaEnabled';
+  featureFlag?: 'keeperQaEnabled' | 'editorialAiEnabled';
   children?: NavItem[];
 }
 
@@ -56,6 +56,14 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { key: 'locations-list', label: 'Gestione Location', href: '/locations/location-list', permission: 'locations.list' },
       { key: 'locations-position-map', label: 'Posiziona Mappa', href: '/locations/position-map', permission: 'locations.update' }
+    ]
+  },
+  {
+    key: 'editorial',
+    label: 'AI Editoriale',
+    icon: '🪶',
+    children: [
+      { key: 'editorial-canon-check', label: 'Revisione canone', href: '/editorial/canon-check', permission: 'documents.list', featureFlag: 'editorialAiEnabled' }
     ]
   },
   {
@@ -128,9 +136,9 @@ export function Sidebar(): React.ReactElement {
   const router = useRouter();
   const { sidebarCollapsed, toggleSidebar, expandedCategories, toggleCategory } = useUIStore();
   const { hasPermission } = usePermissionsStore();
-  const { keeperQaEnabled } = useFeatureFlagsStore();
+  const { keeperQaEnabled, editorialAiEnabled } = useFeatureFlagsStore();
 
-  const featureFlags = { keeperQaEnabled };
+  const featureFlags = { keeperQaEnabled, editorialAiEnabled };
 
   const isNavItemVisible = (item: NavItem): boolean => {
     if (item.permission && !hasPermission(item.permission)) return false;

@@ -14,6 +14,8 @@ import { logger } from '@/lib/logger';
 
 interface FeatureFlagsState {
   keeperQaEnabled: boolean;
+  /** AI editoriale: accesa solo da ENABLE_IA_EDITORIAL sul server (assente in produzione). */
+  editorialAiEnabled: boolean;
   isLoading: boolean;
 }
 
@@ -26,6 +28,7 @@ type FeatureFlagsStore = FeatureFlagsState & FeatureFlagsActions;
 
 const initialState: FeatureFlagsState = {
   keeperQaEnabled: false,
+  editorialAiEnabled: false,
   isLoading: true
 };
 
@@ -41,12 +44,13 @@ export const useFeatureFlagsStore = create<FeatureFlagsStore>((set) => ({
 
       set({
         keeperQaEnabled: data.keeperQaEnabled ?? false,
+        editorialAiEnabled: data.editorialAiEnabled ?? false,
         isLoading: false
       });
     } catch (error: unknown) {
       logger.error('[FeatureFlagsStore] Failed to load feature flags:', { error });
       // Fail-closed: in caso di errore le feature restano nascoste
-      set({ keeperQaEnabled: false, isLoading: false });
+      set({ keeperQaEnabled: false, editorialAiEnabled: false, isLoading: false });
     }
   },
 

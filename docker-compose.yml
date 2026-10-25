@@ -88,6 +88,10 @@ services:
       # host.docker.internal risolve all'host da dentro il container.
       OLLAMA_URL: http://host.docker.internal:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:8b}
+      # AI editoriale: senza 'true' /editorial/* risponde 404. Modello opzionale, più capace di quello del
+      # Bibliotecario (la scrittura editoriale non ha vincoli di tempo: un 9-12b va bene in locale).
+      ENABLE_IA_EDITORIAL: ${ENABLE_IA_EDITORIAL:-false}
+      OLLAMA_EDITORIAL_MODEL: ${OLLAMA_EDITORIAL_MODEL:-}
     ports:
       - "5001:5001"  # HTTP API for embeddings
     networks:
@@ -192,6 +196,10 @@ services:
 
       # Servizio bot locale (bot-service/). Vuoto = endpoint /internal/bot-chat disattivato (404).
       BOT_SERVICE_SECRET: ${BOT_SERVICE_SECRET:-}
+
+      # AI editoriale nel gestionale (revisione di canone, bozze di descrizioni). Solo 'true' la accende;
+      # in produzione la variabile non c'è. Va impostata anche su embeddings-worker (difesa in profondità).
+      ENABLE_IA_EDITORIAL: ${ENABLE_IA_EDITORIAL:-false}
 
       # Frontend URLs
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4000}

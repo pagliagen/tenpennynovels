@@ -429,6 +429,24 @@ SMTP_SECURE=false                      # true for port 465, false for 587
 
 ---
 
+## AI editoriale (solo locale)
+
+```bash
+# Accende l'assistente editoriale del gestionale. Solo il valore esatto "true" la accende
+# (assente, vuoto, "1", "TRUE"... = spenta). Default false; NON impostarla in produzione.
+# Va letta da unified-backend E da embeddings-worker (docker-compose.yml le passa entrambe).
+ENABLE_IA_EDITORIAL=false
+
+# Opzionale, solo embeddings-worker: modello per la scrittura editoriale (default: OLLAMA_MODEL)
+OLLAMA_EDITORIAL_MODEL=gemma4:12b
+```
+
+Con la variabile spenta: le route `/admin/editorial/*` rispondono 404 (tranne `/admin/editorial/status`, che dice
+`{ "enabled": false }`), il worker rifiuta `/editorial/*` e il gestionale non mostra pulsanti né voci di menu.
+Cambiarla richiede riavviare i container (`stop` + `up -d`, mai `restart`: vedi `40-workflow.md`).
+
+---
+
 ## Bot Service (solo locale)
 
 Variabili lette da `unified-backend` (in Docker: `docker-compose.yml`, valori dal `.env` della root):

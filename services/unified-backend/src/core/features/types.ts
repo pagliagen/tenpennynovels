@@ -52,7 +52,9 @@ export interface FeatureRouteMount {
   gated?: boolean;
 }
 
-export interface FeatureFlagSpec {
+/** Flag runtime su SystemConfiguration (modificabile dal gestionale, cache Redis). */
+export interface RuntimeFeatureFlagSpec {
+  source?: 'config';
   /** configKey in SystemConfiguration, es. 'keeper_qa_enabled'. */
   configKey: string;
   section: 'ai_features' | 'system' | 'economy' | 'moderation';
@@ -60,6 +62,19 @@ export interface FeatureFlagSpec {
   /** Etichetta mostrata nel gestionale. */
   label: string;
 }
+
+/**
+ * Flag da variabile d'ambiente: vale solo `'true'`, qualunque altro valore (o assenza) = spenta.
+ * Non è commutabile dal gestionale né tocca SystemConfiguration: serve per le feature che in
+ * produzione non devono esistere (es. ENABLE_IA_EDITORIAL). Cambiarla richiede riavviare il servizio.
+ */
+export interface EnvFeatureFlagSpec {
+  source: 'env';
+  envVar: string;
+  label: string;
+}
+
+export type FeatureFlagSpec = RuntimeFeatureFlagSpec | EnvFeatureFlagSpec;
 
 export interface FeatureManifest {
   key: FeatureKey;

@@ -15,6 +15,7 @@ import { redis } from '@config/runtime/redis';
 import { logger } from '@shared/utils/logger';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { featureRegistry } from './registry';
+import { isEnvFlagOn } from './envFlag';
 import type { FeatureKey } from './types';
 
 function toBoolean(value: unknown, fallback: boolean): boolean {
@@ -26,6 +27,8 @@ export class FeatureFlagService {
     const manifest = featureRegistry.getByKey(key);
     if (!manifest) return false;
     if (!manifest.flag) return true;
+    // Flag da ambiente: niente Redis, niente runtime config, nessun errore possibile.
+    if (manifest.flag.source === 'env') return isEnvFlagOn(manifest.flag.envVar);
 
     try {
       const configService = new ConfigurationService(redis.getClient(), logger);
