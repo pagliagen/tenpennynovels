@@ -28,12 +28,15 @@ export interface LocationInfo {
 export interface BotListing {
   name: string;
   characterId: string;
+  environment: string;
   locationId: string | null;
   file: string;
   active: boolean;
 }
 
 export interface BotAdminDeps {
+  /** L'ambiente di questo backend: vede solo i bot creati qui e li crea con questa etichetta. */
+  environment: string;
   /** Un'azione del character-bot via gateway. */
   call: (action: 'list' | 'design' | 'register', body: unknown, timeoutMs?: number) => Promise<unknown>;
   loadLocation: (locationId: string) => Promise<LocationInfo | null>;
@@ -62,30 +65,40 @@ export interface DesignOutcome {
   ms: number;
 }
 
-async function listRaw(deps: BotAdminDeps): Promise<Omit<BotListing, never>[]> {
-  const body = (await deps.call('list', {})) as { bots?: unknown };
+async function listRaw(deps: BotAdminDeps): Promise<{ bots: BotListing[]; hiddenOtherEnvironments: number }> {
+  const body = (await deps.call('list', { environment: deps.environment })) as { bots?: unknown; hiddenOtherEnvironments?: unknown };
   if (!Array.isArray(body.bots)) throw new BotAdminError(502, 'BAD_RESPONSE', 'Risposta del servizio AI non valida.');
-  return body.bots as BotListing[];
+  return { bots: body.bots as BotListing[], hiddenOtherEnvironments: typeof body.hiddenOtherEnvironments === 'number' ? body.hiddenOtherEnvironments : 0 };
 }
 
-export async function listBots(deps: BotAdminDeps): Promise<(BotListing & { locationName: string | null; playerStatus: string | null })[]> {
-  const bots = await listRaw(deps);
+export interface BotsOverview {
+  bots: (BotListing & { locationName: string | null; playerStatus: string | null })[];
+  /** Bot di altri ambienti (il loro personaggio non è in questo database): non si mostrano, si contano. */
+  hiddenOtherEnvironments: number;
+}
+
+export async function listBots(deps: BotAdminDeps): Promise<BotsOverview> {
+  const { bots, hiddenOtherEnvironments } = await listRaw(deps);
   const [names, statuses] = await Promise.all([
     deps.locationNames(bots.map((b) => b.locationId).filter((id): id is string => !!id)),
     deps.characterStatuses(bots.map((b) => b.characterId)),
   ]);
-  return bots.map((b) => ({
-    ...b,
-    locationName: b.locationId ? names.get(b.locationId) ?? null : null,
-    playerStatus: statuses.get(b.characterId) ?? null,
-  }));
+  return {
+    hiddenOtherEnvironments,
+    bots: bots.map((b) => ({
+      ...b,
+      locationName: b.locationId ? names.get(b.locationId) ?? null : null,
+      playerStatus: statuses.get(b.characterId) ?? null,
+    })),
+  };
 }
 
 async function requireFreeLocation(deps: BotAdminDeps, locationId: string): Promise<{ location: LocationInfo; existing: BotListing[] }> {
   const location = await deps.loadLocation(locationId);
   if (!location) throw new BotAdminError(404, 'NOT_FOUND', 'Location non trovata');
   if (!location.hasChat) throw new BotAdminError(422, 'INVALID_LOCATION', 'Un bot risponde nella chat di una location: scegli un luogo specifico, non un quartiere o un distretto.');
-  const existing = await listRaw(deps);
+  // L'elenco è già solo di questo ambiente: la location è libera se non c'è un bot di QUESTO ambiente.
+  const { bots: existing } = await listRaw(deps);
   if (existing.some((b) => b.locationId === locationId)) throw new BotAdminError(409, 'LOCATION_TAKEN', 'Questa location ha già un bot.');
   return { location, existing };
 }
@@ -132,6 +145,7 @@ export async function runDesign(deps: BotAdminDeps, prepared: PreparedDesign): P
 
 export interface CreatedBot {
   characterId: string;
+  environment: string;
   file: string;
   /** false = scheda e personaggio creati, ma il servizio non si è ricaricato: il bot parte al prossimo riavvio. */
   reloaded: boolean;
@@ -160,8 +174,8 @@ export async function createBot(deps: BotAdminDeps, input: { locationId: string;
 
   const characterId = await deps.createCharacter(draft.character);
   try {
-    const registered = (await deps.call('register', { locationId: input.locationId, sheet: botSheet(draft, characterId) })) as { file?: unknown; reloaded?: unknown };
-    return { characterId, file: typeof registered.file === 'string' ? registered.file : '', reloaded: registered.reloaded !== false };
+    const registered = (await deps.call('register', { locationId: input.locationId, environment: deps.environment, sheet: botSheet(draft, characterId) })) as { file?: unknown; reloaded?: unknown };
+    return { characterId, environment: deps.environment, file: typeof registered.file === 'string' ? registered.file : '', reloaded: registered.reloaded !== false };
   } catch (error: unknown) {
     await deps.deleteCharacter(characterId).catch(() => undefined);
     throw error;

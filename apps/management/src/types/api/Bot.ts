@@ -3,6 +3,8 @@
 export interface BotRow {
   name: string;
   characterId: string;
+  /** Ambiente in cui il bot è stato creato (`local`, `production`...). */
+  environment: string;
   locationId: string | null;
   locationName: string | null;
   file: string;
@@ -10,6 +12,12 @@ export interface BotRow {
   active: boolean;
   /** Stato del personaggio nel game (`approved`...). */
   playerStatus: string | null;
+}
+
+/** L'elenco: solo i bot di questo ambiente; gli altri (il loro personaggio non è in questo database) si contano. */
+export interface BotsOverview {
+  bots: BotRow[];
+  hiddenOtherEnvironments: number;
 }
 
 export interface BotCharacterFields {
@@ -60,6 +68,8 @@ export interface BotDesignRequest {
 
 export interface CreatedBot {
   characterId: string;
+  /** Ambiente con cui è stato creato (quello del backend). */
+  environment: string;
   file: string;
   /** false = bot creato ma il servizio non si è ricaricato: parte al prossimo riavvio. */
   reloaded: boolean;

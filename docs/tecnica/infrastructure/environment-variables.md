@@ -437,10 +437,16 @@ Variabili lette da `unified-backend` (in Docker: `docker-compose.yml`, valori da
 # «L'AI editoriale è abilitata». Solo il valore esatto "true" (assente, vuoto, "1", "TRUE"... = spenta). Default false.
 ENABLE_IA_EDITORIAL=false
 
-# Tab «Bot» del gestionale (elenco e generazione dei bot): STRUMENTO DA SVILUPPO, separato dall'editoriale perché in
-# produzione ENABLE_IA_EDITORIAL può essere true e questa no. Stessa semantica: "true" esatto + il gateway deve
-# dichiarare il servizio `character-bot` (con la variabile spenta il gateway non viene interrogato). Default false.
+# Tab «Bot» del gestionale (elenco e generazione dei bot). Separato dall'editoriale. Stessa semantica: "true" esatto +
+# il gateway deve dichiarare il servizio `character-bot` (con la variabile spenta il gateway non viene interrogato).
+# Default false. Attivare il tab NON accende il bot di chat (quello dipende da BOT_SERVICE_SECRET).
 ENABLE_BOT_CHARACTERS=false
+
+# Ambiente dei bot creati e mostrati dal tab (`local`, `production`...). NON serve impostarla: di default è `production`
+# con NODE_ENV=production e `local` altrimenti (fail-closed). Serve solo per distinguere un altro ambiente (es. staging).
+# APP_ENVIRONMENT=
+# bot-service (bot-service/.env): carica SOLO i bot di questo ambiente. Default `local`.
+# BOT_SERVICE_ENVIRONMENT=local
 
 # Dove sta il gateway AI (ai-gateway/): dominio ngrok oggi, dominio del server AI dedicato domani.
 # In Docker locale: http://host.docker.internal:8787 (senza ngrok).

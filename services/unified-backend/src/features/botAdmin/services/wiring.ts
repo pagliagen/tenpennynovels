@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { aiGateway } from '@core/ai';
+import { appConfig } from '@config/runtime';
 import { LOCATION_TAG_DEFS, type LocationTag } from '@core/location/constants/locationTags';
 import { Location } from '@core/location/models/Location';
 import { characterNameInUse, characterStatuses, createBotCharacter, deleteBotCharacter, systemBotUserExists } from './BotCharacterService';
@@ -42,6 +43,7 @@ async function locationNames(ids: string[]): Promise<Map<string, string>> {
 }
 
 export const defaultDeps: BotAdminDeps = {
+  environment: appConfig.botEnvironment,
   call: (action, body, timeoutMs) => aiGateway.call('character-bot', action, body, timeoutMs ? { timeoutMs } : {}),
   loadLocation: loadLocationInfo,
   locationNames,

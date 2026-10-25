@@ -78,7 +78,7 @@ Dettaglio delle responsabilità: `docs/tecnica/frontend/game-app.md`.
 
 **Auth**: su 401 redirect alla landing per il login. I permessi sono verificati dal backend; `isGestore` bypassa i controlli.
 
-**Tab «Bot» di `characters/character-list`**: compare solo con `featureFlagsStore.botAdminEnabled` (strumento da sviluppo, `ENABLE_BOT_CHARACTERS`; vedi `30-ai-services.md`) e mostra `BotsPanel`, non la tabella dei personaggi. Il filtro precedente su `char.isBot` non faceva nulla: quel campo non è mai esistito nel modello né nel DB (i bot sono i personaggi dell'utente `system-bot`). La generazione legge un flusso **SSE con `fetch`** (`lib/api/bots.ts`, `takeSseEvents`): Axios non lo legge. In locale i personaggi dei bot compaiono anche in «Tutti» e «PG Principale» (`characterType: 'pg_principale'`).
+**Tab «Bot» di `characters/character-list`**: compare solo con `featureFlagsStore.botAdminEnabled` (`ENABLE_BOT_CHARACTERS`; mostra solo i bot del proprio ambiente; vedi `30-ai-services.md`) e mostra `BotsPanel`, non la tabella dei personaggi. Il filtro precedente su `char.isBot` non faceva nulla: quel campo non è mai esistito nel modello né nel DB (i bot sono i personaggi dell'utente `system-bot`). La generazione legge un flusso **SSE con `fetch`** (`lib/api/bots.ts`, `takeSseEvents`): Axios non lo legge. In locale i personaggi dei bot compaiono anche in «Tutti» e «PG Principale» (`characterType: 'pg_principale'`).
 
 **Mutazioni con audit**: create/update/delete tracciano l'autore (`createdBy`, `lastModifiedBy`, `deletedBy`). Preferire **soft delete** (`deletedAt`) all'eliminazione fisica.
 

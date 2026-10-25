@@ -3,6 +3,14 @@ import { existsSync, readFileSync, readdirSync } from 'fs';
 import path from 'path';
 import { z } from 'zod';
 
+/**
+ * L'ambiente a cui appartiene un bot (`local`, `production`...): il suo personaggio esiste solo nel database di quell'ambiente.
+ * Le location hanno gli stessi id ovunque (il seed è deterministico), quindi senza questa etichetta un bot creato in
+ * produzione diventerebbe un bot «fantasma» del servizio locale, e due ambienti si bloccherebbero a vicenda sulla stessa location.
+ */
+export const environmentSchema = z.string().regex(/^[a-z][a-z0-9-]{0,29}$/, 'ambiente: minuscole, cifre e trattini');
+export const DEFAULT_ENVIRONMENT = 'local';
+
 const envSchema = z.object({
   REDIS_URL: z.string().default('redis://localhost:6379'),
   BACKEND_URL: z.string().url().default('http://localhost:3001'),
@@ -12,9 +20,12 @@ const envSchema = z.object({
   BOTS_DIR: z.string().default('./bots'),
   MAPPING_FILE: z.string().default('./mapping.json'),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI mancante'),
+  /** A quale ambiente serve questo servizio: carica solo i bot di quell'ambiente. */
+  BOT_SERVICE_ENVIRONMENT: environmentSchema.default(DEFAULT_ENVIRONMENT),
 });
 
 const score = z.number().min(0).max(100);
+
 
 /** La scheda psicologica: numeri nel codice, tradotti in frasi prima di arrivare al modello. */
 export const psycheSchema = z.object({
@@ -94,6 +105,8 @@ export const botDefSchema = z.object({
   name: z.string().min(1),
   /** _id del Character bot nel game (e id del bot nel mapping). */
   characterId: z.string().min(1),
+  /** Ambiente del personaggio. Le schede senza etichetta (scritte prima) sono `local`. */
+  environment: environmentSchema.default(DEFAULT_ENVIRONMENT),
   persona: z.string().min(20),
   psyche: psycheSchema,
   /** Rapporti già esistenti con personaggi precisi. */
@@ -118,7 +131,7 @@ export const botDefSchema = z.object({
 export const botSchema = botDefSchema.extend({ locationId: z.string().min(1) });
 
 /** `mapping.json`: quale bot sta in quale location. */
-export const mappingSchema = z.array(z.object({ locationId: z.string().min(1), botId: z.string().min(1) }));
+export const mappingSchema = z.array(z.object({ locationId: z.string().min(1), botId: z.string().min(1), environment: environmentSchema.default(DEFAULT_ENVIRONMENT) }));
 
 export type BotConfig = z.infer<typeof botSchema>;
 
@@ -129,6 +142,8 @@ export interface Config {
   ollamaUrl: string;
   model: string;
   mongoUri: string;
+  /** Il servizio carica solo i bot di questo ambiente. */
+  environment: string;
   bots: BotConfig[];
 }
 
@@ -144,13 +159,16 @@ export function loadBotDefs(dir: string): z.infer<typeof botDefSchema>[] {
     });
 }
 
-/** Unisce le schede dei bot con la mappatura location → bot. */
-export function resolveBots(defs: z.infer<typeof botDefSchema>[], mapping: z.infer<typeof mappingSchema>): BotConfig[] {
-  const byId = new Map(defs.map((d) => [d.characterId, d]));
+/**
+ * Unisce le schede dei bot con la mappatura location → bot, **solo per l'ambiente indicato**: schede e righe di altri
+ * ambienti si ignorano (non sono bot di questo servizio) e la regola «una location, un bot» vale per ambiente.
+ */
+export function resolveBots(defs: z.infer<typeof botDefSchema>[], mapping: z.infer<typeof mappingSchema>, environment: string = DEFAULT_ENVIRONMENT): BotConfig[] {
+  const byId = new Map(defs.filter((d) => d.environment === environment).map((d) => [d.characterId, d]));
   const locations = new Set<string>();
-  return mapping.map(({ locationId, botId }) => {
+  return mapping.filter((m) => m.environment === environment).map(({ locationId, botId }) => {
     const def = byId.get(botId);
-    if (!def) throw new Error(`mapping: nessun bot con characterId ${botId} in bots/`);
+    if (!def) throw new Error(`mapping: nessun bot con characterId ${botId} (ambiente ${environment}) in bots/`);
     if (locations.has(locationId)) throw new Error(`mapping: più bot sulla stessa location (${locationId}): non supportato`);
     locations.add(locationId);
     return botSchema.parse({ ...def, locationId });
@@ -175,6 +193,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     ollamaUrl: e.OLLAMA_URL,
     model: e.OLLAMA_MODEL,
     mongoUri: e.MONGODB_URI,
-    bots: resolveBots(defs, mapping),
+    environment: e.BOT_SERVICE_ENVIRONMENT,
+    bots: resolveBots(defs, mapping, e.BOT_SERVICE_ENVIRONMENT),
   };
 }

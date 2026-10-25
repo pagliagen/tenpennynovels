@@ -18,7 +18,7 @@ Example:
 - /generate-bot "Ten Bells Public House" "una cameriera sbrigativa, vedova, che sa tutto del quartiere"
 
 ## Alternativa: dal gestionale
-Con `ENABLE_BOT_CHARACTERS=true` (solo in locale), `ENABLED_SERVICES=character-bot` e il gateway acceso, il tab **Bot** di «Gestione Personaggi» fa tutto questo da sé: scegli la location, descrivi il bot, correggi la bozza, «Crea bot» (personaggio, `bots/<nome>.json` e `mapping.json`, con ricarica automatica). I passi sotto restano validi per fare a mano o per rapporti e atteggiamenti.
+Con `ENABLE_BOT_CHARACTERS=true`, `ENABLED_SERVICES=character-bot` e il gateway acceso, il tab **Bot** di «Gestione Personaggi» fa tutto questo da sé: scegli la location, descrivi il bot, correggi la bozza, «Crea bot» (personaggio, `bots/<nome>.json` e `mapping.json`, con ricarica automatica). I passi sotto restano validi per fare a mano o per rapporti e atteggiamenti.
 
 ## Steps
 

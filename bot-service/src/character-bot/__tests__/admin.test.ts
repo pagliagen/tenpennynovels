@@ -29,7 +29,7 @@ function setup(over: { llm?: Llm; reload?: () => Promise<void> } = {}) {
 
 test('list: vuoto da zero; dopo register il bot compare e risulta attivo se caricato', async () => {
   const { routes } = setup();
-  assert.deepEqual((await routes.list({})).body, { bots: [] });
+  assert.deepEqual((await routes.list({})).body, { bots: [], hiddenOtherEnvironments: 0 });
   assert.equal((await routes.register({ locationId: LOC, sheet })).status, 200);
   const listed = (await routes.list({})).body as { bots: { name: string; active: boolean; locationId: string }[] };
   assert.deepEqual(listed.bots.map((b) => [b.name, b.active, b.locationId]), [['Martha Quill', true, LOC]]);
