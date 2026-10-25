@@ -1,67 +1,44 @@
-import Redis from 'ioredis';
-import PQueue from 'p-queue';
-import { loadConfig } from './config';
-import { BOT_CHAT_CHANNEL, parseChatEvent } from './events';
-import { isPublicStandard, shouldTrigger } from './filters';
-import { History } from './history';
-import { OllamaClient } from './ollama';
-import { BackendClient } from './backendClient';
-import { BotResponder } from './responder';
-import { MongoStore } from './psyche/store';
-import { logger } from './logger';
+import { createCharacterBot } from './character-bot/service';
+import { createHttpServer } from './http/server';
+import type { AiService, ServiceName } from './http/service';
+import { loadLauncherConfig } from './shared/env';
+import { logger } from './shared/logger';
+
+/**
+ * Launcher di bot-service: avvia SOLO i servizi elencati in `ENABLED_SERVICES` (default vuoto =
+ * nessuno, per non accendere per svista un servizio sul server sbagliato) e l'HTTP interno su loopback
+ * con `/health`. Ogni servizio vive nella sua cartella e non sa degli altri.
+ */
+const FACTORIES: Record<ServiceName, (() => AiService) | undefined> = {
+  'character-bot': createCharacterBot,
+  editorial: undefined, // arriva con la fase B
+};
 
 async function main(): Promise<void> {
-  const config = loadConfig();
+  const config = loadLauncherConfig();
+  if (config.enabled.length === 0) {
+    logger.warn('ENABLED_SERVICES è vuoto: nessun servizio attivo. Esempio: ENABLED_SERVICES=editorial,character-bot');
+  }
 
-  const subscriber = new Redis(config.redisUrl);
-  const redis = new Redis(config.redisUrl);
-
-  const store = await MongoStore.connect(config.mongoUri);
-  const history = new History(redis);
-  const ollama = new OllamaClient(config.ollamaUrl, config.model);
-  const backend = new BackendClient(config.backendUrl, config.secret);
-  const queue = new PQueue({ concurrency: 1 });
-
-  const botCharacterIds: ReadonlySet<string> = new Set(config.bots.map((b) => b.characterId));
-  const responders = new Map(
-    config.bots.map((bot) => [bot.locationId, { bot, responder: new BotResponder(bot, { history, ollama, backend, queue, store }) }]),
-  );
-
-  subscriber.on('error', (error) => logger.error('Redis (subscriber)', { error: String(error) }));
-  redis.on('error', (error) => logger.error('Redis', { error: String(error) }));
-
-  subscriber.on('message', (_channel, raw) => {
-    const event = parseChatEvent(raw);
-    if (!event || !isPublicStandard(event)) return;
-
-    const entry = responders.get(event.locationId);
-    if (!entry) return;
-
-    history
-      .push(event.locationId, {
-        characterId: event.characterId,
-        characterName: event.characterName,
-        content: event.content,
-        position: event.position,
-        positionDescription: event.positionDescription,
-      })
-      .then(() => {
-        if (shouldTrigger(event, entry.bot, botCharacterIds)) entry.responder.notify();
-      })
-      .catch((error: unknown) => logger.error('Gestione evento fallita', { error: String(error) }));
+  const services = config.enabled.map((name) => {
+    const factory = FACTORIES[name];
+    if (!factory) throw new Error(`Il servizio «${name}» non è ancora disponibile`);
+    return factory();
   });
 
-  await subscriber.subscribe(BOT_CHAT_CHANNEL);
-  logger.info('bot-service attivo', {
-    model: config.model,
-    bots: config.bots.map((b) => `${b.name}@${b.locationId}`),
-  });
+  for (const service of services) {
+    await service.start();
+    logger.info('Servizio avviato', { service: service.name });
+  }
+
+  const server = createHttpServer(services);
+  await new Promise<void>((resolve) => server.listen(config.port, config.host, resolve));
+  logger.info('bot-service attivo', { http: `${config.host}:${config.port}`, services: services.map((s) => s.name) });
 
   const shutdown = async (): Promise<void> => {
     logger.info('Arresto');
-    for (const { responder } of responders.values()) responder.stop();
-    queue.clear();
-    await Promise.allSettled([subscriber.quit(), redis.quit(), store.close()]);
+    server.close();
+    await Promise.allSettled(services.map((s) => s.stop()));
     process.exit(0);
   };
   process.on('SIGINT', () => void shutdown());

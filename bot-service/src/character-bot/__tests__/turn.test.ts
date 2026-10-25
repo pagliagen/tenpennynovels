@@ -4,10 +4,11 @@ import { testBot } from './fixtures';
 import { MemoryStore } from '../psyche/store';
 import { applyAppraisal, finishTurn, loadTurnState, playerTextSinceLastReply, type TurnState } from '../psyche/turn';
 import { buildPsycheLines } from '../psyche/blocks';
-import type { Llm } from '../ollama';
+import type { Llm } from '../../shared/ollama';
 import type { Appraisal } from '../psyche/appraise';
 import type { TurnContext } from '../pipeline/types';
 import type { HistoryLine } from '../prompt';
+import { NO_REQUEST } from '../knowledge';
 
 const bot = testBot();
 const now = new Date('2026-10-17T18:00:00Z');
@@ -19,7 +20,7 @@ const llm = (json: unknown = { summary: 'Ha chiesto da bere e si è comportato b
   generateJson: async () => json,
 });
 
-const appraisal = (over: Partial<Appraisal> = {}): Appraisal => ({ events: [], introducedName: null, facts: [], ...over });
+const appraisal = (over: Partial<Appraisal> = {}): Appraisal => ({ events: [], introducedName: null, facts: [], infoRequest: NO_REQUEST, ...over });
 
 const ctxFor = (state: TurnState): TurnContext => ({
   bot, history: state.history, previousOwn: [], knownText: '', psyche: bot.psyche,

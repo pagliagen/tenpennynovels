@@ -7,6 +7,8 @@ export interface StateStore {
   saveMood(mood: MoodState): Promise<void>;
   getRelations(botId: string, playerIds: string[]): Promise<Map<string, Relation>>;
   saveRelation(rel: Relation): Promise<void>;
+  /** Il database risponde (per `/health`). */
+  ping(): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -31,6 +33,7 @@ export class MemoryStore implements StateStore {
   async saveRelation(rel: Relation): Promise<void> {
     this.relations.set(`${rel.botId}:${rel.playerId}`, rel);
   }
+  async ping(): Promise<void> {}
   async close(): Promise<void> {}
 }
 
@@ -70,6 +73,10 @@ export class MongoStore implements StateStore {
 
   async saveRelation(rel: Relation): Promise<void> {
     await this.relations.replaceOne({ botId: rel.botId, playerId: rel.playerId }, rel, { upsert: true });
+  }
+
+  async ping(): Promise<void> {
+    await this.client.db().command({ ping: 1 });
   }
 
   async close(): Promise<void> {

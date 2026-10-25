@@ -1,4 +1,4 @@
-import type { Llm } from '../ollama';
+import type { Llm } from '../../shared/ollama';
 import type { TurnContext } from './types';
 
 // Gli esempi non contengono nomi propri: un nome nell'esempio viene copiato nelle risposte

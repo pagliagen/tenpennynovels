@@ -1,5 +1,6 @@
 import type { BotConfig } from './config';
 import type { Plan } from './pipeline/types';
+import type { ChatMessage } from '../shared/ollama';
 
 export interface HistoryLine {
   characterId: string;
@@ -10,10 +11,7 @@ export interface HistoryLine {
   positionDescription?: string;
 }
 
-export interface ChatMessage {
-  role: 'system' | 'user';
-  content: string;
-}
+export type { ChatMessage };
 
 /** Limite del backend sul campo content (Chat.ts). */
 export const MAX_REPLY_CHARS = 1200;

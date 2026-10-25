@@ -1,4 +1,4 @@
-import { logger } from './logger';
+import { logger } from '../shared/logger';
 import type { Appearance } from './psyche/types';
 import type { BotEnvironment } from './environment';
 import type { BotKnowledge, LocationTagOption } from './knowledge';

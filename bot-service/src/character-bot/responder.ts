@@ -1,6 +1,6 @@
 import type PQueue from 'p-queue';
 import type { BotConfig } from './config';
-import type { Llm } from './ollama';
+import type { Llm } from '../shared/ollama';
 import type { BackendClient } from './backendClient';
 import type { HistoryLine } from './prompt';
 import { weatherLines, type BotEnvironment } from './environment';
@@ -11,7 +11,7 @@ import { buildPsycheLines } from './psyche/blocks';
 import type { StateStore } from './psyche/store';
 import { appraiseIncoming } from './psyche/appraise';
 import { applyAppraisal, finishTurn, loadTurnState, playerTextSinceLastReply, type TurnState } from './psyche/turn';
-import { logger } from './logger';
+import { logger } from '../shared/logger';
 
 /** Quante battute precedenti del bot si confrontano per rilevare le ripetizioni. */
 const COMPARE_LAST_OWN = 4;

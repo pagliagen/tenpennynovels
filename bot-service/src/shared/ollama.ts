@@ -1,7 +1,12 @@
 import { logger } from './logger';
-import type { ChatMessage } from './prompt';
+
 
 const REQUEST_TIMEOUT_MS = 3 * 60 * 1000;
+
+export interface ChatMessage {
+  role: 'system' | 'user';
+  content: string;
+}
 
 interface OllamaChatResponse {
   message?: { content?: string };
@@ -79,5 +84,30 @@ export class OllamaClient implements Llm {
       outputTokens: data.eval_count,
     });
     return data.message?.content ?? '';
+  }
+}
+
+export interface OllamaCheck {
+  ok: boolean;
+  /** Perché non è ok, in poche parole (finisce nel /health, mai prompt o risposte). */
+  reason?: string;
+}
+
+/**
+ * Ollama risponde e, se indicato, ha il modello. Serve a `/health`: «200» deve voler dire
+ * «posso davvero generare», non solo «il processo è su».
+ */
+export async function checkOllama(baseUrl: string, model?: string, timeoutMs = 2000): Promise<OllamaCheck> {
+  try {
+    const response = await fetch(new URL('/api/tags', baseUrl), { signal: AbortSignal.timeout(timeoutMs) });
+    if (!response.ok) return { ok: false, reason: `Ollama ${response.status}` };
+    if (!model) return { ok: true };
+    const body = (await response.json()) as { models?: { name?: string; model?: string }[] };
+    const names = (body.models ?? []).flatMap((m) => [m.name, m.model]).filter((n): n is string => !!n);
+    // «gemma4:12b» e «gemma4:12b-q4» sono modelli diversi, ma «gemma4» senza tag vale «gemma4:latest».
+    const wanted = model.includes(':') ? model : `${model}:latest`;
+    return names.includes(wanted) ? { ok: true } : { ok: false, reason: `modello ${model} non installato` };
+  } catch {
+    return { ok: false, reason: 'Ollama non raggiungibile' };
   }
 }

@@ -1,4 +1,4 @@
-import type { Llm } from '../ollama';
+import type { Llm } from '../../shared/ollama';
 import { buildMessages, sanitizeReply } from '../prompt';
 import { findIssues, issueFeedback, type Issue } from '../quality';
 import { planReply } from './plan';

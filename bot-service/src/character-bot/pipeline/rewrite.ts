@@ -1,4 +1,4 @@
-import type { Llm } from '../ollama';
+import type { Llm } from '../../shared/ollama';
 import { formatTranscript, situationBlock } from '../prompt';
 import type { TurnContext } from './types';
 

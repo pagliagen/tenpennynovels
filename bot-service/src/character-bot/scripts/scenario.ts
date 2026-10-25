@@ -12,7 +12,7 @@ import { readFileSync } from 'fs';
 import PQueue from 'p-queue';
 import { z } from 'zod';
 import { botSchema, type BotConfig } from '../config';
-import { OllamaClient } from '../ollama';
+import { OllamaClient } from '../../shared/ollama';
 import { BotResponder } from '../responder';
 import { describeMood } from '../psyche/describe';
 import { MemoryStore } from '../psyche/store';

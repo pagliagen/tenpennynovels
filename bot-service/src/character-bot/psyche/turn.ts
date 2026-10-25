@@ -1,5 +1,5 @@
 import type { BotConfig } from '../config';
-import type { Llm } from '../ollama';
+import type { Llm } from '../../shared/ollama';
 import type { TurnContext } from '../pipeline/types';
 import type { HistoryLine } from '../prompt';
 import type { Appraisal } from './appraise';

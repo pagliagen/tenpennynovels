@@ -2,16 +2,16 @@
   "name": "@tenpennynovels/bot-service",
   "version": "0.1.0",
   "private": true,
-  "description": "Servizio locale: risponde con un LLM alle giocate in chat di location configurate",
+  "description": "Servizi AI locali: character-bot (bot personaggio) ed editorial (bozze per il gestionale), dietro un HTTP interno con /health",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/__tests__/*.test.ts",
-    "simulate": "tsx src/scripts/publishTestEvent.ts",
-    "scenario": "LOG_LEVEL=error tsx src/scripts/scenario.ts"
+    "test": "tsx --test \"src/**/*.test.ts\"",
+    "simulate": "tsx src/character-bot/scripts/publishTestEvent.ts",
+    "scenario": "LOG_LEVEL=error tsx src/character-bot/scripts/scenario.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
