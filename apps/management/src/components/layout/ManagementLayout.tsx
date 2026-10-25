@@ -22,6 +22,9 @@ import { ToastContainer } from '@/components/shared/ToastContainer';
 import { useAdminNotifications } from '@/hooks/useAdminNotifications';
 import styles from '@/styles/components/ManagementLayout.module.scss';
 
+/** Intervallo del polling dei flag: lungo di proposito (quota di richieste del tunnel ngrok). */
+const FEATURE_FLAGS_REFRESH_MS = 120_000;
+
 export interface ManagementLayoutProps {
   children: React.ReactNode;
 }
@@ -30,7 +33,7 @@ export function ManagementLayout({ children }: ManagementLayoutProps): React.Rea
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const { loadPermissions, clearPermissions } = usePermissionsStore();
-  const { loadFeatureFlags, clearFeatureFlags } = useFeatureFlagsStore();
+  const { loadFeatureFlags, refreshFeatureFlags, clearFeatureFlags } = useFeatureFlagsStore();
 
   useAdminNotifications();
 
@@ -61,6 +64,16 @@ export function ManagementLayout({ children }: ManagementLayoutProps): React.Rea
       clearFeatureFlags();
     }
   }, [isAuthenticated, user?.canAccessAdminPanel, loadPermissions, clearPermissions, loadFeatureFlags, clearFeatureFlags]);
+
+  // Le funzioni AI dipendono da un gateway esterno che può accendersi o spegnersi: si rilegge ogni 2 minuti,
+  // solo a scheda visibile (la sonda del backend passa da un tunnel con quota di richieste).
+  useEffect(() => {
+    if (!isAuthenticated || !user?.canAccessAdminPanel) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void refreshFeatureFlags();
+    }, FEATURE_FLAGS_REFRESH_MS);
+    return () => window.clearInterval(id);
+  }, [isAuthenticated, user?.canAccessAdminPanel, refreshFeatureFlags]);
 
   // Loading state
   if (isLoading) {

@@ -28,6 +28,7 @@ Tutti i comandi vanno eseguiti dalla root del progetto.
 
 ### bot-service
 Non è in Docker: gira in locale con `npm run bot-service:dev` (vedi `bot-service/README.md`). Usa Ollama dell'host e il Redis del compose (porta 6379).
+`ai-gateway/` (ingresso dei servizi AI, porta 8787) e `bot-service` (servizi `editorial` e `character-bot`, HTTP interno 8788) girano in locale, non in Docker: `npm run ai-gateway:dev`, `npm run bot-service:dev`. Il backend in Docker raggiunge il gateway con `AI_GATEWAY_URL=http://host.docker.internal:8787`.
 
 ## Alias servizi
 

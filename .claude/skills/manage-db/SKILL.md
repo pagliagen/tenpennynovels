@@ -47,7 +47,7 @@ Both databases live in the same MongoDB container (`tenpennynovels-mongodb`), cr
 - Collections:
   - `bot_moods` — `_id` = characterId del bot, `pad: {p, a, d}` (-1..1), `updatedAt`
   - `relations` — una per coppia (`botId`, `playerId`): `trust`, `respect`, `suspicion` (0-100), `interactions`, `firstSeenAt`, `lastSeenAt`, `knownName` (assente finché il giocatore non si presenta), `facts[]`, `playerName` (solo per leggere il DB)
-- Code: `bot-service/src/psyche/` (types.ts, store.ts)
+- Code: `bot-service/src/character-bot/psyche/` (types.ts, store.ts)
 
 The characters of the bots are in `tenpennynovels.characters` with `userId` = `000000000000000000000001` (user `system-bot`).
 
@@ -103,4 +103,4 @@ db.relations.find({ botId: '<characterId>' }, { _id: 0, interactions: 1, knownNa
 ## Related Files
 - Infrastructure: `docker-compose.yml`
 - Game models: `services/unified-backend/src/`
-- Bot-service state: `bot-service/src/psyche/`
+- Bot-service state: `bot-service/src/character-bot/psyche/`

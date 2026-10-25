@@ -1,13 +1,40 @@
 # bot-service
 
-Servizio **locale e separato** che risponde con un LLM (Ollama, default `gemma4:12b`) ai messaggi
-dei giocatori in chat di location configurate. Non è raggiunto da nessun client: si
-aggancia al Redis di tenpennynovels e risponde al backend.
+Ospita i **servizi AI locali** di Ten Penny Novels, **uno per cartella**, e un piccolo HTTP interno.
+Non va in produzione (escluso dal deploy). Su un eventuale server AI dedicato girerà accanto ad `ai-gateway/`.
+
+| Servizio | Cartella | Cosa fa | Come è raggiunto |
+|---|---|---|---|
+| **`character-bot`** | `src/character-bot/` | il bot personaggio: risponde in chat con un LLM (Ollama, default `gemma4:12b`) | Redis pub/sub + endpoint interni del backend (nessuna rotta HTTP) |
+| **`editorial`** | `src/editorial/` | bozze di testo per il gestionale (`POST /v1/editorial/generate`) | `ai-gateway` → HTTP interno |
+
+`src/shared/` ha ciò che i servizi condividono (logger, client Ollama, config del launcher), `src/http/` il server interno.
+I servizi **non sanno l'uno dell'altro**.
+
+### Quali servizi sono attivi
+
+`ENABLED_SERVICES=editorial,character-bot` (nel `.env`; **vuoto = nessuno**, di proposito: non accendere per svista un
+servizio sul server sbagliato). Il launcher (`src/index.ts`) avvia solo quelli elencati. La configurazione di un servizio
+(Redis, Mongo, segreto…) si valida **solo se è abilitato**: un server solo-editoriale non richiede quei segreti.
+
+`GET http://127.0.0.1:8788/health` (solo loopback) restituisce i servizi **abilitati e sani**:
+`{"services":["editorial","character-bot"],"down":[]}` (200; 503 se nessuno è sano, con il motivo in `down`).
+Sano = `editorial`: Ollama risponde e ha il modello; `character-bot`: Redis, Mongo e Ollama rispondono.
+Il gioco decide se l'AI è attiva proprio da questa lista, passando da `ai-gateway`.
+
+### Editorial
+
+`POST /v1/editorial/generate` `{system, user, schema?, maxTokens?}` → `{text | json, ms}`. Il modello lo sceglie il servizio
+(`EDITORIAL_MODEL`, altrimenti `OLLAMA_MODEL`), mai la richiesta; `maxTokens` ha un tetto (`EDITORIAL_MAX_TOKENS`); una
+generazione alla volta con al più `EDITORIAL_MAX_QUEUE` in attesa (oltre: 429). Non registra prompt né risposte.
+Solo contenuti già pubblici devono arrivare qui (vedi `ai-gateway/README.md`).
+
+### Character-bot
 
 ```
 unified-backend ──publish──▶ Redis `bot:chat:message`
                                   │
-                           bot-service (questo)
+                           character-bot
               filtra → debounce → cooldown → coda → Ollama
                                   │
 unified-backend ◀── POST /internal/bot-chat/messages (secret) ──┘
@@ -30,7 +57,7 @@ risponde a un bot (anche a un altro bot configurato). Una raffica di messaggi pr
 3. **Servizio**:
    ```bash
    cd bot-service && nvm use && npm install
-   cp .env.example .env                          # stesso BOT_SERVICE_SECRET, MONGODB_URI
+   cp .env.example .env                          # ENABLED_SERVICES, stesso BOT_SERVICE_SECRET, MONGODB_URI
    cp bots/barnaby-finch.example.json bots/barnaby-finch.json   # characterId, persona, scheda
    cp mapping.example.json mapping.json          # locationId → botId
    ollama pull gemma4:12b
@@ -139,7 +166,7 @@ pubblica un evento finto; la risposta viene poi postata al backend vero.
 
 Un solo prompt faceva fare al modello quattro cose insieme (capire, scrivere, rispettare il
 formato, non ripetersi) e sbagliava dove i vincoli si sommano. Ogni step ha un compito solo
-(`src/pipeline/`):
+(`src/character-bot/pipeline/`):
 
 1. **Scaletta** (`plan`): JSON con cosa dire o fare, 1-3 punti.
 2. **Bozza**: il testo, seguendo la scaletta.

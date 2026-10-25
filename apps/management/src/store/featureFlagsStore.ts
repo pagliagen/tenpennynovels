@@ -24,6 +24,11 @@ interface FeatureFlagsState {
 
 interface FeatureFlagsActions {
   loadFeatureFlags: () => Promise<void>;
+  /**
+   * Rilegge i flag senza passare da `isLoading` e senza azzerare nulla se la richiesta fallisce:
+   * serve al polling (le funzioni AI possono accendersi o spegnersi mentre il pannello è aperto).
+   */
+  refreshFeatureFlags: () => Promise<void>;
   clearFeatureFlags: () => void;
 }
 
@@ -54,6 +59,20 @@ export const useFeatureFlagsStore = create<FeatureFlagsStore>((set) => ({
       logger.error('[FeatureFlagsStore] Failed to load feature flags:', { error });
       // Fail-closed: in caso di errore le feature restano nascoste
       set({ keeperQaEnabled: false, editorialAiEnabled: false, isLoading: false });
+    }
+  },
+
+  refreshFeatureFlags: async () => {
+    try {
+      const response = await apiClient.get('/admin/system/feature-flags');
+      const data = response.data?.data || response.data;
+      set({
+        keeperQaEnabled: data.keeperQaEnabled ?? false,
+        editorialAiEnabled: data.editorialAiEnabled ?? false
+      });
+    } catch (error: unknown) {
+      // Un errore passeggero non deve far sparire i pulsanti: resta l'ultimo stato noto.
+      logger.warn('[FeatureFlagsStore] Refresh feature flags fallito', { error });
     }
   },
 

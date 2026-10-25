@@ -429,23 +429,39 @@ SMTP_SECURE=false                      # true for port 465, false for 587
 
 ---
 
-## Editoriale con AI (solo locale)
+## Editoriale con AI e gateway AI
+
+Variabili lette da `unified-backend` (in Docker: `docker-compose.yml`, valori dal `.env` della root):
 
 ```bash
-# Accende le funzioni editoriali che usano il MODELLO (bozze di descrizioni, dicerie: in arrivo).
-# Solo il valore esatto "true" la accende (assente, vuoto, "1", "TRUE"... = spenta).
-# Default false; NON impostarla in produzione.
-# Va letta da unified-backend E da embeddings-worker (docker-compose.yml le passa entrambe).
+# «L'AI editoriale è abilitata». Solo il valore esatto "true" (assente, vuoto, "1", "TRUE"... = spenta). Default false.
 ENABLE_IA_EDITORIAL=false
 
-# Opzionale, solo embeddings-worker: modello per la scrittura editoriale (default: OLLAMA_MODEL)
-OLLAMA_EDITORIAL_MODEL=gemma4:12b
+# Dove sta il gateway AI (ai-gateway/): dominio ngrok oggi, dominio del server AI dedicato domani.
+# In Docker locale: http://host.docker.internal:8787 (senza ngrok).
+AI_GATEWAY_URL=https://onomatopoeically-unforgeable-ozie.ngrok-free.dev
+# Stesso valore di GATEWAY_SECRET in ai-gateway/.env (openssl rand -hex 32). Mai nel repo.
+AI_GATEWAY_SECRET=<openssl rand -hex 32>
+
+# Opzionali: validità della sonda a /health del gateway (default 60 s se ok, 10 s se fallita)
+AI_GATEWAY_PROBE_OK_TTL_MS=60000
+AI_GATEWAY_PROBE_FAIL_TTL_MS=10000
 ```
 
-La **revisione di canone** (menu «Editoriale» nel gestionale) è deterministica e **non dipende da questa variabile**:
-è sempre attiva. La variabile guida solo le funzioni con l'AI: con la variabile spenta le loro route rispondono 404
-(`GET /admin/system/feature-flags` dà `editorialAiEnabled: false`), il worker rifiuta `/editorial/*` e il gestionale
-non mostra i pulsanti AI. Cambiarla richiede ricreare i container (`up -d`, mai `restart`: vedi `40-workflow.md`).
+| `ENABLE_IA_EDITORIAL` | `AI_GATEWAY_URL` + segreto | `GET /health` del gateway | AI editoriale |
+|---|---|---|---|
+| ≠ `true` | — | non interrogato | spenta |
+| `true` | mancanti | — | spenta (avviso nel log) |
+| `true` | presenti | 200 con `editorial` fra i `services` | **attiva** |
+| `true` | presenti | errore, timeout, 401, 503 o servizio assente | spenta |
+
+Quindi in produzione puoi tenere `true`: se la macchina del gateway è spenta l'AI semplicemente non c'è (route AI 404,
+`editorialAiEnabled: false` in `GET /admin/system/feature-flags`, pulsanti nascosti). La **revisione di canone** (menu
+«Editoriale») è deterministica e **sempre attiva**, non dipende da queste variabili. La sonda è pigra (mai da un timer) per
+non consumare la quota di richieste del tunnel ngrok. Cambiare le variabili richiede ricreare il container (`up -d`, mai `restart`).
+
+Le variabili del gateway (`GATEWAY_SECRET`, `PORT`, `BOT_SERVICE_URL`…) sono in `ai-gateway/.env.example`, quelle dei servizi AI
+(`ENABLED_SERVICES`, `EDITORIAL_MODEL`…) in `bot-service/.env.example`.
 
 ---
 

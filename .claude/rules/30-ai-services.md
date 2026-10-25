@@ -7,6 +7,22 @@ Descrizione, setup e dati misurati: `bot-service/README.md`.
 Chat.ts ─publish─▶ Redis `bot:chat:message` ─▶ bot-service ─POST─▶ /internal/bot-chat/messages (unified-backend, feature botChat)
 ```
 
+## Architettura dei servizi AI (server AI dedicato in prospettiva)
+
+L'AI deve poter stare **fuori dal server di gioco** (VPS solo CPU, 11 GB; il runner di Ollama è già arrivato a 7 GB). Due processi locali, destinati a traslocare insieme su un server dedicato:
+
+```
+server di gioco ──HTTPS──▶ ai-gateway (:8787) ──loopback──▶ bot-service (:8788) ──▶ Ollama
+ (core/ai)  ngrok oggi        auth, limiti, smista             ├ editorial        (HTTP /v1/editorial/*)
+                                                               └ character-bot    (Redis, Mongo, backend)
+```
+
+- **`ai-gateway/`** (pacchetto indipendente, solo `node:http`): unico ingresso da fuori. Segreto `X-AI-Gateway-Secret` richiesto **anche per `/health` e per i percorsi inesistenti** (401 identico), non è un proxy aperto (solo `POST /v1/<servizio>/<azione>` nel registro `src/registry.ts`), corpo e rate limit, timeout 502/504 senza dettagli. `GET /health` = i servizi **abilitati e sani** di bot-service, 503 se nessuno. Mai prompt né risposte nei log. Dettagli, ngrok e checklist del trasloco: `ai-gateway/README.md`.
+- **`bot-service/`**: un servizio per cartella (`src/character-bot/`, `src/editorial/`), `src/shared/` (logger, client Ollama) e `src/http/` (HTTP interno **solo loopback**). **`ENABLED_SERVICES`** decide quali girano (vuoto = nessuno, voluto); la config di un servizio si valida solo se è abilitato. I servizi non si conoscono. `editorial`: il modello lo sceglie il servizio (`EDITORIAL_MODEL`), mai la richiesta; coda a concorrenza 1 con tetto (429), `maxTokens` limitato.
+- **Dal gioco**: `ENABLE_IA_EDITORIAL` + `AI_GATEWAY_URL` + `AI_GATEWAY_SECRET` (vedi `20-backend.md`). Con il Mac spento l'AI non c'è e nulla si rompe.
+- **Nuovo servizio AI** = cartella in `bot-service/src/`, voce in `FACTORIES` (`src/index.ts`) e `SERVICE_NAMES` (`http/service.ts`), nome nel registro del gateway.
+- **Aperto, da decidere prima di spostare il `character-bot` su un altro server**: oggi parla con Redis (pub/sub), Mongo `botservice` e gli endpoint interni del backend; fra due server serve una rete privata o far spingere gli eventi dal backend al gateway. L'`editorial` non ha il problema.
+
 `local-ai/` (botai, character-gen, gateway) **non esiste più**: se ne trovi tracce, sono residui da togliere.
 Il Q&A "Bibliotecario" vive in `services/embeddings-worker` (vedi `20-backend.md`).
 
@@ -40,7 +56,7 @@ Il Q&A "Bibliotecario" vive in `services/embeddings-worker` (vedi `20-backend.md
 
 **Ollama.** Modelli a ragionamento (qwen3.5, gemma4) con `think: false`; il client riprova senza il parametro con quelli che lo rifiutano (gemma3). Il tempo per risposta non è un vincolo (1-2 minuti vanno bene).
 
-**Test**: `cd bot-service && npm test` (non coprono Ollama né il backend). Con Ollama: `npm run scenario -- scenarios/locanda.json` (copioni con controlli sulle parti deterministiche).
+**Test**: `cd bot-service && npm test` e `cd ai-gateway && npm test` (non coprono Ollama né il backend). Con Ollama: `npm run scenario -- scenarios/locanda.json` (copioni con controlli sulle parti deterministiche).
 
 ---
 

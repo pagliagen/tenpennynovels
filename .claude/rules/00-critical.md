@@ -26,7 +26,8 @@ Verifica: `grep -rn "id:" services/*/src/ --include="*.ts" | grep -v "_id"`
 |---|---|
 | `services/api-gateway`, `services/unified-backend` | Winston — `@shared/utils/logger` o `./utils/logger` |
 | `services/embeddings-worker` | logger custom `src/utils/logger.ts` (**non** Winston, stessi livelli) |
-| `bot-service` | `bot-service/src/logger.ts` (Winston) |
+| `bot-service` | `bot-service/src/shared/logger.ts` (Winston) |
+| `ai-gateway` | `ai-gateway/src/logger.ts` (Winston; mai prompt, risposte né segreti) |
 | `apps/game`, `apps/management`, `apps/documents`, `apps/landing` | `@/lib/logger` — `debug`/`info` no-op in produzione |
 
 **Eccezioni legittime**: script one-shot (`src/scripts/*`), build tool, e l'implementazione del logger stesso.
