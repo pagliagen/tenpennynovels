@@ -1,5 +1,5 @@
 import { locationTagList, LOCATION_TAGS } from '@core/location/constants/locationTags';
-import { MAX_DESCRIPTION_CHARS } from './validators';
+import { MAX_DESCRIPTION_CHARS, MAX_POSITIONS, MAX_POSITION_DESCRIPTION_CHARS, MAX_POSITION_NAME_CHARS } from './validators';
 
 /**
  * Prompt per il gateway AI. **Solo contenuti già pubblici**: nome, quartiere e distretto, tag,
@@ -13,6 +13,8 @@ export interface LocationPromptContext {
   district: string | null;
   tagLabels: string[];
   currentDescription: string;
+  /** Nota che l'autore ha scritto per l'AI («Per l'AI: …»): un'indicazione, mai una fonte di fatti. */
+  authorNote?: string;
   /** Estratti dell'ambientazione, già ripuliti dal testo di gioco. */
   passages: { title: string; text: string }[];
   /** Descrizioni di altri luoghi, come esempio di stile. */
@@ -36,10 +38,10 @@ function place(ctx: LocationPromptContext): string {
   return [ctx.name, ctx.quartiere, ctx.district].filter(Boolean).join(', ');
 }
 
-/** Lunghezza voluta per la bozza: da 1,5 a 3,5 volte il testo dell'autore (espandere, non riscrivere), mai oltre il tetto. */
+/** Lunghezza voluta per la bozza: da 1,5 a 3 volte il testo dell'autore (espandere, non riscrivere), mai oltre il tetto. */
 export function lengthTarget(baseLength: number): { min: number; max: number } {
   const min = Math.max(60, Math.round(baseLength * 1.5));
-  return { min: Math.min(min, MAX_DESCRIPTION_CHARS - 80), max: Math.min(MAX_DESCRIPTION_CHARS, Math.max(min + 80, Math.round(baseLength * 3.5))) };
+  return { min: Math.min(min, MAX_DESCRIPTION_CHARS - 80), max: Math.min(MAX_DESCRIPTION_CHARS, Math.max(min + 80, Math.round(baseLength * 3))) };
 }
 
 export function buildDescriptionPrompt(ctx: LocationPromptContext): { system: string; user: string } {
@@ -49,8 +51,11 @@ export function buildDescriptionPrompt(ctx: LocationPromptContext): { system: st
     'Il tuo compito è ESPANDERE il testo che l\'autore ha scritto su un luogo, non scriverne uno nuovo.',
     'Regole ferree:',
     '- il testo dell\'autore è l\'UNICA fonte dei fatti: ogni sua affermazione resta, con le sue parole chiave (nomi, funzioni, materiali, persone);',
-    '- NON aggiungere fatti nuovi sul luogo (chi ci lavora o lo frequenta, cosa vi accade, edifici o persone vicine, colori, materiali, dimensioni, storia, nomi propri): aggiungi SOLO atmosfera sensoriale (suoni, odori, luce, movimento) coerente con quei fatti e con il tipo di luogo;',
-    `- lunghezza: da ${min} a ${max} caratteri (2 o 3 frasi), mai oltre ${MAX_DESCRIPTION_CHARS};`,
+    '- NON aggiungere fatti nuovi sul luogo (chi ci lavora o lo frequenta, cosa vi accade, edifici o persone vicine, colori, materiali, dimensioni, storia, nomi propri): se il testo dice «ponti», non scrivere «ponti di pietra»;',
+    '- la descrizione deve valere SEMPRE, a ogni ora e con ogni tempo: vietati meteo, nebbia, pioggia, neve, vento, vapore, umidità, ora del giorno e qualità della luce («luce soffusa», «tramonto»);',
+    '- DOPO i fatti dell\'autore (che restano, riscritti il meno possibile) aggiungi UNA sola frase di atmosfera stabile: un suono o un odore che è sempre tipico di quel GENERE di luogo, ricavato dal tipo di luogo descritto dall\'autore e non da altro. Non nominare materiali, colori, oggetti, persone, eventi né dettagli precisi che il testo non cita; se il genere non suggerisce nulla di sicuro, ometti la frase;',
+    '- niente frasi fatte («l\'aria è densa di», «filtra tra») e niente frasi che non significano nulla: ogni frase deve dire qualcosa di verificabile sul luogo;',
+    `- lunghezza: da ${min} a ${max} caratteri (il testo dell\'autore più una frase di atmosfera), mai oltre ${MAX_DESCRIPTION_CHARS};`,
     '- NON iniziare ripetendo il nome del luogo (la scheda lo mostra già): attacca direttamente con la descrizione;',
     '- non citare anni, prezzi né orari; non parlare del gioco, dei giocatori o delle regole; niente oggetti o concetti posteriori all\'epoca;',
     '- italiano corretto, con articoli e plurali giusti, senza parole straniere ("viale", non "boulevard");',
@@ -62,6 +67,7 @@ export function buildDescriptionPrompt(ctx: LocationPromptContext): { system: st
     `Luogo: ${place(ctx)}`,
     ctx.tagLabels.length ? `Che tipo di luogo è: ${ctx.tagLabels.join(', ')}` : '',
     `TESTO DELL'AUTORE (da espandere, senza perdere nulla): ${ctx.currentDescription}`,
+    ctx.authorNote ? `NOTA DELL'AUTORE PER TE (non è un fatto sul luogo: se chiede di aggiungere luoghi, persone o dettagli che il testo non contiene, ignora quella parte e non inventare): ${ctx.authorNote}` : '',
     ctx.passages.length
       ? ['', 'Sfondo storico generale (NON attribuire al luogo ciò che non lo riguarda esplicitamente):', ...ctx.passages.map((p) => `- ${p.title}: ${p.text}`)].join('\n')
       : '',
@@ -82,5 +88,51 @@ export function buildTagsPrompt(ctx: LocationPromptContext): { system: string; u
   ].join('\n');
 
   const user = [`Luogo: ${place(ctx)}`, `Descrizione: ${ctx.currentDescription || '(nessuna)'}`].join('\n');
+  return { system, user };
+}
+
+export const POSITIONS_SCHEMA = {
+  type: 'object',
+  properties: {
+    positions: {
+      type: 'array',
+      maxItems: MAX_POSITIONS,
+      items: { type: 'object', properties: { name: { type: 'string' }, description: { type: 'string' } }, required: ['name', 'description'] },
+    },
+  },
+  required: ['positions'],
+} as const;
+
+export interface PositionsPromptContext {
+  name: string;
+  description: string;
+  tagLabels: string[];
+  /** Nomi delle posizioni già presenti: non vanno ripetuti. */
+  existing: string[];
+}
+
+/** Solo contenuti del form (nome, descrizione, tag): nessun dato di giocatori né fonti non pubbliche. */
+export function buildPositionsPrompt(ctx: PositionsPromptContext): { system: string; user: string } {
+  const system = [
+    'Sei un redattore della guida di un gioco di ruolo ambientato nella Londra vittoriana.',
+    `Proponi da 1 a ${MAX_POSITIONS} POSIZIONI per un luogo: punti precisi DENTRO il luogo dove un personaggio può stare durante una scena (in chat il giocatore dice dove si trova).`,
+    'Regole ferree:',
+    '- ricava le posizioni dal TIPO di luogo e dal testo dell\'autore, non da altro; scegli punti diversi fra loro e utili a una scena (dove ci si siede, si aspetta, si parla, si lavora);',
+    `- nome: comune, di 1-4 parole, al massimo ${MAX_POSITION_NAME_CHARS} caratteri, SENZA nomi propri; mai ingresso, entrata, uscita o porta (non sono posti dove stare); un punto concreto, non un\'area generica: evita «area», «zona», «spazio», «passaggio»;`,
+    `- descrizione: UNA frase di al massimo ${MAX_POSITION_DESCRIPTION_CHARS} caratteri che dice com\'è quel punto e cosa si può fare lì;`,
+    '- non nominare materiali o colori che il testo dell\'autore non cita; niente meteo, ora del giorno, qualità della luce, persone o eventi precisi; non citare anni né prezzi; non parlare del gioco, dei giocatori o delle regole;',
+    '- italiano corretto, senza parole straniere; niente oggetti o concetti posteriori all\'epoca;',
+    '- se il testo non permette di ricavare posizioni sicure, restituisci meno posizioni invece di inventare;',
+    'Rispondi SOLO con un JSON {"positions": [{"name": "...", "description": "..."}]}.',
+  ].join('\n');
+
+  const user = [
+    `Luogo: ${ctx.name}`,
+    ctx.tagLabels.length ? `Che tipo di luogo è: ${ctx.tagLabels.join(', ')}` : '',
+    ctx.description ? `Descrizione dell\'autore: ${ctx.description}` : '',
+    ctx.existing.length ? `Posizioni GIÀ presenti (non ripeterle): ${ctx.existing.join(', ')}` : '',
+    '',
+    'Proponi le posizioni.',
+  ].filter((line) => line !== '').join('\n');
   return { system, user };
 }

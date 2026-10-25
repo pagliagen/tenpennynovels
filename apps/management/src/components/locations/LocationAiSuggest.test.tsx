@@ -29,7 +29,7 @@ import { useFeatureFlagsStore } from '@/store/featureFlagsStore';
 
 const BASE = 'Una taverna popolare frequentata da lavoratori del mercato.';
 
-const GOOD_CHECKS = ['length', 'year', 'anachronism', 'foreign-words', 'unknown-name', 'lost-facts', 'game-meta'].map((code) => ({ code, ok: true }));
+const GOOD_CHECKS = ['length', 'year', 'anachronism', 'foreign-words', 'unknown-name', 'lost-facts', 'variable-conditions', 'invented-material', 'filler', 'game-meta'].map((code) => ({ code, ok: true }));
 
 const wrap = (ui: React.ReactElement) =>
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { mutations: { retry: false } } })}>{ui}</QueryClientProvider>);

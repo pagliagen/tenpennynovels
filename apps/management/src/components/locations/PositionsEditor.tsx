@@ -7,6 +7,7 @@
 import React from 'react';
 import { FormField } from '@/components/shared/FormField';
 import { ImageUploader } from '@/components/shared/ImageUploader';
+import { PositionsAiSuggest, type PositionsContext } from '@/components/locations/PositionsAiSuggest';
 import type { LocationPosition } from '@/types/api/Location';
 import styles from '@/styles/components/PositionsEditor.module.scss';
 
@@ -14,12 +15,15 @@ interface PositionsEditorProps {
   positions: LocationPosition[];
   onChange: (positions: LocationPosition[]) => void;
   locationId?: string;
+  /** Nome, descrizione e tag del form: abilita «Genera posizioni». */
+  aiContext?: PositionsContext;
 }
 
 export function PositionsEditor({
   positions,
   onChange,
-  locationId
+  locationId,
+  aiContext
 }: PositionsEditorProps): React.ReactElement {
   const updatePosition = (index: number, field: keyof LocationPosition, value: string) => {
     const next = positions.map((p, i) => (i === index ? { ...p, [field]: value } : p));
@@ -83,6 +87,8 @@ export function PositionsEditor({
       <button type="button" className={styles.addBtn} onClick={addPosition}>
         + Aggiungi posizione
       </button>
+
+      {aiContext && <PositionsAiSuggest context={aiContext} positions={positions} onChange={onChange} />}
     </div>
   );
 }

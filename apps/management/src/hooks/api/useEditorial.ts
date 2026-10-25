@@ -36,3 +36,6 @@ export function useSuggestLocationTags() {
   return useMutation({ mutationFn: ({ locationId, description }: { locationId: string; description: string }) => editorialAPI.suggestLocationTags(locationId, description) });
 }
 
+export function useSuggestLocationPositions() {
+  return useMutation({ mutationFn: (request: editorialAPI.PositionsRequest) => editorialAPI.suggestLocationPositions(request) });
+}

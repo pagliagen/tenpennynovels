@@ -22,13 +22,22 @@ const CHECK_LABELS: Record<DraftCheck['code'], string> = {
   'foreign-words': 'Parole straniere',
   'unknown-name': 'Nomi propri',
   'lost-facts': 'Fatti del tuo testo',
+  'variable-conditions': 'Meteo, ora, luce',
+  'invented-material': 'Materiali inventati',
+  filler: 'Frasi fatte',
+  positions: 'Posizioni',
   'game-meta': 'Testo di gioco',
 };
 
 /** Come il backend (MIN_BASE_CHARS / MIN_BASE_WORDS): senza almeno una frase non c'è niente da espandere. */
 const MIN_BASE_CHARS = 25;
 const MIN_BASE_WORDS = 4;
-export const hasEnoughText = (text: string): boolean => text.trim().length >= MIN_BASE_CHARS && text.trim().split(/\s+/).length >= MIN_BASE_WORDS;
+/** Come il backend (`splitAuthorNote`): «Per l'AI: …» è una nota al modello, non testo da espandere. */
+const withoutAuthorNote = (text: string): string => text.replace(/\bper l['’]\s?(?:ai|ia)\s*:[\s\S]*$/i, '').trim();
+export const hasEnoughText = (text: string): boolean => {
+  const base = withoutAuthorNote(text);
+  return base.length >= MIN_BASE_CHARS && base.split(/\s+/).length >= MIN_BASE_WORDS;
+};
 
 type Props =
   | { kind: 'description'; locationId: string; currentText: string; onApplyDescription: (text: string) => void }

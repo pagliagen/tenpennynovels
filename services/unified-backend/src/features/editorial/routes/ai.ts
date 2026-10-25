@@ -29,4 +29,12 @@ router.post(
   EditorialAiController.suggestTags
 );
 
+// Le posizioni si chiedono anche creando la location (non ha ancora un id): il testo viene dal form.
+router.post(
+  '/suggest-positions',
+  requireViewPermission('locations.update'),
+  AdminAuthMiddleware.logAdminAction('suggest_location_positions', 'editorial'),
+  EditorialAiController.suggestPositions
+);
+
 export default router;

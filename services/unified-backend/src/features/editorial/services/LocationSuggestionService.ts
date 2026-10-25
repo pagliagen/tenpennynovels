@@ -3,9 +3,9 @@ import { LOCATION_TAG_DEFS, sanitizeLocationTags, type LocationTag } from '@core
 import { Location } from '@core/location/models/Location';
 import { readDocumentsForReview, searchPublicLore, stripGameMeta } from '@features/documenti/api';
 import { detectCanonYear } from '../utils/canonRules';
-import { buildDescriptionPrompt, buildTagsPrompt, DESCRIPTION_SCHEMA, TAGS_SCHEMA, type LocationPromptContext } from '../utils/prompts';
-import { clipToSentence } from '../utils/text';
-import { validateDescription, type DraftCheck } from '../utils/validators';
+import { buildDescriptionPrompt, buildPositionsPrompt, buildTagsPrompt, DESCRIPTION_SCHEMA, POSITIONS_SCHEMA, TAGS_SCHEMA, type LocationPromptContext } from '../utils/prompts';
+import { clipToSentence, splitAuthorNote } from '../utils/text';
+import { cleanPositions, validateDescription, validatePositions, type DraftCheck, type SuggestedPosition } from '../utils/validators';
 
 /** Estratti di ambientazione che finiscono nel prompt: pochi e corti (il prefill è il collo di bottiglia). */
 const MAX_PASSAGES = 3;
@@ -110,9 +110,10 @@ const defaultDeps: SuggestDeps = {
 async function context(locationId: string, input: SuggestInput, deps: SuggestDeps): Promise<SuggestionContext> {
   const ctx = await deps.loadContext(locationId);
   if (!ctx) throw new LocationNotFoundError('Location non trovata');
-  const base = (input.description ?? ctx.currentDescription).trim();
+  // «Per l'AI: …» è una nota al modello: non è testo del luogo, non si espande e non conta come fatto da conservare.
+  const { base, note } = splitAuthorNote(input.description ?? ctx.currentDescription);
   // Il testo dell'autore è la fonte dei fatti anche per il controllo sui nomi propri.
-  return { ...ctx, currentDescription: base, knownText: `${ctx.knownText} ${base}` };
+  return { ...ctx, currentDescription: base, ...(note ? { authorNote: note } : {}), knownText: `${ctx.knownText} ${base}` };
 }
 
 /** La risposta vincolata dallo schema è comunque non fidata: si verifica la forma. */
@@ -144,4 +145,42 @@ export async function suggestTags(locationId: string, input: SuggestInput = {}, 
   if (!Array.isArray(raw)) throw new AiGatewayError('Risposta del servizio AI non valida.', 502);
   // Il modello può sbagliare anche con lo schema: si tengono solo i tag del registro.
   return { tags: sanitizeLocationTags(raw).tags, ms: result.ms };
+}
+
+export interface PositionsInput {
+  name: string;
+  description?: string | undefined;
+  /** Tag del registro (valori grezzi: si filtrano qui). */
+  tags?: unknown[] | undefined;
+  /** Nomi delle posizioni già nel form. */
+  existing?: string[] | undefined;
+}
+
+export interface PositionsSuggestion {
+  positions: SuggestedPosition[];
+  ok: boolean;
+  checks: DraftCheck[];
+  ms: number;
+}
+
+/**
+ * Posizioni per un luogo (anche non ancora creato): si lavora solo su ciò che c'è nel form.
+ * Servono il tipo di luogo (tag) o un minimo di descrizione: dal solo nome il modello inventerebbe.
+ */
+export async function suggestPositions(input: PositionsInput, deps: Pick<SuggestDeps, 'generate'> = defaultDeps): Promise<PositionsSuggestion> {
+  const description = splitAuthorNote(input.description ?? '').base;
+  const tags = sanitizeLocationTags(input.tags ?? []).tags;
+  if (!hasEnoughInput(description) && tags.length === 0) {
+    throw new InsufficientInputError('Scrivi prima la descrizione o scegli almeno un tag: l\'AI ricava le posizioni dal tipo di luogo.');
+  }
+  const tagLabels = tags.map((t) => LOCATION_TAG_DEFS[t]?.label ?? t);
+  const existing = (input.existing ?? []).map((n) => n.trim()).filter(Boolean);
+  const { system, user } = buildPositionsPrompt({ name: input.name, description, tagLabels, existing });
+  const result = await deps.generate({ system, user, schema: POSITIONS_SCHEMA as unknown as Record<string, unknown>, maxTokens: 400 });
+
+  const raw = (result.json as { positions?: unknown } | null)?.positions;
+  if (!Array.isArray(raw)) throw new AiGatewayError('Risposta del servizio AI non valida.', 502);
+  const positions = cleanPositions(raw, existing);
+  const knownText = [input.name, description, ...tagLabels, ...existing].join(' ');
+  return { positions, ...validatePositions(positions, knownText), ms: result.ms };
 }
