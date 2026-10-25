@@ -36,32 +36,38 @@ function place(ctx: LocationPromptContext): string {
   return [ctx.name, ctx.quartiere, ctx.district].filter(Boolean).join(', ');
 }
 
+/** Lunghezza voluta per la bozza: da 1,5 a 3,5 volte il testo dell'autore (espandere, non riscrivere), mai oltre il tetto. */
+export function lengthTarget(baseLength: number): { min: number; max: number } {
+  const min = Math.max(60, Math.round(baseLength * 1.5));
+  return { min: Math.min(min, MAX_DESCRIPTION_CHARS - 80), max: Math.min(MAX_DESCRIPTION_CHARS, Math.max(min + 80, Math.round(baseLength * 3.5))) };
+}
+
 export function buildDescriptionPrompt(ctx: LocationPromptContext): { system: string; user: string } {
+  const { min, max } = lengthTarget(ctx.currentDescription.length);
   const system = [
-    `Sei un redattore della guida di un gioco di ruolo ambientato nella Londra vittoriana${ctx.canonYear ? ` del ${ctx.canonYear}` : ''}.`,
-    'Scrivi in italiano la descrizione di un luogo, in 2 o 3 frasi (al massimo ' + MAX_DESCRIPTION_CHARS + ' caratteri), con lo stesso tono e la stessa lunghezza degli esempi.',
+    'Sei un redattore della guida di un gioco di ruolo ambientato nella Londra vittoriana.',
+    'Il tuo compito è ESPANDERE il testo che l\'autore ha scritto su un luogo, non scriverne uno nuovo.',
     'Regole ferree:',
-    '- ARRICCHISCI la descrizione attuale, non sostituirla: conserva TUTTI i fatti che contiene (nomi propri, chi l\'ha progettato, caratteristiche) e aggiungi atmosfera e aspetto;',
-    '- descrivi com\'è il luogo (atmosfera, aspetto, chi lo frequenta): niente trama, niente eventi;',
-    '- NON iniziare ripetendo il nome del luogo (la scheda lo mostra già) e non ripeterlo: attacca direttamente con la descrizione;',
-    '- evita le frasi fatte ("tempio di", "cuore pulsante", "rifugio", "alveare") e non cambiare il TIPO di luogo (una stazione resta una stazione, non una cattedrale);',
-    '- scrivi in italiano corretto, con articoli e plurali giusti, senza parole straniere ("viale", non "boulevard"; "stazione", non "terminal");',
-    '- usa SOLO ciò che è nel contesto o è del tutto generico; NON inventare nomi propri di persone, vie, locali o negozi;',
-    '- non citare anni, prezzi né orari (l\'epoca è già nota al lettore);',
-    '- usa gli estratti SOLO se parlano proprio di questo luogo o del suo quartiere; altrimenti ignorali. Non citare alla lettera le etichette del tipo di luogo;',
-    '- non parlare del gioco, dei giocatori, delle regole o dei personaggi giocanti;',
-    '- niente oggetti o concetti posteriori all\'epoca.',
+    '- il testo dell\'autore è l\'UNICA fonte dei fatti: ogni sua affermazione resta, con le sue parole chiave (nomi, funzioni, materiali, persone);',
+    '- NON aggiungere fatti nuovi sul luogo (chi ci lavora o lo frequenta, cosa vi accade, edifici o persone vicine, colori, materiali, dimensioni, storia, nomi propri): aggiungi SOLO atmosfera sensoriale (suoni, odori, luce, movimento) coerente con quei fatti e con il tipo di luogo;',
+    `- lunghezza: da ${min} a ${max} caratteri (2 o 3 frasi), mai oltre ${MAX_DESCRIPTION_CHARS};`,
+    '- NON iniziare ripetendo il nome del luogo (la scheda lo mostra già): attacca direttamente con la descrizione;',
+    '- non citare anni, prezzi né orari; non parlare del gioco, dei giocatori o delle regole; niente oggetti o concetti posteriori all\'epoca;',
+    '- italiano corretto, con articoli e plurali giusti, senza parole straniere ("viale", non "boulevard");',
+    '- evita le frasi fatte ("tempio di", "cuore pulsante", "rifugio", "alveare") e non cambiare il TIPO di luogo (una stazione resta una stazione);',
     'Rispondi SOLO con un JSON {"description": "..."}.',
   ].join('\n');
 
   const user = [
     `Luogo: ${place(ctx)}`,
     ctx.tagLabels.length ? `Che tipo di luogo è: ${ctx.tagLabels.join(', ')}` : '',
-    `Descrizione attuale (da migliorare, non da ripetere): ${ctx.currentDescription || '(nessuna)'}`,
-    ctx.passages.length ? ['', 'Dall\'ambientazione pubblicata:', ...ctx.passages.map((p) => `- ${p.title}: ${p.text}`)].join('\n') : '',
-    ctx.styleExamples.length ? ['', 'Esempi di stile (altri luoghi):', ...ctx.styleExamples.map((e) => `- ${e.name}: ${e.description}`)].join('\n') : '',
+    `TESTO DELL'AUTORE (da espandere, senza perdere nulla): ${ctx.currentDescription}`,
+    ctx.passages.length
+      ? ['', 'Sfondo storico generale (NON attribuire al luogo ciò che non lo riguarda esplicitamente):', ...ctx.passages.map((p) => `- ${p.title}: ${p.text}`)].join('\n')
+      : '',
+    ctx.styleExamples.length ? ['', 'Esempi di tono (altri luoghi; solo per lo stile, mai per i contenuti):', ...ctx.styleExamples.map((e) => `- ${e.name}: ${e.description}`)].join('\n') : '',
     '',
-    'Scrivi la nuova descrizione.',
+    'Espandi il testo dell\'autore.',
   ].filter((line) => line !== '').join('\n');
 
   return { system, user };

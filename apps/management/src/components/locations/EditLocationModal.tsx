@@ -159,7 +159,7 @@ export function EditLocationModal({
             value={formData.description || ''}
             onChange={(e: any) => handleChange('description', e.target.value)}
           />
-          <LocationAiSuggest kind="description" locationId={locationId} onApplyDescription={(text) => handleChange('description', text)} />
+          <LocationAiSuggest kind="description" locationId={locationId} currentText={formData.description || ''} onApplyDescription={(text) => handleChange('description', text)} />
 
           <div className={styles.row}>
             <FormField
@@ -246,7 +246,7 @@ export function EditLocationModal({
               value={formData.tags || []}
               onChange={(tags) => handleChange('tags', tags)}
             />
-            <LocationAiSuggest kind="tags" locationId={locationId} onApplyTags={(tags) => handleChange('tags', tags)} />
+            <LocationAiSuggest kind="tags" locationId={locationId} currentText={formData.description || ''} onApplyTags={(tags) => handleChange('tags', tags)} />
           </div>
 
           <div className={styles.section}>

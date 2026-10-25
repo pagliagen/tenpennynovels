@@ -7,9 +7,9 @@ import { describe, it } from 'node:test';
 
 import { AiGatewayError } from '../../../core/ai/AiGatewayClient';
 import { LOCATION_TAGS } from '../../../core/location/constants/locationTags';
-import { LocationNotFoundError, suggestDescription, suggestTags, type SuggestDeps, type SuggestionContext } from '../services/LocationSuggestionService';
-import { buildDescriptionPrompt, buildTagsPrompt, TAGS_SCHEMA } from '../utils/prompts';
-import { foreignWords, lostNames, unknownProperNames, validateDescription } from '../utils/validators';
+import { hasEnoughInput, InsufficientInputError, LocationNotFoundError, suggestDescription, suggestTags, type SuggestDeps, type SuggestionContext } from '../services/LocationSuggestionService';
+import { buildDescriptionPrompt, buildTagsPrompt, lengthTarget, TAGS_SCHEMA } from '../utils/prompts';
+import { foreignWords, lostNames, missingContent, unknownProperNames, validateDescription } from '../utils/validators';
 import { clipToSentence } from '../utils/text';
 
 const ctx: SuggestionContext = {
@@ -21,7 +21,7 @@ const ctx: SuggestionContext = {
   knownText: 'Ten Bells Public House Whitechapel East End Taverna / pub Una taverna popolare frequentata da lavoratori del mercato e residenti locali.',
 };
 
-const GOOD = 'Una taverna fumosa nel cuore di Whitechapel, dove i lavoratori del mercato si ritrovano a fine giornata. Il bancone è consumato dai gomiti e il chiacchiericcio non smette mai.';
+const GOOD = 'Una taverna popolare frequentata da lavoratori del mercato e residenti locali, con il fumo che ristagna sotto il soffitto basso. Il bancone è consumato dai gomiti e il brusio non smette mai.';
 
 const deps = (json: unknown, over: Partial<SuggestDeps> = {}): SuggestDeps & { requests: { system: string; user: string; schema?: unknown; maxTokens?: number }[] } => {
   const requests: { system: string; user: string; schema?: unknown; maxTokens?: number }[] = [];
@@ -91,15 +91,17 @@ describe('lostNames', () => {
 describe('prompt', () => {
   it('descrizione: contesto, regole e solo contenuti pubblici', () => {
     const { system, user } = buildDescriptionPrompt(ctx);
-    assert.match(system, /1895/);
-    assert.match(system, /NON inventare nomi propri/);
+    assert.match(system, /ESPANDERE/);
+    assert.match(system, /NON aggiungere fatti nuovi/);
     assert.match(system, /non parlare del gioco/i);
-    assert.match(system, /conserva TUTTI i fatti/);
+    assert.match(system, /UNICA fonte dei fatti/);
     assert.match(system, /NON iniziare ripetendo il nome/);
     assert.doesNotMatch(system, /salvo il 1895/);
     assert.match(user, /Ten Bells Public House, Whitechapel, East End/);
     assert.match(user, /Taverna \/ pub/);
-    assert.match(user, /Esempi di stile/);
+    assert.match(user, /Esempi di tono/);
+    assert.match(user, /TESTO DELL'AUTORE \(da espandere, senza perdere nulla\): Una taverna popolare/);
+    assert.match(user, /Sfondo storico generale \(NON attribuire al luogo/);
     assert.match(user, /Nel 1895 Londra è il centro/);
   });
 
@@ -113,7 +115,7 @@ describe('prompt', () => {
 describe('suggestDescription', () => {
   it('restituisce bozza, controlli e fonti, e chiede l\'output vincolato con un tetto di token', async () => {
     const d = deps({ description: GOOD });
-    const r = await suggestDescription('id', d);
+    const r = await suggestDescription('id', {}, d);
     assert.equal(r.draft, GOOD);
     assert.equal(r.ok, true);
     assert.deepEqual(r.sources, ['La città']);
@@ -123,21 +125,21 @@ describe('suggestDescription', () => {
   });
 
   it('una bozza con difetti arriva comunque, con i controlli falliti (decide la persona)', async () => {
-    const r = await suggestDescription('id', deps({ description: `${GOOD} Si paga con il cellulare nel 1889.` }));
+    const r = await suggestDescription('id', {}, deps({ description: `${GOOD} Si paga con il cellulare nel 1889.` }));
     assert.equal(r.ok, false);
     assert.deepEqual(r.checks.filter((c) => !c.ok).map((c) => c.code).sort(), ['anachronism', 'year']);
   });
 
   it('forma sbagliata dal modello = errore 502 in italiano', async () => {
     for (const json of [{}, { description: '' }, { description: 5 }, null, 'testo']) {
-      await assert.rejects(() => suggestDescription('id', deps(json)), (e: unknown) => e instanceof AiGatewayError && e.status === 502 && /non valida/.test(e.userMessage));
+      await assert.rejects(() => suggestDescription('id', {}, deps(json)), (e: unknown) => e instanceof AiGatewayError && e.status === 502 && /non valida/.test(e.userMessage));
     }
   });
 
   it('location inesistente e errori del gateway si propagano', async () => {
-    await assert.rejects(() => suggestDescription('id', deps({}, { loadContext: async () => null })), LocationNotFoundError);
+    await assert.rejects(() => suggestDescription('id', {}, deps({}, { loadContext: async () => null })), LocationNotFoundError);
     await assert.rejects(
-      () => suggestDescription('id', deps({}, { generate: async () => { throw new AiGatewayError('Il servizio AI è occupato: riprova fra poco.', 429); } })),
+      () => suggestDescription('id', {}, deps({}, { generate: async () => { throw new AiGatewayError('Il servizio AI è occupato: riprova fra poco.', 429); } })),
       (e: unknown) => e instanceof AiGatewayError && e.status === 429,
     );
   });
@@ -145,12 +147,12 @@ describe('suggestDescription', () => {
 
 describe('suggestTags', () => {
   it('tiene solo i tag del registro, anche se il modello ne inventa', async () => {
-    const r = await suggestTags('id', deps({ tags: ['taverna', 'castello', 'alloggio', 'taverna'] }));
+    const r = await suggestTags('id', {}, deps({ tags: ['taverna', 'castello', 'alloggio', 'taverna'] }));
     assert.deepEqual(r.tags, ['taverna', 'alloggio']);
   });
 
   it('forma sbagliata = 502', async () => {
-    await assert.rejects(() => suggestTags('id', deps({ tags: 'taverna' })), (e: unknown) => e instanceof AiGatewayError && e.status === 502);
+    await assert.rejects(() => suggestTags('id', {}, deps({ tags: 'taverna' })), (e: unknown) => e instanceof AiGatewayError && e.status === 502);
   });
 });
 
@@ -159,3 +161,54 @@ describe('clipToSentence', () => {
     assert.equal(clipToSentence('Una frase intera. Un\'altra frase che sfora il limite.', 25), 'Una frase intera.');
   });
 });
+
+describe('espandere, non inventare', () => {
+  it('senza un minimo di testo non c\'è niente da espandere: errore e nessuna chiamata al modello', async () => {
+    const d = deps({ description: GOOD });
+    for (const description of ['', '   ', 'Una strada.', 'Una taverna.']) {
+      await assert.rejects(() => suggestDescription('id', { description }, d), (e: unknown) => e instanceof InsufficientInputError && /Scrivi prima almeno una frase/.test(e.message));
+    }
+    assert.equal(d.requests.length, 0);
+    assert.equal(hasEnoughInput('Una taverna popolare frequentata da lavoratori.'), true);
+    assert.equal(hasEnoughInput('Una taverna fumosa.'), false, 'meno di 4 parole');
+  });
+
+  it('la base è il testo nel form (anche non salvato), non quello su DB', async () => {
+    const d = deps({ description: 'Una taverna di portuali con il bancone di zinco e il fumo sempre alto.' });
+    await suggestDescription('id', { description: 'Taverna di portuali con bancone di zinco, sempre fumosa.' }, d);
+    assert.match(d.requests[0]!.user, /TESTO DELL'AUTORE[^\n]*Taverna di portuali con bancone di zinco/);
+    assert.doesNotMatch(d.requests[0]!.user, /lavoratori del mercato e residenti locali/, 'la descrizione su DB non entra se l\'autore ne ha scritta un\'altra');
+  });
+
+  it('senza testo nel form si usa quello su DB', async () => {
+    const d = deps({ description: GOOD });
+    await suggestDescription('id', {}, d);
+    assert.match(d.requests[0]!.user, /TESTO DELL'AUTORE[^\n]*Una taverna popolare frequentata/);
+  });
+
+  it('le parole-chiave del testo dell\'autore devono restare: una stazione non diventa una cattedrale', () => {
+    const base = 'La grande stazione ferroviaria in ferro e vetro, progettata da Brunel, brulicante di vapore e viaggiatori.';
+    const wrong = 'L\'imponente cattedrale di ferro e vetro progettata da Brunel domina il paesaggio urbano con le sue strutture monumentali.';
+    const r = missingContent(wrong, base);
+    assert.ok(r.missing.includes('stazione'), r.missing.join(','));
+    assert.ok(r.keptRatio < 0.6);
+    const check = validateDescription(wrong, { knownText: base, canonYear: 1895, currentDescription: base }).checks.find((c) => c.code === 'lost-facts')!;
+    assert.equal(check.ok, false);
+    assert.match(check.detail!, /stazione/);
+
+    const good = 'Una grande stazione ferroviaria in ferro e vetro, progettata da Brunel, dove il vapore avvolge i viaggiatori che brulicano tra i binari.';
+    assert.equal(validateDescription(good, { knownText: base, canonYear: 1895, currentDescription: base }).checks.find((c) => c.code === 'lost-facts')!.ok, true);
+  });
+
+  it('con un testo troppo scarno per verificare (meno di 3 parole-chiave) il controllo non scatta', () => {
+    assert.deepEqual(missingContent('Qualcosa di completamente diverso.', 'Una strada.'), { missing: [], keptRatio: 1 });
+  });
+
+  it('la lunghezza voluta cresce con il testo dell\'autore ma non supera mai il tetto', () => {
+    assert.deepEqual(lengthTarget(40), { min: 60, max: 140 });
+    assert.deepEqual(lengthTarget(80), { min: 120, max: 280 });
+    const long = lengthTarget(500);
+    assert.ok(long.max <= 400 && long.min <= 320);
+  });
+});
+
