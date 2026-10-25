@@ -41,7 +41,7 @@
 | Documento | Descrizione | Status |
 |-----------|-------------|--------|
 | [seeders](./scripts/seeders.md) | 10 script seeder in `scripts/seeders` | Completo |
-| [glass-ball](./scripts/glass-ball.md) | Processing immagini | Completo |
+| [glass-ball](./scripts/glass-ball.md) | Processing immagini | Storico (strumento rimosso) |
 
 ---
 

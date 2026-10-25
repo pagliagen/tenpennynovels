@@ -193,7 +193,7 @@ Dopo la registrazione, verrai portato alla schermata di login.
 
 Al primo accesso, ti verrà chiesto di **creare il tuo primo personaggio**.
 
-> **📖 Continua con la guida**: Per istruzioni dettagliate sulla creazione del personaggio, consulta la **[Guida alla Creazione del Personaggio](./personaggi.md)** *(coming soon)*.
+> **📖 Continua con la guida**: Per istruzioni dettagliate sulla creazione del personaggio, consulta la **Guida alla Creazione del Personaggio *(guida in preparazione)*** *(coming soon)*.
 
 ---
 
@@ -349,7 +349,7 @@ Nella pagina di login troverai il link **"Password dimenticata"**. Segui la proc
 
 - **[Termini e Condizioni](https://tenpennynovels.com/terms)** - Regolamento della piattaforma
 - **[Privacy Policy](https://tenpennynovels.com/privacy)** - Come trattiamo i tuoi dati
-- **[Guida Creazione Personaggio](./personaggi.md)** *(coming soon)* - Tutorial per creare il tuo primo personaggio
+- **Guida Creazione Personaggio *(guida in preparazione)*** *(coming soon)* - Tutorial per creare il tuo primo personaggio
 - **[Documentazione Funzionale](../funzionale/autenticazione.md)** - Dettagli tecnici sul sistema di autenticazione
 - **[Supporto](https://tenpennynovels.com/support)** - Contatta il team per assistenza
 
@@ -360,7 +360,7 @@ Nella pagina di login troverai il link **"Password dimenticata"**. Segui la proc
 Congratulazioni! Ora sai come registrarti su TenPennyNovels. Se hai seguito questa guida, dovresti avere un account attivo e essere pronto a creare il tuo primo personaggio vittoriano.
 
 **Prossimi passi**:
-1. Crea il tuo primo personaggio → [Guida Creazione Personaggio](./personaggi.md) *(coming soon)*
+1. Crea il tuo primo personaggio → Guida Creazione Personaggio *(guida in preparazione)* *(coming soon)*
 2. Esplora le location disponibili
 3. Inizia a interagire con altri giocatori
 

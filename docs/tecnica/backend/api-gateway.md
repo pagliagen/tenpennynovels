@@ -50,41 +50,21 @@ flowchart TB
 ### Backend Services Map
 
 ```typescript
-const UNIFIED_BACKEND = process.env.UNIFIED_BACKEND_URL || 'http://localhost:3001';
-
+// services/api-gateway/src/app.ts (estratto): BACKEND = config.backend.url
 const services = {
-  auth: {
-    target: 'http://unified-backend:3001/auth',
-    backend: 'unified-backend',
-    port: 3001
-  },
-  game: {
-    target: 'http://unified-backend:3001/game',
-    backend: 'unified-backend',
-    port: 3001
-  },
-  admin: {
-    target: 'http://unified-backend:3001/admin',
-    backend: 'unified-backend',
-    port: 3001
-  },
-  documents: {
-    target: 'http://unified-backend:3001/game/documents',
-    backend: 'unified-backend',
-    port: 3001
-  },
-  forum: {
-    target: 'http://unified-backend:3001/forum',
-    backend: 'unified-backend',
-    port: 3001
-  },
-  socketio: {
-    target: 'http://unified-backend:3001',  // No path prefix for WebSocket
-    backend: 'unified-backend',
-    port: 3001
-  }
+  auth:      { target: `${BACKEND}/auth`,      timeout: config.proxy.defaultTimeout },   // 30 s
+  game:      { target: `${BACKEND}/game`,      timeout: config.proxy.defaultTimeout },
+  forum:     { target: `${BACKEND}/forum`,      timeout: config.proxy.defaultTimeout },
+  documents: { target: `${BACKEND}/documents`,  timeout: config.proxy.documentsTimeout }, // 120 s (ricerca semantica)
+  admin:     { target: `${BACKEND}/admin`,      timeout: config.proxy.defaultTimeout },   // 30 s: oltre, una risposta ferma viene tagliata
+  'bot-api': { target: `${BACKEND}/bot-api`,    timeout: config.proxy.defaultTimeout },   // API a cui risponde il servizio AI esterno
 };
+// Il proxy WebSocket (/socket.io/**) ha `socketTimeout` = 60 s.
+// Ogni voce è montata su `/<nome>` (app.use(`/${name}`, createServiceProxy(...))). Il proxy WebSocket (/socket.io/**) è a parte e va montato PRIMA.
 ```
+
+`/bot-api` ha un rate limiter dedicato (120 req/min per IP, attivo solo in produzione) davanti al proxy; l'autenticazione (token per evento)
+la fa il backend. Un flusso SSE con battito (es. `POST /admin/bots/design`) supera i 30 s del proxy `/admin`: la risposta ferma no.
 
 **Why Target Includes Mount Path?**
 
@@ -832,9 +812,9 @@ curl -i -N -H "Connection: Upgrade" \
 
 - [Unified Backend](./unified-backend.md) - Backend modules
 - [WebSocket Patterns](../frontend/websocket-patterns.md) - Socket.IO usage
-- [Docker Compose](../01-infrastructure/docker-compose.md) - Service configuration
-- [Environment Variables](../01-infrastructure/environment-variables.md) - Configuration
-- [Deploy README](../../deploy/README.md) - Produzione
+- [Docker Compose](../infrastructure/docker-compose.md) - Service configuration
+- [Environment Variables](../infrastructure/environment-variables.md) - Configuration
+- [Deploy README](../../../deploy/README.md) - Produzione
 
 ---
 

@@ -26,7 +26,7 @@ TenPennyNovels is a web-based RPG platform that brings Victorian London to life 
 ## Technology Stack
 
 - **Frontend**: Next.js 16, React, TypeScript, SCSS Modules
-- **Backend**: Node.js 22, Express, TypeScript (unified backend)
+- **Backend**: Node.js 24, Express, TypeScript (unified backend)
 - **Real-time**: Socket.IO for WebSocket connections
 - **Database**: MongoDB 7 with Mongoose ODM
 - **Cache/Pub-Sub**: Redis 7 for sessions, caching, and real-time events
@@ -266,19 +266,19 @@ docker compose ps                # Check status
 | api.tenpennynovels.com | API Gateway |
 | ws.tenpennynovels.com | WebSocket |
 
-**Bot Service** — gira solo in locale e non viene deployato (`bot-service/` è escluso dal rsync).
+**Servizi AI** (`ai-gateway/`, `bot-service/`) — non vengono deployati (esclusi dal rsync): oggi girano sul Mac dello sviluppatore dietro un tunnel ngrok, domani su un server AI dedicato. Il gioco li chiama (editoriale, bot di chat) solo con la configurazione completa; con i servizi spenti l'AI semplicemente non c'è.
 
-See [deploy/](deploy/) and [docs/06-operations/deployment-guide.md](docs/06-operations/deployment-guide.md) for game deployment.
+See [deploy/](deploy/) and [deploy/docs/01-ubuntu-from-zero.md](deploy/docs/01-ubuntu-from-zero.md) for game deployment.
 
 ## Documentation
 
 - [docs/INDEX.md](docs/INDEX.md) — Complete documentation index
-- [docs/00-getting-started/](docs/00-getting-started/) — Tech stack and project structure
-- [docs/01-infrastructure/](docs/01-infrastructure/) — Docker, environment variables, MongoDB schemas
-- [docs/02-backend/](docs/02-backend/) — Backend architecture and API documentation
-- [docs/03-game-systems/](docs/03-game-systems/) — Game mechanics and systems
-- [docs/04-ai-ml/](docs/04-ai-ml/) — AI/ML integrations (embeddings, bots, Q&A)
-- [docs/06-operations/](docs/06-operations/) — Deployment and operations
+- [docs/tecnica/](docs/tecnica/README.md) — Documentazione tecnica: backend, frontend, infrastruttura, script
+- [docs/tecnica/infrastructure/](docs/tecnica/infrastructure/README.md) — Docker, variabili d'ambiente, MongoDB, Redis, Qdrant
+- [docs/tecnica/backend/](docs/tecnica/backend/README.md) — Architettura del backend, endpoint, autenticazione, WebSocket
+- [docs/funzionale/](docs/funzionale/README.md) — Funzionalità di gioco (personaggi, chat, location, corporazioni…)
+- [docs/tecnica/backend/embeddings-worker.md](docs/tecnica/backend/embeddings-worker.md) — Embedding, ricerca semantica, Q&A «Bibliotecario»
+- [deploy/](deploy/README.md) — Deploy e operazioni
 - [bot-service/README.md](bot-service/README.md) — Bot di chat: pipeline, schede, umore e rapporti, modelli
 
 ## Security

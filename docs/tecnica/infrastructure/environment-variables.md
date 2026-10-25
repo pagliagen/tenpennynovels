@@ -429,6 +429,23 @@ SMTP_SECURE=false                      # true for port 465, false for 587
 
 ---
 
+## CDN e callback interni (unified-backend)
+
+Presenti nel `docker-compose.yml`; i default sono pensati per lo sviluppo.
+
+```bash
+# Dove il backend salva gli upload (immagini) e con quale URL pubblico vengono serviti (dietro /cdn dell'api-gateway)
+CDN_STORAGE_PATH=/cdn-storage
+CDN_BASE_URL=http://localhost:8000/cdn
+# Upload FTP verso un CDN esterno (disabilitato di default)
+CDN_FTP_ENABLED=false
+# Alimenta `appConfig.urls.api` (in sviluppo; in produzione è fisso https://api.tenpennynovels.com). Default http://localhost:8000;
+# in Docker http://tenpennynovels-api-gateway:8000. Oggi nessun codice del backend legge `urls.api`: è un residuo.
+API_CALLBACK_BASE_URL=http://tenpennynovels-api-gateway:8000
+```
+
+---
+
 ## Editoriale con AI e gateway AI
 
 Variabili lette da `unified-backend` (in Docker: `docker-compose.yml`, valori dal `.env` della root):
@@ -773,7 +790,7 @@ MONGODB_URI=mongodb://...@mongodb:27017/tenpennynovels?authSource=admin
 ## Related Documentation
 
 - [Docker Compose](./docker-compose.md) - Service configuration
-- [Deploy README](../../deploy/README.md) - Produzione
+- [Deploy README](../../../deploy/README.md) - Produzione
 - [Personaggi (funzionale)](../../funzionale/personaggi.md)
 - [Housing (funzionale)](../../funzionale/housing.md)
 - [bot-service README](../../../bot-service/README.md) - bot di chat con LLM, solo locale

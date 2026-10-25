@@ -1,5 +1,7 @@
 # Glass Ball Effect - Image Processing Script
 
+> ⚠️ **Strumento non più nel repository**: la cartella `scripts/glass-ball/` è stata rimossa (resta nella cronologia git). Questo documento è conservato solo come riferimento storico.
+
 **ImageMagick script per effetto palla di vetro** - Location thumbnails processing
 
 ---

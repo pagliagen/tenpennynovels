@@ -4,7 +4,7 @@
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-08
 
-Documentation of Redis usage in TenPennyNovels: Socket.IO adapter, Bull job queues, Pub/Sub for real-time events, and caching.
+Documentation of Redis usage in TenPennyNovels: Socket.IO adapter, BullMQ job queues, Pub/Sub for real-time events, and caching.
 
 ---
 
@@ -13,7 +13,7 @@ Documentation of Redis usage in TenPennyNovels: Socket.IO adapter, Bull job queu
 Redis is a critical infrastructure component used for multiple purposes:
 
 - **Socket.IO Adapter**: Horizontal scaling of WebSocket connections across multiple backend instances
-- **Bull Job Queues**: Async embedding processing with Dead Letter Queue for failed jobs
+- **BullMQ Job Queues**: Async embedding processing with Dead Letter Queue for failed jobs
 - **Pub/Sub**: Real-time event broadcasting for embedding generation triggers
 - **Caching**: Embedding result cache (1h TTL) to avoid redundant computation
 
@@ -31,7 +31,7 @@ flowchart TB
             E4["character:events (game)"]
         end
 
-        subgraph Bull["Bull Queues"]
+        subgraph Bull["BullMQ Queues"]
             Q1["embeddings queue"]
         end
 
@@ -76,12 +76,18 @@ flowchart TB
 ### Usage by Service
 
 - **Unified Backend**: Uses `REDIS_HOST` + `REDIS_PORT` for Socket.IO adapter; `REDIS_URL` for sessions/caching
-- **embeddings-worker**: Uses `REDIS_URL` for Bull queue, Pub/Sub subscription, and cache
+- **embeddings-worker**: Uses `REDIS_URL` for BullMQ queue, Pub/Sub subscription, and cache
 - **API Gateway**: No direct Redis connection (proxies to unified-backend)
 
 ---
 
-## Bull Job Queues
+## Canale della chat dei bot
+
+| Canale | Chi pubblica | Chi legge | Note |
+|---|---|---|---|
+| `bot:chat:message` | `unified-backend` (`BotChatEventPublisher`, dopo ogni messaggio `standard` di una location) | `BotChatForwarder` (stesso backend) | Pubblica **solo con la configurazione completa** della chat dei bot (`ENABLE_BOT_CHAT`, `BOT_SERVICE_SECRET`, `BOT_REPLY_BASE_URL`, gateway AI). Il forwarder spinge l'evento al servizio AI esterno (gateway → `bot-service`); il servizio **non** legge Redis. Vedi `.claude/rules/30-ai-services.md`. |
+
+## BullMQ Job Queues
 
 ### Embeddings Queue
 
@@ -109,7 +115,7 @@ sequenceDiagram
 
 | Setting | Value | Description |
 |---------|-------|-------------|
-| Queue name | `embeddings` | Bull queue identifier |
+| Queue name | `embeddings` | BullMQ queue identifier |
 | Concurrency | 5 | Parallel job processing |
 | Attempts | 3 | Retries before DLQ |
 | Backoff | Exponential (2s base) | Delay between retries |

@@ -188,7 +188,7 @@ export interface TableFilter {
 
 ### Example: User List Config
 
-**File**: [user-list.json](../../../apps/management/src/lib/config/tables/user-list.json)
+**File**: [user-list.json](../../../apps/management/public/config/tables/user-list.json)
 
 ```json
 {
@@ -488,7 +488,7 @@ export default function DocumentEditor() {
 
 ### Document Tree Reordering
 
-**Component**: [DocumentTree.tsx](../../../apps/management/src/components/documents/DocumentTree.tsx)
+**Component**: [DocumentTreeView.tsx](../../../apps/management/src/components/documents/DocumentTreeView.tsx)
 
 **Implementation**:
 ```typescript
@@ -826,7 +826,7 @@ location /gestione {
 
 **Checklist**:
 1. Verifica nome tabella: `tableName="user-list"` (deve matchare file JSON)
-2. Check file esiste: `ls apps/management/src/lib/config/tables/user-list.json`
+2. Check file esiste: `ls apps/management/public/config/tables/user-list.json`
 3. Verifica JSON valido: `cat user-list.json | jq .`
 4. Check config loader: `console.log(loadTableConfig('user-list'))`
 

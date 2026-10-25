@@ -20,8 +20,8 @@
 **Tutorial passo-passo** - Manuali operativi con screenshot
 
 - [Iscrizione](./guide-utente/iscrizione.md) - Come creare un account
-- [Creazione Personaggio](./guide-utente/personaggi.md) *(coming soon)*
-- [Primo Accesso e Chat](./guide-utente/primo-accesso.md) *(coming soon)*
+- Creazione Personaggio *(coming soon)*
+- Primo Accesso e Chat *(coming soon)*
 
 ### [Documentazione Tecnica](./tecnica/README.md)
 **Come funziona il sistema** - Architetture, API, implementazioni
@@ -40,7 +40,7 @@
 
 #### Scripts
 - [Seeders](./tecnica/scripts/seeders.md) — 10 seed TypeScript in `scripts/seeders`
-- [Glass Ball](./tecnica/scripts/glass-ball.md) - Image processing
+- [Glass Ball](./tecnica/scripts/glass-ball.md) - Image processing *(storico: strumento rimosso)*
 
 #### Infrastructure
 - [Docker Compose](./tecnica/infrastructure/docker-compose.md)

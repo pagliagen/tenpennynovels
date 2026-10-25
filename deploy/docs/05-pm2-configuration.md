@@ -1,6 +1,6 @@
 # PM2 Configuration Guide
 
-**Navigation**: [Deploy Hub](./README.md) > PM2 Guide
+**Navigation**: [Deploy Hub](./INDEX.md) > PM2 Guide
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-15
 
@@ -962,8 +962,8 @@ flowchart TB
 
 ## Related Documentation
 
-- [Ubuntu From Zero](./ubuntu-from-zero.md) - Setup server e PM2 installation
-- [GitHub Setup](./github-setup.md) - CI/CD con PM2 restart automatico
-- [Nginx Guide](./nginx-guide.md) - Reverse proxy per PM2 processes
-- [VPS Troubleshooting](./vps-deployment-guide.md) - PM2 cluster crash fix
-- [Deployment Overview](../docs/06-operations/deployment-guide.md) - Panoramica generale
+- [Ubuntu From Zero](./01-ubuntu-from-zero.md) - Setup server e PM2 installation
+- [GitHub Setup](./02-github-setup.md) - CI/CD con PM2 restart automatico
+- [Nginx Guide](../nginx-configs/README.md) - Reverse proxy per PM2 processes
+- [VPS Troubleshooting](./01-ubuntu-from-zero.md) - PM2 cluster crash fix
+- [Deployment Overview](./01-ubuntu-from-zero.md) - Panoramica generale

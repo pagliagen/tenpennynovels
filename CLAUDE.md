@@ -13,11 +13,11 @@ Monorepo TypeScript/Node.js per un gioco di ruolo vittoriano multiplayer con AI 
 ```
 apps/          4 frontend Next.js: landing(4000) game(4001) documents(4002) management(4003)
 services/      3 backend: api-gateway(8000) unified-backend(3001) embeddings-worker(5001)
-bot-service/  servizi AI locali (solo dev), uno per cartella: character-bot (bot di chat via Ollama) ed editorial (bozze per il gestionale); HTTP interno 8788
+bot-service/  servizi AI (oggi sul Mac, domani un server dedicato; non deployati), uno per cartella: character-bot (bot di chat via Ollama: il gioco lo chiama e lui risponde su /bot-api) ed editorial (bozze per il gestionale); HTTP interno 8788
 ai-gateway/   ingresso dei servizi AI (8787): segreto, limiti, smista verso bot-service; oggi dietro ngrok, domani su un server dedicato
 ```
 
-**Stack**: Next.js 16 Pages Router · React 18 · Express 5 (v4 in embeddings-worker) · MongoDB/Mongoose · Redis · Socket.IO · Bull · Ollama · Qdrant · PM2 · Docker
+**Stack**: Next.js 16 Pages Router · React 18 · Express 5 (v4 in embeddings-worker) · MongoDB/Mongoose · Redis · Socket.IO · BullMQ · Ollama · Qdrant · PM2 · Docker
 
 **Node**: `.nvmrc` è source of truth (`v24.18.0`). **Nessun npm workspace**: ogni app/service ha il proprio `node_modules`, si installa con `cd <dir> && npm install`.
 
@@ -48,7 +48,7 @@ Violarle causa bug in produzione. Dettagli e incidenti reali in [00-critical.md]
 | [00-critical.md](.claude/rules/00-critical.md) | Le 7 regole in dettaglio + incidenti reali — **leggi sempre** |
 | [10-frontend.md](.claude/rules/10-frontend.md) | Regole per le 4 app, ESLint reale, checklist nuova pagina management |
 | [20-backend.md](.claude/rules/20-backend.md) | Regole per i 3 service, auth a due livelli, Qdrant, ordine proxy |
-| [30-ai-services.md](.claude/rules/30-ai-services.md) | bot-service: endpoint interno, cosa vede il bot, umore e rapporti, incidenti |
+| [30-ai-services.md](.claude/rules/30-ai-services.md) | servizi AI: gateway, chat dei bot (push + token), cosa vede il bot, umore e rapporti, incidenti |
 | [40-workflow.md](.claude/rules/40-workflow.md) | TypeScript, npm senza workspace, git, CI/CD, Docker, deploy |
 
 **`docs/` — descrittivo, da leggere SOLO all'occorrenza.** Architetture, cataloghi, API. Non caricarlo preventivamente: aprilo quando serve il dettaglio su un'area specifica.
@@ -56,10 +56,10 @@ Violarle causa bug in produzione. Dettagli e incidenti reali in [00-critical.md]
 | Doc | Quando aprirlo |
 |---|---|
 | [docs/INDEX.md](docs/INDEX.md) | punto di ingresso a tutta la documentazione |
-| `docs/tecnica/frontend/game-app.md` | 12 tipi di messaggio, 9 store Zustand, virtual scrolling |
+| `docs/tecnica/frontend/game-app.md` | 12 tipi di messaggio, 11 store Zustand, virtual scrolling |
 | `docs/tecnica/frontend/websocket-patterns.md` | API del `WebSocketContext`, errori tipici |
 | `docs/tecnica/backend/websocket-events.md` | catalogo completo eventi Socket.IO |
-| `docs/tecnica/backend/error-codes.md` | registry dei codici errore (~59 voci) |
+| `docs/tecnica/backend/error-codes.md` | registry dei codici errore (54 nell'enum `ErrorCode` + i codici AI/bot usati come stringhe) |
 | `docs/tecnica/backend/api-endpoints.md` | 90+ endpoint REST |
 | `docs/tecnica/backend/authentication.md` | flusso JWT + sessione personaggio |
 | `docs/tecnica/infrastructure/` | mongodb-schemas, docker-compose, env vars, redis, qdrant |
@@ -77,6 +77,8 @@ Se rules e `docs/` divergono, **il codice decide**. Correggi quello che è sbagl
 | game | 4001 | unified-backend | 3001 | Redis | 6379 |
 | documents | 4002 | embeddings-worker | 5001 | Qdrant | 6333 |
 | management | 4003 | | | | |
+
+**AI (fuori dal gioco)**: ai-gateway 8787 · bot-service 8788 (solo loopback) · Ollama 11434. Il gioco le raggiunge solo con la configurazione completa (`ENABLE_IA_EDITORIAL`, `ENABLE_BOT_CHARACTERS`, `ENABLE_BOT_CHAT`, gateway): vedi `30-ai-services.md`.
 
 **Produzione**: `tenpennynovels.com` (landing) · `game.` · `documenti.` · `gestione.` · `api.` · `ws.`
 

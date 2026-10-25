@@ -15,4 +15,4 @@ La **knowledge base** raccoglie testi di ambientazione, regolamento e approfondi
 
 ## Dettagli tecnici
 
-Vedi [Documents App](../tecnica/frontend/documents-app.md), [Embeddings Worker](../tecnica/backend/embeddings-worker.md), [Qdrant](../tecnica/infrastructure/qdrant-vector-db.md) e [Semantic search in deploy](../deploy/docs/08-semantic-search-setup.md) per l’ambiente di produzione.
+Vedi [Documents App](../tecnica/frontend/documents-app.md), [Embeddings Worker](../tecnica/backend/embeddings-worker.md), [Qdrant](../tecnica/infrastructure/qdrant-vector-db.md) e [Semantic search in deploy](../../deploy/docs/08-semantic-search-setup.md) per l’ambiente di produzione.

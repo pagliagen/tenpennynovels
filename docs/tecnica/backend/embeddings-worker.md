@@ -66,7 +66,7 @@ flowchart TB
 ### 1. Embeddings Worker (Node.js/TypeScript)
 
 **Container**: `tenpennynovels-embeddings-worker`
-**Language**: TypeScript (Node.js 22)
+**Language**: TypeScript (Node.js 24, `.nvmrc`)
 **Technology**: Bull Queue, Mongoose, Qdrant Client
 
 **Purpose**: Async processing of embedding generation jobs via Redis pub/sub.
@@ -142,7 +142,7 @@ POST http://localhost:6333/collections/documents/points/search
 }
 ```
 
-**Details**: [Qdrant Vector DB](../01-infrastructure/qdrant-vector-db.md)
+**Details**: [Qdrant Vector DB](../infrastructure/qdrant-vector-db.md)
 
 ---
 
@@ -186,7 +186,7 @@ interface ChatEmbeddingEvent {
 
 ### Document Model
 
-**Location**: `services/unified-backend/src/database/models/Document.ts`
+**Location**: `services/unified-backend/src/features/documenti/models/Document.ts`
 
 ```typescript
 interface IDocument extends MongooseDocument {
@@ -311,7 +311,7 @@ docker logs tenpennynovels-embeddings-worker -f
 # Python 3.11+
 python --version
 
-# Node.js 22+
+# Node.js 24 (vedi .nvmrc)
 node --version
 ```
 
@@ -522,7 +522,7 @@ const MODEL_CONFIG = {
 
 ## Related Documentation
 
-- [Semantic Search](./semantic-search.md) - Search implementation using embeddings
-- [Qdrant Vector DB](../01-infrastructure/qdrant-vector-db.md) - Vector database setup
-- [Redis Pub/Sub](../01-infrastructure/redis-pubsub.md) - Event channels
+- [Semantic Search](../../../deploy/docs/08-semantic-search-setup.md) - Search implementation using embeddings
+- [Qdrant Vector DB](../infrastructure/qdrant-vector-db.md) - Vector database setup
+- [Redis Pub/Sub](../infrastructure/redis-pubsub.md) - Event channels
 - [Documents App](../frontend/documents-app.md) - UI knowledge base

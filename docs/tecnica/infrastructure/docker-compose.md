@@ -251,6 +251,8 @@ ports:
 
 ### 6. Unified Backend (Port 3001)
 
+> Le variabili del servizio sono molte: l'elenco completo e commentato sta in [environment-variables.md](./environment-variables.md) (incluse quelle dell'AI: `ENABLE_IA_EDITORIAL`, `ENABLE_BOT_CHARACTERS`, `ENABLE_BOT_CHAT`, `BOT_SERVICE_SECRET`, `BOT_REPLY_BASE_URL`, `AI_GATEWAY_URL`, `AI_GATEWAY_SECRET`) e nel `docker-compose.yml`, che è la fonte di verità.
+
 **Build**: `./services/unified-backend/Dockerfile.dev`
 **Container**: `tenpennynovels-unified-backend`
 **Purpose**: Main backend with all modules
@@ -449,8 +451,7 @@ volumes:
 # Development (with hot-reload)
 docker compose up -d
 
-# Production (no dev dependencies)
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Production: NON si usa Docker per i service Node (PM2 sull'host, vedi deploy/). docker-compose.prod.yml è una proposta (sezione "Resource Limits"), non esiste nel repo.
 
 # View logs (follow)
 docker compose logs -f
@@ -663,7 +664,7 @@ docker compose restart unified-backend
 
 ### Resource Limits
 
-**Create**: `docker-compose.prod.yml`
+**Proposta (il file non esiste nel repo)**: `docker-compose.prod.yml`
 
 ```yaml
 services:
@@ -732,8 +733,8 @@ services:
 - [Unified Backend](../backend/unified-backend.md) - Backend modules
 - [API Gateway](../backend/api-gateway.md) - Proxy configuration
 - [Embeddings Worker](../backend/embeddings-worker.md) - Pipeline embedding e hybrid search
-- [Deploy (README)](../../deploy/README.md) - Produzione e checklist
-- [Troubleshooting deploy](../../deploy/docs/99-troubleshooting.md) - Problemi comuni
+- [Deploy (README)](../../../deploy/README.md) - Produzione e checklist
+- [Troubleshooting deploy](../../../deploy/docs/99-troubleshooting.md) - Problemi comuni
 
 ---
 

@@ -172,9 +172,9 @@ Strict rules:
 
 ## 📚 Documentation
 
-- [Architecture V2](../.claude/plans/GAME_ARCHITECTURE_V2.md)
-- [Features Requirements](../.claude/plans/GAME_FEATURES_REQUIREMENTS.md)
-- [Critical Analysis](../.claude/plans/ANALISI_CRITICA_GAME.md)
+- Architecture V2 *(documento non più nel repo)*
+- Features Requirements *(documento non più nel repo)*
+- Critical Analysis *(documento non più nel repo)*
 
 ## 🤝 Contributing
 

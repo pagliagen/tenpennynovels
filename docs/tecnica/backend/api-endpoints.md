@@ -446,5 +446,4 @@ Administrative operations: user management, character approval, locations, docum
 
 - [Unified Backend Architecture](./unified-backend.md) - Module structure
 - [API Gateway](./api-gateway.md) - Proxy configuration
-- [Authentication System](./authentication-system.md) - JWT and permissions
-- [API Testing Scripts](../07-testing/api-testing-scripts.md) - Testing scripts
+- [Authentication System](./authentication.md) - JWT and permissions

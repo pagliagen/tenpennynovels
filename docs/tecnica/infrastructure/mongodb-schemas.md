@@ -1020,7 +1020,7 @@ docker exec -i tenpennynovels-mongodb mongorestore \
   /backups/20260301/tenpennynovels
 ```
 
-**Details**: [Deploy README](../../deploy/README.md) (backup DB / volumi secondo ambiente)
+**Details**: [Deploy README](../../../deploy/README.md) (backup DB / volumi secondo ambiente)
 
 ---
 

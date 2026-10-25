@@ -5,7 +5,7 @@ Regole normative per le 4 app Next.js. Descrizione completa di ciascuna app: `do
 | App | Porta | Stack specifico | Doc |
 |---|---|---|---|
 | landing | 4000 | **Fetch API** (non Axios), no state lib, react-hook-form + Zod | `docs/tecnica/frontend/landing-app.md` |
-| game | 4001 | Axios, React Query, **9 store Zustand**, Socket.IO | `docs/tecnica/frontend/game-app.md` |
+| game | 4001 | Axios, React Query, **11 store Zustand**, Socket.IO | `docs/tecnica/frontend/game-app.md` |
 | documents | 4002 | Axios, React Query, SSR per SEO, read-only | `docs/tecnica/frontend/documents-app.md` |
 | management | 4003 | Axios, React Query, TipTap, dnd-kit | `docs/tecnica/frontend/management-app.md` |
 
@@ -61,7 +61,7 @@ Tutte e 3 usano flat config e `npm run lint` → `eslint .` (`next lint` non esi
 
 **Optimistic updates**: vedi regola 5 in `00-critical.md`.
 
-**9 store** in `apps/game/src/store/`: `authStore` (persistito), `chatStore`, `locationStore`, `gameStateStore`, `presenceStore`, `uiStore`, `windowManagerStore`, `wizardStore` (il più grande), `forumStore`.
+**11 store** in `apps/game/src/store/`: `authStore` (persistito), `chatStore`, `locationStore`, `gameStateStore`, `presenceStore`, `uiStore`, `windowManagerStore`, `wizardStore` (il più grande), `forumStore`, `audioManagerStore`, `characterSheetHeaderStore`.
 Dettaglio delle responsabilità: `docs/tecnica/frontend/game-app.md`.
 
 **Single point of write**: le transizioni di location passano solo da `gameStateStore.enterLocation()`/`leaveLocation()`, che gestiscono update ottimistico + persistenza HTTP + join/leave della room WebSocket. I componenti non chiamano le API di location direttamente né scrivono lo stato a mano.
