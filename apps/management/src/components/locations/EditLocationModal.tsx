@@ -11,6 +11,7 @@ import { ImageUploader } from '@/components/shared/ImageUploader';
 import { GenerateImageButton } from '@/components/shared/GenerateImageButton';
 import { PositionsEditor } from '@/components/locations/PositionsEditor';
 import { LocationTagsEditor } from '@/components/locations/LocationTagsEditor';
+import { LocationAiSuggest } from '@/components/locations/LocationAiSuggest';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useLocation, useUpdateLocation, useLocations } from '@/hooks/api/useLocations';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -158,6 +159,7 @@ export function EditLocationModal({
             value={formData.description || ''}
             onChange={(e: any) => handleChange('description', e.target.value)}
           />
+          <LocationAiSuggest kind="description" locationId={locationId} onApplyDescription={(text) => handleChange('description', text)} />
 
           <div className={styles.row}>
             <FormField
@@ -244,6 +246,7 @@ export function EditLocationModal({
               value={formData.tags || []}
               onChange={(tags) => handleChange('tags', tags)}
             />
+            <LocationAiSuggest kind="tags" locationId={locationId} onApplyTags={(tags) => handleChange('tags', tags)} />
           </div>
 
           <div className={styles.section}>

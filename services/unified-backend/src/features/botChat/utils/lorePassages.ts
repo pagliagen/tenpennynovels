@@ -1,4 +1,4 @@
-import type { LorePassage } from '@features/documenti/api';
+import { stripGameMeta, type LorePassage } from '@features/documenti/api';
 
 /**
  * Soglia sul coseno grezzo per dire «i documenti coprono la domanda».
@@ -18,8 +18,6 @@ const MAX_TOTAL_CHARS = 900;
 const MAX_PASSAGE_CHARS = 500;
 /** Un passaggio che dopo il filtro resta più corto è un frammento, non una risposta. */
 const MIN_PASSAGE_CHARS = 80;
-/** Frazione di frasi di gioco oltre la quale l'intero chunk è testo per giocatori, non per il mondo. */
-const META_DENSITY = 0.25;
 
 export interface BotLore {
   covered: boolean;
@@ -33,26 +31,6 @@ export function clipToSentence(text: string, max: number): string {
   const slice = clean.slice(0, max);
   const end = Math.max(slice.lastIndexOf('. '), slice.lastIndexOf('! '), slice.lastIndexOf('? '));
   return end > max / 3 ? slice.slice(0, end + 1) : slice.slice(0, slice.lastIndexOf(' ')).trim() + '…';
-}
-
-// L'ambientazione contiene anche testo che parla del gioco e dei giocatori («Nel gioco i pronomi…», tutta
-// la «Presentazione»): un barista del 1895 non lo può dire. Frasi che nominano il gioco, i giocatori, la
-// scheda, il regolamento, i link di rimando. «campagna» (campagna investigativa) sì, «la campagna» (il
-// contado) no; «master» solo minuscolo ("Master Tom" è un ragazzino vittoriano).
-const GAME_META = /\b(giocator\w*|giocabil\w*|giocar\w*|gioco|PvE|scheda|regolamento|campagna investigativa|leggi anche)\b|\[[A-Z ]*LINK\]/i;
-const GAME_META_CASE = /\bmaster\b/;
-const SENTENCE_SPLIT = /(?<=[.!?])\s*(?=[A-ZÀ-Ý“"\[])|\n+/;
-
-/**
- * Toglie dal testo le frasi che parlano del gioco. Se sono troppe (`META_DENSITY`) l'intero chunk è
- * materiale per giocatori e non rimane niente. Euristico: una frase di gioco senza parole-spia passa
- * (la «Presentazione» è catturata dalla densità). La soluzione pulita è un flag per documento.
- */
-export function stripGameMeta(text: string): string {
-  const sentences = text.split(SENTENCE_SPLIT).map((x) => x.trim()).filter(Boolean);
-  const keep = sentences.filter((x) => !GAME_META.test(x) && !GAME_META_CASE.test(x));
-  if (sentences.length > 0 && (sentences.length - keep.length) / sentences.length >= META_DENSITY) return '';
-  return keep.join(' ');
 }
 
 export function selectLore(all: LorePassage[]): BotLore {

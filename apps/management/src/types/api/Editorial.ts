@@ -25,3 +25,26 @@ export interface CanonReport {
   findings: CanonFinding[];
   stats: { documents: number; subtypes: number; locations: number; findings: number };
 }
+
+/** Un controllo deterministico sulla bozza del modello (`POST /admin/editorial/ai/locations/:id/suggest-description`). */
+export interface DraftCheck {
+  code: 'length' | 'year' | 'anachronism' | 'foreign-words' | 'unknown-name' | 'lost-facts' | 'game-meta';
+  ok: boolean;
+  detail?: string;
+}
+
+export interface DescriptionSuggestion {
+  draft: string;
+  /** Tutti i controlli passati. */
+  ok: boolean;
+  checks: DraftCheck[];
+  /** Su cosa si è basata la bozza (titoli degli estratti dell'ambientazione). */
+  sources: string[];
+  ms: number;
+}
+
+export interface TagsSuggestion {
+  tags: string[];
+  ms: number;
+}
+
