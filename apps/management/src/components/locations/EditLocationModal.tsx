@@ -255,6 +255,7 @@ export function EditLocationModal({
               positions={formData.positions || []}
               onChange={(positions) => handleChange('positions', positions)}
               locationId={locationId}
+              aiContext={{ name: formData.name || '', description: formData.description || '', tags: formData.tags || [] }}
             />
           </div>
 

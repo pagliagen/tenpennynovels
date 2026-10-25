@@ -28,7 +28,7 @@ export interface CanonReport {
 
 /** Un controllo deterministico sulla bozza del modello (`POST /admin/editorial/ai/locations/:id/suggest-description`). */
 export interface DraftCheck {
-  code: 'length' | 'year' | 'anachronism' | 'foreign-words' | 'unknown-name' | 'lost-facts' | 'game-meta';
+  code: 'length' | 'year' | 'anachronism' | 'foreign-words' | 'unknown-name' | 'lost-facts' | 'variable-conditions' | 'invented-material' | 'filler' | 'positions' | 'game-meta';
   ok: boolean;
   detail?: string;
 }
@@ -48,3 +48,15 @@ export interface TagsSuggestion {
   ms: number;
 }
 
+
+export interface SuggestedPosition {
+  name: string;
+  description: string;
+}
+
+export interface PositionsSuggestion {
+  positions: SuggestedPosition[];
+  ok: boolean;
+  checks: DraftCheck[];
+  ms: number;
+}

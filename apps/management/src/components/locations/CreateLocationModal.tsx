@@ -240,6 +240,7 @@ export function CreateLocationModal({
           <PositionsEditor
             positions={formData.positions || []}
             onChange={(positions) => handleChange('positions', positions)}
+            aiContext={{ name: formData.name || '', description: formData.description || '', tags: formData.tags || [] }}
           />
         </div>
       </form>

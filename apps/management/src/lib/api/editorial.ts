@@ -6,7 +6,7 @@
  */
 
 import { apiClient, withRetry } from './client';
-import type { CanonReport, DescriptionSuggestion, TagsSuggestion } from '@/types/api/Editorial';
+import type { CanonReport, DescriptionSuggestion, PositionsSuggestion, TagsSuggestion } from '@/types/api/Editorial';
 import type { ApiResponse } from '@/types/api/common';
 
 export async function getCanonCheck(): Promise<CanonReport> {
@@ -31,3 +31,20 @@ async function postSuggestion<T>(locationId: string, action: 'suggest-descriptio
 
 export const suggestLocationDescription = (locationId: string, description: string): Promise<DescriptionSuggestion> => postSuggestion(locationId, 'suggest-description', description);
 export const suggestLocationTags = (locationId: string, description: string): Promise<TagsSuggestion> => postSuggestion(locationId, 'suggest-tags', description);
+
+export interface PositionsRequest {
+  name: string;
+  description: string;
+  tags: string[];
+  /** Nomi delle posizioni già nel form: l'AI non li ripete. */
+  existing: string[];
+}
+
+/** Senza id: serve anche mentre si crea la location. Il testo viene dal form. */
+export async function suggestLocationPositions(request: PositionsRequest): Promise<PositionsSuggestion> {
+  const response = await apiClient.post<ApiResponse<PositionsSuggestion>>('/admin/editorial/ai/suggest-positions', request, { timeout: AI_TIMEOUT_MS });
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Il servizio AI non ha risposto');
+  }
+  return response.data.data;
+}

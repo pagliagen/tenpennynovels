@@ -17,7 +17,7 @@ export interface DraftContext {
 }
 
 export interface DraftCheck {
-  code: 'length' | 'year' | 'anachronism' | 'foreign-words' | 'unknown-name' | 'game-meta' | 'lost-facts';
+  code: 'length' | 'year' | 'anachronism' | 'foreign-words' | 'unknown-name' | 'game-meta' | 'lost-facts' | 'variable-conditions' | 'invented-material' | 'filler' | 'positions';
   ok: boolean;
   detail?: string;
 }
@@ -104,6 +104,26 @@ export function missingContent(draft: string, base: string): { missing: string[]
   return { missing, keptRatio: 1 - missing.length / wanted.size };
 }
 
+/**
+ * Condizioni che in gioco cambiano (meteo, ora, luce): una descrizione fissa che dice «nebbie» resta vera anche
+ * quando la sidebar mostra la neve. Si segnalano solo se l'autore non le ha scritte lui.
+ */
+const VARIABLE_CONDITIONS = /\b(nebbi\w*|foschi\w*|bruma|brume|piogg\w*|piov\w*|pioviggin\w*|acquazzon\w*|nev\w*|gelo|gelid\w*|vent[oi]|ventos\w*|soleggiat\w*|sole|tramont\w*|alba|albe|crepuscol\w*|mattin\w*|pomerigg\w*|serata|sera|notte|notturn\w*|luce|luci|lume|lumi|chiarore|penombra|ombre|ombra|umid\w*|vapor\w*)\b/gi;
+
+/** Materiali e colori che il modello aggiunge di suo («ponti di pietra»): fatti nuovi, non atmosfera. */
+const INVENTED_MATERIALS = /\b(pietr\w*|marm\w*|legn\w*|ferr\w*|ghisa|mattoni|mattone|vetr\w*|ottone|bronz\w*|quercia|velluto|cuoio|rame|granito|acciaio|dorat\w*|argentat\w*|rossastr\w*|scuri|scuro|scura|scure|nero|nera|neri|nere|bianc\w*)\b/gi;
+
+/** Frasi fatte che il modello ripete in ogni bozza: poche, ma riconoscibili. */
+const FILLER = /(soffus\w*|fiocc\w*|aria (?:è )?dens\w*|dens[ao] (?:di|del|dell)|filtr\w* (?:tra|dalle|attraverso))/gi;
+
+const stemOf = (w: string): string => w.toLowerCase().slice(0, 5);
+
+/** Parole del pattern presenti nella bozza e non nel testo dell'autore (confronto per radice). */
+function newWords(pattern: RegExp, draft: string, base: string): string[] {
+  const have = new Set([...base.matchAll(pattern)].map((m) => stemOf(m[0])));
+  return [...new Set([...draft.matchAll(pattern)].map((m) => m[0].toLowerCase()).filter((w) => !have.has(stemOf(w))))];
+}
+
 export function validateDescription(text: string, ctx: DraftContext): { ok: boolean; checks: DraftCheck[] } {
   const clean = text.trim();
   const checks: DraftCheck[] = [];
@@ -131,7 +151,81 @@ export function validateDescription(text: string, ctx: DraftContext): { ok: bool
   const lostOk = lost.length === 0 && keptRatio >= MIN_KEPT_CONTENT;
   checks.push({ code: 'lost-facts', ok: lostOk, ...(lostOk ? {} : { detail: `non riporta: ${[...lost, ...missing].slice(0, 6).join(', ')}` }) });
 
+  const conditions = newWords(VARIABLE_CONDITIONS, clean, base);
+  checks.push({ code: 'variable-conditions', ok: conditions.length === 0, ...(conditions.length ? { detail: `meteo, ora o luce che in gioco cambiano: ${conditions.join(', ')}` } : {}) });
+
+  const materials = newWords(INVENTED_MATERIALS, clean, base);
+  checks.push({ code: 'invented-material', ok: materials.length === 0, ...(materials.length ? { detail: `materiali o colori non scritti da te: ${materials.join(', ')}` } : {}) });
+
+  const filler = newWords(FILLER, clean, base);
+  checks.push({ code: 'filler', ok: filler.length === 0, ...(filler.length ? { detail: `frasi fatte: ${filler.join(', ')}` } : {}) });
+
   const meta = mentionsGameMeta(clean);
+  checks.push({ code: 'game-meta', ok: !meta, ...(meta ? { detail: 'parla del gioco o dei giocatori' } : {}) });
+
+  return { ok: checks.every((c) => c.ok), checks };
+}
+
+export const MAX_POSITIONS = 3;
+export const MAX_POSITION_NAME_CHARS = 30;
+export const MAX_POSITION_DESCRIPTION_CHARS = 160;
+
+export interface SuggestedPosition {
+  name: string;
+  description: string;
+}
+
+/** Entrata e uscita non sono posti dove stare: sono il motivo per cui si generano posizioni vere. */
+const PASSAGE_NAMES = /^(ingresso|uscita|entrata|porta|ingresso principale|uscita principale)$/i;
+
+const norm = (text: string): string => text.trim().toLowerCase().replace(/\s+/g, ' ');
+
+/**
+ * Pulisce ciò che il modello ha restituito (forma, doppioni, ingresso/uscita, posizioni già presenti, massimo 3)
+ * e controlla il testo: lo scarto qui è silenzioso, i controlli sul testo informano la persona.
+ */
+export function cleanPositions(raw: unknown, existing: string[]): SuggestedPosition[] {
+  if (!Array.isArray(raw)) return [];
+  const taken = new Set(existing.map(norm));
+  const out: SuggestedPosition[] = [];
+  for (const item of raw) {
+    const name = typeof (item as { name?: unknown })?.name === 'string' ? (item as { name: string }).name.trim().replace(/[.:;]+$/, '').replace(/^./, (c) => c.toUpperCase()) : '';
+    const description = typeof (item as { description?: unknown })?.description === 'string' ? (item as { description: string }).description.trim() : '';
+    if (!name || !description || name.length > MAX_POSITION_NAME_CHARS || PASSAGE_NAMES.test(name) || taken.has(norm(name))) continue;
+    taken.add(norm(name));
+    out.push({ name, description: description.slice(0, MAX_POSITION_DESCRIPTION_CHARS + 40) });
+    if (out.length === MAX_POSITIONS) break;
+  }
+  return out;
+}
+
+export function validatePositions(positions: SuggestedPosition[], knownText: string): { ok: boolean; checks: DraftCheck[] } {
+  const checks: DraftCheck[] = [];
+  checks.push({ code: 'positions', ok: positions.length > 0, ...(positions.length ? {} : { detail: 'nessuna posizione utilizzabile' }) });
+
+  const long = positions.filter((p) => p.description.length > MAX_POSITION_DESCRIPTION_CHARS).map((p) => p.name);
+  checks.push({ code: 'length', ok: long.length === 0, ...(long.length ? { detail: `descrizione troppo lunga: ${long.join(', ')}` } : {}) });
+
+  const text = positions.map((p) => `${p.name}. ${p.description}`).join(' ');
+  const years = [...text.matchAll(/(?<!\d)(1[89]\d{2})(?!\d)/g)].map((m) => m[1]!);
+  checks.push({ code: 'year', ok: years.length === 0, ...(years.length ? { detail: `anni nel testo: ${[...new Set(years)].join(', ')}` } : {}) });
+
+  const anachronisms = [...new Set(findAnachronisms(text).map((h) => h.word))];
+  checks.push({ code: 'anachronism', ok: anachronisms.length === 0, ...(anachronisms.length ? { detail: anachronisms.join(', ') } : {}) });
+
+  const foreign = foreignWords(text);
+  checks.push({ code: 'foreign-words', ok: foreign.length === 0, ...(foreign.length ? { detail: foreign.join(', ') } : {}) });
+
+  const unknown = unknownProperNames(text, knownText);
+  checks.push({ code: 'unknown-name', ok: unknown.length === 0, ...(unknown.length ? { detail: `nomi non presenti nelle fonti: ${unknown.join(', ')}` } : {}) });
+
+  const conditions = newWords(VARIABLE_CONDITIONS, text, knownText);
+  checks.push({ code: 'variable-conditions', ok: conditions.length === 0, ...(conditions.length ? { detail: `meteo, ora o luce che in gioco cambiano: ${conditions.join(', ')}` } : {}) });
+
+  const materials = newWords(INVENTED_MATERIALS, text, knownText);
+  checks.push({ code: 'invented-material', ok: materials.length === 0, ...(materials.length ? { detail: `materiali o colori non scritti da te: ${materials.join(', ')}` } : {}) });
+
+  const meta = mentionsGameMeta(text);
   checks.push({ code: 'game-meta', ok: !meta, ...(meta ? { detail: 'parla del gioco o dei giocatori' } : {}) });
 
   return { ok: checks.every((c) => c.ok), checks };
