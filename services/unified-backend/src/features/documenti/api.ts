@@ -14,6 +14,12 @@ export { EmbeddingService } from './services/EmbeddingService';
 export { searchPublicLore } from './services/PublicLoreSearch';
 export type { LorePassage } from './services/PublicLoreSearch';
 
+/**
+ * Il testo di gioco dentro l'ambientazione (frasi per giocatori): chi riusa l'ambientazione per far parlare il
+ * mondo (bot dei PNG, bozze editoriali) lo toglie con `stripGameMeta`.
+ */
+export { stripGameMeta, mentionsGameMeta } from './utils/gameMeta';
+
 /** Lettura in sola lettura dei documenti pubblici per la revisione editoriale (features/editorialAi). */
 export { readDocumentsForReview, htmlToPlainText } from './services/DocumentReviewReader';
 export type { ReviewDocumentRow, ReviewSubtypeRow } from './services/DocumentReviewReader';

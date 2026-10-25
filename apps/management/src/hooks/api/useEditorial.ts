@@ -2,7 +2,7 @@
  * Editorial AI TanStack Query Hooks
  */
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import * as editorialAPI from '@/lib/api/editorial';
 
 export const editorialKeys = {
@@ -23,3 +23,16 @@ export function useCanonCheck() {
     retry: false,
   });
 }
+
+/**
+ * Suggerimenti AI per una location. Sono mutazioni (una per richiesta, mai in cache): non scrivono
+ * nulla sul server, restituiscono una bozza che la persona applica nel form e poi salva.
+ */
+export function useSuggestLocationDescription() {
+  return useMutation({ mutationFn: (locationId: string) => editorialAPI.suggestLocationDescription(locationId) });
+}
+
+export function useSuggestLocationTags() {
+  return useMutation({ mutationFn: (locationId: string) => editorialAPI.suggestLocationTags(locationId) });
+}
+

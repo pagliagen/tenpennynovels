@@ -1,5 +1,6 @@
 import type { FeatureManifest } from '@core/features/types';
 import adminRoutes from './routes/admin';
+import aiRoutes from './routes/ai';
 
 /**
  * Strumenti editoriali del gestionale che NON usano un modello: sempre attivi, anche in produzione.
@@ -27,8 +28,8 @@ export const editorial: FeatureManifest = {
  * pulsanti AI. Non è commutabile dal gestionale: la variabile richiede un riavvio, il gateway no.
  * I suggerimenti non salvano mai da soli.
  *
- * Nessuna route ancora: arrivano con le funzioni AI. Il manifest esiste già per tenere il flag nel
- * sistema feature (stesso schema di `fineSessione` / `fineSessioneAi`).
+ * Route: `/admin/editorial/ai/*` (suggerimenti di descrizione e tag per le location). Gated: 404 se la
+ * feature non è attiva. Stesso schema di `fineSessione` / `fineSessioneAi`.
  */
 export const editorialAi: FeatureManifest = {
   key: 'editorialAi',
@@ -38,4 +39,5 @@ export const editorialAi: FeatureManifest = {
   // dependsOn per directory (l'ultimo): vanno tenuti uguali.
   dependsOn: ['documenti'],
   flag: { source: 'env', envVar: 'ENABLE_IA_EDITORIAL', label: 'Editoriale con AI (ENABLE_IA_EDITORIAL)', requiresAiService: 'editorial' },
+  routes: [{ scope: 'admin', path: '/editorial/ai', router: aiRoutes }],
 };
