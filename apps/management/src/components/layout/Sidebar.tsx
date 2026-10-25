@@ -23,6 +23,7 @@ interface NavItem {
   href?: string;
   permission?: string;
   /** Voce nascosta se il flag corrispondente (featureFlagsStore) è false — feature legate a servizi AI non gestiti dal server */
+  /** `editorialAiEnabled`: funzioni editoriali con il modello (ENABLE_IA_EDITORIAL sul server). */
   featureFlag?: 'keeperQaEnabled' | 'editorialAiEnabled';
   children?: NavItem[];
 }
@@ -60,10 +61,10 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     key: 'editorial',
-    label: 'AI Editoriale',
+    label: 'Editoriale',
     icon: '🪶',
     children: [
-      { key: 'editorial-canon-check', label: 'Revisione canone', href: '/editorial/canon-check', permission: 'documents.list', featureFlag: 'editorialAiEnabled' }
+      { key: 'editorial-canon-check', label: 'Revisione canone', href: '/editorial/canon-check', permission: 'documents.list' }
     ]
   },
   {

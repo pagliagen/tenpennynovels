@@ -429,11 +429,12 @@ SMTP_SECURE=false                      # true for port 465, false for 587
 
 ---
 
-## AI editoriale (solo locale)
+## Editoriale con AI (solo locale)
 
 ```bash
-# Accende l'assistente editoriale del gestionale. Solo il valore esatto "true" la accende
-# (assente, vuoto, "1", "TRUE"... = spenta). Default false; NON impostarla in produzione.
+# Accende le funzioni editoriali che usano il MODELLO (bozze di descrizioni, dicerie: in arrivo).
+# Solo il valore esatto "true" la accende (assente, vuoto, "1", "TRUE"... = spenta).
+# Default false; NON impostarla in produzione.
 # Va letta da unified-backend E da embeddings-worker (docker-compose.yml le passa entrambe).
 ENABLE_IA_EDITORIAL=false
 
@@ -441,9 +442,10 @@ ENABLE_IA_EDITORIAL=false
 OLLAMA_EDITORIAL_MODEL=gemma4:12b
 ```
 
-Con la variabile spenta: le route `/admin/editorial/*` rispondono 404 (tranne `/admin/editorial/status`, che dice
-`{ "enabled": false }`), il worker rifiuta `/editorial/*` e il gestionale non mostra pulsanti né voci di menu.
-Cambiarla richiede riavviare i container (`stop` + `up -d`, mai `restart`: vedi `40-workflow.md`).
+La **revisione di canone** (menu «Editoriale» nel gestionale) è deterministica e **non dipende da questa variabile**:
+è sempre attiva. La variabile guida solo le funzioni con l'AI: con la variabile spenta le loro route rispondono 404
+(`GET /admin/system/feature-flags` dà `editorialAiEnabled: false`), il worker rifiuta `/editorial/*` e il gestionale
+non mostra i pulsanti AI. Cambiarla richiede ricreare i container (`up -d`, mai `restart`: vedi `40-workflow.md`).
 
 ---
 

@@ -2,7 +2,7 @@
  * Il flag ENABLE_IA_EDITORIAL è fail-closed: solo 'true' accende.
  *
  *   cd services/unified-backend
- *   npx tsx --test src/features/editorialAi/__tests__/envFlag.test.ts
+ *   npx tsx --test src/features/editorial/__tests__/envFlag.test.ts
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';

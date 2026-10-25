@@ -24,7 +24,8 @@ export class SystemConfigController {
       const { FeatureFlagService } = await import('@core/features/flags');
 
       const keeperQaEnabled = await FeatureFlagService.isEnabled('bibliotecario');
-      // AI editoriale: flag d'ambiente (ENABLE_IA_EDITORIAL), spenta se la variabile non c'è.
+      // Editoriale CON IL MODELLO: flag d'ambiente (ENABLE_IA_EDITORIAL), spenta se la variabile non c'è.
+      // La revisione di canone (deterministica) non passa da qui: è sempre attiva.
       const editorialAiEnabled = await FeatureFlagService.isEnabled('editorialAi');
 
       res.json(successResponse(

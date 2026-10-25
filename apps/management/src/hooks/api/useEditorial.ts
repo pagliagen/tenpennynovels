@@ -14,11 +14,10 @@ export const editorialKeys = {
  * Il rapporto si rifà a richiesta (pulsante «Ricontrolla»), non in background: dopo aver corretto
  * un testo si vuole vedere il rilievo sparire, non un dato di cinque minuti fa.
  */
-export function useCanonCheck(enabled: boolean) {
+export function useCanonCheck() {
   return useQuery({
     queryKey: editorialKeys.canonCheck(),
     queryFn: () => editorialAPI.getCanonCheck(),
-    enabled,
     staleTime: 0,
     gcTime: 0,
     retry: false,

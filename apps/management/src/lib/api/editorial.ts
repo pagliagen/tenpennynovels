@@ -1,8 +1,8 @@
 /**
  * Editorial AI API
  *
- * Endpoint /admin/editorial del backend. Esistono solo se il server ha ENABLE_IA_EDITORIAL=true:
- * altrimenti rispondono 404 (il menu non li mostra, vedi featureFlagsStore.editorialAiEnabled).
+ * Endpoint /admin/editorial del backend. La revisione di canone è deterministica ed è sempre attiva;
+ * le funzioni con il modello (quando ci saranno) dipendono da featureFlagsStore.editorialAiEnabled.
  */
 
 import { apiClient, withRetry } from './client';

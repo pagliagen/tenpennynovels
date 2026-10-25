@@ -6,10 +6,9 @@ import { EditorialController } from '../controllers/EditorialController';
 
 const router = express.Router();
 
-// Le chiamate al modello sono lente e costose: limite per IP più basso delle altre rotte admin.
 router.use(rateLimit({
   windowMs: 60 * 1000,
-  max: 30,
+  max: 120,
   keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
 }));
 router.use(AdminAuthMiddleware.requireAdminAccess);

@@ -14,7 +14,10 @@ import { logger } from '@/lib/logger';
 
 interface FeatureFlagsState {
   keeperQaEnabled: boolean;
-  /** AI editoriale: accesa solo da ENABLE_IA_EDITORIAL sul server (assente in produzione). */
+  /**
+   * Funzioni editoriali CON IL MODELLO: accese solo da ENABLE_IA_EDITORIAL sul server (assente in
+   * produzione). La revisione di canone non dipende da questo flag: è deterministica ed è sempre attiva.
+   */
   editorialAiEnabled: boolean;
   isLoading: boolean;
 }

@@ -1,6 +1,6 @@
 /**
  *   cd services/unified-backend
- *   npx tsx --test src/features/editorialAi/__tests__/canonRules.test.ts
+ *   npx tsx --test src/features/editorial/__tests__/canonRules.test.ts
  */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';

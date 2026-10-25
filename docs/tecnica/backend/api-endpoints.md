@@ -335,7 +335,7 @@ Administrative operations: user management, character approval, locations, docum
 |--------|------|-------------|
 | GET | `/admin/locations` | List locations |
 | GET | `/admin/locations/tags` | Registro chiuso dei tag delle location (`core/location/constants/locationTags.ts`) |
-| GET | `/admin/editorial/canon-check` | Revisione di canone (anni, slug, anacronismi, documenti vuoti). Esiste solo con `ENABLE_IA_EDITORIAL=true`, altrimenti 404 |
+| GET | `/admin/editorial/canon-check` | Revisione di canone (anni, slug, anacronismi, documenti vuoti, luoghi con descrizione breve). Deterministica, sola lettura, sempre attiva |
 | GET | `/admin/locations/:id` | Get location |
 | POST | `/admin/locations` | Create location |
 | PUT | `/admin/locations/:id` | Update location |

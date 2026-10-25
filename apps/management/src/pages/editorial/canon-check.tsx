@@ -3,7 +3,7 @@
  *
  * Rapporto sulle incoerenze del materiale di ambientazione (anni, slug, anacronismi, documenti
  * vuoti, luoghi con descrizioni sottili). Regole deterministiche, nessun modello: non modifica nulla.
- * Visibile solo se il server ha ENABLE_IA_EDITORIAL=true.
+ * Sempre attiva (non dipende da ENABLE_IA_EDITORIAL, che riguarda solo le funzioni con l'AI).
  */
 
 import Head from 'next/head';
@@ -12,7 +12,6 @@ import React from 'react';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useCanonCheck } from '@/hooks/api/useEditorial';
-import { useFeatureFlagsStore } from '@/store/featureFlagsStore';
 import type { CanonFinding, CanonTarget, CanonTargetKind } from '@/types/api/Editorial';
 import styles from '@/styles/pages/CanonCheck.module.scss';
 
@@ -65,8 +64,7 @@ function FindingCard({ finding }: { finding: CanonFinding }): React.ReactElement
 }
 
 export default function CanonCheckPage(): React.ReactElement {
-  const { editorialAiEnabled, isLoading: flagsLoading } = useFeatureFlagsStore();
-  const { data, isFetching, error, refetch } = useCanonCheck(editorialAiEnabled);
+  const { data, isFetching, error, refetch } = useCanonCheck();
 
   return (
     <ManagementLayout>
@@ -83,16 +81,12 @@ export default function CanonCheckPage(): React.ReactElement {
               {data?.canonYear ? ` Anno del canone: ${data.canonYear} (il più citato nei documenti).` : ''}
             </p>
           </div>
-          <button type="button" className={styles.refresh} onClick={() => void refetch()} disabled={!editorialAiEnabled || isFetching}>
+          <button type="button" className={styles.refresh} onClick={() => void refetch()} disabled={isFetching}>
             {isFetching ? 'Controllo...' : 'Ricontrolla'}
           </button>
         </header>
 
-        {flagsLoading ? (
-          <div className={styles.state}><LoadingSpinner size="medium" /></div>
-        ) : !editorialAiEnabled ? (
-          <div className={styles.state}>L&apos;AI editoriale non è attiva in questo ambiente.</div>
-        ) : error ? (
+        {error ? (
           <div className={styles.state}>
             <strong>Errore nella revisione.</strong>
             <p>{error instanceof Error ? error.message : 'Errore sconosciuto'}</p>
