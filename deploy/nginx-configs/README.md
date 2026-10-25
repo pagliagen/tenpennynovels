@@ -143,11 +143,11 @@ sudo certbot --nginx -d tenpennynovels.com
 
 ## 📖 Documentation
 
-Per dettagli completi: [docs/04-nginx-configuration.md](../docs/04-nginx-configuration.md) *(TODO)*
+Per dettagli completi: [docs/04-nginx-configuration.md](../docs/01-ubuntu-from-zero.md) *(TODO)*
 
 ---
 
 ## 🔗 Related
 
-- [SSL Certificates Guide](../docs/06-ssl-certificates.md) *(TODO)*
+- [SSL Certificates Guide](../docs/01-ubuntu-from-zero.md) *(TODO)*
 - [Troubleshooting](../docs/99-troubleshooting.md)

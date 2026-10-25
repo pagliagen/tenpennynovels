@@ -90,4 +90,4 @@ pm2 restart tenpennynovels-game
 
 ## 📖 Documentation
 
-Per dettagli completi: [docs/03-environment-variables.md](../docs/03-environment-variables.md) *(TODO)*
+Per dettagli completi: [docs/03-environment-variables.md](../../docs/tecnica/infrastructure/environment-variables.md) *(TODO)*

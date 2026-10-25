@@ -14,7 +14,7 @@ Scripts manutenzione e setup database.
 ### [Glass Ball](./glass-ball.md)
 - Dashboard analytics
 - Character stats, activity metrics
-- Usage: `npm run glass-ball`
+- Stato: **strumento rimosso dal repository** (documento storico)
 
 ---
 

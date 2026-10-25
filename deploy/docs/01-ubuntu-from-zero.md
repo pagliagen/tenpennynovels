@@ -1,6 +1,6 @@
 # Ubuntu Server Setup da Zero
 
-**Navigation**: [Deploy Hub](./README.md) > Ubuntu Setup
+**Navigation**: [Deploy Hub](./INDEX.md) > Ubuntu Setup
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-15
 
@@ -1302,7 +1302,7 @@ sudo systemctl status redis-server      # Redis status
 
 Dopo aver completato questo setup:
 
-1. **Configura GitHub Actions Secrets** → Vedi [github-setup.md](./github-setup.md)
+1. **Configura GitHub Actions Secrets** → Vedi [github-setup.md](./02-github-setup.md)
 2. **Setup CI/CD deployment** → Push to master per automatic deploy
 3. **Seed database** → Esegui seeders per dati iniziali
 4. **Crea primo utente admin** → Via management panel
@@ -1312,9 +1312,9 @@ Dopo aver completato questo setup:
 
 ## Related Documentation
 
-- [GitHub Setup](./github-setup.md) - Configurazione GitHub Actions secrets
-- [PM2 Configuration](./pm2-guide.md) - Dettagli ecosystem.config.js
-- [Nginx Configuration](./nginx-guide.md) - 7 subdomini completi
-- [SSL Certificates](./ssl-guide.md) - Certbot troubleshooting
-- [VPS Troubleshooting](./vps-deployment-guide.md) - Fix specifici produzione
-- [Deployment Guide](../docs/06-operations/deployment-guide.md) - Overview generale
+- [GitHub Setup](./02-github-setup.md) - Configurazione GitHub Actions secrets
+- [PM2 Configuration](./05-pm2-configuration.md) - Dettagli ecosystem.config.js
+- [Nginx Configuration](../nginx-configs/README.md) - 7 subdomini completi
+- [SSL Certificates](../nginx-configs/README.md) - Certbot troubleshooting
+- [VPS Troubleshooting](./01-ubuntu-from-zero.md) - Fix specifici produzione
+- [Deployment Guide](./01-ubuntu-from-zero.md) - Overview generale

@@ -1,6 +1,6 @@
 # GitHub Actions Setup
 
-**Navigation**: [Deploy Hub](./README.md) > GitHub Setup
+**Navigation**: [Deploy Hub](./INDEX.md) > GitHub Setup
 
 **Status**: ✅ Production Ready | **Last Updated**: 2026-03-15
 
@@ -106,7 +106,7 @@ curl ifconfig.me
 
 **Descrizione**: Username dell'utente deploy sul VPS
 
-**Valore**: `deploy` (utente creato in [ubuntu-from-zero.md](./ubuntu-from-zero.md) STEP 3)
+**Valore**: `deploy` (utente creato in [ubuntu-from-zero.md](./01-ubuntu-from-zero.md) STEP 3)
 
 **Configurazione GitHub**:
 - Name: `SSH_USERNAME`
@@ -118,7 +118,7 @@ curl ifconfig.me
 
 **Descrizione**: Chiave SSH privata per autenticazione
 
-**CRITICO**: Questa è la chiave privata generata in [ubuntu-from-zero.md](./ubuntu-from-zero.md) STEP 4.
+**CRITICO**: Questa è la chiave privata generata in [ubuntu-from-zero.md](./01-ubuntu-from-zero.md) STEP 4.
 
 ### Genera Nuova Chiave SSH (se non l'hai già)
 
@@ -789,8 +789,8 @@ git log --oneline --decorate --graph -10
 
 ## Related Documentation
 
-- [Ubuntu From Zero](./ubuntu-from-zero.md) - Setup server completo
-- [PM2 Guide](./pm2-guide.md) - ecosystem.config.js dettagliato
-- [Nginx Guide](./nginx-guide.md) - Configurazioni Nginx
-- [VPS Troubleshooting](./vps-deployment-guide.md) - Fix specifici produzione
-- [Deployment Overview](../docs/06-operations/deployment-guide.md) - Panoramica generale
+- [Ubuntu From Zero](./01-ubuntu-from-zero.md) - Setup server completo
+- [PM2 Guide](./05-pm2-configuration.md) - ecosystem.config.js dettagliato
+- [Nginx Guide](../nginx-configs/README.md) - Configurazioni Nginx
+- [VPS Troubleshooting](./01-ubuntu-from-zero.md) - Fix specifici produzione
+- [Deployment Overview](./01-ubuntu-from-zero.md) - Panoramica generale

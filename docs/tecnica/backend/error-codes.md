@@ -1,6 +1,6 @@
 # Error Codes
 
-**Registry completo codici errore API** - Tutti i codici, HTTP status, payload e frontend handling
+**Registry dei codici errore API** - Sezioni dettagliate per i codici principali (auth, registrazione, personaggi, location…); tutti gli altri nelle tabelle in fondo
 
 ---
 
@@ -1519,6 +1519,52 @@ Segnala mancanza a team backend per aggiunta.
 
 ---
 
+## Altri codici dell'enum `ErrorCode`
+
+L'enum (`services/unified-backend/src/shared/utils/errorCodes.ts`) ha **54 codici**; le sezioni sopra ne descrivono in dettaglio 34. Gli altri 20, con il loro messaggio standard (`ERROR_MESSAGES`):
+
+| Codice | Messaggio |
+|---|---|
+| `SESSION_NOT_FOUND` | Sessione non trovata |
+| `REGISTRATION_FAILED` | Registrazione fallita. Riprova più tardi. |
+| `CHARACTER_ALREADY_EXISTS` | Hai già un personaggio con questo nome |
+| `CHARACTER_LIMIT_REACHED` | Hai raggiunto il limite massimo di personaggi |
+| `NOT_IN_LOCATION` | Non sei in una location |
+| `RESET_TOKEN_INVALID` | Token di reset non valido |
+| `RESET_TOKEN_EXPIRED` | Token di reset scaduto |
+| `PASSWORD_RESET_FAILED` | Reset password fallito. Riprova. |
+| `SAME_PASSWORD` | La nuova password deve essere diversa dalla precedente |
+| `INVALID_VALUE` | Valore non valido |
+| `INVALID_OPERATION` | Operazione non valida |
+| `EMAIL_SEND_ERROR` | Impossibile inviare email |
+| `RESOURCE_NOT_FOUND` | Risorsa non trovata |
+| `RESOURCE_ALREADY_EXISTS` | Risorsa già esistente |
+| `RESOURCE_CONFLICT` | Conflitto con risorsa esistente |
+| `DOCUMENT_NOT_FOUND` | Documento non trovato |
+| `TICKET_NOT_FOUND` | Ticket non trovato |
+| `FORUM_POST_NOT_FOUND` | Post del forum non trovato |
+| `COMMENT_NOT_FOUND` | Commento non trovato |
+| `TRANSACTION_FAILED` | Transazione fallita |
+
+## Codici usati come stringhe fuori dall'enum (AI, bot, SEO)
+
+Le feature editoriali e dei bot rispondono con codici letterali (non sono nell'enum). Il messaggio è sempre in italiano e senza dettagli tecnici.
+
+| Codice | HTTP | Dove | Significato |
+|---|---|---|---|
+| `INSUFFICIENT_INPUT` | 422 | `POST /admin/editorial/ai/*`, `POST /admin/bots/design` | poco testo da cui partire (descrizione, tag o testo del documento): l'AI espande ciò che scrivi, non inventa |
+| `AI_UNAVAILABLE` | 429, 502-504 | tutte le route AI | servizio AI occupato, non raggiungibile o troppo lento (messaggio generico) |
+| `SEO_CHECKS_FAILED` | 422 | `POST /admin/editorial/ai/documents/:id/generate-seo` | nessuna delle bozze ha superato i controlli: **non è stato salvato nulla** |
+| `INVALID_DOCUMENT_ID`, `UPDATE_SEO_DESCRIPTION_ERROR` | 400, 500 | `PATCH /admin/documents/:id/seo-description` | id non valido / salvataggio non riuscito |
+| `LOCATION_TAKEN` | 409 | `/admin/bots` | la location ha già un bot (per ambiente) |
+| `NAME_TAKEN` | 409 | `POST /admin/bots` | nome già di un personaggio |
+| `NO_SYSTEM_USER` | 409 | `POST /admin/bots` | manca l'utente di sistema dei bot in questo database |
+| `INVALID_LOCATION` | 422 | `/admin/bots` | serve una location specifica (con chat), non un quartiere o un distretto |
+| `BAD_RESPONSE` | 502 | `/admin/bots` | risposta del servizio AI non valida |
+| `location-taken`, `character-taken`, `file-exists`, `invalid`, `reply-not-allowed` | 400, 409 | bot-service (`register`, `event`) | errori del servizio, passati al gestionale con il loro messaggio |
+
+---
+
 ## Related Documentation
 
 - [API Endpoints](./api-endpoints.md) - Endpoint che possono ritornare questi error codes
@@ -1529,4 +1575,4 @@ Segnala mancanza a team backend per aggiunta.
 ---
 
 **Maintained by**: TenPennyNovels Team
-**Last Updated**: 2026-03-15
+**Last Updated**: 2026-10-25

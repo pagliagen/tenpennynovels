@@ -383,7 +383,7 @@ Persuade (73) VS Psychology (45)
 
 ---
 
-## Zustand Stores (9 stores)
+## Zustand Stores (11 stores)
 
 ### 1. authStore
 
@@ -567,6 +567,20 @@ Persuade (73) VS Psychology (45)
 ```
 
 **Persistence**: `theme`, `sidebarCollapsed` in localStorage
+
+---
+
+### 10. audioManagerStore
+
+**Purpose**: un solo brano attivo alla volta tra tutte le schede personaggio aperte (suona quello della finestra `characterSheet` in primo piano). Le schede si registrano da sole con `characterId` + tema audio; lo store non fa fetch.
+
+**File**: [audioManagerStore.ts](../../../apps/game/src/store/audioManagerStore.ts)
+
+### 11. characterSheetHeaderStore
+
+**Purpose**: il bottone «Modifica Scheda» vive nell'header della finestra (`Window.tsx`) ma la logica appartiene al contenuto della scheda: la scheda si registra con `characterId`, se il viewer può modificare e il callback che apre il modale (stesso pattern di `audioManagerStore`).
+
+**File**: [characterSheetHeaderStore.ts](../../../apps/game/src/store/characterSheetHeaderStore.ts)
 
 ---
 

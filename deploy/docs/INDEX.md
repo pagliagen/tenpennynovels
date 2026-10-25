@@ -14,15 +14,15 @@ Indice completo della documentazione di deployment per TenPennyNovels.
 |---|----------|--------|-------------|
 | [01](./01-ubuntu-from-zero.md) | ✅ Complete | **Ubuntu Setup da Zero** | Setup VPS completo da provisioning a deployment operativo (26 steps, 1030 linee) |
 | [02](./02-github-setup.md) | ✅ Complete | **GitHub Actions Setup** | Configurazione CI/CD con 4 secrets, workflow spiegato stage-by-stage (719 linee) |
-| [03](./03-environment-variables.md) | 📝 TODO | **Environment Variables** | Guida completa a tutti i .env.production (unified-backend, api-gateway, frontend apps) |
+| [03](../env-templates/README.md) | 📝 TODO | **Environment Variables** | Guida completa a tutti i .env.production (unified-backend, api-gateway, frontend apps) |
 
 ### Configurazione Servizi
 
 | # | Document | Status | Description |
 |---|----------|--------|-------------|
-| [04](./04-nginx-configuration.md) | 📝 TODO | **Nginx Configuration** | 7 subdomini, reverse proxy, WebSocket handling, SSL integration |
+| [04](../nginx-configs/README.md) | 📝 TODO | **Nginx Configuration** | 7 subdomini, reverse proxy, WebSocket handling, SSL integration |
 | [05](./05-pm2-configuration.md) | ✅ Complete | **PM2 Configuration** | ecosystem.config.js line-by-line, 8 processi, fork vs cluster (961 linee) |
-| [06](./06-ssl-certificates.md) | 📝 TODO | **SSL Certificates** | Certbot setup, auto-renewal, troubleshooting, wildcard certs |
+| [06](../nginx-configs/README.md) | 📝 TODO | **SSL Certificates** | Certbot setup, auto-renewal, troubleshooting, wildcard certs |
 
 ### Servizi Aggiuntivi
 
@@ -50,8 +50,8 @@ Indice completo della documentazione di deployment per TenPennyNovels.
 
 **🔧 Configurazione Esistente**
 - [05 - PM2](./05-pm2-configuration.md) - Modifica processi
-- [04 - Nginx](./04-nginx-configuration.md) - Modifica subdomini *(TODO)*
-- [03 - Env Variables](./03-environment-variables.md) - Aggiorna secrets *(TODO)*
+- [04 - Nginx](../nginx-configs/README.md) - Modifica subdomini *(TODO)*
+- [03 - Env Variables](../env-templates/README.md) - Aggiorna secrets *(TODO)*
 
 **🚨 Problemi**
 - [99 - Troubleshooting](./99-troubleshooting.md) - Risoluzione problemi comuni

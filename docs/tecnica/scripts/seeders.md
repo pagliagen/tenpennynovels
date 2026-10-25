@@ -179,7 +179,7 @@ npm run seed:dev:users -- --force
 
 **File**: [seeders/LocationSeeder.ts](../../../scripts/seeders/seeders/LocationSeeder.ts)
 
-**Data Source**: [data/locations.json](../../../scripts/seeders/data/locations.json)
+**Data Source**: [data/locations.csv](../../../scripts/seeders/data/locations.csv)
 
 **Structure**:
 ```json
@@ -291,7 +291,7 @@ SKIP_EMBEDDINGS=true npm run seed:dev:documents
 
 **File**: [seeders/SkillSeeder.ts](../../../scripts/seeders/seeders/SkillSeeder.ts)
 
-**Data Source**: [data/skills.json](../../../scripts/seeders/data/skills.json)
+**Data Source**: [data/skills.csv](../../../scripts/seeders/data/skills.csv)
 
 **Skill Structure**:
 ```json
@@ -319,7 +319,7 @@ SKIP_EMBEDDINGS=true npm run seed:dev:documents
 
 **File**: [seeders/OccupationSeeder.ts](../../../scripts/seeders/seeders/OccupationSeeder.ts)
 
-**Data Source**: [data/occupations.json](../../../scripts/seeders/data/occupations.json)
+**Data Source**: [data/occupations.csv](../../../scripts/seeders/data/occupations.csv)
 
 **Examples**:
 - Detective
@@ -345,7 +345,7 @@ SKIP_EMBEDDINGS=true npm run seed:dev:documents
 
 **File**: [seeders/ItemSeeder.ts](../../../scripts/seeders/seeders/ItemSeeder.ts)
 
-**Data Source**: [data/items.json](../../../scripts/seeders/data/items.json)
+**Data Source**: [data/items.csv](../../../scripts/seeders/data/items.csv)
 
 **Item Categories**:
 - Weapons (melee, firearms)
@@ -383,8 +383,8 @@ SKIP_EMBEDDINGS=true npm run seed:dev:documents
 
 | Seeder | Purpose | Data Source |
 |--------|---------|-------------|
-| SocialClassConfigSeeder | Victorian class system | data/social-classes.json |
-| SkillConfrontationSeeder | Skill opposition matrix | data/skill-confrontations.json |
+| SocialClassConfigSeeder | Victorian class system | data/social-class-configs.csv |
+| SkillConfrontationSeeder | Skill opposition matrix | (dati nel codice: `SkillConfrontationSeeder.ts`) |
 | SystemConfigSeeder | Game configuration | Hardcoded defaults |
 
 ---

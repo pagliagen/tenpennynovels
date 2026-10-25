@@ -13,7 +13,7 @@ TenPennyNovels usa il backend unificato in `services/unified-backend`: autentica
 
 ### Note sulla documentazione sotto
 
-Le sezioni con pseudocodice (middleware, hook React di esempio, endpoint inventariati) sono **di riferimento concettuale**: il comportamento reale è definito da `services/unified-backend/src/modules/auth/` e dalle route effettive (`/auth/session`, `/auth/select-character`, ecc.).
+Le sezioni con pseudocodice (middleware, hook React di esempio, endpoint inventariati) sono **di riferimento concettuale**: il comportamento reale è definito da `services/unified-backend/src/core/auth/` e dalle route effettive (`/auth/session`, `/auth/select-character`, ecc.).
 
 ## 🏗️ Architettura token e sessione
 

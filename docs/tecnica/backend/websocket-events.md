@@ -1374,7 +1374,7 @@ function LocationChat() {
 **Checklist**:
 1. Check `auth_token` cookie exists (login required)
 2. Verify `WS_CONFIG.URL` points to correct backend (default: `wss://ws.tenpennynovels.com`)
-3. Check Nginx WebSocket upgrade config (see [nginx-configuration.md](../../../deploy/docs/04-nginx-configuration.md))
+3. Check Nginx WebSocket upgrade config (see [nginx-configuration.md](../../../deploy/nginx-configs/README.md))
 4. Verify backend is running: `pm2 status tenpennynovels-unified-backend`
 5. Check backend logs: `pm2 logs tenpennynovels-unified-backend`
 

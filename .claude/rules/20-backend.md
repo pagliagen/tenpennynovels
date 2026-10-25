@@ -5,7 +5,7 @@ Regole normative per i 3 service. Architettura completa: `docs/tecnica/backend/`
 | Service | Porta | Ruolo | PM2 | Doc |
 |---|---|---|---|---|
 | api-gateway | 8000 | reverse proxy, rate limit, CORS, proxy WebSocket, CDN | cluster ×2 | `docs/tecnica/backend/api-gateway.md` |
-| unified-backend | 3001 | logica di business, 6 moduli, Socket.IO, CRON | fork ×1 | `docs/tecnica/backend/unified-backend.md` |
+| unified-backend | 3001 | logica di business (`core/` + 17 `features/` + `modules/game|admin`), Socket.IO, CRON | fork ×1 | `docs/tecnica/backend/unified-backend.md` |
 | embeddings-worker | 5001 | embedding async, Qdrant, RAG "Bibliotecario" | fork ×1 | `docs/tecnica/backend/embeddings-worker.md` |
 
 **Nessun client esterno raggiunge direttamente unified-backend o embeddings-worker**: tutto passa dal gateway.
@@ -61,8 +61,7 @@ if (!res.headersSent && typeof res.status === 'function') { res.status(502).json
 
 ## unified-backend (3001)
 
-**6 moduli**: `auth`, `game`, `admin`, `documents`, `forum`, `tickets`.
-⚠️ `docs/tecnica/backend/unified-backend.md` marca forum/tickets come "in development": verifica lo stato reale nel codice prima di fidarti (il forum ha avuto sviluppo recente).
+**Struttura**: `core/` (dominio condiviso: `core/auth`, `character`, `chat`, `location`, `features`, `extensions`, `ai`), `features/` (17 feature, ciascuna con `manifest.ts` e `api.ts` pubblico: forum, tickets, documenti, economia, bot, editorial…) e `modules/game` + `modules/admin`. `app.ts` monta `/auth`, `/game`, `/admin`; le feature si montano da `bootstrapFeatures()` secondo il manifest. Le vecchie «6 moduli» (`modules/auth|documents|forum|tickets`) non esistono più; il codice è la fonte di verità, `docs/tecnica/backend/unified-backend.md` ne riporta la mappa.
 
 **Controller statici**, logica di business nei service. I controller non fanno query dirette.
 

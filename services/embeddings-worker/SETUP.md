@@ -3,7 +3,7 @@
 ## Prerequisiti
 
 - Python 3.12+ installato
-- Node.js 22+ installato
+- Node.js 24 (`.nvmrc`) installato
 - PM2 installato globalmente
 
 ## Setup Iniziale (Da fare UNA VOLTA su nuovo server)

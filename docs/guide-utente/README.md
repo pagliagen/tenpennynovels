@@ -7,16 +7,16 @@ Tutorial passo-passo per utilizzare la piattaforma di gioco di ruolo ambientata 
 ## 📚 Primi Passi
 
 - **[Iscrizione](./iscrizione.md)** - Come creare un account (5 minuti)
-- **[Primo Accesso](./primo-accesso.md)** *(coming soon)* - Login e navigazione iniziale
-- **[Creazione Personaggio](./personaggi.md)** *(coming soon)* - Crea il tuo personaggio vittoriano
+- **Primo Accesso** *(coming soon)* - Login e navigazione iniziale
+- **Creazione Personaggio** *(coming soon)* - Crea il tuo personaggio vittoriano
 
 ---
 
 ## 🎮 Gameplay
 
-- **[Navigare le Locations](./locations.md)** *(coming soon)* - Esplorare il mondo di gioco
-- **[Usare la Chat](./chat.md)** *(coming soon)* - Comunicare in-character con altri giocatori
-- **[Consultare Documenti](./documenti.md)** *(coming soon)* - Sistema di ricerca e consultazione
+- **Navigare le Locations** *(coming soon)* - Esplorare il mondo di gioco
+- **Usare la Chat** *(coming soon)* - Comunicare in-character con altri giocatori
+- **Consultare Documenti** *(coming soon)* - Sistema di ricerca e consultazione
 
 ---
 
