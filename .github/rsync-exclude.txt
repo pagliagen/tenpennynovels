@@ -116,3 +116,4 @@ apps/documents/public/sitemap.xml
 
 # Servizio bot locale (solo macchina di sviluppo, non va in produzione)
 bot-service/
+ai-gateway/

@@ -19,5 +19,6 @@ import { statCheck } from './statCheck/manifest';
 import { itemUse } from './itemUse/manifest';
 import { confronti } from './confronti/manifest';
 import { botChat } from './botChat/manifest';
+import { editorial, editorialAi } from './editorial/manifest';
 
-export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni, tickets, occupazioni, economia, oggetti, documenti, forum, fineSessione, fineSessioneAi, offGameMessages, skillCheck, statCheck, itemUse, confronti, botChat];
+export const FEATURES: readonly FeatureManifest[] = [bibliotecario, corporazioni, tickets, occupazioni, economia, oggetti, documenti, forum, fineSessione, fineSessioneAi, offGameMessages, skillCheck, statCheck, itemUse, confronti, botChat, editorial, editorialAi];

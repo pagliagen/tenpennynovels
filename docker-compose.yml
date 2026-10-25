@@ -193,6 +193,15 @@ services:
       # Servizio bot locale (bot-service/). Vuoto = endpoint /internal/bot-chat disattivato (404).
       BOT_SERVICE_SECRET: ${BOT_SERVICE_SECRET:-}
 
+      # Funzioni editoriali con il MODELLO (bozze di descrizioni, dicerie). ENABLE_IA_EDITORIAL=true dice che
+      # l'AI è abilitata; è DAVVERO attiva solo se il gateway AI (ai-gateway/) risponde e dichiara il servizio
+      # `editorial`. La revisione di canone non dipende da qui.
+      ENABLE_IA_EDITORIAL: ${ENABLE_IA_EDITORIAL:-false}
+      # Gateway AI: in Docker locale l'host è host.docker.internal (senza ngrok); in produzione il dominio
+      # ngrok (oggi) o del server AI dedicato (domani). Il segreto sta solo nell'env, mai nel repo.
+      AI_GATEWAY_URL: ${AI_GATEWAY_URL:-}
+      AI_GATEWAY_SECRET: ${AI_GATEWAY_SECRET:-}
+
       # Frontend URLs
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4000}
       LANDING_URL: ${LANDING_URL:-http://localhost:4000}

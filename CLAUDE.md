@@ -13,7 +13,8 @@ Monorepo TypeScript/Node.js per un gioco di ruolo vittoriano multiplayer con AI 
 ```
 apps/          4 frontend Next.js: landing(4000) game(4001) documents(4002) management(4003)
 services/      3 backend: api-gateway(8000) unified-backend(3001) embeddings-worker(5001)
-bot-service/  1 servizio locale (solo dev): risponde in chat con un LLM via Ollama
+bot-service/  servizi AI locali (solo dev), uno per cartella: character-bot (bot di chat via Ollama) ed editorial (bozze per il gestionale); HTTP interno 8788
+ai-gateway/   ingresso dei servizi AI (8787): segreto, limiti, smista verso bot-service; oggi dietro ngrok, domani su un server dedicato
 ```
 
 **Stack**: Next.js 16 Pages Router · React 18 · Express 5 (v4 in embeddings-worker) · MongoDB/Mongoose · Redis · Socket.IO · Bull · Ollama · Qdrant · PM2 · Docker

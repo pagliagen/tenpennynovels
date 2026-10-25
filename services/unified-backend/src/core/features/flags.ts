@@ -15,6 +15,8 @@ import { redis } from '@config/runtime/redis';
 import { logger } from '@shared/utils/logger';
 import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { featureRegistry } from './registry';
+import { isEnvFlagActive } from './envFlag';
+import { aiGateway } from '../ai';
 import type { FeatureKey } from './types';
 
 function toBoolean(value: unknown, fallback: boolean): boolean {
@@ -26,6 +28,9 @@ export class FeatureFlagService {
     const manifest = featureRegistry.getByKey(key);
     if (!manifest) return false;
     if (!manifest.flag) return true;
+    // Flag da ambiente: niente Redis né runtime config. Se dietro c'è un servizio AI, conta anche che il
+    // gateway lo dichiari attivo (la sonda parte solo se la variabile è 'true').
+    if (manifest.flag.source === 'env') return isEnvFlagActive(manifest.flag, (service) => aiGateway.isAvailable(service));
 
     try {
       const configService = new ConfigurationService(redis.getClient(), logger);

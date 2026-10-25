@@ -31,3 +31,4 @@ Example:
 ## Prerequisites
 - User `system-bot` seeded (`seed:dev:users`) and `BOT_SERVICE_SECRET` set (see `bot-service/README.md`).
 - Ollama running with the model in `bot-service/.env` (`OLLAMA_MODEL`, default `gemma4:12b`).
+- `ENABLED_SERVICES` in `bot-service/.env` includes `character-bot` (empty = no service starts; the bot lives in `bot-service/src/character-bot/`).
