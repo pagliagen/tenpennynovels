@@ -1,5 +1,5 @@
 import type { Psyche } from '../config';
-import type { Pad, Relation } from './types';
+import type { Pad, Relation, Stance } from './types';
 
 /**
  * I numeri non arrivano mai al modello: un 12B non sa cosa farsene di
@@ -68,9 +68,14 @@ export function describeMood(pad: Pad): string {
 
 export const STRANGER_LABEL = 'Straniero';
 
-/** Come il bot chiama (e vede nel testo) un giocatore: solo col nome che gli è stato detto. */
-export function labelFor(rel: Relation | null): string {
-  return rel?.knownName ?? STRANGER_LABEL;
+/**
+ * Come il bot chiama (e vede nel testo) un giocatore: solo col nome che gli è stato
+ * detto, o che già conosce per rapporto autorato (allora è il nome in chat).
+ */
+export function labelFor(rel: Relation | null, stance?: Stance, chatName?: string): string {
+  if (rel?.knownName) return rel.knownName;
+  if (stance?.knowsName && chatName) return chatName;
+  return STRANGER_LABEL;
 }
 
 function sinceText(from: Date, now: Date): string {
@@ -83,31 +88,55 @@ function sinceText(from: Date, now: Date): string {
   return 'molto tempo fa';
 }
 
-export function describeRelation(rel: Relation | null, now: Date): string[] {
-  if (!rel || rel.interactions === 0) {
-    return [
-      'È la prima volta che parli con questa persona: non la conosci.',
-      'Non sai come si chiama. Non inventare un nome: chiamala «straniero» o simili finché non si presenta.',
-    ];
+/** Il rapporto autorato e gli atteggiamenti di categoria, in frasi. */
+function describeStance(stance: Stance | undefined): string[] {
+  if (!stance) return [];
+  const lines: string[] = [];
+  if (stance.label) lines.push(`Per te è ${stance.label}.`);
+  if (stance.backstory) lines.push(stance.backstory);
+  lines.push(...stance.hints);
+  return lines;
+}
+
+/**
+ * @param name come il bot chiama la persona (il nome visibile solo se lo sa)
+ */
+export function describeRelation(rel: Relation | null, now: Date, stance?: Stance, name?: string, gender?: 'male' | 'female'): string[] {
+  const who = gender === 'male' ? 'lui' : gender === 'female' ? 'lei' : 'questa persona';
+  const knows = rel?.knownName ?? (stance?.knowsName ? name : undefined);
+  const firstTime = !rel || rel.interactions === 0;
+
+  const lines: string[] = [];
+  if (firstTime && !stance?.authored) {
+    lines.push(`È la prima volta che parli con ${who}: non la conosci.`);
+    lines.push(
+      knows
+        ? `Ha appena detto di chiamarsi ${knows}.`
+        : 'Non sai come si chiama. Non inventare un nome: chiama così «straniero» o simili finché non si presenta.',
+    );
+  } else if (rel && rel.interactions > 0) {
+    lines.push(
+      rel.interactions === 1
+        ? `Hai già scambiato qualche parola con ${who} una volta, ${sinceText(rel.lastSeenAt, now)}.`
+        : `Hai già incontrato ${who} ${rel.interactions} volte; l'ultima ${sinceText(rel.lastSeenAt, now)}.`,
+    );
+    lines.push(knows ? `Sai che si chiama ${knows}.` : 'Non sai come si chiama: non si è mai presentato. Non inventare un nome, usa «straniero» o simili.');
+  } else if (knows) {
+    lines.push(`Sai che si chiama ${knows}.`);
   }
+  lines.push(...describeStance(stance));
+  if (!rel) return lines;
 
-  const lines: string[] = [
-    rel.interactions === 1
-      ? `Hai già scambiato qualche parola con lui una volta, ${sinceText(rel.lastSeenAt, now)}.`
-      : `Lo hai già incontrato ${rel.interactions} volte; l'ultima ${sinceText(rel.lastSeenAt, now)}.`,
-    rel.knownName
-      ? `Sai che si chiama ${rel.knownName}.`
-      : 'Non sai come si chiama: non si è mai presentato. Non inventare un nome, chiamalo «straniero» o simili.',
-  ];
+  if (rel.trust >= HIGH) lines.push(`Ti fidi di ${who}.`);
+  else if (rel.trust <= LOW) lines.push(`Non ti fidi di ${who}.`);
+  if (rel.respect >= HIGH) lines.push(`Provi rispetto per ${who}.`);
+  else if (rel.respect <= LOW) lines.push(`Non hai alcun rispetto per ${who}.`);
+  if (rel.suspicion >= HIGH) lines.push(`Sei molto sospettoso nei confronti di ${who}.`);
+  else if (rel.suspicion >= 50) lines.push(`Tieni d'occhio ${who}.`);
+  else if (rel.suspicion <= LOW) lines.push(`Non hai alcun motivo di sospettare di ${who}.`);
 
-  if (rel.trust >= HIGH) lines.push('Ti fidi di lui.');
-  else if (rel.trust <= LOW) lines.push('Non ti fidi di lui.');
-  if (rel.respect >= HIGH) lines.push('Lo rispetti.');
-  else if (rel.respect <= LOW) lines.push('Non hai alcun rispetto per lui.');
-  if (rel.suspicion >= HIGH) lines.push('Sei molto sospettoso nei suoi confronti.');
-  else if (rel.suspicion >= 50) lines.push('Lo tieni d\'occhio.');
-  else if (rel.suspicion <= LOW) lines.push('Non ti dà alcun motivo di sospetto.');
-
-  if (rel.facts.length > 0) lines.push(`Sai di lui: ${rel.facts.join('; ')}.`);
+  if (rel.summary) lines.push(`Ricordi: ${rel.summary}`);
+  if (rel.lastEvent) lines.push(`L'ultima cosa che conta: ${rel.lastEvent}.`);
+  if (rel.facts.length > 0) lines.push(`Sai di ${who}: ${rel.facts.join('; ')}.`);
   return lines;
 }

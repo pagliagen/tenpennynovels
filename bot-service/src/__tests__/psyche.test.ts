@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { psycheSchema } from '../config';
 import {
-  addFacts, applyPadDelta, applyRelationDelta, decayMood, initialMood, initialRelation,
+  addFacts, applyPadDelta, applyRelationDelta, decayMood, initialMood, initialRelation, recordExchange,
   MAX_FACTS, MAX_PAD_DELTA, moodHalfLifeMs, validateIntroducedName,
 } from '../psyche/dynamics';
 import { describeMood, describePsyche, describeRelation, labelFor } from '../psyche/describe';
@@ -57,11 +57,11 @@ test('relazione: primo incontro, poi conteggi, tempo e nome', () => {
   assert.equal(labelFor(rel0), 'Straniero', 'il nome vero della chat non filtra mai');
   assert.match(describeRelation(rel0, t0).join(' '), /prima volta/);
 
-  const rel1 = applyRelationDelta(rel0, { trust: 4, respect: 0, suspicion: -3 }, later(1));
+  const rel1 = recordExchange(applyRelationDelta(rel0, { trust: 4, respect: 0, suspicion: -3 }), later(1));
   assert.match(describeRelation(rel1, later(2)).join(' '), /una volta, poco fa/);
   assert.match(describeRelation(rel1, later(2)).join(' '), /non si è mai presentato/);
 
-  const rel2 = applyRelationDelta({ ...rel1, knownName: 'John' }, { trust: 0, respect: 0, suspicion: 0 }, later(300));
+  const rel2 = recordExchange({ ...rel1, knownName: 'John' }, later(300));
   assert.equal(labelFor(rel2), 'John');
   const text = describeRelation(rel2, later(2000)).join(' ');
   assert.match(text, /2 volte/);
@@ -71,7 +71,7 @@ test('relazione: primo incontro, poi conteggi, tempo e nome', () => {
 
 test('i punteggi di relazione restano in 0-100 e le variazioni sono limitate', () => {
   const rel = initialRelation('b', 'p1', 'x', psyche, t0);
-  const up = applyRelationDelta({ ...rel, trust: 98 }, { trust: 500, respect: -500, suspicion: 0 }, t0);
+  const up = applyRelationDelta({ ...rel, trust: 98 }, { trust: 500, respect: -500, suspicion: 0 });
   assert.equal(up.trust, 100);
   assert.ok(up.respect >= rel.respect - 10, 'max 10 punti per scambio');
 });
@@ -96,10 +96,11 @@ test('il nome vale solo se il giocatore lo ha scritto davvero', () => {
 
 test('i fatti: dedup, scarto di quelli troppo corti o lunghi, massimo ' + MAX_FACTS, () => {
   let facts = addFacts([], ['È un marinaio', 'è un marinaio', 'ok', 'x'.repeat(200), 42]);
-  assert.deepEqual(facts, ['È un marinaio']);
-  for (let i = 0; i < 12; i++) facts = addFacts(facts, [`fatto numero ${i}`]);
+  assert.deepEqual(facts, ['è un marinaio'], 'il duplicato sostituisce il vecchio');
+  const distinct = ['ama il rum', 'ha una cicatrice', 'porta un cappello', 'viene dal Galles', 'odia la polizia', 'ha un cane', 'fuma la pipa', 'tossisce spesso', 'deve soldi', 'canta male', 'è sordo', 'zoppica'];
+  for (const f of distinct) facts = addFacts(facts, [f]);
   assert.equal(facts.length, MAX_FACTS);
-  assert.equal(facts.at(-1), 'fatto numero 11');
+  assert.equal(facts.at(-1), 'zoppica');
 });
 
 test('con spinte sempre positive la dominanza non satura a 1 (torna verso la base ad ogni scambio)', () => {
@@ -115,4 +116,10 @@ test('un insulto sposta l\'umore verso «irritato», e l\'effetto passa', () => 
   assert.match(describeMood(m.pad), /irritato|teso|distaccato/);
   const calm = decayMood(m, psyche, new Date(t0.getTime() + 8 * 3600_000));
   assert.match(describeMood(calm.pad), /rilassato|neutro/);
+});
+
+test('un fatto che ripete in altre parole uno già noto lo sostituisce, non si accumula', () => {
+  const facts = addFacts(['cerca lavoro al porto'], ['Cerca lavoro al porto di Londra']);
+  assert.deepEqual(facts, ['Cerca lavoro al porto di Londra']);
+  assert.equal(addFacts(['è un marinaio'], ['ha un cane nero']).length, 2);
 });

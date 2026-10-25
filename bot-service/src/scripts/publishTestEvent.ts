@@ -1,6 +1,7 @@
 /**
  * Simula un messaggio di giocatore sul canale Redis, senza passare dal game.
- * Uso: npm run simulate -- <locationId> "<testo>" [nomePersonaggio] [posizione]
+ * Uso: npm run simulate -- <locationId> "<testo>" [nomePersonaggio] [posizione] [characterId]
+ * Con il characterId di un personaggio vero il bot ne vede l'aspetto pubblico; senza, è «simulated-player».
  * La risposta viene comunque postata al backend vero: serve un bot configurato
  * e un unified-backend attivo (altrimenti si vede solo la generazione nei log).
  */
@@ -10,9 +11,9 @@ import { randomUUID } from 'crypto';
 import { BOT_CHAT_CHANNEL } from '../events';
 
 async function main(): Promise<void> {
-  const [locationId, content, name = 'Tester', position] = process.argv.slice(2);
+  const [locationId, content, name = 'Tester', position, characterId = 'simulated-player'] = process.argv.slice(2);
   if (!locationId || !content) {
-    process.stderr.write('Uso: npm run simulate -- <locationId> "<testo>" [nomePersonaggio] [posizione]\n');
+    process.stderr.write('Uso: npm run simulate -- <locationId> "<testo>" [nomePersonaggio] [posizione] [characterId]\n');
     process.exit(1);
   }
 
@@ -20,7 +21,7 @@ async function main(): Promise<void> {
   await redis.publish(BOT_CHAT_CHANNEL, JSON.stringify({
     eventId: randomUUID(),
     chatId: randomUUID().replace(/-/g, '').slice(0, 24),
-    characterId: 'simulated-player',
+    characterId,
     characterName: name,
     locationId,
     content,

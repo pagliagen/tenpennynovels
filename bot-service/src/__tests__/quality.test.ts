@@ -49,3 +49,19 @@ test('un nome con titolo già presente nella chat non è inventato', () => {
   const known = 'Mrs. Hargreave è la locandiera';
   assert.deepEqual(findIssues('Chiedete a Mrs. Hargreave.', [], known), []);
 });
+
+test('il meteo che nessuno ha nominato è inventato; se è in chat o nella persona no', () => {
+  const issues = findIssues('*Guarda fuori.* Mi piace il rumore della pioggia sulla strada.', [], 'Buonasera, è aperto?');
+  assert.deepEqual(issues, [{ type: 'invented', names: ['pioggia'] }]);
+  assert.deepEqual(findIssues('La pioggia non smette.', [], 'Che pioggia stasera!'), []);
+});
+
+test('un nome proprio a metà frase che nessuno ha nominato è inventato; inizio frase e allowlist no', () => {
+  const known = 'Barnaby Finch, barista di Whitechapel. Annie è qui.';
+  assert.deepEqual(
+    findIssues('Prova alla locanda Blue Boar, vicino al molo di Cutler.', [], known),
+    [{ type: 'invented', names: ['Blue', 'Boar', 'Cutler'] }],
+  );
+  assert.deepEqual(findIssues('Whitechapel è a due passi. *Guarda Annie.* Signore, Londra non dorme.', [], known), []);
+  assert.deepEqual(findIssues('Entra pure. Vieni da Londra?', [], known), []);
+});

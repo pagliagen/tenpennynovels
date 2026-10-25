@@ -44,6 +44,51 @@ export const psycheSchema = z.object({
 
 export type Psyche = z.infer<typeof psycheSchema>;
 
+const padOffset = z.object({
+  p: z.number().min(-1).max(1).default(0),
+  a: z.number().min(-1).max(1).default(0),
+  d: z.number().min(-1).max(1).default(0),
+});
+
+/** Fasce d'età apparente (dalla scheda pubblica del personaggio, mai l'età reale). */
+export const AGE_BANDS = ['child', 'young', 'adult', 'mature', 'old'] as const;
+
+/** Un rapporto già esistente con un personaggio preciso (parente, creditore, rivale...). */
+export const relationshipSchema = z.object({
+  characterId: z.string().min(1),
+  /** Chi è per il bot, in due parole: "tuo fratello minore", "il creditore". */
+  label: z.string().min(2),
+  backstory: z.string().optional(),
+  /** Punteggi iniziali 0-100; se mancano, quelli di uno sconosciuto. */
+  trust: score.optional(),
+  respect: score.optional(),
+  suspicion: score.optional(),
+  /** Il bot lo conosce già per nome (default sì: lo ha già incontrato). */
+  knowsName: z.boolean().default(true),
+  /** Quanto questa persona sposta il suo umore mentre le parla (PAD, -1..1). */
+  moodOffset: padOffset.default({ p: 0, a: 0, d: 0 }),
+  /** Come reagisce a lei/lui, in una frase: finisce nel prompt. */
+  hint: z.string().optional(),
+});
+
+/** Un atteggiamento verso una categoria di persone, in base a ciò che si vede. */
+export const attitudeSchema = z.object({
+  match: z.object({
+    gender: z.enum(['male', 'female']).optional(),
+    ageBand: z.enum(AGE_BANDS).optional(),
+    /** Parole che, se compaiono nella descrizione fisica/pubblica, fanno scattare la regola ("uniforme", "elegante"). */
+    appearsLike: z.array(z.string().min(2)).optional(),
+  }).refine((m) => Object.values(m).some((v) => v !== undefined), 'match vuoto: indica almeno un criterio'),
+  trustShift: z.number().min(-50).max(50).default(0),
+  respectShift: z.number().min(-50).max(50).default(0),
+  suspicionShift: z.number().min(-50).max(50).default(0),
+  moodOffset: padOffset.default({ p: 0, a: 0, d: 0 }),
+  hint: z.string().optional(),
+});
+
+export type Relationship = z.infer<typeof relationshipSchema>;
+export type Attitude = z.infer<typeof attitudeSchema>;
+
 /** Un bot: scheda e stile, indipendenti da dove viene usato. File `bots/<nome>.json`. */
 export const botDefSchema = z.object({
   name: z.string().min(1),
@@ -51,6 +96,12 @@ export const botDefSchema = z.object({
   characterId: z.string().min(1),
   persona: z.string().min(20),
   psyche: psycheSchema,
+  /** Rapporti già esistenti con personaggi precisi. */
+  relationships: z.array(relationshipSchema).default([]),
+  /** Atteggiamenti verso categorie di persone. */
+  attitudes: z.array(attitudeSchema).default([]),
+  /** Distretti che conosce bene oltre a quello in cui lavora (es. un facchino di stazione che conosce tutta Londra). */
+  knows: z.array(z.string().min(2)).default([]),
   /** 'all': risponde a ogni messaggio; 'mention': solo se citato per nome. */
   respondTo: z.enum(['all', 'mention']).default('all'),
   /** Pausa minima tra due risposte dello stesso bot. */
