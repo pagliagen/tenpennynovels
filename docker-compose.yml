@@ -197,6 +197,9 @@ services:
       # l'AI è abilitata; è DAVVERO attiva solo se il gateway AI (ai-gateway/) risponde e dichiara il servizio
       # `editorial`. La revisione di canone non dipende da qui.
       ENABLE_IA_EDITORIAL: ${ENABLE_IA_EDITORIAL:-false}
+      # Tab «Bot» del gestionale (elenco e generazione dei bot): STRUMENTO DA SVILUPPO. Attivo solo con "true" e se il
+      # gateway AI dichiara il servizio `character-bot`. In produzione non si imposta mai: il bot è spento per scelta.
+      ENABLE_BOT_CHARACTERS: ${ENABLE_BOT_CHARACTERS:-false}
       # Gateway AI: in Docker locale l'host è host.docker.internal (senza ngrok); in produzione il dominio
       # ngrok (oggi) o del server AI dedicato (domani). Il segreto sta solo nell'env, mai nel repo.
       AI_GATEWAY_URL: ${AI_GATEWAY_URL:-}

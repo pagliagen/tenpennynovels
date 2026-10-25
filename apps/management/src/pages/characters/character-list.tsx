@@ -30,6 +30,8 @@ import {
 } from '@/hooks/api/useCharacters';
 import { useCharacterFinances, useUpdateCharacterFinances } from '@/hooks/api/useCharacterFinances';
 import { useNotificationStore } from '@/store/notificationStore';
+import { useFeatureFlagsStore } from '@/store/featureFlagsStore';
+import { BotsPanel } from '@/components/bots/BotsPanel';
 import { useURLFilter } from '@/hooks/useURLFilter';
 import { clearFilterHash } from '@/lib/utils/urlFilters';
 import { FormField } from '@/components/shared/FormField';
@@ -83,7 +85,10 @@ function CharacterEditContent({
 
 export default function CharacterList() {
   // State
-  const [activeTab, setActiveTab] = useState<'all' | 'pg_principale' | 'png' | 'pg_master' | 'bot'>('all');
+  const [selectedTab, setActiveTab] = useState<'all' | 'pg_principale' | 'png' | 'pg_master' | 'bot'>('all');
+  const botAdminEnabled = useFeatureFlagsStore((s) => s.botAdminEnabled);
+  // Il flag può spegnersi mentre il tab è aperto (servizio giù): si torna a «Tutti» invece di mostrare un pannello morto.
+  const activeTab = selectedTab === 'bot' && !botAdminEnabled ? 'all' : selectedTab;
   const { filters, params, setParams, handleFilterChange } = useTableFilters<CharacterListParams>({
     page: 1,
     pageSize: 25,
@@ -133,9 +138,7 @@ export default function CharacterList() {
   const filteredData = useMemo(() => {
     if (!data?.list) return [];
     if (activeTab === 'all') return data.list;
-    if (activeTab === 'bot') return data.list.filter(char => char.isBot);
-    // For standard types, exclude bots (they have characterType 'png' but should only show in Bot tab)
-    return data.list.filter(char => char.characterType === activeTab && !char.isBot);
+    return data.list.filter(char => char.characterType === activeTab);
   }, [data?.list, activeTab]);
 
   // Prepare visible columns for ConfigurableDataTable
@@ -527,7 +530,7 @@ export default function CharacterList() {
       <div className={styles.characterList}>
         <header className={styles.header}>
           <h1>Gestione Personaggi</h1>
-          <p>Totale: {filteredData.length} personaggi{activeTab !== 'all' ? ` (${activeTab})` : ''}</p>
+          {activeTab !== 'bot' && <p>Totale: {filteredData.length} personaggi{activeTab !== 'all' ? ` (${activeTab})` : ''}</p>}
         </header>
 
         {/* Character Type Tabs */}
@@ -556,14 +559,21 @@ export default function CharacterList() {
           >
             Master
           </button>
-          <button
-            className={`${styles.tab} ${activeTab === 'bot' ? styles.active : ''}`}
-            onClick={() => setActiveTab('bot')}
-          >
-            Bot
-          </button>
+          {/* Strumento da sviluppo: compare solo con ENABLE_BOT_CHARACTERS e il character-bot raggiungibile. */}
+          {botAdminEnabled && (
+            <button
+              className={`${styles.tab} ${activeTab === 'bot' ? styles.active : ''}`}
+              onClick={() => setActiveTab('bot')}
+            >
+              Bot
+            </button>
+          )}
         </div>
 
+        {activeTab === 'bot' ? (
+          <BotsPanel />
+        ) : (
+          <>
         {/* Filter Badge */}
         {urlFilter?.userId && (
           <div className={styles.filterBadge}>
@@ -611,6 +621,8 @@ export default function CharacterList() {
             resolveConditionalValue: tableConfig.resolveConditionalValue
           } : undefined}
         />
+          </>
+        )}
 
         {activeSidePanel === 'edit' && currentCharacter && (
           <SidePanel
