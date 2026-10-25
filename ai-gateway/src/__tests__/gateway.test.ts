@@ -162,3 +162,10 @@ test('upstream lento = 504, upstream irraggiungibile = 502, mai dettagli tecnici
     assert.doesNotMatch(JSON.stringify(await res.json()), /ECONNREFUSED|127\.0\.0\.1/);
   });
 });
+
+test('l\'URL verso bot-service ha l\'host della configurazione e solo due segmenti dal registro', async () => {
+  const { upstreamUrl } = await import('../upstream');
+  assert.equal(upstreamUrl('http://127.0.0.1:8788/', { kind: 'health' }), 'http://127.0.0.1:8788/health');
+  assert.equal(upstreamUrl('http://127.0.0.1:8788', { kind: 'route', service: 'editorial', action: 'generate' }), 'http://127.0.0.1:8788/v1/editorial/generate');
+  assert.equal(upstreamUrl('http://127.0.0.1:8788', { kind: 'route', service: 'editorial', action: '../@evil.com' }), 'http://127.0.0.1:8788/v1/editorial/..%2F%40evil.com');
+});

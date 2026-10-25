@@ -17,7 +17,7 @@ export async function aggregateHealth(botServiceUrl: string): Promise<{ status: 
 
   let raw: { status: number; body: string };
   try {
-    raw = await forward(botServiceUrl, '/health', 'GET', null, HEALTH_TIMEOUT_MS);
+    raw = await forward(botServiceUrl, { kind: 'health' }, 'GET', null, HEALTH_TIMEOUT_MS);
   } catch {
     return down('non raggiungibile');
   }
