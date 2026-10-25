@@ -114,7 +114,7 @@ const VARIABLE_CONDITIONS = /\b(nebbi\w*|foschi\w*|bruma|brume|piogg\w*|piov\w*|
 const INVENTED_MATERIALS = /\b(pietr\w*|marm\w*|legn\w*|ferr\w*|ghisa|mattoni|mattone|vetr\w*|ottone|bronz\w*|quercia|velluto|cuoio|rame|granito|acciaio|dorat\w*|argentat\w*|rossastr\w*|scuri|scuro|scura|scure|nero|nera|neri|nere|bianc\w*)\b/gi;
 
 /** Frasi fatte che il modello ripete in ogni bozza: poche, ma riconoscibili. */
-const FILLER = /(soffus\w*|fiocc\w*|aria (?:è )?dens\w*|dens[ao] (?:di|del|dell)|filtr\w* (?:tra|dalle|attraverso))/gi;
+const FILLER = /\b(?:soffus\w{0,6}|fiocc\w{0,6}|aria (?:è )?dens\w{0,4}|dens[ao] (?:di|del|dell)|filtr\w{0,6} (?:tra|dalle|attraverso))\b/gi;
 
 const stemOf = (w: string): string => w.toLowerCase().slice(0, 5);
 
