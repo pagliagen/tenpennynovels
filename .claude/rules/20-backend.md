@@ -47,7 +47,7 @@ if (!res.headersSent && typeof res.status === 'function') { res.status(502).json
 
 **Incidente 2026-03-03** — l'error handler del proxy Socket.IO chiamava `res.status(502)` e crashava a ogni errore di upgrade. Fix: il controllo sopra.
 
-**Timeout**: 30s per i proxy REST, 60s per `/documents` (ricerca semantica lenta), 120s per WebSocket. Erano 10s e facevano fallire richieste legittime (2026-03-03).
+**Timeout** (`services/api-gateway/src/config.ts`, `config.proxy`): 30s per i proxy REST (`defaultTimeout`), 120s per `/documents` (ricerca semantica lenta, `documentsTimeout`), 60s per WebSocket (`socketTimeout`). Erano 10s e facevano fallire richieste legittime (2026-03-03).
 
 **Rate limit**: doppio limite per `/documents` — 30 req/min non autenticati, 120 req/min autenticati (chiave = token, non IP, così i tab non si rubano quota). Disattivati in sviluppo. Bypass per le build Next.js via header secret.
 

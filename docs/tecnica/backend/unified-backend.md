@@ -238,10 +238,17 @@ flowchart TB
 
 ### Redis Pub/Sub Channels
 
-Famiglie di canali pubblicate dal backend (elenco non esaustivo; dettagli in [redis-pubsub.md](../infrastructure/redis-pubsub.md) e nel codice):
+Famiglie di canali (elenco non esaustivo; dettagli in [redis-pubsub.md](../infrastructure/redis-pubsub.md) e nel codice):
 
 | Canale | Chi pubblica | Chi legge |
 |---|---|---|
+| `embedding:document:*`, `embedding:chat:*`, `embedding:forum_post:*` | hook dei modelli (create/update/delete) | `embeddings-worker` |
+| `bot:chat:message` | `BotChatEventPublisher` (solo con la chat dei bot configurata per intero) | `BotChatForwarder` (stesso backend → servizio AI esterno) |
+| `user:events`, `character:events`, `character:review_completed`, `game:events`, `game:weather_changed`, `location:events`, `corporation:events`, `relationship:events`, `ticket:events`, `system:broadcast`, `forum:events` | vari punti del backend | `RedisSubscriber` (`modules/game/events`, enum `RedisChannel`) |
+| `auth:*` (login, registrazione, reset password…) | `core/auth` | nessun subscriber nel backend |
+| `system_config_updated`, `system_config_cache_invalidated` | `ConfigurationService` | `ConfigurationService` (cache dei flag) |
+
+---|---|---|
 | `embedding:document:*`, `embedding:chat:*`, `embedding:forum_post:*` | hook dei modelli (create/update/delete) | `embeddings-worker` |
 | `bot:chat:message` | `BotChatEventPublisher` (solo con la chat dei bot configurata per intero) | `BotChatForwarder` (stesso backend → servizio AI esterno) |
 | `auth:*`, `user:events` | `core/auth` (registrazione, login, reset password…) | `RedisSubscriber` (`modules/game/events`) |

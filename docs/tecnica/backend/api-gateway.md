@@ -55,10 +55,11 @@ const services = {
   auth:      { target: `${BACKEND}/auth`,      timeout: config.proxy.defaultTimeout },   // 30 s
   game:      { target: `${BACKEND}/game`,      timeout: config.proxy.defaultTimeout },
   forum:     { target: `${BACKEND}/forum`,      timeout: config.proxy.defaultTimeout },
-  documents: { target: `${BACKEND}/documents`,  timeout: config.proxy.documentsTimeout }, // 60 s (ricerca semantica)
+  documents: { target: `${BACKEND}/documents`,  timeout: config.proxy.documentsTimeout }, // 120 s (ricerca semantica)
   admin:     { target: `${BACKEND}/admin`,      timeout: config.proxy.defaultTimeout },   // 30 s: oltre, una risposta ferma viene tagliata
   'bot-api': { target: `${BACKEND}/bot-api`,    timeout: config.proxy.defaultTimeout },   // API a cui risponde il servizio AI esterno
 };
+// Il proxy WebSocket (/socket.io/**) ha `socketTimeout` = 60 s.
 // Ogni voce è montata su `/<nome>` (app.use(`/${name}`, createServiceProxy(...))). Il proxy WebSocket (/socket.io/**) è a parte e va montato PRIMA.
 ```
 

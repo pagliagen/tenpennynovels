@@ -33,7 +33,7 @@ Seeders standalone con **MongoDB native driver** (NO Mongoose). Ogni seeder può
 - **Package dedicato**: `seeders/package.json` con dipendenze isolate
 - **MongoDB native**: Usa `MongoClient` diretto, non modelli Mongoose
 - **Standalone**: Possono girare in produzione senza clonare tutto il backend
-- **Idempotenti**: Puliscono e ri-popolano collections ad ogni run
+- **Non tutti idempotenti**: `Location`, `Skill`, `Occupation`, `SocialClassConfig`, `User`, `Document` saltano se i dati esistono (salvo `--force`, che cancella e ricrea); **`Item`, `Service` e `Forum` fanno `deleteMany({})` a ogni run, anche senza `--force`** (su un forum con contenuti veri cancellerebbero tutto)
 
 
 ### Seeders disponibili
@@ -48,9 +48,9 @@ Seeders standalone con **MongoDB native driver** (NO Mongoose). Ogni seeder può
 | `seed:dev:reindex-documents` | riallinea l'indice di ricerca ai documenti nel DB, senza toccare Mongo (`-- --dry-run`, `-- --wait`) | DB |
 | `seed:dev:forum` · `system-config` | forum iniziale, configurazioni di sistema | dati nel codice |
 | `seed:dev:bots` | personaggi dei bot (`BOT_CHARACTERS`); stampa le schede per `bot-service` | dati nel codice |
-| `seed:dev:all` · `seed:dev:all:force` | tutti i precedenti (il force ricrea) | |
+| `seed:dev:all` · `seed:dev:all:force` | **eseguono ogni seeder con `--force`** (distruttivo): users, bots, locations, items, services, skills, occupations, social-classes, documents, forum, system-config. **Non** includono `location-tags` e `reindex-documents`. | |
 
-Le stesse voci esistono con prefisso `seed:prod:` (tranne bot e tag, solo sviluppo). Il seeder utenti **non va importato** da altri file (eseguirebbe il suo `main()`): le costanti condivise stanno in `seeders/utils/`.
+Le stesse voci esistono con prefisso `seed:prod:` (users, bots, locations, items, services, skills, occupations, social-classes, documents, forum, system-config); `location-tags` e `reindex-documents` sono solo `dev`; `seed:prod:all` non include `bots`. Il seeder utenti **non va importato** da altri file (eseguirebbe il suo `main()`): le costanti condivise stanno in `seeders/utils/`.
 
 ### Esecuzione
 
@@ -59,8 +59,10 @@ Le stesse voci esistono con prefisso `seed:prod:` (tranne bot e tag, solo svilup
 cd scripts/seeders && npm install
 
 # Dalla root
-npm run seed:dev:all            # popola ciò che manca
-npm run seed:dev:all:force      # ricrea tutto (distruttivo)
+# ATTENZIONE: `seed:*:all` esegue TUTTI i seeder con --force e cancella i dati esistenti (compresi i documenti scritti dal gestionale).
+npm run seed:dev:skills         # un seeder alla volta (skills, locations, occupations, users…: salta se i dati esistono)
+# ma `seed:*:items`, `:services` e `:forum` cancellano e ricreano SEMPRE
+npm run seed:dev:all            # ricrea tutto (distruttivo)
 ```
 
 

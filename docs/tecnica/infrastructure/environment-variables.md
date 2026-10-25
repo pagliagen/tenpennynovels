@@ -439,8 +439,8 @@ CDN_STORAGE_PATH=/cdn-storage
 CDN_BASE_URL=http://localhost:8000/cdn
 # Upload FTP verso un CDN esterno (disabilitato di default)
 CDN_FTP_ENABLED=false
-# URL con cui servizi interni (es. generatori di immagini) richiamano il backend attraverso il gateway.
-# Default http://localhost:8000; in Docker http://tenpennynovels-api-gateway:8000
+# Alimenta `appConfig.urls.api` (in sviluppo; in produzione è fisso https://api.tenpennynovels.com). Default http://localhost:8000;
+# in Docker http://tenpennynovels-api-gateway:8000. Oggi nessun codice del backend legge `urls.api`: è un residuo.
 API_CALLBACK_BASE_URL=http://tenpennynovels-api-gateway:8000
 ```
 
