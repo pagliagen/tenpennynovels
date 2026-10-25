@@ -10,6 +10,10 @@
  */
 export { EmbeddingService } from './services/EmbeddingService';
 
+/** Ambientazione pubblica per chi non è un giocatore (bot dei PNG): default-deny sul tipo e sulla pubblicazione. */
+export { searchPublicLore } from './services/PublicLoreSearch';
+export type { LorePassage } from './services/PublicLoreSearch';
+
 /**
  * Tipi documento: sorgente unica in constants/documentTypes.ts, riesposta qui
  * perché serve fuori dalla feature (tipi del gestionale, SitemapService). Sono

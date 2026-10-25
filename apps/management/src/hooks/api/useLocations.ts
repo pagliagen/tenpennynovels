@@ -24,6 +24,7 @@ export const locationKeys = {
   list: (params: Partial<LocationListParams>) => [...locationKeys.lists(), params] as const,
   hierarchy: () => [...locationKeys.all, 'hierarchy'] as const,
   stats: () => [...locationKeys.all, 'stats'] as const,
+  tags: () => [...locationKeys.all, 'tags'] as const,
   details: () => [...locationKeys.all, 'detail'] as const,
   detail: (id: string) => [...locationKeys.details(), id] as const,
 };
@@ -33,6 +34,16 @@ export function useLocations(params: Partial<LocationListParams> = {}) {
     queryKey: locationKeys.list(params),
     queryFn: () => locationAPI.getLocations(params),
     staleTime: 5 * 60 * 1000,
+    retry: 3
+  });
+}
+
+/** Il registro dei tag cambia solo con un deploy: cache lunga. */
+export function useLocationTags() {
+  return useQuery({
+    queryKey: locationKeys.tags(),
+    queryFn: () => locationAPI.getLocationTags(),
+    staleTime: 60 * 60 * 1000,
     retry: 3
   });
 }

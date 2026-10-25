@@ -25,5 +25,41 @@
   "cooldownMs": 15000,
   "debounceMs": 3000,
   "historySize": 12,
-  "targetWords": 60
+  "targetWords": 60,
+  "relationships": [
+    {
+      "characterId": "<_id del personaggio che il bot conosce già>",
+      "label": "tua sorella minore",
+      "backstory": "Ti ha prestato i soldi per aprire la locanda e le vuoi bene, anche se non lo dici.",
+      "trust": 90,
+      "respect": 75,
+      "suspicion": 5,
+      "knowsName": true,
+      "moodOffset": {
+        "p": 0.3,
+        "a": -0.1,
+        "d": 0
+      },
+      "hint": "Con lei abbassi la guardia e sei meno laconico."
+    }
+  ],
+  "attitudes": [
+    {
+      "match": {
+        "appearsLike": [
+          "uniforme",
+          "agente"
+        ]
+      },
+      "trustShift": -15,
+      "respectShift": 0,
+      "suspicionShift": 25,
+      "moodOffset": {
+        "p": 0,
+        "a": 0.1,
+        "d": -0.1
+      },
+      "hint": "Diffidi della polizia: non hai niente da nascondere, ma non ti piace essere interrogato."
+    }
+  ]
 }

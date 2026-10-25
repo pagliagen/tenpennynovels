@@ -14,7 +14,8 @@ import type {
   LocationStatsResponse,
   CreateLocationData,
   UpdateLocationData,
-  MapPosition
+  MapPosition,
+  LocationTagOption
 } from '@/types/api/Location';
 import type { ApiResponse } from '@/types/api/common';
 
@@ -50,6 +51,19 @@ export async function getLocationStats(): Promise<LocationStatsResponse> {
   );
   if (!response.data.success || !response.data.data) {
     throw new Error('Errore nel recupero statistiche location');
+  }
+  return response.data.data;
+}
+
+/**
+ * Registro dei tag disponibili per le location (elenco chiuso, deciso dal backend)
+ */
+export async function getLocationTags(): Promise<LocationTagOption[]> {
+  const response = await withRetry(() =>
+    apiClient.get<ApiResponse<LocationTagOption[]>>('/admin/locations/tags')
+  );
+  if (!response.data.success || !response.data.data) {
+    throw new Error('Errore nel recupero dei tag delle location');
   }
   return response.data.data;
 }

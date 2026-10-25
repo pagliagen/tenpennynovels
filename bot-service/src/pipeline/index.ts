@@ -61,7 +61,7 @@ export async function generateReply(
   const plan = options.plan ? await timed('plan', () => planReply(llm, ctx)) : null;
 
   const draftRaw = await timed('draft', () =>
-    llm.generate(buildMessages(bot, ctx.history, { ...(plan ? { plan } : {}), psycheLines: ctx.psycheLines }), {
+    llm.generate(buildMessages(bot, ctx.history, { ...(plan ? { plan } : {}), psycheLines: ctx.psycheLines, genderKnown: ctx.genderKnown }), {
       temperature: bot.temperature,
       numPredict: Math.max(200, bot.targetWords * 4),
     }),

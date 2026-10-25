@@ -33,10 +33,12 @@ export interface PromptExtras {
   feedback?: string;
   /** Carattere, umore e rapporto, già tradotti in frasi. */
   psycheLines?: string[];
+  /** Se il genere dell'interlocutore è noto la regola 9 non serve. */
+  genderKnown?: boolean;
 }
 
 export function buildMessages(bot: BotConfig, fullHistory: HistoryLine[], extras: PromptExtras = {}): ChatMessage[] {
-  const { plan, feedback, psycheLines } = extras;
+  const { plan, feedback, psycheLines, genderKnown } = extras;
   const history = trimOwnLines(fullHistory, bot.characterId);
   const system = [
     bot.persona,
@@ -52,7 +54,8 @@ export function buildMessages(bot: BotConfig, fullHistory: HistoryLine[], extras
     `6. Una sola battuta di AL MASSIMO ${bot.targetWords} parole, in un unico paragrafo. Meglio corta che lunga.`,
     '7. Non ripetere frasi o gesti che hai già usato nei messaggi precedenti.',
     '8. Non inventare dettagli che nessuno ha detto (meteo, oggetti, eventi, persone): reagisci solo a ciò che c\'è nella chat.',
-    '9. Non sai se l\'altro è uomo o donna: evita aggettivi e participi che ne indichino il genere (non "attenta", "stanco").',
+    '10. Non fai mai del male fisico agli altri e non li blocchi o trattieni (niente afferrare, colpire, spintonare): puoi minacciare a parole, cacciare, voltare le spalle, ma ciò che subisce l\'altro lo decide il suo giocatore.',
+    ...(genderKnown ? [] : ['9. Non sai se l\'altro è uomo o donna: evita aggettivi e participi che ne indichino il genere (non "attenta", "stanco").']),
   ].join('\n');
 
   const user = [

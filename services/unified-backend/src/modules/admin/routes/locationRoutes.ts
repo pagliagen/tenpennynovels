@@ -24,6 +24,12 @@ router.get(
 );
 
 router.get(
+  '/tags',
+  requireViewPermission('locations.read'),
+  LocationManagementController.getLocationTags
+);
+
+router.get(
   '/stats',
   requireViewPermission('locations.read'),
   AdminAuthMiddleware.logAdminAction('view_location_stats', 'location_management'),

@@ -55,12 +55,43 @@ function repeatedPhrases(draft: string[], previous: Set<string>): { phrases: str
 /** Titoli che introducono un nome proprio: "Mrs. Halloway", "Ispettore Grey". */
 const TITLED_NAME = /\b(?:Mrs?\.?|Miss|Lady|Lord|Sir|Madame|Signor[ae]?|Dottor[e]?|Ispettor[e]?|Inspector|Padre|Reverendo|Capitano|Sergente)\s+([A-ZÀ-Ý][a-zà-ÿ]+)/g;
 
+/** Il meteo è un classico: un 12B lo aggiunge per "atmosfera" anche se nessuno ne ha parlato. */
+const WEATHER = /\b(pioggia|pioggerella|piove|nebbia|neve|nevica|temporale|tuono|tuoni|vento|grandine)\b/gi;
+
+/** Maiuscole che non sono nomi inventati: luoghi e istituzioni di sfondo, titoli senza nome, espressioni fisse. */
+const CAPITAL_ALLOWED = new Set([
+  'londra', 'inghilterra', 'tamigi', 'impero', 'regina', 'dio', 'signore', 'signora', 'signorina', 'madame', 'natale', 'pasqua',
+  'domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'altezza', 'maestà', 'eccellenza', 'inglese', 'italiano',
+]);
+
+/**
+ * Nomi propri a metà frase che non compaiono in persona, chat, rapporto o luoghi mostrati:
+ * il modello li ha inventati («la locanda Blue Boar», «vicino al molo di Cutler»).
+ * Salta le parole a inizio frase o azione (la maiuscola è sintattica).
+ */
+function unknownProperNames(draft: string, known: string): string[] {
+  const out = new Set<string>();
+  for (const m of draft.matchAll(/[A-ZÀ-Ý][a-zà-ÿ']{3,}/g)) {
+    const word = m[0];
+    const before = draft.slice(0, m.index).trimEnd();
+    if (before === '' || /[.!?*:"“«…—-]$/.test(before)) continue;
+    const lower = word.toLowerCase();
+    if (CAPITAL_ALLOWED.has(lower) || known.includes(lower)) continue;
+    out.add(word);
+  }
+  return [...out];
+}
+
 function inventedNames(draft: string, knownText: string): string[] {
   const known = knownText.toLowerCase();
   const names = new Set<string>();
+  for (const [word] of draft.matchAll(WEATHER)) {
+    if (!known.includes(word.toLowerCase())) names.add(word);
+  }
   for (const [, surname] of draft.matchAll(TITLED_NAME)) {
     if (surname && !known.includes(surname.toLowerCase())) names.add(surname);
   }
+  for (const name of unknownProperNames(draft, known)) names.add(name);
   return [...names];
 }
 

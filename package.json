@@ -38,6 +38,8 @@
     "docker:logs:embeddings": "docker compose logs -f embeddings-worker",
     "seed:dev:users": "cd scripts/seeders && npm run seed:dev:users",
     "seed:dev:locations": "cd scripts/seeders && npm run seed:dev:locations",
+    "seed:dev:location-tags": "cd scripts/seeders && npm run seed:dev:location-tags",
+    "seed:dev:reindex-documents": "cd scripts/seeders && npm run seed:dev:reindex-documents",
     "seed:dev:items": "cd scripts/seeders && npm run seed:dev:items",
     "seed:dev:skills": "cd scripts/seeders && npm run seed:dev:skills",
     "seed:dev:occupations": "cd scripts/seeders && npm run seed:dev:occupations",

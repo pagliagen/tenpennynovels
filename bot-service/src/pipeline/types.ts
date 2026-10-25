@@ -17,6 +17,8 @@ export interface TurnContext {
   relation: Relation | null;
   /** Sezioni di prompt su carattere, umore e rapporto (psyche/blocks.ts). */
   psycheLines: string[];
+  /** Il genere dell'interlocutore è noto (campo pubblico della scheda): se no, il bot lo evita. */
+  genderKnown?: boolean;
   /** Nome dell'interlocutore solo se si è presentato; altrimenti assente. */
   otherName?: string;
 }

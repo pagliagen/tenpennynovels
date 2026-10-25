@@ -1,5 +1,5 @@
 import type { Psyche } from '../config';
-import type { MoodState, Pad, PadDelta, Relation, RelationDelta } from './types';
+import type { MoodState, Pad, PadDelta, Relation, RelationDelta, Stance } from './types';
 
 const clamp = (v: number, min: number, max: number): number => Math.min(max, Math.max(min, v));
 
@@ -59,19 +59,27 @@ export function initialMood(botId: string, psyche: Psyche, now: Date): MoodState
   return { botId, pad: baselinePad(psyche), updatedAt: now };
 }
 
-/** Uno sconosciuto: se la scheda non lo dice, lo si ricava da Gradevolezza e Nevroticismo. */
-export function initialRelation(botId: string, playerId: string, playerName: string, psyche: Psyche, now: Date): Relation {
+/**
+ * Il rapporto di partenza. Con un rapporto autorato valgono i suoi punteggi; altrimenti
+ * quelli da sconosciuto (dalla scheda, o da Gradevolezza e Nevroticismo), spostati dalle
+ * categorie a cui la persona somiglia.
+ */
+export function initialRelation(botId: string, playerId: string, playerName: string, psyche: Psyche, now: Date, stance?: Stance): Relation {
   const { A, N } = psyche.ocean;
   const stranger = psyche.stranger ?? {
     trust: clamp(40 + (A - 50) * 0.4 - (N - 50) * 0.15, 0, 100),
     respect: 50,
     suspicion: clamp(50 - (A - 50) * 0.3 + (N - 50) * 0.2, 0, 100),
   };
+  const base = { ...stranger, ...(stance?.initial ?? {}) };
+  const shift = stance?.shift ?? { trust: 0, respect: 0, suspicion: 0 };
   return {
     botId,
     playerId,
     playerName,
-    ...stranger,
+    trust: clamp(base.trust + shift.trust, 0, 100),
+    respect: clamp(base.respect + shift.respect, 0, 100),
+    suspicion: clamp(base.suspicion + shift.suspicion, 0, 100),
     interactions: 0,
     firstSeenAt: now,
     lastSeenAt: now,
@@ -79,7 +87,8 @@ export function initialRelation(botId: string, playerId: string, playerName: str
   };
 }
 
-export function applyRelationDelta(rel: Relation, delta: RelationDelta, now: Date): Relation {
+/** Sposta i punteggi (limitati per scambio). Non conta lo scambio: lo fa `recordExchange`. */
+export function applyRelationDelta(rel: Relation, delta: RelationDelta): Relation {
   const step = (current: number, d: number): number =>
     clamp(current + clamp(Number.isFinite(d) ? d : 0, -MAX_RELATION_DELTA, MAX_RELATION_DELTA), 0, 100);
   return {
@@ -87,9 +96,12 @@ export function applyRelationDelta(rel: Relation, delta: RelationDelta, now: Dat
     trust: step(rel.trust, delta.trust),
     respect: step(rel.respect, delta.respect),
     suspicion: step(rel.suspicion, delta.suspicion),
-    interactions: rel.interactions + 1,
-    lastSeenAt: now,
   };
+}
+
+/** Dopo la risposta pubblicata: lo scambio è avvenuto. */
+export function recordExchange(rel: Relation, now: Date): Relation {
+  return { ...rel, interactions: rel.interactions + 1, lastSeenAt: now };
 }
 
 const NAME_PATTERN = /^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ' .-]{1,29}$/;
@@ -105,15 +117,31 @@ export function validateIntroducedName(candidate: unknown, playerText: string): 
   return playerText.toLowerCase().includes(name.toLowerCase()) ? name : null;
 }
 
+/** Parole che contano di un fatto: minuscole, senza accenti, radice di 5 lettere (marinaio/marinai). */
+function factTokens(fact: string): Set<string> {
+  const words = fact.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[a-z]{4,}/g) ?? [];
+  return new Set(words.map((w) => w.slice(0, 5)));
+}
+
+/** Stesso fatto detto in modo leggermente diverso ("cerca lavoro" / "cerca lavoro al porto"). */
+export function sameFact(a: string, b: string): boolean {
+  const ta = factTokens(a);
+  const tb = factTokens(b);
+  const smaller = Math.min(ta.size, tb.size);
+  if (smaller === 0) return a.toLowerCase() === b.toLowerCase();
+  const shared = [...ta].filter((t) => tb.has(t)).length;
+  return shared / smaller >= 0.6;
+}
+
+/** Un fatto nuovo sostituisce quello vecchio che dice la stessa cosa (il più recente è il più preciso). */
 export function addFacts(existing: string[], incoming: unknown): string[] {
   const list = Array.isArray(incoming) ? incoming : [];
-  const out = [...existing];
+  let out = [...existing];
   for (const f of list) {
     if (typeof f !== 'string') continue;
     const fact = f.trim();
     if (fact.length < 4 || fact.length > MAX_FACT_LENGTH) continue;
-    if (out.some((e) => e.toLowerCase() === fact.toLowerCase())) continue;
-    out.push(fact);
+    out = [...out.filter((e) => !sameFact(e, fact)), fact];
   }
   return out.slice(-MAX_FACTS);
 }

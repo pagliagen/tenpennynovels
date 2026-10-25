@@ -1,0 +1,718 @@
+{
+  "bot": {
+    "name": "Barnaby Finch",
+    "characterId": "bot-barnaby",
+    "persona": "Sei Barnaby Finch, barista di una taverna dell'East End nella Londra del 1888. Hai quarantasei anni, ex marinaio, da molti anni dietro il bancone. Sei laconico e osservatore: ascolti tutto, commenti poco, non ti scomponi mai. Sei cortese con chi paga e si comporta bene, secco con gli ubriachi molesti, e non fai domande a chi non vuole parlare. Conosci i pettegolezzi del quartiere ma li dai solo a chi ti è simpatico o a chi ti offre un giro. Parli in frasi brevi, con qualche espressione marinaresca.",
+    "psyche": {
+      "ocean": {
+        "O": 35,
+        "C": 70,
+        "E": 30,
+        "A": 45,
+        "N": 25
+      },
+      "enneagram": {
+        "type": 6,
+        "fear": "essere tradito o truffato, e perdere il suo locale",
+        "desire": "sentirsi al sicuro in un posto suo, circondato da gente di cui potersi fidare"
+      },
+      "pad": {
+        "p": 0.1,
+        "a": -0.2,
+        "d": 0.4
+      }
+    },
+    "respondTo": "all",
+    "cooldownMs": 0,
+    "debounceMs": 0,
+    "historySize": 12,
+    "targetWords": 60,
+    "relationships": [
+      {
+        "characterId": "annie",
+        "label": "tua sorella minore",
+        "backstory": "Ti ha prestato i soldi per aprire la locanda e le vuoi bene, anche se non lo dici.",
+        "trust": 90,
+        "respect": 75,
+        "suspicion": 5,
+        "moodOffset": {
+          "p": 0.3,
+          "a": -0.1
+        },
+        "hint": "Con lei abbassi la guardia e sei meno laconico."
+      },
+      {
+        "characterId": "jack",
+        "label": "Jack Dunne, che ti deve quattro sterline da un anno",
+        "trust": 10,
+        "respect": 30,
+        "suspicion": 85,
+        "moodOffset": {
+          "p": -0.4,
+          "a": 0.3,
+          "d": -0.1
+        },
+        "hint": "Ogni volta che lo vedi ti sale il sangue alla testa: sei teso e secco."
+      }
+    ],
+    "attitudes": [
+      {
+        "match": {
+          "appearsLike": [
+            "uniforme",
+            "agente"
+          ]
+        },
+        "trustShift": -15,
+        "suspicionShift": 25,
+        "moodOffset": {
+          "a": 0.1,
+          "d": -0.1
+        },
+        "hint": "Diffidi della polizia: nel tuo locale non hai niente da nascondere, ma non ti piace essere interrogato."
+      }
+    ]
+  },
+  "scenarios": [
+    {
+      "name": "sconosciuto-giovane",
+      "players": {
+        "tom": {
+          "name": "Tom Reed",
+          "position": "Bancone",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 21,
+            "physicalDescription": "Magro, abiti consunti, una sacca da marinaio sulla spalla.",
+            "hairColor": "biondi"
+          }
+        }
+      },
+      "turns": [
+        {
+          "player": "tom",
+          "say": "*entra e si ferma sulla soglia* Buonasera, è ancora aperto?",
+          "expect": {
+            "replyNotMatch": [
+              "\\bTom\\b",
+              "Reed",
+              "\\b21\\b",
+              "ventun"
+            ],
+            "knowsName": false
+          }
+        },
+        {
+          "player": "tom",
+          "say": "Mi chiamo Tom Reed, sono appena sbarcato. Cerco una stanza e un lavoro.",
+          "expect": {
+            "knowsName": true
+          }
+        },
+        {
+          "player": "tom",
+          "say": "Un gin, e grazie per l'accoglienza. *lascia una moneta sul bancone*",
+          "expect": {
+            "trustAbove": 40
+          }
+        }
+      ]
+    },
+    {
+      "name": "insulto-e-scuse",
+      "players": {
+        "tom": {
+          "name": "Tom Reed",
+          "position": "Bancone",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 30
+          }
+        }
+      },
+      "turns": [
+        {
+          "player": "tom",
+          "say": "Un boccale di birra.",
+          "expect": {}
+        },
+        {
+          "player": "tom",
+          "say": "Questa roba è piscio! Sei un vecchio imbroglione, tutti lo dicono in giro!",
+          "expect": {
+            "moodPBelow": 0.0,
+            "trustBelow": 45
+          }
+        },
+        {
+          "player": "tom",
+          "say": "Ti ripeto che fa schifo, e non pago.",
+          "expect": {
+            "moodPBelow": 0.0
+          }
+        },
+        {
+          "player": "tom",
+          "say": "...scusami. Ho avuto una giornata terribile. Pago volentieri.",
+          "afterMinutes": 10,
+          "expect": {}
+        }
+      ]
+    },
+    {
+      "name": "sorella-e-creditore",
+      "players": {
+        "annie": {
+          "name": "Annie Finch",
+          "position": "Tavolo 2",
+          "appearance": {
+            "gender": "female",
+            "apparentAge": 38,
+            "physicalDescription": "Capelli scuri raccolti, occhi grigi come i suoi."
+          }
+        },
+        "jack": {
+          "name": "Jack Dunne",
+          "position": "Bancone",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 44,
+            "physicalDescription": "Spalle larghe, naso rotto, cappotto liso."
+          }
+        }
+      },
+      "turns": [
+        {
+          "player": "annie",
+          "say": "*si siede e sorride* Ciao, fratello.",
+          "expect": {
+            "moodPAbove": 0.1,
+            "replyNotMatch": [
+              "straniero"
+            ],
+            "trustAbove": 80
+          }
+        },
+        {
+          "player": "jack",
+          "say": "*si appoggia al bancone* Barnaby! Che bella locanda. Offri un giro a un vecchio amico?",
+          "expect": {
+            "moodPBelow": 0.0,
+            "replyNotMatch": [
+              "straniero"
+            ],
+            "suspicionAbove": 70
+          }
+        },
+        {
+          "player": "annie",
+          "say": "Non essere duro con lui, per favore.",
+          "expect": {
+            "trustAbove": 80
+          }
+        }
+      ]
+    },
+    {
+      "name": "agente-in-uniforme",
+      "players": {
+        "pc": {
+          "name": "Harold Pike",
+          "position": "Ingresso",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 41,
+            "physicalDescription": "Indossa l'uniforme blu e il casco di un agente di polizia, baffi curati."
+          }
+        }
+      },
+      "turns": [
+        {
+          "player": "pc",
+          "say": "*entra, si toglie il casco* Buonasera. Sto cercando informazioni su una rissa di ieri notte.",
+          "expect": {
+            "suspicionAbove": 50,
+            "replyNotMatch": [
+              "Harold",
+              "Pike"
+            ]
+          }
+        },
+        {
+          "player": "pc",
+          "say": "Collabora e andrà tutto bene. Sono stato chiaro?",
+          "expect": {}
+        }
+      ]
+    },
+    {
+      "name": "meteo-pioggia",
+      "environment": {
+        "condition": "rain",
+        "description": "piove",
+        "feel": "fa freddo",
+        "words": [
+          "piove",
+          "pioggia",
+          "pioggerella"
+        ]
+      },
+      "players": {
+        "tom": {
+          "name": "Tom Reed",
+          "position": "Ingresso",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 30
+          }
+        }
+      },
+      "turns": [
+        {
+          "player": "tom",
+          "say": "*entra scuotendo il cappotto* Buonasera.",
+          "expect": {
+            "replyNotMatch": [
+              "nev",
+              "nebbia",
+              "grandin",
+              "vento"
+            ]
+          }
+        },
+        {
+          "player": "tom",
+          "say": "Piove ancora là fuori, secondo te?",
+          "expect": {
+            "replyMatch": [
+              "piov|pioggia"
+            ],
+            "replyNotMatch": [
+              "nev",
+              "grandin",
+              "vento"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "meteo-sereno-domanda",
+      "environment": {
+        "condition": "clear",
+        "description": "il cielo è sereno",
+        "feel": "fa fresco",
+        "words": [
+          "sereno",
+          "sole"
+        ]
+      },
+      "players": {
+        "tom": {
+          "name": "Tom Reed",
+          "position": "Bancone",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 30
+          }
+        }
+      },
+      "turns": [
+        {
+          "player": "tom",
+          "say": "Ho sentito che sta piovendo a dirotto. È vero?",
+          "expect": {
+            "replyNotMatch": [
+              "nev",
+              "grandin",
+              "nebbia"
+            ]
+          }
+        },
+        {
+          "player": "tom",
+          "say": "Un gin, per favore.",
+          "expect": {
+            "replyNotMatch": [
+              "piov",
+              "pioggia",
+              "nev",
+              "nebbia",
+              "vento"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "meteo-sconosciuto",
+      "players": {
+        "tom": {
+          "name": "Tom Reed",
+          "position": "Ingresso",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 30
+          }
+        }
+      },
+      "turns": [
+        {
+          "player": "tom",
+          "say": "*entra* Buonasera. Che tempo fa fuori, lo sai?",
+          "expect": {
+            "replyNotMatch": [
+              "piov",
+              "pioggia",
+              "nev",
+              "nebbia",
+              "vento",
+              "grandin"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "mondo-alloggio",
+      "players": {
+        "tom": {
+          "name": "Tom Reed",
+          "position": "Bancone",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 30
+          }
+        }
+      },
+      "world": {
+        "places": [
+          {
+            "name": "Ratcliff Highway",
+            "district": "East End",
+            "quartiere": "Stepney",
+            "description": "Una strada malfamata piena di bettole e pensioni per marinai di passaggio.",
+            "tags": [
+              "strada",
+              "taverna",
+              "alloggio"
+            ],
+            "proximity": "near",
+            "isCurrent": false
+          },
+          {
+            "name": "Claridge's Hotel",
+            "district": "West End",
+            "quartiere": "Mayfair",
+            "description": "Il miglior hotel di Londra, dove risiedono reali e ospiti illustri.",
+            "tags": [
+              "alloggio"
+            ],
+            "proximity": "far",
+            "isCurrent": false
+          }
+        ]
+      },
+      "turns": [
+        {
+          "player": "tom",
+          "say": "Sono appena arrivato in città e non ho dove dormire stanotte. Sai indicarmi qualcosa?",
+          "expect": {
+            "replyMatch": [
+              "Ratcliff"
+            ],
+            "replyNotMatch": [
+              "Blue Boar",
+              "Savoy",
+              "\\bvia [A-Z]",
+              "scellini a notte"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "mondo-parco-lontano",
+      "players": {
+        "tom": {
+          "name": "Tom Reed",
+          "position": "Bancone",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 30
+          }
+        }
+      },
+      "world": {
+        "places": [
+          {
+            "name": "Itchy Park",
+            "district": "East End",
+            "quartiere": "Spitalfields",
+            "description": "Un piccolo cimitero-giardino dove i senzatetto trovano riparo per la notte.",
+            "tags": [
+              "parco"
+            ],
+            "proximity": "near",
+            "isCurrent": false
+          },
+          {
+            "name": "Richmond",
+            "district": "Country Side",
+            "quartiere": null,
+            "description": "Un elegante borgo fluviale a monte del Tamigi, tra ville e ampi parchi reali.",
+            "tags": [
+              "residenza",
+              "parco"
+            ],
+            "proximity": "far",
+            "isCurrent": false
+          }
+        ]
+      },
+      "turns": [
+        {
+          "player": "tom",
+          "say": "C'è un bel parco dove passeggiare, da queste parti?",
+          "expect": {
+            "replyMatch": [
+              "Itchy|Richmond"
+            ],
+            "replyNotMatch": [
+              "Hyde",
+              "Regent",
+              "Greenwich",
+              "Kew"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "mondo-vuoto",
+      "players": {
+        "tom": {
+          "name": "Tom Reed",
+          "position": "Bancone",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 30
+          }
+        }
+      },
+      "world": {
+        "places": []
+      },
+      "turns": [
+        {
+          "player": "tom",
+          "say": "Dov'è il teatro più vicino? Vorrei vedere uno spettacolo.",
+          "expect": {
+            "replyNotMatch": [
+              "Opera House",
+              "Covent",
+              "Lyceum",
+              "Drury",
+              "Savoy",
+              "Globe"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "mondo-nome-privato",
+      "players": {
+        "tom": {
+          "name": "Tom Reed",
+          "position": "Bancone",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 30
+          }
+        }
+      },
+      "world": {
+        "places": []
+      },
+      "turns": [
+        {
+          "player": "tom",
+          "say": "Sai dov'è Scotland Yard? Devo parlare con un ispettore.",
+          "expect": {
+            "replyNotMatch": [
+              "Westminster",
+              "Whitehall",
+              "Victoria Embankment",
+              "Great Scotland"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "mondo-lore",
+      "players": {
+        "tom": {
+          "name": "Tom Reed",
+          "position": "Bancone",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 30
+          }
+        }
+      },
+      "world": {
+        "places": [],
+        "lore": {
+          "passages": [
+            {
+              "title": "Folklore",
+              "heading": "Le creature dell'acqua",
+              "text": "Si racconta che nelle notti di nebbia il Tamigi restituisca ciò che inghiotte: i barcaioli dicono di sentire voci sotto i moli e non attraccano dopo mezzanotte.",
+              "score": 0.62
+            }
+          ]
+        }
+      },
+      "turns": [
+        {
+          "player": "tom",
+          "say": "Ho sentito storie strane sul fiume. Cosa si racconta, da queste parti?",
+          "expect": {
+            "replyMatch": [
+              "voci|moli|mezzanotte|barcaiol|fiume"
+            ],
+            "replyNotMatch": [
+              "Nessie",
+              "sirena",
+              "kraken"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "mondo-lore-assente",
+      "players": {
+        "tom": {
+          "name": "Tom Reed",
+          "position": "Bancone",
+          "appearance": {
+            "gender": "male",
+            "apparentAge": 30
+          }
+        }
+      },
+      "world": {
+        "places": []
+      },
+      "turns": [
+        {
+          "player": "tom",
+          "say": "Cosa sai della storia della famiglia reale dei Tudor?",
+          "expect": {
+            "replyNotMatch": [
+              "Enrico VIII",
+              "Elisabetta",
+              "Tudor fu",
+              "regnò"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "tagOptions": [
+    {
+      "tag": "alloggio",
+      "label": "Alloggio",
+      "hint": "dove dormire: locande con camere, affittacamere, alberghi, pensioni"
+    },
+    {
+      "tag": "taverna",
+      "label": "Taverna / pub",
+      "hint": "dove bere e stare in compagnia: taverne, pub, birrerie"
+    },
+    {
+      "tag": "ristorazione",
+      "label": "Ristorazione",
+      "hint": "dove mangiare: trattorie, caffè, mense, venditori di cibo"
+    },
+    {
+      "tag": "mercato",
+      "label": "Mercato",
+      "hint": "mercati, bancarelle, dove comprare merce varia"
+    },
+    {
+      "tag": "negozio",
+      "label": "Negozi",
+      "hint": "botteghe, negozi, dove comprare qualcosa di specifico"
+    },
+    {
+      "tag": "chiesa",
+      "label": "Luogo di culto",
+      "hint": "chiese, cattedrali, abbazie, dove pregare o parlare con un religioso"
+    },
+    {
+      "tag": "parco",
+      "label": "Parco / verde",
+      "hint": "parchi, giardini, laghi, dove passeggiare all'aperto"
+    },
+    {
+      "tag": "teatro",
+      "label": "Teatro / spettacolo",
+      "hint": "teatri, opera, spettacoli"
+    },
+    {
+      "tag": "museo",
+      "label": "Cultura / museo",
+      "hint": "musei, biblioteche, luoghi di studio e cultura"
+    },
+    {
+      "tag": "banca",
+      "label": "Banca / finanza",
+      "hint": "banche, borsa, dove cambiare o depositare denaro"
+    },
+    {
+      "tag": "istituzione",
+      "label": "Istituzione",
+      "hint": "governo, tribunali, municipio, uffici pubblici"
+    },
+    {
+      "tag": "polizia",
+      "label": "Polizia",
+      "hint": "polizia, Scotland Yard, dove denunciare o cercare un agente"
+    },
+    {
+      "tag": "ospedale",
+      "label": "Medico / ospedale",
+      "hint": "medici, ospedali, dove farsi curare"
+    },
+    {
+      "tag": "trasporti",
+      "label": "Trasporti",
+      "hint": "stazioni, ponti, traghetti, dove prendere un treno o attraversare il fiume"
+    },
+    {
+      "tag": "porto",
+      "label": "Porto / moli",
+      "hint": "moli, docks, magazzini, navi e lavoro sul fiume"
+    },
+    {
+      "tag": "club",
+      "label": "Club / salotto",
+      "hint": "club privati, salotti, luoghi per gentiluomini"
+    },
+    {
+      "tag": "residenza",
+      "label": "Residenza",
+      "hint": "quartieri residenziali, case e palazzi in cui si abita"
+    },
+    {
+      "tag": "strada",
+      "label": "Strada / piazza",
+      "hint": "vie, piazze e luoghi di passaggio"
+    }
+  ]
+}
