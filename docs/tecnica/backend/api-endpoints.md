@@ -337,6 +337,9 @@ Administrative operations: user management, character approval, locations, docum
 | GET | `/admin/locations/tags` | Registro chiuso dei tag delle location (`core/location/constants/locationTags.ts`) |
 | GET | `/admin/editorial/canon-check` | Revisione di canone (anni, slug, anacronismi, documenti vuoti, luoghi con descrizione breve). Deterministica, sola lettura, sempre attiva |
 | POST | `/admin/editorial/ai/locations/:id/suggest-description` | Bozza di descrizione dal modello (con controlli). Non salva. Solo con `ENABLE_IA_EDITORIAL=true` e gateway AI attivo, altrimenti 404 |
+| POST | `/admin/editorial/ai/suggest-positions` | Fino a 3 posizioni interne (nome + frase) dal form `{name, description?, tags?, existing?}`: funziona anche in creazione. Non salva |
+| POST | `/admin/editorial/ai/documents/:id/generate-seo` | Genera la descrizione SEO dal titolo e dal testo del documento **e la salva** (solo se la bozza supera tutti i controlli, fino a 3 tentativi; 422 `SEO_CHECKS_FAILED` e nulla salvato altrimenti). Permesso `documents.update`. Stesso gating AI |
+| PATCH | `/admin/documents/:id/seo-description` | Modifica a mano della descrizione SEO (max 300 caratteri). Permesso `documents.update`. Non fa re-embed; rigenera la pagina ISR |
 | POST | `/admin/editorial/ai/locations/:id/suggest-tags` | Tag suggeriti (solo dal registro). Non salva. Stesse condizioni |
 | GET | `/admin/locations/:id` | Get location |
 | POST | `/admin/locations` | Create location |

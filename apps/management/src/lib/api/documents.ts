@@ -306,3 +306,18 @@ export async function getSeoDocuments(): Promise<{ documents: SeoDocument[] }> {
 
   return response.data.data;
 }
+
+/**
+ * Modifica a mano della descrizione SEO. Endpoint dedicato: `PATCH /:id` non la accetta e farebbe il re-embed del documento.
+ */
+export async function updateSeoDescription(id: string, description: string): Promise<{ _id: string; description: string; previous: string }> {
+  const response = await withRetry(() =>
+    apiClient.patch<ApiResponse<{ _id: string; description: string; previous: string }>>(`/admin/documents/${id}/seo-description`, { description })
+  );
+
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Errore nel salvataggio della descrizione SEO');
+  }
+
+  return response.data.data;
+}

@@ -12,6 +12,7 @@ import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiR
 import { Types } from 'mongoose';
 import { ALL_DOCUMENT_TYPES, isDocumentType, type DocumentType } from '../constants/documentTypes';
 import { validateSlug } from '../utils/slugValidation';
+import { saveSeoDescription } from '../services/DocumentSeoService';
 
 const mongoose = db.getMongoose();
 
@@ -902,6 +903,31 @@ export class DocumentManagementController {
         error.message || 'Errore recupero documenti SEO',
         'GET_SEO_DOCUMENTS_ERROR', undefined, 500, getRequestId(req)
       ));
+    }
+  }
+  /** PATCH /admin/documents/:id/seo-description — modifica a mano della descrizione SEO (non passa da `updateDocument`: niente re-embed). */
+  static async updateSeoDescription(req: Request, res: Response): Promise<void> {
+    const id = req.params.id;
+    const raw = (req.body as { description?: unknown } | undefined)?.description;
+    if (typeof id !== 'string' || !isValidObjectId(id)) {
+      res.status(400).json(errorResponse('ID documento non valido', 'INVALID_DOCUMENT_ID', undefined, 400, getRequestId(req)));
+      return;
+    }
+    if (typeof raw !== 'string' || raw.length > 300) {
+      res.status(400).json(errorResponse('La descrizione SEO deve essere un testo di al più 300 caratteri', 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
+      return;
+    }
+    try {
+      const description = raw.replace(/\s+/g, ' ').trim();
+      const saved = await saveSeoDescription(id, description);
+      if (!saved) {
+        res.status(404).json(errorResponse('Documento non trovato', 'DOCUMENT_NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+      res.json(successResponse({ _id: id, description, previous: saved.previous }, undefined, getRequestId(req)));
+    } catch (error: unknown) {
+      logger.error('Error updating SEO description:', error);
+      res.status(500).json(errorResponse('Errore nel salvataggio della descrizione SEO', 'UPDATE_SEO_DESCRIPTION_ERROR', undefined, 500, getRequestId(req)));
     }
   }
 }

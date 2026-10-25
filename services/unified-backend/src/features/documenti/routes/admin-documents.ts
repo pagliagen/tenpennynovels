@@ -82,6 +82,13 @@ router.patch('/:id',
   DocumentManagementController.updateDocument
 );
 
+// Descrizione SEO a mano (la generazione con l'AI sta in features/editorial)
+router.patch('/:id/seo-description',
+  AdminAuthMiddleware.requireGranularPermission('documents.update'),
+  AdminAuthMiddleware.logAdminAction('document.seo_description', 'document_management'),
+  DocumentManagementController.updateSeoDescription
+);
+
 // Autosave leggero (debounce editor): niente audit log, ogni tick sarebbe rumore
 router.patch('/:id/autosave',
   AdminAuthMiddleware.requireGranularPermission('documents.update'),

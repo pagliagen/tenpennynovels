@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { AiGatewayError } from '@core/ai';
 import { errorResponse, getRequestId, successResponse } from '@shared/utils/apiResponse';
 import { logger } from '@shared/utils/logger';
+import { DocumentNotFoundError, generateSeoDescription, SeoChecksFailedError } from '../services/SeoDescriptionService';
 import { InsufficientInputError, LocationNotFoundError, suggestDescription, suggestPositions, suggestTags, type SuggestInput } from '../services/LocationSuggestionService';
 
 type Suggest<T> = (locationId: string, input: SuggestInput) => Promise<T>;
@@ -83,6 +84,40 @@ export class EditorialAiController {
         return;
       }
       logger.error('[Editorial] suggest-positions fallito', { error });
+      res.status(500).json(errorResponse('Errore interno', 'INTERNAL_ERROR', undefined, 500, getRequestId(req)));
+    }
+  }
+  /**
+   * POST /admin/editorial/ai/documents/:documentId/generate-seo
+   * A differenza dei suggerimenti per le location **salva**: la descrizione SEO si scrive sul documento solo se la bozza supera tutti i controlli.
+   */
+  static async generateSeo(req: Request<{ documentId: string }>, res: Response): Promise<void> {
+    const { documentId } = req.params;
+    if (!mongoose.isValidObjectId(documentId)) {
+      res.status(400).json(errorResponse('Id documento non valido', 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
+      return;
+    }
+    try {
+      res.json(successResponse(await generateSeoDescription(documentId), undefined, getRequestId(req)));
+    } catch (error: unknown) {
+      if (error instanceof DocumentNotFoundError) {
+        res.status(404).json(errorResponse('Documento non trovato', 'NOT_FOUND', undefined, 404, getRequestId(req)));
+        return;
+      }
+      if (error instanceof InsufficientInputError) {
+        res.status(422).json(errorResponse(error.message, 'INSUFFICIENT_INPUT', undefined, 422, getRequestId(req)));
+        return;
+      }
+      if (error instanceof SeoChecksFailedError) {
+        const failed = error.checks.filter((c) => !c.ok).map((c) => (c.detail ? `${c.code}: ${c.detail}` : c.code)).join('; ');
+        res.status(422).json(errorResponse(`Nessuna delle ${error.attempts} bozze rispetta le regole (${failed}). Non ho salvato nulla: riprova o scrivila a mano.`, 'SEO_CHECKS_FAILED', undefined, 422, getRequestId(req)));
+        return;
+      }
+      if (error instanceof AiGatewayError) {
+        res.status(error.status).json(errorResponse(error.userMessage, 'AI_UNAVAILABLE', undefined, error.status, getRequestId(req)));
+        return;
+      }
+      logger.error('[Editorial] generate-seo fallito', { error, documentId });
       res.status(500).json(errorResponse('Errore interno', 'INTERNAL_ERROR', undefined, 500, getRequestId(req)));
     }
   }

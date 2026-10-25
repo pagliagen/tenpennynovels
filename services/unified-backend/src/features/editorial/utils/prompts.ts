@@ -1,5 +1,5 @@
 import { locationTagList, LOCATION_TAGS } from '@core/location/constants/locationTags';
-import { MAX_DESCRIPTION_CHARS, MIN_DESCRIPTION_CHARS, MAX_POSITIONS, MAX_POSITION_DESCRIPTION_CHARS, MAX_POSITION_NAME_CHARS } from './validators';
+import { SEO_MAX_CHARS, SEO_MIN_CHARS, MAX_DESCRIPTION_CHARS, MIN_DESCRIPTION_CHARS, MAX_POSITIONS, MAX_POSITION_DESCRIPTION_CHARS, MAX_POSITION_NAME_CHARS } from './validators';
 
 /**
  * Prompt per il gateway AI. **Solo contenuti già pubblici**: nome, quartiere e distretto, tag,
@@ -139,5 +139,35 @@ export function buildPositionsPrompt(ctx: PositionsPromptContext): { system: str
     '',
     'Proponi le posizioni.',
   ].filter((line) => line !== '').join('\n');
+  return { system, user };
+}
+
+export const SEO_SCHEMA = {
+  type: 'object',
+  properties: { description: { type: 'string' } },
+  required: ['description'],
+} as const;
+
+export interface SeoPromptContext {
+  title: string;
+  type: string;
+  /** Testo del documento (già senza HTML, ripulito dal testo di gioco e accorciato). */
+  text: string;
+}
+
+/** Solo contenuti pubblici (titolo e testo di un documento di ambientazione/regolamento). */
+export function buildSeoPrompt(ctx: SeoPromptContext): { system: string; user: string } {
+  const system = [
+    'Sei un redattore SEO di una guida di un gioco di ruolo ambientato nella Londra vittoriana.',
+    'Scrivi la META DESCRIPTION di una pagina: il testo che i motori di ricerca mostrano sotto il titolo.',
+    'Regole ferree:',
+    `- una o due frasi, tra ${SEO_MIN_CHARS + 20} e ${SEO_MAX_CHARS - 2} caratteri, MAI oltre ${SEO_MAX_CHARS};`,
+    '- spiega di cosa tratta la pagina usando SOLO il testo fornito: nessun fatto, nome, luogo o numero che il testo non contenga;',
+    '- NON iniziare ripetendo il titolo; tono informativo e chiaro, non promozionale (niente «scopri», «immergiti», punti esclamativi);',
+    '- italiano corretto, senza parole straniere, senza virgolette, senza elenchi;',
+    '- niente frasi fatte («cuore pulsante», «tempio di», «l\'aria è densa di»);',
+    'Rispondi SOLO con un JSON {"description": "..."}.',
+  ].join('\n');
+  const user = [`Titolo: ${ctx.title}`, `Sezione: ${ctx.type}`, '', 'Testo della pagina:', ctx.text, '', 'Scrivi la meta description.'].join('\n');
   return { system, user };
 }

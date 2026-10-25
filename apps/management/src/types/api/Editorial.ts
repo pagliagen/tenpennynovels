@@ -60,3 +60,12 @@ export interface PositionsSuggestion {
   checks: DraftCheck[];
   ms: number;
 }
+
+export interface SeoGeneration {
+  /** La descrizione salvata. */
+  description: string;
+  /** Quella che c'era prima (vuota se non c'era). */
+  previous: string;
+  attempts: number;
+  ms: number;
+}
