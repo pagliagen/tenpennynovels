@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { aiGateway } from '@core/ai';
 import { appConfig } from '@config/runtime';
+import { invalidateBotDirectory } from '@features/botChat/api';
 import { LOCATION_TAG_DEFS, type LocationTag } from '@core/location/constants/locationTags';
 import { Location } from '@core/location/models/Location';
 import { characterNameInUse, characterStatuses, createBotCharacter, deleteBotCharacter, systemBotUserExists } from './BotCharacterService';
@@ -52,4 +53,5 @@ export const defaultDeps: BotAdminDeps = {
   nameInUse: characterNameInUse,
   createCharacter: createBotCharacter,
   deleteCharacter: deleteBotCharacter,
+  afterCreate: invalidateBotDirectory,
 };

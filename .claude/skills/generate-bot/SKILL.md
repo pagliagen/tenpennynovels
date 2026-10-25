@@ -29,7 +29,7 @@ Con `ENABLE_BOT_CHARACTERS=true`, `ENABLED_SERVICES=character-bot` e il gateway 
    - `psyche`: Big Five 1-100 (`ocean` O C E A N), Enneagram (`type`, `fear`, `desire`), baseline mood `pad` (p, a, d in -1..1). See `bot-service/README.md` for how numbers become behaviour.
 3. **Run the seeder**: `cd scripts/seeders && npm run seed:dev:bots` (idempotent). It prints the full `bots/<name>.json` with the new `characterId`.
 4. **Save** that JSON as `bot-service/bots/<name>.json` and add `{ "locationId": "<_id>", "botId": "<characterId>" }` to `bot-service/mapping.json` (one bot per location).
-5. **Restart** `bot-service` (`npm run bot-service:dev`) and try it: `cd bot-service && npm run simulate -- <locationId> "Buonasera" Tester Ingresso`.
+5. **Restart** `bot-service` (`npm run bot-service:dev`) and try it (needs `ENABLE_BOT_CHAT=true` and the rest of the config in the root `.env`, see `bot-service/README.md`): `cd bot-service && npm run simulate -- <locationId> "Buonasera" Tester Ingresso`.
 
 ## Prerequisites
 - User `system-bot` seeded (`seed:dev:users`) and `BOT_SERVICE_SECRET` set (see `bot-service/README.md`).

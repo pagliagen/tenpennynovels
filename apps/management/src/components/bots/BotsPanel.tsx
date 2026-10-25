@@ -8,11 +8,14 @@
 import React, { useState } from 'react';
 import { GenerateBotModal } from '@/components/bots/GenerateBotModal';
 import { useBots } from '@/hooks/api/useBots';
+import { useFeatureFlagsStore } from '@/store/featureFlagsStore';
 import styles from '@/styles/components/BotsPanel.module.scss';
 
 export function BotsPanel(): React.ReactElement {
   const { data, isLoading, error, refetch } = useBots();
   const bots = data?.bots;
+  const chatEnabled = useFeatureFlagsStore((s) => s.botChatEnabled);
+  const chatMissing = useFeatureFlagsStore((s) => s.botChatMissing);
   const [generating, setGenerating] = useState(false);
 
   return (
@@ -24,6 +27,14 @@ export function BotsPanel(): React.ReactElement {
           ogni bot appartiene all&apos;ambiente in cui è stato creato.
         </p>
       </div>
+
+      <p className={chatEnabled ? styles.ok : styles.warn} role="status">
+        {chatEnabled
+          ? 'Chat dei bot attiva: i messaggi nelle location con un bot arrivano al servizio AI.'
+          : chatMissing.length > 0
+            ? `Chat dei bot NON attiva: manca ${chatMissing.join('; ')}.`
+            : 'Chat dei bot non attiva (spenta o servizio AI non raggiungibile): i bot non rispondono.'}
+      </p>
 
       {isLoading && <p className={styles.note}>Carico i bot…</p>}
       {error && (

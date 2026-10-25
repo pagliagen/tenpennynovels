@@ -12,16 +12,16 @@ export const environmentSchema = z.string().regex(/^[a-z][a-z0-9-]{0,29}$/, 'amb
 export const DEFAULT_ENVIRONMENT = 'local';
 
 const envSchema = z.object({
-  REDIS_URL: z.string().default('redis://localhost:6379'),
-  BACKEND_URL: z.string().url().default('http://localhost:3001'),
-  BOT_SERVICE_SECRET: z.string().min(16, 'BOT_SERVICE_SECRET mancante o troppo corto'),
   OLLAMA_URL: z.string().url().default('http://localhost:11434'),
   OLLAMA_MODEL: z.string().default('gemma4:12b'),
   BOTS_DIR: z.string().default('./bots'),
   MAPPING_FILE: z.string().default('./mapping.json'),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI mancante'),
-  /** A quale ambiente serve questo servizio: carica solo i bot di quell'ambiente. */
-  BOT_SERVICE_ENVIRONMENT: environmentSchema.default(DEFAULT_ENVIRONMENT),
+  /**
+   * Gli indirizzi (origin) a cui il servizio può rispondere, separati da virgola. Il gioco manda con ogni evento DOVE rispondere
+   * e un token per farlo: il servizio non invia mai un token a un indirizzo fuori da questa lista. Vuota = nessun evento accettato.
+   */
+  ALLOWED_REPLY_ORIGINS: z.string().default(''),
 });
 
 const score = z.number().min(0).max(100);
@@ -136,14 +136,11 @@ export const mappingSchema = z.array(z.object({ locationId: z.string().min(1), b
 export type BotConfig = z.infer<typeof botSchema>;
 
 export interface Config {
-  redisUrl: string;
-  backendUrl: string;
-  secret: string;
   ollamaUrl: string;
   model: string;
   mongoUri: string;
-  /** Il servizio carica solo i bot di questo ambiente. */
-  environment: string;
+  /** Origin ammessi per la risposta (vedi `reply.ts`). */
+  allowedReplyOrigins: string[];
   bots: BotConfig[];
 }
 
@@ -160,18 +157,26 @@ export function loadBotDefs(dir: string): z.infer<typeof botDefSchema>[] {
 }
 
 /**
- * Unisce le schede dei bot con la mappatura location → bot, **solo per l'ambiente indicato**: schede e righe di altri
- * ambienti si ignorano (non sono bot di questo servizio) e la regola «una location, un bot» vale per ambiente.
+ * Unisce le schede dei bot con la mappatura location → bot. Con `environment` solo per quell'ambiente (schede e righe
+ * di altri ambienti si ignorano); senza, per tutti. «Una location, un bot» vale per ambiente.
  */
-export function resolveBots(defs: z.infer<typeof botDefSchema>[], mapping: z.infer<typeof mappingSchema>, environment: string = DEFAULT_ENVIRONMENT): BotConfig[] {
-  const byId = new Map(defs.filter((d) => d.environment === environment).map((d) => [d.characterId, d]));
-  const locations = new Set<string>();
-  return mapping.filter((m) => m.environment === environment).map(({ locationId, botId }) => {
-    const def = byId.get(botId);
-    if (!def) throw new Error(`mapping: nessun bot con characterId ${botId} (ambiente ${environment}) in bots/`);
-    if (locations.has(locationId)) throw new Error(`mapping: più bot sulla stessa location (${locationId}): non supportato`);
-    locations.add(locationId);
+export function resolveBots(defs: z.infer<typeof botDefSchema>[], mapping: z.infer<typeof mappingSchema>, environment?: string): BotConfig[] {
+  const key = (env: string, id: string): string => `${env}|${id}`;
+  const byKey = new Map(defs.map((d) => [key(d.environment, d.characterId), d]));
+  const taken = new Set<string>();
+  return mapping.filter((m) => environment === undefined || m.environment === environment).map(({ locationId, botId, environment: env }) => {
+    const def = byKey.get(key(env, botId));
+    if (!def) throw new Error(`mapping: nessun bot con characterId ${botId} (ambiente ${env}) in bots/`);
+    if (taken.has(key(env, locationId))) throw new Error(`mapping: più bot sulla stessa location (${locationId}, ambiente ${env}): non supportato`);
+    taken.add(key(env, locationId));
     return botSchema.parse({ ...def, locationId });
+  });
+}
+
+/** `ALLOWED_REPLY_ORIGINS`: elenco separato da virgola, ridotto agli origin (senza percorso né barra finale). */
+export function parseOrigins(raw: string): string[] {
+  return raw.split(',').map((s) => s.trim()).filter(Boolean).map((s) => {
+    try { return new URL(s).origin; } catch { throw new Error(`ALLOWED_REPLY_ORIGINS: «${s}» non è un indirizzo valido`); }
   });
 }
 
@@ -187,13 +192,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const mapping = loadMapping(e.MAPPING_FILE);
 
   return {
-    redisUrl: e.REDIS_URL,
-    backendUrl: e.BACKEND_URL,
-    secret: e.BOT_SERVICE_SECRET,
     ollamaUrl: e.OLLAMA_URL,
     model: e.OLLAMA_MODEL,
     mongoUri: e.MONGODB_URI,
-    environment: e.BOT_SERVICE_ENVIRONMENT,
-    bots: resolveBots(defs, mapping, e.BOT_SERVICE_ENVIRONMENT),
+    allowedReplyOrigins: parseOrigins(e.ALLOWED_REPLY_ORIGINS),
+    // Tutti gli ambienti insieme: ogni evento dice a quale appartiene, il servizio non ne conosce nessuno in particolare.
+    bots: resolveBots(defs, mapping),
   };
 }

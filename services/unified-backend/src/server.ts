@@ -79,6 +79,10 @@ async function startServer(): Promise<void> {
     await redis.connect();
     logger.info('✅ Redis connected');
 
+    // Chat dei bot con servizio AI esterno: parte solo con la configurazione completa (altrimenti avvisa e non fa nulla)
+    const { startBotChatForwarder } = await import('@features/botChat/api');
+    await startBotChatForwarder();
+
     // Setup Redis adapter for WebSocket
     await setupRedisAdapter();
 

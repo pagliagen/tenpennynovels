@@ -24,6 +24,12 @@ interface FeatureFlagsState {
    * ENABLE_BOT_CHARACTERS sul server E dal servizio `character-bot` raggiungibile; in produzione non esiste.
    */
   botAdminEnabled: boolean;
+  /**
+   * La chat dei bot con il servizio AI esterno è attiva: configurazione completa sul server (ENABLE_BOT_CHAT, segreto,
+   * indirizzo di risposta, gateway) E servizio raggiungibile. Se non lo è, `botChatMissing` elenca i NOMI delle variabili che mancano.
+   */
+  botChatEnabled: boolean;
+  botChatMissing: string[];
   isLoading: boolean;
 }
 
@@ -43,6 +49,8 @@ const initialState: FeatureFlagsState = {
   keeperQaEnabled: false,
   editorialAiEnabled: false,
   botAdminEnabled: false,
+  botChatEnabled: false,
+  botChatMissing: [],
   isLoading: true
 };
 
@@ -60,12 +68,14 @@ export const useFeatureFlagsStore = create<FeatureFlagsStore>((set) => ({
         keeperQaEnabled: data.keeperQaEnabled ?? false,
         editorialAiEnabled: data.editorialAiEnabled ?? false,
         botAdminEnabled: data.botAdminEnabled ?? false,
+        botChatEnabled: data.botChatEnabled ?? false,
+        botChatMissing: Array.isArray(data.botChatMissing) ? data.botChatMissing : [],
         isLoading: false
       });
     } catch (error: unknown) {
       logger.error('[FeatureFlagsStore] Failed to load feature flags:', { error });
       // Fail-closed: in caso di errore le feature restano nascoste
-      set({ keeperQaEnabled: false, editorialAiEnabled: false, botAdminEnabled: false, isLoading: false });
+      set({ keeperQaEnabled: false, editorialAiEnabled: false, botAdminEnabled: false, botChatEnabled: false, botChatMissing: [], isLoading: false });
     }
   },
 
@@ -76,7 +86,9 @@ export const useFeatureFlagsStore = create<FeatureFlagsStore>((set) => ({
       set({
         keeperQaEnabled: data.keeperQaEnabled ?? false,
         editorialAiEnabled: data.editorialAiEnabled ?? false,
-        botAdminEnabled: data.botAdminEnabled ?? false
+        botAdminEnabled: data.botAdminEnabled ?? false,
+        botChatEnabled: data.botChatEnabled ?? false,
+        botChatMissing: Array.isArray(data.botChatMissing) ? data.botChatMissing : []
       });
     } catch (error: unknown) {
       // Un errore passeggero non deve far sparire i pulsanti: resta l'ultimo stato noto.

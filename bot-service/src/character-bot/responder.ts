@@ -16,15 +16,28 @@ import { logger } from '../shared/logger';
 /** Quante battute precedenti del bot si confrontano per rilevare le ripetizioni. */
 const COMPARE_LAST_OWN = 4;
 
-/** Le ultime battute pubbliche di una location (Redis in servizio, finto negli scenari). */
+/** Le ultime battute pubbliche di una location (finto negli scenari; in servizio arrivano con l'evento). */
 export interface HistorySource {
   recent(locationId: string, size: number): Promise<HistoryLine[]>;
 }
 
+type Backend = Pick<BackendClient, 'postMessage'> & Partial<Pick<BackendClient, 'getAppearance' | 'getEnvironment' | 'getLocationTags' | 'getKnowledge'>>;
+
+/**
+ * Ciò che arriva con un evento: la storia scelta dal gioco e il client per rispondere (indirizzo e token dell'evento).
+ * In servizio il bot non ha storia propria né un backend fisso: li riceve a ogni chiamata.
+ */
+export interface ReplyContext {
+  history: HistoryLine[];
+  backend: Backend;
+}
+
 interface Deps {
-  history: HistorySource;
+  /** Solo per gli scenari di prova: in servizio la storia arriva nel `ReplyContext`. */
+  history?: HistorySource;
   ollama: Llm;
-  backend: Pick<BackendClient, 'postMessage'> & Partial<Pick<BackendClient, 'getAppearance' | 'getEnvironment' | 'getLocationTags' | 'getKnowledge'>>;
+  /** Il backend di default (scenari); in servizio vale quello del `ReplyContext`. */
+  backend?: Backend;
   /** Umore del bot e rapporto con ogni giocatore. */
   store: StateStore;
   /** Coda condivisa a concurrency 1: Ollama locale elabora una richiesta alla volta. */
@@ -39,6 +52,7 @@ interface Deps {
  */
 export class BotResponder {
   private timer: NodeJS.Timeout | null = null;
+  private latest: ReplyContext | null = null;
   private lastReplyAt = 0;
   private readonly now: () => number;
 
@@ -46,7 +60,9 @@ export class BotResponder {
     this.now = deps.now ?? Date.now;
   }
 
-  notify(): void {
+  /** `ctx` è l'ultimo contesto ricevuto: la risposta, quando parte, usa quello (storia e token più recenti). */
+  notify(ctx?: ReplyContext): void {
+    if (ctx) this.latest = ctx;
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(() => this.fire(), this.bot.debounceMs);
   }
@@ -63,17 +79,21 @@ export class BotResponder {
       this.timer = setTimeout(() => this.fire(), wait);
       return;
     }
-    this.deps.queue.add(() => this.reply()).catch((error: unknown) => {
+    const incoming = this.latest ?? undefined;
+    this.latest = null;
+    this.deps.queue.add(() => this.reply(incoming)).catch((error: unknown) => {
       logger.error('Risposta fallita', { bot: this.bot.name, error: String(error) });
     });
   }
 
   /** Una risposta adesso, senza debounce né cooldown (anche per gli scenari di prova). */
-  async reply(): Promise<string | null> {
-    const rawHistory = await this.deps.history.recent(this.bot.locationId, this.bot.historySize);
-    const lookup = (id: string) => this.deps.backend.getAppearance?.(id) ?? Promise.resolve(null);
+  async reply(incoming?: ReplyContext): Promise<string | null> {
+    const backend = incoming?.backend ?? this.deps.backend;
+    if (!backend) throw new Error('Nessun backend a cui rispondere');
+    const rawHistory = incoming ? incoming.history.slice(-this.bot.historySize) : await this.deps.history!.recent(this.bot.locationId, this.bot.historySize);
+    const lookup = (id: string) => backend.getAppearance?.(id) ?? Promise.resolve(null);
     const now = new Date(this.now());
-    const environment = (await this.deps.backend.getEnvironment?.()) ?? null;
+    const environment = (await backend.getEnvironment?.()) ?? null;
     const initial = await loadTurnState(this.deps.store, this.bot, rawHistory, now, lookup);
     // Storia vuota o ultima battuta già nostra: niente a cui rispondere.
     if (!initial) return null;
@@ -82,7 +102,7 @@ export class BotResponder {
     // Prima si reagisce a ciò che l'altro ha fatto (umore, rapporto, nome detto), poi si risponde:
     // chi viene insultato risponde già arrabbiato, chi si presenta viene chiamato per nome.
     const playerText = playerTextSinceLastReply(rawHistory, this.bot.characterId, initial.interlocutorId);
-    const locationTags = (await this.deps.backend.getLocationTags?.()) ?? [];
+    const locationTags = (await backend.getLocationTags?.()) ?? [];
     const appraisal = await appraiseIncoming(this.deps.ollama, this.contextFor(rawHistory, initial, environment), playerText, locationTags);
     await applyAppraisal(this.deps.store, this.bot, initial, appraisal, playerText);
     const state = (await loadTurnState(this.deps.store, this.bot, rawHistory, now, lookup))!;
@@ -90,7 +110,7 @@ export class BotResponder {
     // Se chiede di luoghi o di ambientazione si interroga il mondo, invece di lasciare che il modello inventi.
     const request = appraisal?.infoRequest ?? NO_REQUEST;
     const knowledge = hasRequest(request)
-      ? (await this.deps.backend.getKnowledge?.({
+      ? (await backend.getKnowledge?.({
           tags: request.tags,
           ...(request.placeName ? { placeName: request.placeName } : {}),
           ...(request.needsLore ? { query: playerText.slice(0, 200) } : {}),
@@ -117,7 +137,7 @@ export class BotResponder {
     }
     const content = result.content;
 
-    const posted = await this.deps.backend.postMessage({
+    const posted = await backend.postMessage({
       characterId: this.bot.characterId,
       locationId: this.bot.locationId,
       content,
