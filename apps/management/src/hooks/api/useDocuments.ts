@@ -10,6 +10,7 @@
 
 import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import * as documentAPI from '@/lib/api/documents';
+import * as editorialAPI from '@/lib/api/editorial';
 import { applyMove, type MoveTarget } from '@/lib/documentTree';
 import type {
   Document,
@@ -18,7 +19,8 @@ import type {
   DocumentTreeResponse,
   CreateDocumentData,
   UpdateDocumentData,
-  DocumentSubtype
+  DocumentSubtype,
+  SeoDocument
 } from '@/types/api/Document';
 
 /**
@@ -432,5 +434,34 @@ export function useSeoDocuments() {
     queryFn: () => documentAPI.getSeoDocuments(),
     staleTime: 5 * 60 * 1000,
     retry: 3
+  });
+}
+
+/** Aggiorna la riga nella cache dell'elenco SEO senza rileggerlo (niente refetch: la risposta contiene già il valore salvato). */
+function setSeoDescriptionInCache(queryClient: QueryClient, id: string, description: string): void {
+  queryClient.setQueryData<{ documents: SeoDocument[] }>(documentKeys.seo, (old) =>
+    old ? { documents: old.documents.map((d) => (d._id === id ? { ...d, description } : d)) } : old
+  );
+}
+
+/**
+ * Modifica a mano della descrizione SEO. Aggiorna la cache dalla risposta, senza invalidare.
+ */
+export function useUpdateSeoDescription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, description }: { id: string; description: string }) => documentAPI.updateSeoDescription(id, description),
+    onSuccess: (saved) => setSeoDescriptionInCache(queryClient, saved._id, saved.description),
+  });
+}
+
+/**
+ * «Genera SEO»: l'AI scrive la descrizione e il backend la salva. Aggiorna la cache dalla risposta.
+ */
+export function useGenerateSeoDescription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: string }) => editorialAPI.generateSeoDescription(id).then((result) => ({ id, ...result })),
+    onSuccess: (result) => setSeoDescriptionInCache(queryClient, result.id, result.description),
   });
 }

@@ -232,3 +232,45 @@ export function validatePositions(positions: SuggestedPosition[], knownText: str
 
   return { ok: checks.every((c) => c.ok), checks };
 }
+
+/** Meta description: abbastanza lunga da dire qualcosa, abbastanza corta da non essere tagliata nei risultati di ricerca. */
+export const SEO_MIN_CHARS = 120;
+export const SEO_MAX_CHARS = 160;
+
+export interface SeoDraftContext {
+  title: string;
+  /** Testo del documento da cui la descrizione deve venire: l'unica fonte di nomi, anni e fatti. */
+  source: string;
+}
+
+/**
+ * Controlli sulla descrizione SEO. Qui la bozza si SALVA da sola, quindi (a differenza delle bozze nel form) basta
+ * un controllo fallito per scartarla. Nessun controllo sul testo di gioco: la pagina può parlare del gioco, e la
+ * descrizione la descrive com'è.
+ */
+export function validateSeoDescription(text: string, ctx: SeoDraftContext): { ok: boolean; checks: DraftCheck[] } {
+  const clean = text.trim();
+  const known = `${ctx.title} ${ctx.source}`;
+  const checks: DraftCheck[] = [];
+
+  const lengthOk = clean.length >= SEO_MIN_CHARS && clean.length <= SEO_MAX_CHARS;
+  checks.push({ code: 'length', ok: lengthOk, ...(lengthOk ? {} : { detail: `${clean.length} caratteri (da ${SEO_MIN_CHARS} a ${SEO_MAX_CHARS})` }) });
+
+  // Un anno è lecito solo se il documento lo cita: la descrizione non porta fatti nuovi.
+  const strangeYears = [...clean.matchAll(/(?<!\d)(1[0-9]\d{2}|20\d{2})(?!\d)/g)].map((m) => m[1]!).filter((y) => !ctx.source.includes(y) && !ctx.title.includes(y));
+  checks.push({ code: 'year', ok: strangeYears.length === 0, ...(strangeYears.length ? { detail: `anno non presente nel documento: ${[...new Set(strangeYears)].join(', ')}` } : {}) });
+
+  const anachronisms = [...new Set(findAnachronisms(clean).map((h) => h.word))].filter((w) => !ctx.source.toLowerCase().includes(w.toLowerCase()));
+  checks.push({ code: 'anachronism', ok: anachronisms.length === 0, ...(anachronisms.length ? { detail: anachronisms.join(', ') } : {}) });
+
+  const foreign = foreignWords(clean);
+  checks.push({ code: 'foreign-words', ok: foreign.length === 0, ...(foreign.length ? { detail: foreign.join(', ') } : {}) });
+
+  const unknown = unknownProperNames(clean, known);
+  checks.push({ code: 'unknown-name', ok: unknown.length === 0, ...(unknown.length ? { detail: `nomi non presenti nel documento: ${unknown.join(', ')}` } : {}) });
+
+  const filler = newWords(FILLER, clean, ctx.source);
+  checks.push({ code: 'filler', ok: filler.length === 0, ...(filler.length ? { detail: `frasi fatte: ${filler.join(', ')}` } : {}) });
+
+  return { ok: checks.every((c) => c.ok), checks };
+}

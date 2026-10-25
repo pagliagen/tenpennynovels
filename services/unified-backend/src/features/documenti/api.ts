@@ -24,6 +24,10 @@ export { stripGameMeta, mentionsGameMeta } from './utils/gameMeta';
 export { readDocumentsForReview, htmlToPlainText } from './services/DocumentReviewReader';
 export type { ReviewDocumentRow, ReviewSubtypeRow } from './services/DocumentReviewReader';
 
+/** Descrizione SEO: lettura di titolo+testo dei documenti pubblici e salvataggio (usati da features/editorial). */
+export { readDocumentForSeo, saveSeoDescription } from './services/DocumentSeoService';
+export type { SeoSource } from './services/DocumentSeoService';
+
 /**
  * Tipi documento: sorgente unica in constants/documentTypes.ts, riesposta qui
  * perché serve fuori dalla feature (tipi del gestionale, SitemapService). Sono

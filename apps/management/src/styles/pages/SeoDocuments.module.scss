@@ -1,3 +1,6 @@
+@use 'sass:color';
+@use '../variables' as *;
+
 .seoDocuments {
   padding: var(--spacing-lg);
 }
@@ -37,4 +40,61 @@
     color: var(--text-primary);
     cursor: pointer;
   }
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-md;
+}
+
+.cancelBtn {
+  padding: $spacing-sm $spacing-lg;
+  background-color: transparent;
+  color: $color-text-secondary;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: $radius-sm;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.submitBtn {
+  padding: $spacing-sm $spacing-lg;
+  background-color: $color-primary;
+  color: $color-bg-primary;
+  border: none;
+  border-radius: $radius-sm;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background-color: color.adjust($color-primary, $lightness: 10%);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.hintOk,
+.hintWarn {
+  margin: $spacing-sm 0 0;
+  font-size: 13px;
+}
+
+.hintOk {
+  color: #2e7d32;
+}
+
+.hintWarn {
+  color: #b26a00;
 }

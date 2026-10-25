@@ -1,17 +1,24 @@
 /**
  * SEO Documents Page
  *
- * Elenco di sola lettura di titoli e descrizioni SEO dei documenti (ConfigurableDataTable + TanStack Query).
- * Le descrizioni si modificano dalla scheda del documento.
+ * Elenco di titoli e descrizioni SEO dei documenti pubblici (ConfigurableDataTable + TanStack Query).
+ * Azioni per riga:
+ * - Modifica: scrive la descrizione a mano (EditSeoDescriptionModal).
+ * - Genera SEO: l'AI la scrive dal titolo e dal testo del documento e il backend la salva. Compare solo se
+ *   l'AI editoriale è attiva (`featureFlagsStore.editorialAiEnabled`: variabile d'ambiente + gateway raggiungibile).
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Head from 'next/head';
 import { ManagementLayout } from '@/components/layout/ManagementLayout';
 import { ConfigurableDataTable } from '@/components/shared/ConfigurableDataTable';
+import { EditSeoDescriptionModal } from '@/components/documents/EditSeoDescriptionModal';
+import { useConfirm } from '@/hooks/useConfirm';
 import { useTableConfig } from '@/hooks/useTableConfig';
 import { useTableFilters } from '@/hooks/useTableFilters';
-import { useSeoDocuments } from '@/hooks/api/useDocuments';
+import { useSeoDocuments, useGenerateSeoDescription } from '@/hooks/api/useDocuments';
+import { useFeatureFlagsStore } from '@/store/featureFlagsStore';
+import { useNotificationStore } from '@/store/notificationStore';
 import type { SeoDocument } from '@/types/api/Document';
 import styles from '@/styles/pages/SeoDocuments.module.scss';
 
@@ -32,6 +39,11 @@ export default function SeoDocumentsPage() {
 
   const { data, isLoading, error } = useSeoDocuments();
   const tableConfig = useTableConfig('seo-documents');
+  const aiEnabled = useFeatureFlagsStore((s) => s.editorialAiEnabled);
+  const generate = useGenerateSeoDescription();
+  const addNotification = useNotificationStore((s) => s.addNotification);
+  const { confirm, ConfirmDialogComponent } = useConfirm();
+  const [editing, setEditing] = useState<SeoDocument | null>(null);
 
   const visibleColumns = useMemo(() => {
     if (!tableConfig.config) return [];
@@ -40,12 +52,44 @@ export default function SeoDocumentsPage() {
     );
   }, [tableConfig.config, tableConfig.columnVisibility]);
 
+  // «Genera SEO» non si offre se l'AI non c'è: niente pulsante che poi risponde 404.
+  const config = useMemo(() => {
+    if (!tableConfig.config) return null;
+    return { ...tableConfig.config, actions: tableConfig.config.actions?.filter((a) => a.key !== 'generate-seo' || aiEnabled) };
+  }, [tableConfig.config, aiEnabled]);
+
   // Client-side filter by type (the TableFilters widget calls onFilterChange)
   const filteredData = useMemo(() => {
     const docs = data?.documents ?? [];
     if (!filters.type) return docs;
     return docs.filter(doc => doc.type === filters.type);
   }, [data?.documents, filters.type]);
+
+  const handleAction = async (action: string, doc: SeoDocument): Promise<void> => {
+    if (action === 'edit') {
+      setEditing(doc);
+      return;
+    }
+    if (action !== 'generate-seo') return;
+    if (generate.isPending) {
+      addNotification({ type: 'info', message: 'Una generazione è già in corso: attendi che finisca.' });
+      return;
+    }
+    if (doc.description.trim() !== '') {
+      const confirmed = await confirm({
+        title: 'Sostituire la descrizione SEO?',
+        message: `"${doc.title}" ha già una descrizione SEO. L'AI ne scriverà una nuova e la salverà al suo posto.`,
+      });
+      if (!confirmed) return;
+    }
+    try {
+      addNotification({ type: 'info', message: `Genero la descrizione SEO di "${doc.title}"…` });
+      const result = await generate.mutateAsync({ id: doc._id });
+      addNotification({ type: 'success', message: `Descrizione SEO di "${doc.title}" salvata (${result.description.length} caratteri)` });
+    } catch (err) {
+      addNotification({ type: 'error', message: err instanceof Error ? err.message : 'Generazione non riuscita' });
+    }
+  };
 
   if (error) {
     return (
@@ -79,13 +123,17 @@ export default function SeoDocumentsPage() {
           loading={isLoading || tableConfig.loading}
           filters={filters}
           onFilterChange={handleFilterChange}
-          externalConfig={tableConfig.config ? {
-            config: tableConfig.config,
+          onAction={handleAction}
+          externalConfig={config ? {
+            config,
             visibleColumns: visibleColumns,
             getNestedValue: tableConfig.getNestedValue,
             resolveConditionalValue: tableConfig.resolveConditionalValue
           } : undefined}
         />
+
+        <EditSeoDescriptionModal document={editing} onClose={() => setEditing(null)} />
+        {ConfirmDialogComponent}
       </div>
     </ManagementLayout>
   );

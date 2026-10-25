@@ -37,4 +37,12 @@ router.post(
   EditorialAiController.suggestPositions
 );
 
+// La descrizione SEO si genera E si salva sul documento: serve il permesso di modificarlo.
+router.post(
+  '/documents/:documentId/generate-seo',
+  AdminAuthMiddleware.requireGranularPermission('documents.update'),
+  AdminAuthMiddleware.logAdminAction('generate_document_seo', 'editorial'),
+  EditorialAiController.generateSeo
+);
+
 export default router;

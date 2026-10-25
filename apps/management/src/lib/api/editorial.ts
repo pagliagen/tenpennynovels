@@ -6,7 +6,7 @@
  */
 
 import { apiClient, withRetry } from './client';
-import type { CanonReport, DescriptionSuggestion, PositionsSuggestion, TagsSuggestion } from '@/types/api/Editorial';
+import type { CanonReport, DescriptionSuggestion, PositionsSuggestion, SeoGeneration, TagsSuggestion } from '@/types/api/Editorial';
 import type { ApiResponse } from '@/types/api/common';
 
 export async function getCanonCheck(): Promise<CanonReport> {
@@ -43,6 +43,18 @@ export interface PositionsRequest {
 /** Senza id: serve anche mentre si crea la location. Il testo viene dal form. */
 export async function suggestLocationPositions(request: PositionsRequest): Promise<PositionsSuggestion> {
   const response = await apiClient.post<ApiResponse<PositionsSuggestion>>('/admin/editorial/ai/suggest-positions', request, { timeout: AI_TIMEOUT_MS });
+  if (!response.data.success || !response.data.data) {
+    throw new Error(response.data.error || 'Il servizio AI non ha risposto');
+  }
+  return response.data.data;
+}
+
+/**
+ * Genera la descrizione SEO di un documento e la SALVA (a differenza dei suggerimenti per le location).
+ * Il backend accetta solo una bozza che supera tutti i controlli: altrimenti risponde 422 e non salva nulla.
+ */
+export async function generateSeoDescription(documentId: string): Promise<SeoGeneration> {
+  const response = await apiClient.post<ApiResponse<SeoGeneration>>(`/admin/editorial/ai/documents/${documentId}/generate-seo`, undefined, { timeout: AI_TIMEOUT_MS });
   if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Il servizio AI non ha risposto');
   }
