@@ -29,10 +29,10 @@ export function useCanonCheck() {
  * nulla sul server, restituiscono una bozza che la persona applica nel form e poi salva.
  */
 export function useSuggestLocationDescription() {
-  return useMutation({ mutationFn: (locationId: string) => editorialAPI.suggestLocationDescription(locationId) });
+  return useMutation({ mutationFn: ({ locationId, description }: { locationId: string; description: string }) => editorialAPI.suggestLocationDescription(locationId, description) });
 }
 
 export function useSuggestLocationTags() {
-  return useMutation({ mutationFn: (locationId: string) => editorialAPI.suggestLocationTags(locationId) });
+  return useMutation({ mutationFn: ({ locationId, description }: { locationId: string; description: string }) => editorialAPI.suggestLocationTags(locationId, description) });
 }
 

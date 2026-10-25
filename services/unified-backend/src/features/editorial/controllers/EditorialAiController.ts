@@ -3,9 +3,12 @@ import mongoose from 'mongoose';
 import { AiGatewayError } from '@core/ai';
 import { errorResponse, getRequestId, successResponse } from '@shared/utils/apiResponse';
 import { logger } from '@shared/utils/logger';
-import { LocationNotFoundError, suggestDescription, suggestTags } from '../services/LocationSuggestionService';
+import { InsufficientInputError, LocationNotFoundError, suggestDescription, suggestTags, type SuggestInput } from '../services/LocationSuggestionService';
 
-type Suggest<T> = (locationId: string) => Promise<T>;
+type Suggest<T> = (locationId: string, input: SuggestInput) => Promise<T>;
+
+/** Il testo nel form (anche non salvato): la base su cui l'AI lavora. */
+const MAX_BASE_CHARS = 2000;
 
 async function handle<T>(req: Request<{ locationId: string }>, res: Response, suggest: Suggest<T>, what: string): Promise<void> {
   const { locationId } = req.params;
@@ -13,9 +16,18 @@ async function handle<T>(req: Request<{ locationId: string }>, res: Response, su
     res.status(400).json(errorResponse('Id location non valido', 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
     return;
   }
+  const raw = (req.body as { description?: unknown } | undefined)?.description;
+  if (raw !== undefined && (typeof raw !== 'string' || raw.length > MAX_BASE_CHARS)) {
+    res.status(400).json(errorResponse(`description deve essere un testo di al più ${MAX_BASE_CHARS} caratteri`, 'VALIDATION_ERROR', undefined, 400, getRequestId(req)));
+    return;
+  }
   try {
-    res.json(successResponse(await suggest(locationId), undefined, getRequestId(req)));
+    res.json(successResponse(await suggest(locationId, { description: raw }), undefined, getRequestId(req)));
   } catch (error: unknown) {
+    if (error instanceof InsufficientInputError) {
+      res.status(422).json(errorResponse(error.message, 'INSUFFICIENT_INPUT', undefined, 422, getRequestId(req)));
+      return;
+    }
     if (error instanceof LocationNotFoundError) {
       res.status(404).json(errorResponse('Location non trovata', 'NOT_FOUND', undefined, 404, getRequestId(req)));
       return;

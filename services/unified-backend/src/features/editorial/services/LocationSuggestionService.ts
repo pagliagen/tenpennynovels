@@ -11,8 +11,8 @@ import { validateDescription, type DraftCheck } from '../utils/validators';
 const MAX_PASSAGES = 3;
 const MAX_PASSAGE_CHARS = 400;
 const MIN_PASSAGE_CHARS = 80;
-/** Coseno minimo perché un estratto aiuti a descrivere il luogo (più basso di quello del bot: qui serve atmosfera, non una risposta). */
-const MIN_PASSAGE_COSINE = 0.35;
+/** Coseno minimo perché un estratto sia sfondo utile: sotto, il modello lo attribuisce al luogo a sproposito (la cattedrale con la pratica religiosa). */
+const MIN_PASSAGE_COSINE = 0.5;
 const STYLE_EXAMPLES = 2;
 
 export interface SuggestionContext extends LocationPromptContext {
@@ -41,6 +41,22 @@ export interface TagsSuggestion {
 }
 
 export class LocationNotFoundError extends Error {}
+
+/** L'AI espande ciò che una persona ha scritto: senza un minimo di testo non c'è niente da espandere. */
+export class InsufficientInputError extends Error {}
+
+export const MIN_BASE_CHARS = 25;
+export const MIN_BASE_WORDS = 4;
+
+/** Il testo di partenza: quello nel form (anche non salvato) se c'è, altrimenti quello su DB. */
+export interface SuggestInput {
+  description?: string | undefined;
+}
+
+export function hasEnoughInput(text: string): boolean {
+  const t = text.trim();
+  return t.length >= MIN_BASE_CHARS && t.split(/\s+/).length >= MIN_BASE_WORDS;
+}
 
 /** Il contesto di un luogo, solo da contenuti pubblici: mai chat, descrizioni private o dati dei personaggi. */
 export async function loadLocationContext(locationId: string): Promise<SuggestionContext | null> {
@@ -91,10 +107,12 @@ const defaultDeps: SuggestDeps = {
   generate: (request) => aiGateway.generate('editorial', request),
 };
 
-async function context(locationId: string, deps: SuggestDeps): Promise<SuggestionContext> {
+async function context(locationId: string, input: SuggestInput, deps: SuggestDeps): Promise<SuggestionContext> {
   const ctx = await deps.loadContext(locationId);
   if (!ctx) throw new LocationNotFoundError('Location non trovata');
-  return ctx;
+  const base = (input.description ?? ctx.currentDescription).trim();
+  // Il testo dell'autore è la fonte dei fatti anche per il controllo sui nomi propri.
+  return { ...ctx, currentDescription: base, knownText: `${ctx.knownText} ${base}` };
 }
 
 /** La risposta vincolata dallo schema è comunque non fidata: si verifica la forma. */
@@ -104,8 +122,11 @@ function asString(json: unknown, key: string): string {
   return value.trim();
 }
 
-export async function suggestDescription(locationId: string, deps: SuggestDeps = defaultDeps): Promise<DescriptionSuggestion> {
-  const ctx = await context(locationId, deps);
+export async function suggestDescription(locationId: string, input: SuggestInput = {}, deps: SuggestDeps = defaultDeps): Promise<DescriptionSuggestion> {
+  const ctx = await context(locationId, input, deps);
+  if (!hasEnoughInput(ctx.currentDescription)) {
+    throw new InsufficientInputError('Scrivi prima almeno una frase nel campo Descrizione: l\'AI espande ciò che scrivi, non la inventa.');
+  }
   const { system, user } = buildDescriptionPrompt(ctx);
   const result = await deps.generate({ system, user, schema: DESCRIPTION_SCHEMA as unknown as Record<string, unknown>, maxTokens: 300 });
 
@@ -114,8 +135,8 @@ export async function suggestDescription(locationId: string, deps: SuggestDeps =
   return { draft, ok, checks, sources: ctx.passages.map((p) => p.title), ms: result.ms };
 }
 
-export async function suggestTags(locationId: string, deps: SuggestDeps = defaultDeps): Promise<TagsSuggestion> {
-  const ctx = await context(locationId, deps);
+export async function suggestTags(locationId: string, input: SuggestInput = {}, deps: SuggestDeps = defaultDeps): Promise<TagsSuggestion> {
+  const ctx = await context(locationId, input, deps);
   const { system, user } = buildTagsPrompt(ctx);
   const result = await deps.generate({ system, user, schema: TAGS_SCHEMA as unknown as Record<string, unknown>, maxTokens: 80 });
 

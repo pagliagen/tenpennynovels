@@ -1,9 +1,10 @@
 /**
  * LocationAiSuggest - suggerimento AI di descrizione o tag per una location.
  *
- * Compare solo se l'AI editoriale è attiva (flag del server + gateway raggiungibile). Non salva
- * mai: la bozza si riempie nel form con «Usa» e la persona la rilegge, la modifica e salva come
- * sempre. I controlli sotto la bozza dicono cosa non torna (anni, anacronismi, nomi inventati,
+ * Compare solo se l'AI editoriale è attiva (flag del server + gateway raggiungibile). **Espande ciò
+ * che la persona ha scritto** nel campo Descrizione (anche non salvato): non la inventa. Senza un minimo
+ * di testo il pulsante è disattivo. Non salva mai: la bozza si riempie nel form con «Usa» e la persona la
+ * rilegge, la modifica e salva come sempre. I controlli sotto la bozza dicono cosa non torna (anni, anacronismi, nomi inventati,
  * fatti persi): non bloccano, informano.
  */
 
@@ -20,13 +21,18 @@ const CHECK_LABELS: Record<DraftCheck['code'], string> = {
   anachronism: 'Anacronismi',
   'foreign-words': 'Parole straniere',
   'unknown-name': 'Nomi propri',
-  'lost-facts': 'Fatti della descrizione attuale',
+  'lost-facts': 'Fatti del tuo testo',
   'game-meta': 'Testo di gioco',
 };
 
+/** Come il backend (MIN_BASE_CHARS / MIN_BASE_WORDS): senza almeno una frase non c'è niente da espandere. */
+const MIN_BASE_CHARS = 25;
+const MIN_BASE_WORDS = 4;
+export const hasEnoughText = (text: string): boolean => text.trim().length >= MIN_BASE_CHARS && text.trim().split(/\s+/).length >= MIN_BASE_WORDS;
+
 type Props =
-  | { kind: 'description'; locationId: string; onApplyDescription: (text: string) => void }
-  | { kind: 'tags'; locationId: string; onApplyTags: (tags: string[]) => void };
+  | { kind: 'description'; locationId: string; currentText: string; onApplyDescription: (text: string) => void }
+  | { kind: 'tags'; locationId: string; currentText: string; onApplyTags: (tags: string[]) => void };
 
 export function LocationAiSuggest(props: Props): React.ReactElement | null {
   const editorialAiEnabled = useFeatureFlagsStore((s) => s.editorialAiEnabled);
@@ -39,9 +45,11 @@ export function LocationAiSuggest(props: Props): React.ReactElement | null {
 
   const isDescription = props.kind === 'description';
   const mutation = isDescription ? descriptionMutation : tagsMutation;
+  // La descrizione si espande solo se c'è qualcosa da espandere; i tag si possono chiedere anche con poco testo.
+  const needsText = isDescription && !hasEnoughText(props.currentText);
   const run = (): void => {
     setApplied(false);
-    mutation.mutate(props.locationId);
+    mutation.mutate({ locationId: props.locationId, description: props.currentText });
   };
   const discard = (): void => {
     setApplied(false);
@@ -52,9 +60,12 @@ export function LocationAiSuggest(props: Props): React.ReactElement | null {
 
   return (
     <div className={styles.aiBox}>
-      <button type="button" className={styles.aiButton} onClick={run} disabled={mutation.isPending}>
-        {mutation.isPending ? 'Sto scrivendo… (fino a un minuto)' : isDescription ? '✨ Suggerisci descrizione' : '✨ Suggerisci tag'}
+      <button type="button" className={styles.aiButton} onClick={run} disabled={mutation.isPending || needsText}>
+        {mutation.isPending ? 'Sto scrivendo… (fino a un minuto)' : isDescription ? '✨ Espandi descrizione' : '✨ Suggerisci tag'}
       </button>
+      {needsText && (
+        <p className={styles.aiNote}>Scrivi prima almeno una frase qui sopra (cos&apos;è il luogo, chi lo frequenta): l&apos;AI la espande, non la inventa.</p>
+      )}
 
       {mutation.isError && (
         <p className={styles.aiError} role="alert">

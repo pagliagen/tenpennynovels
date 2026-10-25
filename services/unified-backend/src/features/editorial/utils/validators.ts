@@ -72,6 +72,38 @@ export function lostNames(draft: string, currentDescription: string): string[] {
   return [...out];
 }
 
+/** Parole comuni di 5+ lettere che non portano un fatto: non contano per verificare cosa la bozza ha conservato. */
+const COMMON_WORDS = new Set([
+  'questo', 'questa', 'questi', 'queste', 'sempre', 'molto', 'nella', 'nello', 'nelle', 'negli', 'della', 'delle', 'degli', 'dello',
+  'dalla', 'dalle', 'dagli', 'dallo', 'sulla', 'sulle', 'sugli', 'sullo', 'tutti', 'tutte', 'tutto', 'dove', 'quale', 'quali', 'anche',
+  'ancora', 'stato', 'stata', 'essere', 'altro', 'altra', 'altri', 'altre', 'dopo', 'prima', 'verso', 'tanto', 'tanti', 'tante', 'quasi',
+  'spesso', 'cosa', 'cose', 'luogo', 'luoghi', 'dalla', 'attraverso', 'insieme', 'tra', 'fra',
+]);
+
+const stem = (word: string): string => word.slice(0, 5);
+
+function contentWords(text: string): Map<string, string> {
+  const normalized = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const out = new Map<string, string>();
+  for (const w of normalized.match(/[a-z]{5,}/g) ?? []) if (!COMMON_WORDS.has(w) && !out.has(stem(w))) out.set(stem(w), w);
+  return out;
+}
+
+/** Quota minima delle parole-chiave del testo dell'autore che la bozza deve riportare. */
+export const MIN_KEPT_CONTENT = 0.6;
+
+/**
+ * Parole-chiave (radici di 5+ lettere) del testo dell'autore che la bozza non riporta. «Espandere» vuol dire
+ * che ciò che l'autore ha scritto resta: una stazione che diventa «cattedrale» perde «stazione» e «ferroviaria».
+ */
+export function missingContent(draft: string, base: string): { missing: string[]; keptRatio: number } {
+  const wanted = contentWords(base);
+  if (wanted.size < 3) return { missing: [], keptRatio: 1 };
+  const have = contentWords(draft);
+  const missing = [...wanted].filter(([st]) => !have.has(st)).map(([, w]) => w);
+  return { missing, keptRatio: 1 - missing.length / wanted.size };
+}
+
 export function validateDescription(text: string, ctx: DraftContext): { ok: boolean; checks: DraftCheck[] } {
   const clean = text.trim();
   const checks: DraftCheck[] = [];
@@ -92,8 +124,12 @@ export function validateDescription(text: string, ctx: DraftContext): { ok: bool
   const unknown = unknownProperNames(clean, ctx.knownText);
   checks.push({ code: 'unknown-name', ok: unknown.length === 0, ...(unknown.length ? { detail: `nomi non presenti nelle fonti: ${unknown.join(', ')}` } : {}) });
 
-  const lost = ctx.currentDescription ? lostNames(clean, ctx.currentDescription) : [];
-  checks.push({ code: 'lost-facts', ok: lost.length === 0, ...(lost.length ? { detail: `non riporta: ${lost.join(', ')}` } : {}) });
+  // Il testo dell'autore deve restare: nomi propri e parole-chiave. Espandere non è riscrivere.
+  const base = ctx.currentDescription ?? '';
+  const lost = base ? lostNames(clean, base) : [];
+  const { missing, keptRatio } = base ? missingContent(clean, base) : { missing: [], keptRatio: 1 };
+  const lostOk = lost.length === 0 && keptRatio >= MIN_KEPT_CONTENT;
+  checks.push({ code: 'lost-facts', ok: lostOk, ...(lostOk ? {} : { detail: `non riporta: ${[...lost, ...missing].slice(0, 6).join(', ')}` }) });
 
   const meta = mentionsGameMeta(clean);
   checks.push({ code: 'game-meta', ok: !meta, ...(meta ? { detail: 'parla del gioco o dei giocatori' } : {}) });
