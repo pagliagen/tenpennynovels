@@ -11,6 +11,7 @@ import mongoose from 'mongoose';
 import Document, { IDocument } from '../models/Document';
 import DocumentSubtype from '../models/DocumentSubtype';
 import { EmbeddingService } from '../services/EmbeddingService';
+import { loadReassembledChunks } from '../services/ChunkLoader';
 import { HierarchyService } from '../services/HierarchyService';
 import { PreviewTokenService } from '../services/PreviewTokenService';
 import { logger } from '@shared/utils/logger';
@@ -495,42 +496,7 @@ export class DocumentController {
       const db = mongoose.connection.db;
       if (!db) throw new Error('Database connection not available');
 
-      const chunks = await db.collection('documentchunks').find({ chunkId: { $in: chunkIds } }).toArray();
-
-      // Sezioni troppo lunghe per il subprocess di embedding vengono spezzate
-      // in più chunk in scrittura (embeddings-worker/ChunkParser.splitOversizedChunk),
-      // che condividono {documentId, slug} come chiave di riaggancio. La
-      // ricerca vettoriale può far match su UN SOLO pezzo: qui si recuperano
-      // tutti i fratelli e si ricompone il contenuto intero della sezione,
-      // così il Bibliotecario risponde sempre sul testo completo e non solo
-      // sul frammento che ha fatto match.
-      const splitGroups = [...new Set(
-        chunks.filter(c => (c.splitTotal ?? 1) > 1).map(c => `${c.documentId}::${c.slug}`)
-      )];
-      if (splitGroups.length > 0) {
-        const siblings = await db.collection('documentchunks').find({
-          $or: splitGroups.map(key => {
-            const [documentId, slug] = key.split('::');
-            return { documentId, slug };
-          })
-        }).toArray();
-
-        const reassembledByGroup = new Map<string, string>();
-        for (const key of splitGroups) {
-          const [documentId, slug] = key.split('::');
-          const piecesContent = siblings
-            .filter(s => s.documentId === documentId && s.slug === slug)
-            .sort((a, b) => (a.splitIndex ?? 0) - (b.splitIndex ?? 0))
-            .map(s => s.content);
-          reassembledByGroup.set(key, piecesContent.join('\n\n'));
-        }
-
-        for (const chunk of chunks) {
-          if ((chunk.splitTotal ?? 1) > 1) {
-            chunk.content = reassembledByGroup.get(`${chunk.documentId}::${chunk.slug}`) ?? chunk.content;
-          }
-        }
-      }
+      const chunks = await loadReassembledChunks(db, chunkIds);
 
       const documentIds = chunks.map(c => c.documentId).filter(Boolean);
       const docFilter: Record<string, unknown> = {

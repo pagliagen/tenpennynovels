@@ -30,5 +30,9 @@ function botServiceAuth(req: Request, res: Response, next: NextFunction): void {
 }
 
 router.post('/messages', limiter, botServiceAuth, BotChatController.postMessage);
+router.get('/environment', limiter, botServiceAuth, BotChatController.getEnvironment);
+router.get('/knowledge/tags', limiter, botServiceAuth, BotChatController.getKnowledgeTags);
+router.post('/knowledge', limiter, botServiceAuth, BotChatController.getKnowledge);
+router.get('/characters/:id', limiter, botServiceAuth, BotChatController.getCharacterAppearance);
 
 export default router;

@@ -14,12 +14,14 @@ import internalRoutes from './routes/internal';
  *
  * dependsOn: ['fineSessione'] — la risposta del bot entra nella
  * segmentazione in scene come ogni altro messaggio standard.
+ * dependsOn: ['documenti'] — l'ambientazione pubblica che il bot può citare
+ * (`searchPublicLore`, solo tipo `ambientazione`, solo pubblicata).
  */
 export const botChat: FeatureManifest = {
   key: 'botChat',
   title: 'Bot chat',
   description: 'Endpoint interno per le risposte del servizio bot locale',
-  dependsOn: ['fineSessione'],
+  dependsOn: ['fineSessione', 'documenti'],
   routes: [
     { scope: 'public', path: '/internal/bot-chat', router: internalRoutes, gated: false },
   ],
