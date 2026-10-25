@@ -10,7 +10,8 @@ import { LOCATION_TAGS } from '../../../core/location/constants/locationTags';
 import { hasEnoughInput, InsufficientInputError, LocationNotFoundError, suggestDescription, suggestTags, type SuggestDeps, type SuggestionContext } from '../services/LocationSuggestionService';
 import { splitAuthorNote } from '../utils/text';
 import { suggestPositions } from '../services/LocationSuggestionService';
-import { cleanPositions } from '../utils/validators';
+import { cleanPositions, MIN_DESCRIPTION_CHARS } from '../utils/validators';
+import { MIN_LOCATION_DESCRIPTION_CHARS } from '../utils/canonRules';
 import { buildDescriptionPrompt, buildTagsPrompt, lengthTarget, TAGS_SCHEMA } from '../utils/prompts';
 import { foreignWords, lostNames, missingContent, unknownProperNames, validateDescription } from '../utils/validators';
 import { clipToSentence } from '../utils/text';
@@ -78,6 +79,11 @@ describe('validateDescription', () => {
     assert.equal(r.checks.find((c) => c.code === 'lost-facts')!.ok, true);
     assert.match(d.requests[0]!.user, /NOTA DELL'AUTORE PER TE/);
     assert.doesNotMatch(d.requests[0]!.user, /TESTO DELL'AUTORE[^\n]*Aggiungi location/);
+  });
+
+  it('la soglia minima è quella della revisione di canone, così una bozza valida non finisce fra i problemi', () => {
+    assert.equal(MIN_DESCRIPTION_CHARS, MIN_LOCATION_DESCRIPTION_CHARS);
+    assert.equal(v('x '.repeat(55).trim()).checks.find((c) => c.code === 'length')!.ok, false); // 109 caratteri
   });
 
   it('lunghezza fuori misura', () => {
@@ -243,8 +249,8 @@ describe('espandere, non inventare', () => {
   });
 
   it('la lunghezza voluta cresce con il testo dell\'autore ma non supera mai il tetto', () => {
-    assert.deepEqual(lengthTarget(40), { min: 60, max: 140 });
-    assert.deepEqual(lengthTarget(80), { min: 120, max: 240 });
+    assert.deepEqual(lengthTarget(40), { min: 135, max: 215 });
+    assert.deepEqual(lengthTarget(80), { min: 135, max: 240 });
     const long = lengthTarget(500);
     assert.ok(long.max <= 400 && long.min <= 320);
   });

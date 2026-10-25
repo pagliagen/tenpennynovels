@@ -1,5 +1,6 @@
 import { mentionsGameMeta } from '@features/documenti/api';
 import { findAnachronisms } from './anachronisms';
+import { MIN_LOCATION_DESCRIPTION_CHARS } from './canonRules';
 
 /**
  * Controlli deterministici sulla bozza del modello. Il modello propone, il codice verifica: sono gli
@@ -22,7 +23,8 @@ export interface DraftCheck {
   detail?: string;
 }
 
-export const MIN_DESCRIPTION_CHARS = 40;
+/** Stessa soglia della revisione di canone (`short-location`): una bozza più corta finirebbe subito fra i problemi. */
+export const MIN_DESCRIPTION_CHARS = MIN_LOCATION_DESCRIPTION_CHARS;
 export const MAX_DESCRIPTION_CHARS = 400;
 
 /** Maiuscole che non sono nomi inventati: sfondo noto, titoli senza nome, espressioni fisse. */

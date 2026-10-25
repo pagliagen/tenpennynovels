@@ -1,5 +1,5 @@
 import { locationTagList, LOCATION_TAGS } from '@core/location/constants/locationTags';
-import { MAX_DESCRIPTION_CHARS, MAX_POSITIONS, MAX_POSITION_DESCRIPTION_CHARS, MAX_POSITION_NAME_CHARS } from './validators';
+import { MAX_DESCRIPTION_CHARS, MIN_DESCRIPTION_CHARS, MAX_POSITIONS, MAX_POSITION_DESCRIPTION_CHARS, MAX_POSITION_NAME_CHARS } from './validators';
 
 /**
  * Prompt per il gateway AI. **Solo contenuti già pubblici**: nome, quartiere e distretto, tag,
@@ -38,10 +38,15 @@ function place(ctx: LocationPromptContext): string {
   return [ctx.name, ctx.quartiere, ctx.district].filter(Boolean).join(', ');
 }
 
-/** Lunghezza voluta per la bozza: da 1,5 a 3 volte il testo dell'autore (espandere, non riscrivere), mai oltre il tetto. */
+/**
+ * Lunghezza voluta per la bozza: da 1,5 a 3 volte il testo dell'autore (espandere, non riscrivere), mai oltre il tetto
+ * e mai sotto la soglia della revisione di canone (con un margine, perché il modello tende a stare corto).
+ */
+const MIN_MARGIN = 15;
+
 export function lengthTarget(baseLength: number): { min: number; max: number } {
-  const min = Math.max(60, Math.round(baseLength * 1.5));
-  return { min: Math.min(min, MAX_DESCRIPTION_CHARS - 80), max: Math.min(MAX_DESCRIPTION_CHARS, Math.max(min + 80, Math.round(baseLength * 3))) };
+  const min = Math.min(Math.max(MIN_DESCRIPTION_CHARS + MIN_MARGIN, Math.round(baseLength * 1.5)), MAX_DESCRIPTION_CHARS - 80);
+  return { min, max: Math.min(MAX_DESCRIPTION_CHARS, Math.max(min + 80, Math.round(baseLength * 3))) };
 }
 
 export function buildDescriptionPrompt(ctx: LocationPromptContext): { system: string; user: string } {
