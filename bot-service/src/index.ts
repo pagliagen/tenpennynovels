@@ -1,4 +1,5 @@
 import { createCharacterBot } from './character-bot/service';
+import { createEditorialService } from './editorial/service';
 import { createHttpServer } from './http/server';
 import type { AiService, ServiceName } from './http/service';
 import { loadLauncherConfig } from './shared/env';
@@ -9,9 +10,9 @@ import { logger } from './shared/logger';
  * nessuno, per non accendere per svista un servizio sul server sbagliato) e l'HTTP interno su loopback
  * con `/health`. Ogni servizio vive nella sua cartella e non sa degli altri.
  */
-const FACTORIES: Record<ServiceName, (() => AiService) | undefined> = {
+const FACTORIES: Record<ServiceName, () => AiService> = {
   'character-bot': createCharacterBot,
-  editorial: undefined, // arriva con la fase B
+  editorial: () => createEditorialService(),
 };
 
 async function main(): Promise<void> {
@@ -21,9 +22,7 @@ async function main(): Promise<void> {
   }
 
   const services = config.enabled.map((name) => {
-    const factory = FACTORIES[name];
-    if (!factory) throw new Error(`Il servizio «${name}» non è ancora disponibile`);
-    return factory();
+    return FACTORIES[name]();
   });
 
   for (const service of services) {
