@@ -115,17 +115,17 @@ via `requireFeature`). Una feature può avere un **flag** runtime (`SystemConfig
 | `bibliotecario` | Q&A sui documenti (RAG), flag runtime `keeper_qa_enabled` | estensione di `documenti` |
 | `botAdmin` | tab «Bot» del gestionale: elenco e generazione dei bot | admin `/bots` (flag d'ambiente + servizio AI) |
 | `botChat` | chat dei bot con servizio AI esterno: inoltro degli eventi e API di risposta | public `/bot-api` (config completa o 404) |
-| `confronti` | confronti (attacco/reazione) | game `/chats` |
-| `corporazioni` | corporazioni e relazioni | game `/`, admin `/corporations` |
+| `confronti` | TiroContrapposto: conflitti sociali e combattimento con richiesta di reazione | game `/chats` |
+| `corporazioni` | gilde, associazioni professionali e organizzazioni di personaggio | game `/`, admin `/corporations` |
 | `documenti` | documenti, sottotipi, ricerca, descrizione SEO | public `/documents`, admin `/documents`, `/subtypes` |
-| `economia` | classi sociali, finanze | game `/`, admin `/social-classes` |
+| `economia` | finanze del personaggio, classe sociale, servizi continuativi | game `/`, admin `/social-classes` |
 | `editorial` | revisione di canone (sempre attiva) e funzioni AI editoriali (flag) | admin `/editorial`, `/editorial/ai` |
-| `fineSessione` | chiusura scene e riassunti | game `/` |
+| `fineSessione` | segmentazione della chat in scene, chiusura automatica, riassunti | game `/` |
 | `forum` | forum | public `/forum`, admin `/forum-*` |
-| `itemUse`, `skillCheck`, `statCheck` | azioni di chat (uso oggetti, prove) | nessuna rotta: estendono la chat |
-| `occupazioni` | occupazioni | game `/occupations`, admin `/occupations` |
-| `offGameMessages` | messaggi e chat off-game, mail | game `/`, admin `/messaging`, `/mail` |
-| `oggetti` | oggetti e inventario | game `/items`, `/`, admin `/items` |
+| `itemUse`, `skillCheck`, `statCheck` | messaggi di chat di location: uso di un oggetto, tiro su abilità, tiro su caratteristica | nessuna rotta: estendono la chat |
+| `occupazioni` | esperienze pregresse del personaggio: bonus alle skill in creazione | game `/occupations`, admin `/occupations` |
+| `offGameMessages` | messaggistica OOC tra giocatori (chat/gruppi e thread 1-a-1), mail | game `/`, admin `/messaging`, `/mail` |
+| `oggetti` | catalogo oggetti, inventario, negozi | game `/items`, `/`, admin `/items` |
 | `tickets` | ticket di supporto | game `/`, admin `/tickets` |
 
 I dettagli di ogni area (endpoint, permessi, modelli) stanno nelle rules (`.claude/rules/20-backend.md`) e in `api-endpoints.md`.
