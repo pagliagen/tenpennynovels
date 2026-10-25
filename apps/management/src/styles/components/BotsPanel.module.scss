@@ -1,0 +1,73 @@
+@use '../variables' as *;
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: $spacing-md 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $spacing-md;
+}
+
+.note {
+  margin: 0;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: #c62828;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  th,
+  td {
+    padding: $spacing-sm $spacing-md;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  th {
+    color: $color-text-secondary;
+    font-weight: 600;
+  }
+}
+
+.ok {
+  color: #2e7d32;
+}
+
+.warn {
+  color: #b26a00;
+}
+
+.primaryBtn {
+  padding: $spacing-sm $spacing-lg;
+  background-color: $color-primary;
+  color: $color-bg-primary;
+  border: none;
+  border-radius: $radius-sm;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

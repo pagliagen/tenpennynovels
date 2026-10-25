@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { readFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import path from 'path';
 import { z } from 'zod';
 
@@ -157,10 +157,16 @@ export function resolveBots(defs: z.infer<typeof botDefSchema>[], mapping: z.inf
   });
 }
 
+/** `mapping.json` assente = nessun bot ancora: serve a partire da zero (il primo bot si crea dal gestionale). */
+export function loadMapping(file: string): z.infer<typeof mappingSchema> {
+  if (!existsSync(file)) return [];
+  return mappingSchema.parse(JSON.parse(readFileSync(file, 'utf8')));
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const e = envSchema.parse(env);
-  const defs = loadBotDefs(e.BOTS_DIR);
-  const mapping = mappingSchema.min(1).parse(JSON.parse(readFileSync(e.MAPPING_FILE, 'utf8')));
+  const defs = existsSync(e.BOTS_DIR) ? loadBotDefs(e.BOTS_DIR) : [];
+  const mapping = loadMapping(e.MAPPING_FILE);
 
   return {
     redisUrl: e.REDIS_URL,

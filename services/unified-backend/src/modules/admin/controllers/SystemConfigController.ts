@@ -27,9 +27,11 @@ export class SystemConfigController {
       // Editoriale CON IL MODELLO: flag d'ambiente (ENABLE_IA_EDITORIAL), spenta se la variabile non c'è.
       // La revisione di canone (deterministica) non passa da qui: è sempre attiva.
       const editorialAiEnabled = await FeatureFlagService.isEnabled('editorialAi');
+      // Tab «Bot» (strumento da sviluppo): ENABLE_BOT_CHARACTERS + character-bot raggiungibile. Spento in produzione.
+      const botAdminEnabled = await FeatureFlagService.isEnabled('botAdmin');
 
       res.json(successResponse(
-        { keeperQaEnabled, editorialAiEnabled },
+        { keeperQaEnabled, editorialAiEnabled, botAdminEnabled },
         undefined,
         getRequestId(req)
       ));
@@ -39,7 +41,7 @@ export class SystemConfigController {
       });
       // Fail-closed: se qualcosa va storto, le feature restano nascoste
       res.json(successResponse(
-        { keeperQaEnabled: false, editorialAiEnabled: false },
+        { keeperQaEnabled: false, editorialAiEnabled: false, botAdminEnabled: false },
         undefined,
         getRequestId(req)
       ));

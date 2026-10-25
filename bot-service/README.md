@@ -73,6 +73,15 @@ risponde a un bot (anche a un altro bot configurato). Una raffica di messaggi pr
   una location ha un solo bot.
 - Entrambi sono ignorati da git (contengono id dell'ambiente).
 
+### Creare i bot dal gestionale (strumento da sviluppo)
+
+Con `ENABLED_SERVICES=character-bot`, `ENABLE_BOT_CHARACTERS=true` sul backend locale e il gateway acceso, il tab **Bot** di
+«Gestione Personaggi» elenca i bot e li genera: location + descrizione libera → scheda completa (personaggio, persona,
+psicologia) da correggere → «Crea bot». Il character-bot espone tre azioni (`POST /v1/character-bot/<azione>`, via gateway):
+`list`, `design` (non salva; `src/character-bot/designer.ts`) e `register` (scrive `bots/<slug>.json` + `mapping.json`, mai
+sovrascrive, una location = un bot) e poi si ricarica da solo. Parti anche da zero: senza `bots/` né `mapping.json` il servizio
+parte lo stesso. Relazioni e atteggiamenti non si generano: si scrivono a mano nel file (sezione sotto).
+
 ## Carattere, umore e rapporto
 
 I numeri vivono nel codice e non arrivano mai al modello: un 12B non sa cosa farsene di

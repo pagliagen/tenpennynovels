@@ -37,7 +37,7 @@ export const DEFAULT_AI_GATEWAY_OPTIONS = {
 
 /** Errore da mostrare a un admin: il messaggio è già in italiano e senza dettagli tecnici. */
 export class AiGatewayError extends Error {
-  constructor(readonly userMessage: string, readonly status: number) {
+  constructor(readonly userMessage: string, readonly status: number, readonly code?: string) {
     super(userMessage);
   }
 }
@@ -120,6 +120,46 @@ export class AiGatewayClient {
 
     try {
       return (await response.json()) as GenerateResult;
+    } catch {
+      throw new AiGatewayError('Risposta del servizio AI non valida.', 502);
+    }
+  }
+
+  /**
+   * Chiama un'azione di un servizio (`POST /v1/<servizio>/<azione>`) e restituisce il JSON.
+   * Come `generate`: errori in italiano e generici. Fanno eccezione 400/409/429 dei servizi, i cui messaggi sono
+   * scritti per essere letti da una persona (es. «Questa location ha già un bot») e passano con il loro `code`.
+   */
+  async call<T = unknown>(service: string, action: string, body: unknown, options: { timeoutMs?: number } = {}): Promise<T> {
+    if (!this.isConfigured()) throw new AiGatewayError('Servizio AI non configurato.', 503);
+
+    let response: Response;
+    try {
+      response = await this.fetchImpl(this.endpoint(`/v1/${service}/${action}`), {
+        method: 'POST',
+        headers: this.headers({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(body ?? {}),
+        signal: AbortSignal.timeout(options.timeoutMs ?? this.options.generateTimeoutMs),
+      });
+    } catch (error: unknown) {
+      const timedOut = error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
+      logger.warn('[AiGateway] call non riuscita', { service, action, reason: timedOut ? 'timeout' : 'rete' });
+      this.invalidate();
+      throw new AiGatewayError(timedOut ? 'Il servizio AI ha impiegato troppo tempo.' : 'Servizio AI non raggiungibile.', timedOut ? 504 : 503);
+    }
+
+    if (!response.ok) {
+      logger.warn('[AiGateway] call rifiutata', { service, action, status: response.status });
+      if (response.status === 401) this.invalidate();
+      if ([400, 409, 429].includes(response.status)) {
+        const detail = (await response.json().catch(() => null)) as { error?: unknown; code?: unknown } | null;
+        if (typeof detail?.error === 'string') throw new AiGatewayError(detail.error, response.status, typeof detail.code === 'string' ? detail.code : undefined);
+      }
+      throw new AiGatewayError('Il servizio AI non è disponibile.', 503);
+    }
+
+    try {
+      return (await response.json()) as T;
     } catch {
       throw new AiGatewayError('Risposta del servizio AI non valida.', 502);
     }

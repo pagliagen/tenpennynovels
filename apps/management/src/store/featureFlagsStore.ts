@@ -19,6 +19,11 @@ interface FeatureFlagsState {
    * produzione). La revisione di canone non dipende da questo flag: è deterministica ed è sempre attiva.
    */
   editorialAiEnabled: boolean;
+  /**
+   * Tab «Bot» della lista personaggi (elenco e generazione dei bot): strumento da SVILUPPO. Acceso da
+   * ENABLE_BOT_CHARACTERS sul server E dal servizio `character-bot` raggiungibile; in produzione non esiste.
+   */
+  botAdminEnabled: boolean;
   isLoading: boolean;
 }
 
@@ -37,6 +42,7 @@ type FeatureFlagsStore = FeatureFlagsState & FeatureFlagsActions;
 const initialState: FeatureFlagsState = {
   keeperQaEnabled: false,
   editorialAiEnabled: false,
+  botAdminEnabled: false,
   isLoading: true
 };
 
@@ -53,12 +59,13 @@ export const useFeatureFlagsStore = create<FeatureFlagsStore>((set) => ({
       set({
         keeperQaEnabled: data.keeperQaEnabled ?? false,
         editorialAiEnabled: data.editorialAiEnabled ?? false,
+        botAdminEnabled: data.botAdminEnabled ?? false,
         isLoading: false
       });
     } catch (error: unknown) {
       logger.error('[FeatureFlagsStore] Failed to load feature flags:', { error });
       // Fail-closed: in caso di errore le feature restano nascoste
-      set({ keeperQaEnabled: false, editorialAiEnabled: false, isLoading: false });
+      set({ keeperQaEnabled: false, editorialAiEnabled: false, botAdminEnabled: false, isLoading: false });
     }
   },
 
@@ -68,7 +75,8 @@ export const useFeatureFlagsStore = create<FeatureFlagsStore>((set) => ({
       const data = response.data?.data || response.data;
       set({
         keeperQaEnabled: data.keeperQaEnabled ?? false,
-        editorialAiEnabled: data.editorialAiEnabled ?? false
+        editorialAiEnabled: data.editorialAiEnabled ?? false,
+        botAdminEnabled: data.botAdminEnabled ?? false
       });
     } catch (error: unknown) {
       // Un errore passeggero non deve far sparire i pulsanti: resta l'ultimo stato noto.

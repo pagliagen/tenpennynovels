@@ -5,6 +5,8 @@ import { BOT_CHAT_CHANNEL, parseChatEvent } from './events';
 import { isPublicStandard, shouldTrigger } from './filters';
 import { History } from './history';
 import { OllamaClient } from '../shared/ollama';
+import { createAdminRoutes } from './admin';
+import { botPathsFromEnv } from './registry';
 import { BackendClient } from './backendClient';
 import { BotResponder } from './responder';
 import { MongoStore } from './psyche/store';
@@ -14,7 +16,8 @@ import type { AiService, ServiceHealth } from '../http/service';
 
 /**
  * Il bot personaggio come servizio: Redis (pub/sub e storia), Mongo `botservice` (umore e rapporti),
- * backend di gioco (endpoint interni) e Ollama. Nessuna rotta HTTP: compare solo in `/health`.
+ * backend di gioco (endpoint interni) e Ollama. Le rotte HTTP (`list`, `design`, `register`) servono il gestionale
+ * per vedere e creare i bot (vedi `admin.ts`); la chat non passa da HTTP.
  */
 export function createCharacterBot(): AiService {
   let running: {
@@ -26,7 +29,7 @@ export function createCharacterBot(): AiService {
     responders: Map<string, { bot: ReturnType<typeof loadConfig>['bots'][number]; responder: BotResponder }>;
   } | null = null;
 
-  return {
+  const service: AiService = {
     name: 'character-bot',
 
     async start(): Promise<void> {
@@ -106,4 +109,16 @@ export function createCharacterBot(): AiService {
       return ollama.ok ? { ok: true } : { ok: false, reason: ollama.reason ?? 'Ollama non disponibile' };
     },
   };
+
+  // Le schede si leggono solo all'avvio: dopo `register` il servizio si riavvia da solo (1-2 s senza risposte).
+  const routes = createAdminRoutes({
+    paths: botPathsFromEnv(),
+    llm: () => new OllamaClient(process.env.OLLAMA_URL ?? 'http://localhost:11434', process.env.OLLAMA_MODEL ?? 'gemma4:12b'),
+    reload: async () => {
+      await service.stop();
+      await service.start();
+    },
+    loaded: () => new Set(running?.config.bots.map((b) => b.characterId) ?? []),
+  });
+  return Object.assign(service, { routes });
 }

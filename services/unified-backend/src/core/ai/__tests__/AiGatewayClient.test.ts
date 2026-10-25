@@ -172,6 +172,42 @@ describe('generate', () => {
   });
 });
 
+describe('call (azioni di un servizio)', () => {
+  it('POST /v1/<servizio>/<azione> con il segreto e restituisce il JSON', async () => {
+    const fake = await fakeGateway();
+    try {
+      fake.setHandler(json(200, { bots: [] }));
+      const { c } = client(fake);
+      assert.deepEqual(await c.call('character-bot', 'list', {}), { bots: [] });
+      assert.equal(fake.hits[0]!.path, '/v1/character-bot/list');
+      assert.equal(fake.hits[0]!.headers['x-ai-gateway-secret'], SECRET);
+    } finally { await fake.close(); }
+  });
+
+  it('400/409/429 del servizio passano con messaggio e codice; il resto è generico', async () => {
+    const fake = await fakeGateway();
+    try {
+      const { c } = client(fake);
+      fake.setHandler(json(409, { error: 'Questa location ha già un bot', code: 'location-taken' }));
+      await assert.rejects(() => c.call('character-bot', 'register', {}), (e: unknown) => e instanceof AiGatewayError && e.status === 409 && e.userMessage === 'Questa location ha già un bot' && e.code === 'location-taken');
+      fake.setHandler(json(500, { error: 'ENOENT /Users/qualcuno/bots/x.json' }));
+      await assert.rejects(() => c.call('character-bot', 'register', {}), (e: unknown) => e instanceof AiGatewayError && e.status === 503 && !/ENOENT/.test(e.userMessage));
+      fake.setHandler(json(401, { error: 'Non autorizzato' }));
+      await assert.rejects(() => c.call('character-bot', 'list', {}), (e: unknown) => e instanceof AiGatewayError && e.status === 503);
+    } finally { await fake.close(); }
+  });
+
+  it('non configurato: 503; lento: 504 con il timeout della singola chiamata', async () => {
+    await assert.rejects(() => client(null).c.call('character-bot', 'list', {}), (e: unknown) => e instanceof AiGatewayError && e.status === 503);
+    const fake = await fakeGateway();
+    try {
+      fake.setHandler(() => { /* non risponde */ });
+      const { c } = client(fake);
+      await assert.rejects(() => c.call('character-bot', 'design', {}, { timeoutMs: 200 }), (e: unknown) => e instanceof AiGatewayError && e.status === 504);
+    } finally { await fake.close(); }
+  });
+});
+
 describe('isEnvFlagActive (semantica del flag)', () => {
   const spec = { envVar: 'ENABLE_IA_EDITORIAL', requiresAiService: 'editorial' };
 
