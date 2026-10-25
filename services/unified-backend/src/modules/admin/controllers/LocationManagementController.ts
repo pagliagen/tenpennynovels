@@ -9,6 +9,7 @@ import {
 import { AdminAuthMiddleware } from '../middleware/adminAuth';
 import { logger } from '../utils/logger';
 import { Location } from '@core/location/models/Location';
+import { locationTagList, sanitizeLocationTags } from '@core/location/constants/locationTags';
 import type { SuccessResponse, ErrorResponse, ListResponse } from '@shared/types/responses';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId , deleteResponse} from '@shared/utils/apiResponse';
 
@@ -116,6 +117,7 @@ export class LocationManagementController {
           sortOrder: loc.sortOrder || 0,
           imageUrl: loc.imageUrl || null,
           descriptionImages: loc.descriptionImages || [],
+          tags: loc.tags || [],
           positions: loc.positions || [],
           maxOccupants: loc.maxOccupants || null,
           settings: {
@@ -222,6 +224,7 @@ export class LocationManagementController {
         sortOrder: location.sortOrder || 0,
         imageUrl: location.imageUrl || null,
         descriptionImages: location.descriptionImages || [],
+        tags: location.tags || [],
         positions: location.positions || [],
         maxOccupants: location.maxOccupants || null,
         childCount,
@@ -437,6 +440,14 @@ export class LocationManagementController {
   }
 
   /**
+   * Registro dei tag disponibili (elenco chiuso)
+   * GET /admin/locations/tags
+   */
+  static async getLocationTags(_req: Request, res: Response): Promise<void> {
+    res.json(successResponse(locationTagList()));
+  }
+
+  /**
    * Create a new location
    * POST /admin/locations
    */
@@ -444,8 +455,20 @@ export class LocationManagementController {
     try {
       const {
         name, district, description, settings, locationLevel,
-        parentLocation, imageUrl, descriptionImages, positions, maxOccupants
+        parentLocation, imageUrl, descriptionImages, positions, maxOccupants, tags
       } = req.body;
+
+      const cleanTags = sanitizeLocationTags(tags);
+      if (cleanTags.invalid.length > 0) {
+        res.status(400).json(errorResponse(
+          `Tag non validi: ${cleanTags.invalid.join(', ')}`,
+          'INVALID_TAGS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
 
       if (!name || name.trim().length === 0) {
         res.status(400).json(errorResponse(
@@ -511,6 +534,7 @@ export class LocationManagementController {
         parentLocation: parentLocation || undefined,
         imageUrl: imageUrl || undefined,
         descriptionImages: descriptionImages || [],
+        tags: cleanTags.tags,
         positions: positions || [],
         mapPosition: { x: 0, y: 0 },
         maxOccupants: maxOccupants || undefined,
@@ -572,8 +596,20 @@ export class LocationManagementController {
       const locationId = req.params.locationId;
       const {
         name, district, description, settings, locationLevel,
-        parentLocation, imageUrl, descriptionImages, positions, maxOccupants, sortOrder
+        parentLocation, imageUrl, descriptionImages, positions, maxOccupants, sortOrder, tags
       } = req.body;
+
+      const cleanTags = tags !== undefined ? sanitizeLocationTags(tags) : null;
+      if (cleanTags && cleanTags.invalid.length > 0) {
+        res.status(400).json(errorResponse(
+          `Tag non validi: ${cleanTags.invalid.join(', ')}`,
+          'INVALID_TAGS',
+          undefined,
+          400,
+          getRequestId(req)
+        ));
+        return;
+      }
 
       const location = await Location.findById(locationId);
       if (!location) {
@@ -611,6 +647,7 @@ export class LocationManagementController {
       if (locationLevel !== undefined) updateData.locationLevel = locationLevel;
       if (imageUrl !== undefined) updateData.imageUrl = imageUrl || null;
       if (descriptionImages !== undefined) updateData.descriptionImages = descriptionImages;
+      if (cleanTags) updateData.tags = cleanTags.tags;
       if (positions !== undefined) updateData.positions = positions;
       if (maxOccupants !== undefined) updateData.maxOccupants = maxOccupants;
       if (sortOrder !== undefined) updateData.sortOrder = sortOrder;

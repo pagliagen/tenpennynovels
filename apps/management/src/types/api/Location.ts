@@ -51,6 +51,8 @@ export interface Location {
   sortOrder: number;
   imageUrl: string | null;
   descriptionImages: string[];
+  /** Categorie del luogo (registro chiuso lato backend): le legge il bot per rispondere senza inventare. */
+  tags: string[];
   positions: LocationPosition[];
   maxOccupants: number | null;
   settings: LocationSettings;
@@ -132,6 +134,7 @@ export interface CreateLocationData {
   parentLocation?: string | null;
   imageUrl?: string;
   descriptionImages?: string[];
+  tags?: string[];
   positions?: LocationPosition[];
   maxOccupants?: number;
   settings?: Partial<LocationSettings>;
@@ -145,8 +148,16 @@ export interface UpdateLocationData {
   parentLocation?: string | null;
   imageUrl?: string;
   descriptionImages?: string[];
+  tags?: string[];
   positions?: LocationPosition[];
   maxOccupants?: number;
   sortOrder?: number;
   settings?: Partial<LocationSettings>;
+}
+
+/** Un tag del registro (`GET /admin/locations/tags`). */
+export interface LocationTagOption {
+  tag: string;
+  label: string;
+  hint: string;
 }

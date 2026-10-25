@@ -9,6 +9,7 @@ import { Modal } from '@/components/shared/Modal';
 import { FormField } from '@/components/shared/FormField';
 import { ImageUploader } from '@/components/shared/ImageUploader';
 import { PositionsEditor } from '@/components/locations/PositionsEditor';
+import { LocationTagsEditor } from '@/components/locations/LocationTagsEditor';
 import { useCreateLocation, useLocations } from '@/hooks/api/useLocations';
 import { useNotificationStore } from '@/store/notificationStore';
 import type { CreateLocationData, LocationLevel } from '@/types/api/Location';
@@ -46,6 +47,7 @@ export function CreateLocationModal({
     parentLocation: preselectedParentId || null,
     imageUrl: '',
     positions: [],
+    tags: [],
     maxOccupants: undefined,
     settings: {
       visible: true,
@@ -222,6 +224,14 @@ export function CreateLocationModal({
             placeholder="es. 20"
             min={1}
             max={100}
+          />
+        </div>
+
+        <div className={styles.section}>
+          <h3>Cosa c'è qui (tag)</h3>
+          <LocationTagsEditor
+            value={formData.tags || []}
+            onChange={(tags) => handleChange('tags', tags)}
           />
         </div>
 

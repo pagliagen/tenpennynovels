@@ -12,6 +12,8 @@
     "seed:dev:users": "dotenv -e .env.local -- tsx seeders/UserSeeder.ts",
     "seed:dev:bots": "dotenv -e .env.local -- tsx seeders/BotCharacterSeeder.ts",
     "seed:dev:locations": "dotenv -e .env.local -- tsx seeders/LocationSeeder.ts",
+    "seed:dev:location-tags": "dotenv -e .env.local -- tsx seeders/LocationTagsBackfill.ts",
+    "seed:dev:reindex-documents": "dotenv -e .env.local -- tsx seeders/ReindexDocuments.ts",
     "seed:dev:items": "dotenv -e .env.local -- tsx seeders/ItemSeeder.ts",
     "seed:dev:services": "dotenv -e .env.local -- tsx seeders/ServiceSeeder.ts",
     "seed:dev:skills": "dotenv -e .env.local -- tsx seeders/SkillSeeder.ts",

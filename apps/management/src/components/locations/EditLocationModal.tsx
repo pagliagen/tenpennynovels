@@ -10,6 +10,7 @@ import { FormField } from '@/components/shared/FormField';
 import { ImageUploader } from '@/components/shared/ImageUploader';
 import { GenerateImageButton } from '@/components/shared/GenerateImageButton';
 import { PositionsEditor } from '@/components/locations/PositionsEditor';
+import { LocationTagsEditor } from '@/components/locations/LocationTagsEditor';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { useLocation, useUpdateLocation, useLocations } from '@/hooks/api/useLocations';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -53,6 +54,7 @@ export function EditLocationModal({
         imageUrl: location.imageUrl || '',
         maxOccupants: location.maxOccupants || undefined,
         positions: location.positions || [],
+        tags: location.tags || [],
         settings: { ...location.settings }
       });
       setInitialized(true);
@@ -233,6 +235,14 @@ export function EditLocationModal({
               onChange={(e: any) => handleChange('maxOccupants', e.target.value ? parseInt(e.target.value) : undefined)}
               min={1}
               max={100}
+            />
+          </div>
+
+          <div className={styles.section}>
+            <h3>Cosa c'è qui (tag)</h3>
+            <LocationTagsEditor
+              value={formData.tags || []}
+              onChange={(tags) => handleChange('tags', tags)}
             />
           </div>
 

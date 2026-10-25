@@ -334,6 +334,7 @@ Administrative operations: user management, character approval, locations, docum
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/admin/locations` | List locations |
+| GET | `/admin/locations/tags` | Registro chiuso dei tag delle location (`core/location/constants/locationTags.ts`) |
 | GET | `/admin/locations/:id` | Get location |
 | POST | `/admin/locations` | Create location |
 | PUT | `/admin/locations/:id` | Update location |

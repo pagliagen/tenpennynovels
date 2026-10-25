@@ -1,3 +1,4 @@
+import { LOCATION_TAGS, type LocationTag } from '../constants/locationTags';
 import mongoose, { Schema, model, Document, QueryFilter } from 'mongoose';
 import { softDeletePlugin, SoftDeleteMethods } from '@database/plugins/softDeletePlugin';
 
@@ -13,6 +14,8 @@ export interface ILocation extends Document, SoftDeleteMethods {
   slug: string;
   description: string;
   district: string;
+  /** Categorie del luogo (registro chiuso, constants/locationTags.ts): servono al bot per rispondere senza inventare. */
+  tags: LocationTag[];
   parentLocation?: Schema.Types.ObjectId;
   imageUrl?: string; // URL CDN (upload manuale via pannello gestione)
   image?: string;    // Filename statico in apps/game/public/artifacts/locations/ (es. "london.png"),
@@ -165,6 +168,10 @@ const LocationSchema = new Schema<ILocation>({
     type: String,
     required: true,
     trim: true
+  },
+  tags: {
+    type: [{ type: String, enum: LOCATION_TAGS }],
+    default: []
   },
   parentLocation: {
     type: Schema.Types.ObjectId,
@@ -451,6 +458,7 @@ const LocationSchema = new Schema<ILocation>({
 // Indexes
 LocationSchema.index({ name: 1 });
 LocationSchema.index({ district: 1 });
+LocationSchema.index({ tags: 1 });
 LocationSchema.index({ parentLocation: 1 });
 LocationSchema.index({ locationLevel: 1, sortOrder: 1 });
 LocationSchema.index({ 'settings.visible': 1, 'settings.private': 1 });

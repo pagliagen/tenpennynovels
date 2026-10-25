@@ -21,6 +21,8 @@ interface LocationRow {
   description: string;
   parentLocationName: string;
   filename: string;
+  /** Tag del registro chiuso (backend: core/location/constants/locationTags.ts), separati da virgola. */
+  tags?: string;
   // "prompt" esiste in locations.csv (prompt AI per local-tools/imagegen) ma NON
   // va a DB: volutamente non incluso in questa interfaccia/mapping.
 }
@@ -90,6 +92,10 @@ function slugify(text: string): string {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
+}
+
+export function parseTags(raw: string | undefined): string[] {
+  return (raw ?? '').split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
 }
 
 function shouldHaveShop(name: string): boolean {
@@ -175,6 +181,7 @@ async function seedLocations() {
           district: resolvedLevel === 'root' ? row.name : (parentDoc?.district || parentDoc?.name || ''),
           parentLocation: parentDoc?._id || undefined,
           locationLevel: resolvedLevel,
+          tags: parseTags(row.tags),
           positions: DEFAULT_POSITIONS,
           mapPosition: MAP_POSITIONS[row.name],
           sortOrder: sortOrder++,
