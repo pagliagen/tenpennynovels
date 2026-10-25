@@ -154,6 +154,25 @@ const authRateLimitGateway = rateLimit({
   },
 });
 
+// --- /bot-api — il servizio AI esterno (60 req/min per IP) ----------------
+// Una risposta del bot fa 3-4 chiamate (aspetto, meteo, conoscenza, messaggio): il backend ha il suo limite, questo è lo scudo prima.
+const botApiRateLimitGateway = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => !config.isProduction,
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      error: 'Troppe richieste. Riprova più tardi.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      retryAfter: 60,
+      timestamp: new Date().toISOString(),
+    });
+  },
+});
+
 // --- /game — fallback IP (300 req/min) ---------------------------------
 // Il modulo game non ha rate limit propri: questo è l'unico scudo attuale.
 const gameRateLimitGateway = rateLimit({
@@ -189,6 +208,8 @@ const services: Record<string, ServiceConfig> = {
   forum:     { target: `${BACKEND}/forum`,      timeout: config.proxy.defaultTimeout },
   documents: { target: `${BACKEND}/documents`,  timeout: config.proxy.documentsTimeout },
   admin:     { target: `${BACKEND}/admin`,      timeout: config.proxy.defaultTimeout },
+  // API a cui il servizio AI esterno risponde (chat dei bot): autenticata dal backend con un token per evento.
+  'bot-api': { target: `${BACKEND}/bot-api`,    timeout: config.proxy.defaultTimeout },
 };
 
 function createServiceProxy(name: string, svc: ServiceConfig) {
@@ -353,6 +374,7 @@ app.use('/documents', documentsRateLimitUnauth, documentsRateLimitAuth);
 // Rate limiting di fallback su /auth e /game
 app.use('/auth', authRateLimitGateway);
 app.use('/game', gameRateLimitGateway);
+app.use('/bot-api', botApiRateLimitGateway);
 
 // Route proxy verso il backend
 for (const [name, svc] of Object.entries(services)) {

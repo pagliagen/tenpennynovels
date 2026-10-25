@@ -74,9 +74,9 @@ flowchart TD
     Unified --> Redis
     Unified --> Qdrant
     Unified --> Embeddings
-    Redis -->|"bot:chat:message"| BotService
+    Unified -->|"evento + indirizzo e token di risposta (gateway AI)"| BotService
     BotService --> Ollama
-    BotService -->|"POST /internal/bot-chat"| Unified
+    BotService -->|"POST /bot-api (token per evento)"| Unified
     BotService -->|"umore e rapporti (db botservice)"| MongoDB
     Embeddings --> Qdrant
     Embeddings --> ES
@@ -108,7 +108,7 @@ flowchart TD
 | bot-service | — | Risponde con un LLM ai messaggi di chat di location configurate; si aggancia al Redis del gioco |
 | Ollama | 11434 | LLM inference locale (default `gemma4:12b`) |
 
-> Il bot-service è **separato** dal gioco: ascolta un evento Redis e risponde tramite un endpoint interno del backend (`POST /internal/bot-chat/messages`, protetto da `BOT_SERVICE_SECRET`, non esposto dal gateway). Il suo stato (umore dei bot, rapporti coi giocatori) sta in un database Mongo separato. Vedi [bot-service/README.md](bot-service/README.md).
+> Il bot-service è **separato** dal gioco (oggi il Mac dello sviluppatore, domani un server AI dedicato): il gioco gli **spinge** ogni messaggio pubblico di una location con un bot, insieme all'indirizzo e a un token con cui rispondere; il servizio decide se e cosa rispondere e risponde su `POST /bot-api/messages`. Parte solo con la configurazione completa (`ENABLE_BOT_CHAT`, `BOT_SERVICE_SECRET`, `BOT_REPLY_BASE_URL`, gateway AI); con il servizio spento il bot, semplicemente, non esiste. Il suo stato (umore dei bot, rapporti coi giocatori) sta in un database Mongo separato. Vedi [bot-service/README.md](bot-service/README.md).
 
 ## Quick Start
 
@@ -288,7 +288,7 @@ See [deploy/](deploy/) and [docs/06-operations/deployment-guide.md](docs/06-oper
 - Granular admin permissions with per-character overrides
 - Rate limiting and input sanitization
 - HTTPS enforcement in production
-- **Bot service**: l'endpoint interno `/internal/bot-chat` è disattivato (404) senza `BOT_SERVICE_SECRET`, richiede il secret con confronto a tempo costante e accetta solo personaggi dell'utente di sistema dei bot
+- **Bot service**: l'API di ritorno `/bot-api` è disattivata (404) senza la configurazione completa, richiede un token firmato per evento (valido per UN bot in UNA location, 15 minuti, confronto a tempo costante) e accetta solo personaggi approvati dell'utente di sistema dei bot
 
 ## License
 

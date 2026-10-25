@@ -445,8 +445,8 @@ ENABLE_BOT_CHARACTERS=false
 # Ambiente dei bot creati e mostrati dal tab (`local`, `production`...). NON serve impostarla: di default è `production`
 # con NODE_ENV=production e `local` altrimenti (fail-closed). Serve solo per distinguere un altro ambiente (es. staging).
 # APP_ENVIRONMENT=
-# bot-service (bot-service/.env): carica SOLO i bot di questo ambiente. Default `local`.
-# BOT_SERVICE_ENVIRONMENT=local
+# (bot-service/.env) ALLOWED_REPLY_ORIGINS=http://localhost:3001,https://api.tenpennynovels.com — gli unici indirizzi a cui il servizio
+# invia un token di risposta; vuota = nessun evento accettato
 
 # Dove sta il gateway AI (ai-gateway/): dominio ngrok oggi, dominio del server AI dedicato domani.
 # In Docker locale: http://host.docker.internal:8787 (senza ngrok).
@@ -481,8 +481,17 @@ Le variabili del gateway (`GATEWAY_SECRET`, `PORT`, `BOT_SERVICE_URL`…) sono i
 Variabili lette da `unified-backend` (in Docker: `docker-compose.yml`, valori dal `.env` della root):
 
 ```bash
-# Abilita POST /internal/bot-chat/messages. Vuoto = endpoint disattivato (404).
+# Chiave con cui il backend FIRMA i token di risposta dei bot (HMAC-SHA256), almeno 32 caratteri. Sta solo sul server: il
+# servizio AI riceve un token per evento e non la possiede. Senza (o con la chat spenta) /bot-api risponde 404.
 BOT_SERVICE_SECRET=<openssl rand -hex 32>
+
+# Chat dei bot con servizio AI esterno. L'evento parte SOLO con tutto questo al suo posto (altrimenti non parte niente e il
+# backend dice cosa manca, una volta, all'avvio): ENABLE_BOT_CHAT="true" (valore esatto), BOT_SERVICE_SECRET >= 32 caratteri,
+# BOT_REPLY_BASE_URL, AI_GATEWAY_URL e AI_GATEWAY_SECRET. Più, a runtime, il gateway deve dichiarare il servizio `character-bot`.
+ENABLE_BOT_CHAT=false
+# Indirizzo PUBBLICO di questo backend a cui il servizio AI risponde: https://api.tenpennynovels.com in produzione,
+# http://localhost:3001 in locale (http è lecito solo su localhost).
+BOT_REPLY_BASE_URL=
 
 # Utente proprietario dei personaggi bot (id fisso seedato da UserSeeder)
 SYSTEM_BOT_USER_ID=000000000000000000000001

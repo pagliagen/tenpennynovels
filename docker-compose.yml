@@ -190,8 +190,13 @@ services:
       # UserSeeder — non è un segreto, può stare in chiaro col default qui.
       SYSTEM_BOT_USER_ID: ${SYSTEM_BOT_USER_ID:-000000000000000000000001}
 
-      # Servizio bot locale (bot-service/). Vuoto = endpoint /internal/bot-chat disattivato (404).
+      # Chiave con cui il backend firma i token di risposta dei bot (>= 32 caratteri). Vuoto = /bot-api disattivata (404).
       BOT_SERVICE_SECRET: ${BOT_SERVICE_SECRET:-}
+      # Chat dei bot con servizio AI esterno (il Mac): l'evento parte SOLO con tutto questo al suo posto —
+      # ENABLE_BOT_CHAT=true, BOT_SERVICE_SECRET (>= 32 caratteri), BOT_REPLY_BASE_URL, AI_GATEWAY_URL e AI_GATEWAY_SECRET.
+      ENABLE_BOT_CHAT: ${ENABLE_BOT_CHAT:-false}
+      # L'indirizzo PUBBLICO di questo backend a cui il servizio AI risponde (https, salvo localhost).
+      BOT_REPLY_BASE_URL: ${BOT_REPLY_BASE_URL:-}
 
       # Funzioni editoriali con il MODELLO (bozze di descrizioni, dicerie). ENABLE_IA_EDITORIAL=true dice che
       # l'AI è abilitata; è DAVVERO attiva solo se il gateway AI (ai-gateway/) risponde e dichiara il servizio

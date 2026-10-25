@@ -29,9 +29,15 @@ export class SystemConfigController {
       const editorialAiEnabled = await FeatureFlagService.isEnabled('editorialAi');
       // Tab «Bot» (strumento da sviluppo): ENABLE_BOT_CHARACTERS + character-bot raggiungibile. Spento in produzione.
       const botAdminEnabled = await FeatureFlagService.isEnabled('botAdmin');
+      // Chat dei bot con servizio AI esterno: configurazione completa E servizio raggiungibile. `missing` elenca i NOMI
+      // delle variabili che mancano (mai i valori), per dire all'admin perché non parte.
+      const { botChatConfigStatus } = await import('@features/botChat/api');
+      const { aiGateway } = await import('@core/ai');
+      const chat = botChatConfigStatus();
+      const botChatEnabled = chat.complete && (await aiGateway.isAvailable('character-bot'));
 
       res.json(successResponse(
-        { keeperQaEnabled, editorialAiEnabled, botAdminEnabled },
+        { keeperQaEnabled, editorialAiEnabled, botAdminEnabled, botChatEnabled, botChatMissing: chat.missing },
         undefined,
         getRequestId(req)
       ));
@@ -41,7 +47,7 @@ export class SystemConfigController {
       });
       // Fail-closed: se qualcosa va storto, le feature restano nascoste
       res.json(successResponse(
-        { keeperQaEnabled: false, editorialAiEnabled: false, botAdminEnabled: false },
+        { keeperQaEnabled: false, editorialAiEnabled: false, botAdminEnabled: false, botChatEnabled: false, botChatMissing: [] },
         undefined,
         getRequestId(req)
       ));

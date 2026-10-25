@@ -2,6 +2,8 @@
 
 L'**ingresso dei servizi AI**: l'unico punto raggiunto da fuori. Autentica, limita e smista le chiamate verso
 `bot-service` (servizi `editorial` e `character-bot`). Non chiama mai Ollama e non ha accesso a Mongo né a Redis.
+Il `character-bot` si raggiunge con `POST /v1/character-bot/event` (il gioco spinge i messaggi; vedi `bot-service/README.md`),
+più `list`, `design` e `register` per il gestionale.
 
 ```
 server di gioco ──HTTPS──▶ ai-gateway (:8787) ──loopback──▶ bot-service (:8788) ──▶ Ollama
@@ -66,15 +68,13 @@ gioco (`AI_GATEWAY_SECRET`), poi riavvia i due. Fino ad allora l'AI risulta spen
 ## Trasloco sul server AI dedicato (checklist)
 
 1. Installa Ollama e i modelli, Node (`.nvmrc`) e PM2.
-2. Copia `ai-gateway/` e `bot-service/` (con `npm install`, `npm run build`); `bot-service` con `ENABLED_SERVICES=editorial`
-   (il `character-bot` richiede prima di decidere come collegare Redis, Mongo e il backend di gioco fra due server: vedi sotto).
+2. Copia `ai-gateway/` e `bot-service/` (con `npm install`, `npm run build`); `bot-service` con `ENABLED_SERVICES=editorial,character-bot`,
+   Mongo `botservice` locale al servizio e `ALLOWED_REPLY_ORIGINS` con l'indirizzo pubblico del gioco (nient'altro: nessun segreto di gioco).
 3. nginx/Caddy davanti al gateway con TLS e **allowlist IP del server di gioco** nel firewall.
 4. Sul server di gioco: `AI_GATEWAY_URL=https://ai.<dominio>`; ngrok non serve più.
 5. Opzionale: spostare qui Bibliotecario e riassunti di scena (handler nuovi nel registro, con fallback sul VPS di gioco).
 
-**Attenzione al `character-bot`**: oggi parla con Redis (pub/sub), Mongo `botservice` e gli endpoint interni del backend. Su un
-server diverso dal gioco quei collegamenti non vanno esposti così (rete privata/VPN, Redis con TLS e password, oppure far
-spingere gli eventi dal backend al gateway su `/v1/character-bot/events`). L'`editorial` non ha questo problema.
+**Il `character-bot` non richiede rete privata:** il gioco gli spinge gli eventi (azione `event`, con la storia e l'indirizzo + token per rispondere) e lui risponde su `/bot-api` del gioco con quel token. Non servono Redis, Mongo di gioco né VPN; il servizio spento = il bot non esiste.
 
 ## Sviluppo
 

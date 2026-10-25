@@ -46,6 +46,8 @@ export interface BotAdminDeps {
   nameInUse: (name: string) => Promise<boolean>;
   createCharacter: (fields: BotDraft['character']) => Promise<string>;
   deleteCharacter: (characterId: string) => Promise<void>;
+  /** Dopo la creazione di un bot (es. per rileggere subito le location con bot). */
+  afterCreate?: () => void;
 }
 
 /** Una scheda completa dura da 15 s a più di un minuto (fino a 2 tentativi): si aspetta, ma non all'infinito. */
@@ -175,6 +177,7 @@ export async function createBot(deps: BotAdminDeps, input: { locationId: string;
   const characterId = await deps.createCharacter(draft.character);
   try {
     const registered = (await deps.call('register', { locationId: input.locationId, environment: deps.environment, sheet: botSheet(draft, characterId) })) as { file?: unknown; reloaded?: unknown };
+    deps.afterCreate?.();
     return { characterId, environment: deps.environment, file: typeof registered.file === 'string' ? registered.file : '', reloaded: registered.reloaded !== false };
   } catch (error: unknown) {
     await deps.deleteCharacter(characterId).catch(() => undefined);

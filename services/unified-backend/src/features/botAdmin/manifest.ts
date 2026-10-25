@@ -12,12 +12,13 @@ import adminRoutes from './routes/admin';
  * route rispondono 404.
  *
  * dependsOn: ['editorial'] — `findAnachronisms` per controllare il testo scritto dal modello (`editorial/api.ts`).
+ * dependsOn: ['botChat'] — dopo la creazione di un bot l'elenco delle location con bot si rilegge subito (`botChat/api.ts`).
  */
 export const botAdmin: FeatureManifest = {
   key: 'botAdmin',
   title: 'Bot personaggio (gestionale)',
   description: 'Elenco e generazione dei bot dal gestionale (solo ambienti con ENABLE_BOT_CHARACTERS=true)',
-  dependsOn: ['editorial'],
+  dependsOn: ['editorial', 'botChat'],
   flag: { source: 'env', envVar: 'ENABLE_BOT_CHARACTERS', label: 'Bot personaggio (ENABLE_BOT_CHARACTERS)', requiresAiService: 'character-bot' },
   routes: [{ scope: 'admin', path: '/bots', router: adminRoutes }],
 };

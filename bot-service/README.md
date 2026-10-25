@@ -5,7 +5,7 @@ Non va in produzione (escluso dal deploy). Su un eventuale server AI dedicato gi
 
 | Servizio | Cartella | Cosa fa | Come è raggiunto |
 |---|---|---|---|
-| **`character-bot`** | `src/character-bot/` | il bot personaggio: risponde in chat con un LLM (Ollama, default `gemma4:12b`) | Redis pub/sub + endpoint interni del backend (nessuna rotta HTTP) |
+| **`character-bot`** | `src/character-bot/` | il bot personaggio: risponde in chat con un LLM (Ollama, default `gemma4:12b`) | `ai-gateway` → HTTP interno (`event`, più `list`/`design`/`register` per il gestionale) |
 | **`editorial`** | `src/editorial/` | bozze di testo per il gestionale (`POST /v1/editorial/generate`) | `ai-gateway` → HTTP interno |
 
 `src/shared/` ha ciò che i servizi condividono (logger, client Ollama, config del launcher), `src/http/` il server interno.
@@ -15,11 +15,11 @@ I servizi **non sanno l'uno dell'altro**.
 
 `ENABLED_SERVICES=editorial,character-bot` (nel `.env`; **vuoto = nessuno**, di proposito: non accendere per svista un
 servizio sul server sbagliato). Il launcher (`src/index.ts`) avvia solo quelli elencati. La configurazione di un servizio
-(Redis, Mongo, segreto…) si valida **solo se è abilitato**: un server solo-editoriale non richiede quei segreti.
+(Mongo, origin ammessi…) si valida **solo se è abilitato**: un server solo-editoriale non richiede quei segreti.
 
 `GET http://127.0.0.1:8788/health` (solo loopback) restituisce i servizi **abilitati e sani**:
 `{"services":["editorial","character-bot"],"down":[]}` (200; 503 se nessuno è sano, con il motivo in `down`).
-Sano = `editorial`: Ollama risponde e ha il modello; `character-bot`: Redis, Mongo e Ollama rispondono.
+Sano = `editorial`: Ollama risponde e ha il modello; `character-bot`: Mongo e Ollama rispondono.
 Il gioco decide se l'AI è attiva proprio da questa lista, passando da `ai-gateway`.
 
 ### Editorial
@@ -31,14 +31,23 @@ Solo contenuti già pubblici devono arrivare qui (vedi `ai-gateway/README.md`).
 
 ### Character-bot
 
+Il servizio è **agnostico**: non conosce ambienti, indirizzi né segreti di gioco, non ha Redis. Lo chiama il gioco.
+
 ```
-unified-backend ──publish──▶ Redis `bot:chat:message`
-                                  │
-                           character-bot
-              filtra → debounce → cooldown → coda → Ollama
-                                  │
-unified-backend ◀── POST /internal/bot-chat/messages (secret) ──┘
+Chat ─▶ Redis `bot:chat:message` (solo con la config completa) ─▶ BotChatForwarder (backend)
+   ─▶ ai-gateway/ngrok ─▶ character-bot  POST /v1/character-bot/event
+        { environment, locationId, event, history, reply: { baseUrl, token } }   → 202
+   character-bot: filtra → debounce → cooldown → coda → Ollama
+   ─▶ POST {reply.baseUrl}/bot-api/messages   Authorization: Bearer {reply.token}   (entra nel flusso normale di gioco)
 ```
+
+- **`reply` arriva con l'evento**: l'indirizzo a cui rispondere e un token firmato dal gioco, per UN bot in UNA location, 15 minuti.
+  Il servizio non possiede il segreto di gioco. **Non si fida dell'indirizzo**: invia il token solo a un origin di
+  `ALLOWED_REPLY_ORIGINS` (e `http` solo su localhost); lista vuota = nessun evento accettato.
+- **Niente storia propria**: la storia (ultimi 12 messaggi pubblici) la manda il gioco con l'evento, quindi non si perde nulla
+  se il servizio era spento. Il servizio spento = il bot non esiste, senza errori per i giocatori.
+- **Più ambienti insieme**: i bot sono scelti per `(environment, locationId)`; le location hanno gli stessi id ovunque.
+- `event` risponde subito: 202 (ci pensa), 200 `accepted:false` (`no-bot`, `not-triggered`, `duplicate`), 400 (richiesta o indirizzo non ammessi).
 
 ## Cosa decide di rispondere
 
@@ -52,12 +61,14 @@ risponde a un bot (anche a un altro bot configurato). Una raffica di messaggi pr
 1. **Personaggio bot** (una tantum, per ogni bot): un `Character` con
    `userId = SYSTEM_BOT_USER_ID` (default `000000000000000000000001`, creato da
    `UserSeeder`) e `playerStatus: 'approved'`. Il backend rifiuta altri personaggi.
-2. **Backend**: imposta `BOT_SERVICE_SECRET` nel `.env` della root (letto da `docker-compose.yml`; in dev senza Docker, in `services/unified-backend/.env`)
-   (`openssl rand -hex 32`) e ricostruisci il container (`stop`, `build`, `up -d`). Senza, `/internal/bot-chat` risponde 404.
+2. **Backend**: nel `.env` della root (letto da `docker-compose.yml`) servono, **tutte**: `ENABLE_BOT_CHAT=true`, `BOT_SERVICE_SECRET`
+   (`openssl rand -hex 32`, firma i token), `BOT_REPLY_BASE_URL` (`http://localhost:3001` in locale; in produzione `https://api…`),
+   `AI_GATEWAY_URL` e `AI_GATEWAY_SECRET`. Con un pezzo mancante **non parte niente** e il backend lo dice una volta nel log all'avvio.
+   Ricostruisci il container (`stop`, `build`, `up -d`).
 3. **Servizio**:
    ```bash
    cd bot-service && nvm use && npm install
-   cp .env.example .env                          # ENABLED_SERVICES, stesso BOT_SERVICE_SECRET, MONGODB_URI
+   cp .env.example .env                          # ENABLED_SERVICES, MONGODB_URI, ALLOWED_REPLY_ORIGINS
    cp bots/barnaby-finch.example.json bots/barnaby-finch.json   # characterId, persona, scheda
    cp mapping.example.json mapping.json          # locationId → botId
    ollama pull gemma4:12b
@@ -80,9 +91,9 @@ Con `ENABLED_SERVICES=character-bot`, `ENABLE_BOT_CHARACTERS=true` sul backend l
 psicologia) da correggere → «Crea bot». Il character-bot espone tre azioni (`POST /v1/character-bot/<azione>`, via gateway):
 `list`, `design` (non salva; `src/character-bot/designer.ts`) e `register` (scrive `bots/<slug>.json` + `mapping.json`, mai
 sovrascrive, una location = un bot) e poi si ricarica da solo. Parti anche da zero: senza `bots/` né `mapping.json` il servizio
-parte lo stesso. **Ogni bot ha un `environment`** (`local`, `production`...) in scheda e mapping: il servizio carica solo quelli del
-suo ambiente (`BOT_SERVICE_ENVIRONMENT`, default `local`), perché il personaggio esiste solo nel database di quell'ambiente e le
-location hanno gli stessi id ovunque. Le schede senza etichetta sono `local`. Relazioni e atteggiamenti non si generano: si scrivono a mano nel file (sezione sotto).
+parte lo stesso. **Ogni bot ha un `environment`** (`local`, `production`...) in scheda e mapping: il personaggio esiste solo nel database di quell'ambiente
+e le location hanno gli stessi id ovunque. Il servizio li carica **tutti** e sceglie con l'`environment` dell'evento; il gestionale
+mostra solo quelli del proprio ambiente. Le schede senza etichetta sono `local`. Relazioni e atteggiamenti non si generano: si scrivono a mano nel file (sezione sotto).
 
 ## Carattere, umore e rapporto
 
@@ -103,14 +114,14 @@ al cambio di interlocutore, ma l'umore di fondo ha memoria.
 
 Solo la scheda **pubblica**: età apparente (mai quella reale, detta a occhio: «una ventina d'anni»),
 genere, descrizione fisica/pubblica, altezza, capelli, occhi, segni visibili. Li dà il backend con
-`GET /internal/bot-chat/characters/:id` (stesso secret, whitelist esplicita in
+`GET /bot-api/characters/:id` (stesso token, whitelist esplicita in
 `features/botChat/utils/publicAppearance.ts`; `age`, `birthDate`, campi master non escono mai).
 Il bot la scarica una volta all'ora per giocatore. Il **nome** no: finché il giocatore non si
 presenta è «Straniero». Se il genere non è noto, il bot evita aggettivi di genere.
 
 ### Il meteo
 
-Il bot vede **lo stesso meteo della sidebar del game**: `GET /internal/bot-chat/environment` costruisce il
+Il bot vede **lo stesso meteo della sidebar del game**: `GET /bot-api/environment` costruisce il
 testo da `getWeather()` (la stessa funzione e la stessa cache di `/game/environment`), in
 `features/botChat/utils/botEnvironment.ts`. Le condizioni sono un `Record<WeatherCondition, …>`: se in
 gioco ne compare una nuova (es. neve) il backend non compila finché non si dice come il bot la descrive.
@@ -124,7 +135,7 @@ Le parole di meteo non presenti in prompt, in chat o nella persona restano «inv
 Quando un giocatore chiede dove trovare qualcosa («dove dormo?», «c'è un parco?»), di un luogo preciso o
 di storia e leggende, l'analisi del messaggio (`infoRequest`, stessa chiamata dell'appraisal) lo riconosce
 con tag da **elenco chiuso** (`core/location/constants/locationTags.ts` nel backend, modificabili dal
-gestionale nella modale della location) e il bot interroga il backend: `POST /internal/bot-chat/knowledge`.
+gestionale nella modale della location) e il bot interroga il backend: `POST /bot-api/knowledge`.
 
 - **Luoghi**: solo location foglia, visibili e **non private** (un luogo privato non esiste per il bot,
   come per un giocatore senza accesso), ordinate per vicinanza a dove lavora il bot: `here` (stesso
@@ -171,7 +182,8 @@ Il database (`botservice`) è separato da quello del game, sullo stesso server M
 ## Provarlo senza il game
 
 `npm run simulate -- <locationId> "*entra* Buonasera, locanda aperta?" John`
-pubblica un evento finto; la risposta viene poi postata al backend vero.
+chiama il servizio come farebbe il gioco (azione `event`, con un token di prova firmato con `BOT_SERVICE_SECRET` del `.env`); la risposta viene poi
+postata al backend vero su `/bot-api` (serve `ENABLE_BOT_CHAT=true` lì, e `SIMULATE_REPLY_URL` se non è `http://localhost:3001`).
 
 ## Come genera una risposta (pipeline a step)
 

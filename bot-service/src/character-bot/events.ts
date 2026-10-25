@@ -1,8 +1,8 @@
 import { z } from 'zod';
+import { environmentSchema } from './config';
+import { replySchema } from './reply';
 
-export const BOT_CHAT_CHANNEL = 'bot:chat:message';
-
-/** Payload pubblicato da unified-backend (shared/services/BotChatEventPublisher.ts). */
+/** L'evento del gioco (pubblicato su Redis dal backend, `BotChatEventPublisher`) che arriva con ogni chiamata. */
 export const chatEventSchema = z.object({
   eventId: z.string(),
   chatId: z.string(),
@@ -20,11 +20,22 @@ export const chatEventSchema = z.object({
 
 export type ChatEvent = z.infer<typeof chatEventSchema>;
 
-export function parseChatEvent(raw: string): ChatEvent | null {
-  try {
-    const result = chatEventSchema.safeParse(JSON.parse(raw));
-    return result.success ? result.data : null;
-  } catch {
-    return null;
-  }
-}
+/** Una battuta della storia (i messaggi pubblici recenti della location, già scelti dal gioco). */
+export const historyLineSchema = z.object({
+  characterId: z.string(),
+  characterName: z.string(),
+  content: z.string().max(5000),
+  position: z.string().optional(),
+  positionDescription: z.string().optional(),
+});
+
+/** `POST /v1/character-bot/event`: chiamata dal gioco, attraverso il gateway. */
+export const eventRequestSchema = z.object({
+  environment: environmentSchema,
+  locationId: z.string().min(1),
+  event: chatEventSchema,
+  history: z.array(historyLineSchema).max(50),
+  reply: replySchema,
+});
+
+export type EventRequest = z.infer<typeof eventRequestSchema>;
