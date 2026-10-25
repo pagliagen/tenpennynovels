@@ -88,6 +88,16 @@ export const appConfig = {
     },
   },
 
+  // Gateway dei servizi AI (ai-gateway/): oggi un tunnel ngrok verso la macchina di sviluppo, domani un
+  // server AI dedicato. Con ENABLE_IA_EDITORIAL=true l'AI editoriale è attiva solo se il gateway risponde.
+  ai: {
+    gatewayUrl: process.env.AI_GATEWAY_URL,
+    gatewaySecret: process.env.AI_GATEWAY_SECRET,
+    // La sonda è pigra (mai da un timer): la cache sta fra le chiamate. Valori alti perché il tunnel ha una quota.
+    probeOkTtlMs: Number(process.env.AI_GATEWAY_PROBE_OK_TTL_MS) || 60_000,
+    probeFailTtlMs: Number(process.env.AI_GATEWAY_PROBE_FAIL_TTL_MS) || 10_000,
+  },
+
   cdn: {
     storagePath: process.env.CDN_STORAGE_PATH || '/cdn-storage',
     baseUrl: isProduction ? 'https://cdn.tenpennynovels.com' : 'http://localhost:8000/cdn',

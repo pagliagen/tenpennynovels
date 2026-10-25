@@ -72,6 +72,11 @@ export interface EnvFeatureFlagSpec {
   source: 'env';
   envVar: string;
   label: string;
+  /**
+   * Nome di un servizio AI del gateway (`core/ai`): la feature è attiva solo se la variabile vale
+   * `'true'` E il gateway dichiara quel servizio attivo e sano. Senza, basta la variabile.
+   */
+  requiresAiService?: string;
 }
 
 export type FeatureFlagSpec = RuntimeFeatureFlagSpec | EnvFeatureFlagSpec;

@@ -88,10 +88,6 @@ services:
       # host.docker.internal risolve all'host da dentro il container.
       OLLAMA_URL: http://host.docker.internal:11434
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:8b}
-      # Editoriale con AI: senza 'true' le route AI (/editorial/generate) rispondono 404. Modello opzionale, più capace di quello del
-      # Bibliotecario (la scrittura editoriale non ha vincoli di tempo: un 9-12b va bene in locale).
-      ENABLE_IA_EDITORIAL: ${ENABLE_IA_EDITORIAL:-false}
-      OLLAMA_EDITORIAL_MODEL: ${OLLAMA_EDITORIAL_MODEL:-}
     ports:
       - "5001:5001"  # HTTP API for embeddings
     networks:
@@ -197,10 +193,14 @@ services:
       # Servizio bot locale (bot-service/). Vuoto = endpoint /internal/bot-chat disattivato (404).
       BOT_SERVICE_SECRET: ${BOT_SERVICE_SECRET:-}
 
-      # Funzioni editoriali con il MODELLO (bozze di descrizioni, dicerie). Solo 'true' le accende; in
-      # produzione la variabile non c'è. La revisione di canone non dipende da qui. Va impostata anche su
-      # embeddings-worker (difesa in profondità).
+      # Funzioni editoriali con il MODELLO (bozze di descrizioni, dicerie). ENABLE_IA_EDITORIAL=true dice che
+      # l'AI è abilitata; è DAVVERO attiva solo se il gateway AI (ai-gateway/) risponde e dichiara il servizio
+      # `editorial`. La revisione di canone non dipende da qui.
       ENABLE_IA_EDITORIAL: ${ENABLE_IA_EDITORIAL:-false}
+      # Gateway AI: in Docker locale l'host è host.docker.internal (senza ngrok); in produzione il dominio
+      # ngrok (oggi) o del server AI dedicato (domani). Il segreto sta solo nell'env, mai nel repo.
+      AI_GATEWAY_URL: ${AI_GATEWAY_URL:-}
+      AI_GATEWAY_SECRET: ${AI_GATEWAY_SECRET:-}
 
       # Frontend URLs
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4000}

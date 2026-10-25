@@ -19,11 +19,13 @@ export const editorial: FeatureManifest = {
 };
 
 /**
- * Funzioni editoriali che usano il modello (bozze di descrizioni, dicerie): esistono SOLO se
- * l'ambiente le accende con `ENABLE_IA_EDITORIAL=true`. Senza (produzione, default) le loro route
- * rispondono 404, `GET /admin/system/feature-flags` dà `editorialAiEnabled: false` e il gestionale
- * non mostra i pulsanti AI; il worker rifiuta le richieste. Non è commutabile dal gestionale: serve
- * un riavvio. I suggerimenti non salvano mai da soli.
+ * Funzioni editoriali che usano il modello (bozze di descrizioni, dicerie). Sono attive SOLO se
+ * `ENABLE_IA_EDITORIAL=true` **e** il gateway AI (`core/ai`, `AI_GATEWAY_URL`) dichiara attivo e sano
+ * il servizio `editorial`: la variabile dice «l'AI è abilitata», il gateway dice «c'è davvero». Con la
+ * variabile spenta il gateway non viene nemmeno interrogato; con il gateway giù le route AI rispondono
+ * 404, `GET /admin/system/feature-flags` dà `editorialAiEnabled: false` e il gestionale non mostra i
+ * pulsanti AI. Non è commutabile dal gestionale: la variabile richiede un riavvio, il gateway no.
+ * I suggerimenti non salvano mai da soli.
  *
  * Nessuna route ancora: arrivano con le funzioni AI. Il manifest esiste già per tenere il flag nel
  * sistema feature (stesso schema di `fineSessione` / `fineSessioneAi`).
@@ -35,5 +37,5 @@ export const editorialAi: FeatureManifest = {
   // Come `editorial`: l'ambientazione pubblica da cui ancorare le bozze. Il checker di confini legge un solo
   // dependsOn per directory (l'ultimo): vanno tenuti uguali.
   dependsOn: ['documenti'],
-  flag: { source: 'env', envVar: 'ENABLE_IA_EDITORIAL', label: 'Editoriale con AI (ENABLE_IA_EDITORIAL)' },
+  flag: { source: 'env', envVar: 'ENABLE_IA_EDITORIAL', label: 'Editoriale con AI (ENABLE_IA_EDITORIAL)', requiresAiService: 'editorial' },
 };
