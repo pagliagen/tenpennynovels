@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'fs';
 import path from 'path';
-import { botDefSchema, loadMapping, mappingSchema } from './config';
+import { botDefSchema, DEFAULT_ENVIRONMENT, environmentSchema, loadMapping, mappingSchema } from './config';
 
 /**
  * I file di un bot: `bots/<nome>.json` (la scheda) e una riga in `mapping.json` (location → bot).
@@ -19,6 +19,7 @@ export function botPathsFromEnv(env: NodeJS.ProcessEnv = process.env): BotPaths 
 export interface BotListing {
   name: string;
   characterId: string;
+  environment: string;
   /** null = scheda senza location (non mappata). */
   locationId: string | null;
   file: string;
@@ -52,7 +53,7 @@ export function listBots(paths: BotPaths): BotListing[] {
   const locationOf = new Map(mapping.map((m) => [m.botId, m.locationId]));
   return botFiles(paths.botsDir).map((file) => {
     const def = botDefSchema.parse(JSON.parse(readFileSync(path.join(paths.botsDir, file), 'utf8')));
-    return { name: def.name, characterId: def.characterId, locationId: locationOf.get(def.characterId) ?? null, file };
+    return { name: def.name, characterId: def.characterId, environment: def.environment, locationId: locationOf.get(def.characterId) ?? null, file };
   });
 }
 
@@ -65,6 +66,8 @@ function writeAtomic(file: string, content: string): void {
 
 export interface RegisterInput {
   locationId: string;
+  /** Ambiente del bot (default `local`): la scheda e la riga di mapping lo portano. */
+  environment?: string;
   /** La scheda (name, characterId, persona, psyche, ...): validata con `botDefSchema`. */
   sheet: unknown;
 }
@@ -75,20 +78,23 @@ export interface RegisterInput {
  */
 export function registerBot(paths: BotPaths, input: RegisterInput): { file: string; characterId: string } {
   if (!OBJECT_ID.test(input.locationId)) throw new RegisterError('invalid', 'locationId non valido');
-  const parsed = botDefSchema.safeParse(input.sheet);
+  const environment = input.environment ?? DEFAULT_ENVIRONMENT;
+  if (!environmentSchema.safeParse(environment).success) throw new RegisterError('invalid', 'ambiente non valido');
+  const parsed = botDefSchema.safeParse({ ...(input.sheet as Record<string, unknown> | null), environment });
   if (!parsed.success) throw new RegisterError('invalid', `Scheda non valida: ${parsed.error.issues.slice(0, 3).map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`);
   const def = parsed.data;
   if (!OBJECT_ID.test(def.characterId)) throw new RegisterError('invalid', 'characterId non valido');
 
   const slug = botSlug(def.name);
   if (!slug) throw new RegisterError('invalid', 'Il nome non produce un nome file valido');
-  const file = `${slug}.json`;
+  // Due ambienti possono avere un bot con lo stesso nome: fuori da `local` il nome file porta l'ambiente.
+  const file = environment === DEFAULT_ENVIRONMENT ? `${slug}.json` : `${slug}-${environment}.json`;
   // Lo slug è solo [a-z0-9-]: il file non può uscire da `botsDir`.
   const target = path.join(paths.botsDir, file);
   if (existsSync(target)) throw new RegisterError('file-exists', `Esiste già una scheda «${file}»`);
 
   const mapping = loadMapping(paths.mappingFile);
-  if (mapping.some((m) => m.locationId === input.locationId)) throw new RegisterError('location-taken', 'Questa location ha già un bot');
+  if (mapping.some((m) => m.locationId === input.locationId && m.environment === environment)) throw new RegisterError('location-taken', 'Questa location ha già un bot');
   if (mapping.some((m) => m.botId === def.characterId) || listBots(paths).some((b) => b.characterId === def.characterId)) {
     throw new RegisterError('character-taken', 'Questo personaggio è già un bot');
   }
@@ -96,7 +102,7 @@ export function registerBot(paths: BotPaths, input: RegisterInput): { file: stri
   mkdirSync(paths.botsDir, { recursive: true });
   writeAtomic(target, `${JSON.stringify(def, null, 2)}\n`);
   try {
-    const next = mappingSchema.parse([...mapping, { locationId: input.locationId, botId: def.characterId }]);
+    const next = mappingSchema.parse([...mapping, { locationId: input.locationId, botId: def.characterId, environment }]);
     writeAtomic(paths.mappingFile, `${JSON.stringify(next, null, 2)}\n`);
   } catch (error: unknown) {
     rmSync(target, { force: true });

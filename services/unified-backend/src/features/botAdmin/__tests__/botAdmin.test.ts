@@ -22,14 +22,15 @@ const draft = () => ({
   psyche: { ocean: { O: 40, C: 75, E: 55, A: 35, N: 50 }, enneagram: { type: 6, fear: 'restare sola', desire: 'un posto sicuro' }, pad: { p: -0.1, a: 0.2, d: 0.3 } },
 });
 
-function setup(over: Partial<BotAdminDeps> = {}, bots: { name: string; characterId: string; locationId: string | null; file: string; active: boolean }[] = []) {
+function setup(over: Partial<BotAdminDeps> = {}, bots: { name: string; characterId: string; environment?: string; locationId: string | null; file: string; active: boolean }[] = [], hidden = 0) {
   const calls: { action: string; body: unknown; timeoutMs?: number | undefined }[] = [];
   const created: string[] = [];
   const deleted: string[] = [];
   const deps: BotAdminDeps = {
+    environment: 'production',
     call: async (action, body, timeoutMs) => {
       calls.push({ action, body, timeoutMs });
-      if (action === 'list') return { bots };
+      if (action === 'list') return { bots, hiddenOtherEnvironments: hidden };
       if (action === 'register') return { file: 'martha-quill.json', characterId: 'c'.repeat(24), reloaded: true };
       return { draft: draft(), checks: [{ code: 'schema', ok: true }], attempts: 1, ms: 15000 };
     },
@@ -51,10 +52,17 @@ const rejectsWith = async (fn: () => Promise<unknown>, status: number, code?: st
 describe('listBots', () => {
   it('arricchisce l\'elenco del servizio con il nome della location e lo stato del personaggio', async () => {
     const { deps } = setup({}, [{ name: 'Barnaby Finch', characterId: 'b'.repeat(24), locationId: LOC, file: 'barnaby-finch.json', active: true }]);
-    const [bot] = await listBots(deps);
+    const { bots: [bot] } = await listBots(deps);
     assert.equal(bot!.locationName, 'The Rusty Anchor');
     assert.equal(bot!.playerStatus, 'approved');
     assert.equal(bot!.active, true);
+  });
+
+  it('chiede solo i bot del proprio ambiente e riporta quanti ne ha nascosti', async () => {
+    const { deps, calls } = setup({}, [], 3);
+    const overview = await listBots(deps);
+    assert.deepEqual(calls[0]!.body, { environment: 'production' });
+    assert.equal(overview.hiddenOtherEnvironments, 3);
   });
 
   it('risposta del servizio senza elenco = errore 502', async () => {
@@ -116,11 +124,11 @@ describe('createBot', () => {
   it('crea il personaggio, poi registra la scheda con il characterId nuovo', async () => {
     const { deps, calls, created, deleted } = setup();
     const r = await createBot(deps, { locationId: LOC, draft: draft() });
-    assert.deepEqual(r, { characterId: 'c'.repeat(24), file: 'martha-quill.json', reloaded: true });
+    assert.deepEqual(r, { characterId: 'c'.repeat(24), environment: 'production', file: 'martha-quill.json', reloaded: true });
     assert.equal(created.length, 1);
     assert.equal(deleted.length, 0);
     const register = calls.find((c) => c.action === 'register')!;
-    assert.deepEqual(register.body, { locationId: LOC, sheet: botSheet(draftSchema.parse(draft()), 'c'.repeat(24)) });
+    assert.deepEqual(register.body, { locationId: LOC, environment: 'production', sheet: botSheet(draftSchema.parse(draft()), 'c'.repeat(24)) });
   });
 
   it('se la registrazione fallisce toglie il personaggio appena creato e rilancia l\'errore', async () => {

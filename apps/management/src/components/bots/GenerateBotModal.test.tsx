@@ -14,7 +14,7 @@ const getLocations = locationAPI.getLocations as jest.Mock;
 
 const LOC1 = 'a'.repeat(24);
 const LOC2 = 'b'.repeat(24);
-const taken: BotRow[] = [{ name: 'Barnaby Finch', characterId: 'c'.repeat(24), locationId: LOC2, locationName: 'The Ten Bells', file: 'b.json', active: true, playerStatus: 'approved' }];
+const taken: BotRow[] = [{ name: 'Barnaby Finch', characterId: 'c'.repeat(24), environment: 'local', locationId: LOC2, locationName: 'The Ten Bells', file: 'b.json', active: true, playerStatus: 'approved' }];
 
 const DRAFT = {
   character: { name: 'Martha Quill', firstName: 'Martha', surname: 'Quill', gender: 'female' as const, age: 41, apparentAge: 46, height: '1.62m', eyeColor: 'castani', hairColor: 'grigi', visibleMarks: '', physicalDescription: 'È una donna magra dal viso segnato.', publicDescription: 'Una cameriera dall\'aria stanca.' },

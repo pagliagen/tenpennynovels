@@ -5,7 +5,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as botsAPI from '@/lib/api/bots';
-import type { BotDraft, BotRow } from '@/types/api/Bot';
+import type { BotDraft, BotRow, BotsOverview } from '@/types/api/Bot';
 
 export const botKeys = {
   all: ['admin', 'bots'] as const,
@@ -30,13 +30,14 @@ export function useCreateBot() {
       const row: BotRow = {
         name: variables.draft.character.name,
         characterId: created.characterId,
+        environment: created.environment,
         locationId: variables.locationId,
         locationName: variables.locationName,
         file: created.file,
         active: created.reloaded,
         playerStatus: 'approved',
       };
-      queryClient.setQueryData<BotRow[]>(botKeys.all, (old) => [...(old ?? []), row]);
+      queryClient.setQueryData<BotsOverview>(botKeys.all, (old) => ({ hiddenOtherEnvironments: old?.hiddenOtherEnvironments ?? 0, bots: [...(old?.bots ?? []), row] }));
     },
   });
 }

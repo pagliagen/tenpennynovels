@@ -11,7 +11,8 @@ import { useBots } from '@/hooks/api/useBots';
 import styles from '@/styles/components/BotsPanel.module.scss';
 
 export function BotsPanel(): React.ReactElement {
-  const { data: bots, isLoading, error, refetch } = useBots();
+  const { data, isLoading, error, refetch } = useBots();
+  const bots = data?.bots;
   const [generating, setGenerating] = useState(false);
 
   return (
@@ -19,8 +20,8 @@ export function BotsPanel(): React.ReactElement {
       <div className={styles.toolbar}>
         <button type="button" className={styles.primaryBtn} onClick={() => setGenerating(true)}>✨ Genera bot</button>
         <p className={styles.note}>
-          I bot rispondono nella chat di una location. Le schede stanno nei file di <code>bot-service</code> di questo computer:
-          strumento da sviluppo, non esiste in produzione.
+          I bot rispondono nella chat di una location. Le schede stanno nei file di <code>bot-service</code>:
+          ogni bot appartiene all&apos;ambiente in cui è stato creato.
         </p>
       </div>
 
@@ -29,6 +30,12 @@ export function BotsPanel(): React.ReactElement {
         <p className={styles.error} role="alert">
           {error instanceof Error ? error.message : 'Il servizio dei bot non risponde'}{' '}
           <button type="button" className={styles.linkBtn} onClick={() => void refetch()}>Riprova</button>
+        </p>
+      )}
+
+      {data && data.hiddenOtherEnvironments > 0 && (
+        <p className={styles.note}>
+          {data.hiddenOtherEnvironments === 1 ? '1 bot di un altro ambiente non è mostrato' : `${data.hiddenOtherEnvironments} bot di altri ambienti non sono mostrati`}: il loro personaggio vive nel database di quell&apos;ambiente.
         </p>
       )}
 

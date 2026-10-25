@@ -32,7 +32,7 @@ export class BotAdminController {
   /** GET /admin/bots */
   static async list(req: Request, res: Response): Promise<void> {
     try {
-      res.json(successResponse({ bots: await listBots(BotAdminController.deps) }, undefined, getRequestId(req)));
+      res.json(successResponse(await listBots(BotAdminController.deps), undefined, getRequestId(req)));
     } catch (error: unknown) {
       fail(req, res, error, 'list');
     }

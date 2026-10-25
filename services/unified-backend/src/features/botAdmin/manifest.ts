@@ -4,11 +4,12 @@ import adminRoutes from './routes/admin';
 /**
  * Il tab «Bot» del gestionale: elenco dei bot e generazione di nuovi (personaggio + scheda + location).
  *
- * È uno STRUMENTO DA SVILUPPO. Le schede vivono in file sul computer dove gira `bot-service` e il bot parla solo con
- * Redis/Mongo/backend locali: in produzione il bot è spento per scelta e la feature non c'è. Attiva solo se
- * `ENABLE_BOT_CHARACTERS=true` **e** il gateway AI dichiara attivo e sano il servizio `character-bot` (stessa logica di
- * `editorialAi`, ma variabile separata: `ENABLE_IA_EDITORIAL` resta `true` in produzione, questa no).
- * Con la variabile spenta il gateway non viene nemmeno interrogato e le route rispondono 404.
+ * Le schede vivono in file sul computer dove gira `bot-service`. Ogni bot appartiene a un **ambiente** (`appConfig.botEnvironment`):
+ * il suo personaggio esiste solo nel database di quell'ambiente, e le location hanno gli stessi id ovunque, quindi è
+ * l'etichetta (non la location) a dire di chi è un bot. Attivare la feature non accende il bot di chat (`BOT_SERVICE_SECRET`).
+ * Attiva solo se `ENABLE_BOT_CHARACTERS=true` **e** il gateway AI dichiara attivo e sano il servizio `character-bot` (stessa
+ * logica di `editorialAi`, ma variabile separata). Con la variabile spenta il gateway non viene nemmeno interrogato e le
+ * route rispondono 404.
  *
  * dependsOn: ['editorial'] — `findAnachronisms` per controllare il testo scritto dal modello (`editorial/api.ts`).
  */

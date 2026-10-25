@@ -72,6 +72,14 @@ export const appConfig = {
     emailMock: !isProduction,
   },
 
+  /**
+   * A quale ambiente appartengono i bot creati e mostrati dal tab «Bot» (`local`, `production`...): un bot vive nel
+   * database dell'ambiente dove è stato creato. Si ricava dall'ambiente di esecuzione e non dev'essere impostato a mano:
+   * `APP_ENVIRONMENT` serve solo a distinguere altri ambienti (es. `staging`). Fail-closed: in produzione, anche senza
+   * variabile, è `production` e non `local`.
+   */
+  botEnvironment: (process.env.APP_ENVIRONMENT || (isProduction ? 'production' : 'local')).toLowerCase(),
+
   services: {
     embeddingsUrl: process.env.EMBEDDINGS_SERVICE_URL || 'http://127.0.0.1:5001',
     // Servizio bot locale (bot-service/): senza secret l'endpoint interno

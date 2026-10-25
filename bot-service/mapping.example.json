@@ -1,6 +1,7 @@
 [
   {
     "locationId": "<_id della Location>",
-    "botId": "<characterId del bot>"
+    "botId": "<characterId del bot>",
+    "environment": "local"
   }
 ]

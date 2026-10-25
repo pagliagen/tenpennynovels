@@ -32,8 +32,8 @@ test('da zero (niente cartella, niente mapping) l\'elenco è vuoto e register cr
   assert.deepEqual(listBots(paths), []);
   const r = registerBot(paths, { locationId: LOC, sheet: sheet() });
   assert.equal(r.file, 'martha-quill.json');
-  assert.deepEqual(loadMapping(paths.mappingFile), [{ locationId: LOC, botId: CHAR }]);
-  assert.deepEqual(listBots(paths), [{ name: 'Martha Quill', characterId: CHAR, locationId: LOC, file: 'martha-quill.json' }]);
+  assert.deepEqual(loadMapping(paths.mappingFile), [{ locationId: LOC, botId: CHAR, environment: 'local' }]);
+  assert.deepEqual(listBots(paths), [{ name: 'Martha Quill', characterId: CHAR, environment: 'local', locationId: LOC, file: 'martha-quill.json' }]);
   const saved = JSON.parse(readFileSync(path.join(paths.botsDir, 'martha-quill.json'), 'utf8'));
   assert.equal(saved.respondTo, 'all'); // i default sono scritti in chiaro
   assert.deepEqual(readdirSync(paths.botsDir), ['martha-quill.json']); // nessun file temporaneo

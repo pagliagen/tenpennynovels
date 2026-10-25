@@ -9,14 +9,14 @@
 import { apiClient } from './client';
 import { API_CONFIG } from '@/constants/config';
 import type { ApiResponse } from '@/types/api/common';
-import type { BotDesignRequest, BotDesignResult, BotDraft, BotRow, CreatedBot } from '@/types/api/Bot';
+import type { BotDesignRequest, BotDesignResult, BotDraft, BotsOverview, CreatedBot } from '@/types/api/Bot';
 
-export async function getBots(): Promise<BotRow[]> {
-  const response = await apiClient.get<ApiResponse<{ bots: BotRow[] }>>('/admin/bots');
+export async function getBots(): Promise<BotsOverview> {
+  const response = await apiClient.get<ApiResponse<BotsOverview>>('/admin/bots');
   if (!response.data.success || !response.data.data) {
     throw new Error(response.data.error || 'Il servizio dei bot non risponde');
   }
-  return response.data.data.bots;
+  return response.data.data;
 }
 
 /** Crea personaggio, scheda e mapping, e il servizio si ricarica da solo: mai retry (un secondo tentativo darebbe 409). */
