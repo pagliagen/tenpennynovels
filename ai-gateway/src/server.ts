@@ -55,7 +55,7 @@ export function createGatewayHandler(config: GatewayConfig): RequestListener {
         }
 
         const body = await readBody(req, config.maxBodyBytes);
-        const upstream = await forward(config.botServiceUrl, pathname, 'POST', body, config.upstreamTimeoutMs);
+        const upstream = await forward(config.botServiceUrl, { kind: 'route', service: route.service, action: route.action }, 'POST', body, config.upstreamTimeoutMs);
         status = upstream.status;
         send(res, upstream.status, upstream.body);
       } catch (error: unknown) {
