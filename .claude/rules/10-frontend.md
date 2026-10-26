@@ -70,7 +70,7 @@ Dettaglio delle responsabilità: `docs/tecnica/frontend/game-app.md`.
 
 **Typing indicator**: emit throttled a 2s, indicatori scaduti ripuliti dopo 3s.
 
-**12 tipi di messaggio** in location chat (standard, OOC, whisper, master, dice roll, skill/stat check, combat, item use, reaction, defender, moderation): catalogo in `docs/tecnica/frontend/game-app.md`.
+**12 `actionType` di messaggio** in location chat (standard, whisper, ooc, master, moderation, dice_roll, stat_check, skill_check, item_use, social_confrontation, combat_action, confrontation_reaction_request; 10 componenti, `skill_check` usa `StandardMessage`): catalogo in `docs/tecnica/frontend/game-app.md`.
 
 ---
 

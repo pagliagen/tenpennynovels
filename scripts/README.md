@@ -18,7 +18,7 @@ scripts/
 └── bench-ollama-rag.mjs     # confronto modelli Ollama sui prompt del Bibliotecario (da lanciare sul server)
 ```
 
-I tool di immagini (`glass-ball`), il monitor dei log (`log-monitor`) e le utility per categoria **non esistono più** in questo repository.
+Il monitor dei log (`log-monitor`) e le utility per categoria **non esistono più** in questo repository.
 
 ---
 

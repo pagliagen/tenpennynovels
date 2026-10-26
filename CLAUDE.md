@@ -56,7 +56,7 @@ Violarle causa bug in produzione. Dettagli e incidenti reali in [00-critical.md]
 | Doc | Quando aprirlo |
 |---|---|
 | [docs/INDEX.md](docs/INDEX.md) | punto di ingresso a tutta la documentazione |
-| `docs/tecnica/frontend/game-app.md` | 12 tipi di messaggio, 11 store Zustand, virtual scrolling |
+| `docs/tecnica/frontend/game-app.md` | 12 `actionType` di messaggio, 11 store Zustand, virtual scrolling |
 | `docs/tecnica/frontend/websocket-patterns.md` | API del `WebSocketContext`, errori tipici |
 | `docs/tecnica/backend/websocket-events.md` | catalogo completo eventi Socket.IO |
 | `docs/tecnica/backend/error-codes.md` | registry dei codici errore (54 nell'enum `ErrorCode` + i codici AI/bot usati come stringhe) |

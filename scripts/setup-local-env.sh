@@ -59,7 +59,6 @@ NPM_DIRS=(
   "services/unified-backend"
   "services/embeddings-worker"
   "bot-service"
-  "scripts/glass-ball"
   "scripts/seeders"
 )
 

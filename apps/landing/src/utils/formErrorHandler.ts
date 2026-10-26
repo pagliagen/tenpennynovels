@@ -44,6 +44,8 @@ export function handleApiFormErrors<T extends Record<string, any>>(
   // Handle field-specific errors (details contains per-field errors)
   if (result.details) {
     Object.entries(result.details).forEach(([field, message]) => {
+      // Valori non testuali (es. `suggestions` di USERNAME_TAKEN) non sono errori di campo
+      if (Array.isArray(message)) return;
       setError(field as FieldPath<T>, {
         type: 'server',
         message: typeof message === 'string' ? message : 'Errore di validazione',

@@ -57,7 +57,9 @@ flowchart TB
 
 ---
 
-## Message Types Catalog (12 tipi)
+## Message Types Catalog (12 `actionType`, 10 componenti)
+
+Il campo che distingue il tipo è `actionType` (in `types/chat.ts`; il vecchio nome `messageType` non esiste più). `MessageCard` sceglie il componente con uno `switch`; i 12 valori sono: `standard`, `whisper`, `ooc`, `master`, `moderation`, `dice_roll`, `stat_check`, `skill_check`, `item_use`, `social_confrontation`, `combat_action`, `confrontation_reaction_request`. `skill_check` non ha un componente suo (usa `StandardMessage`) e `social_confrontation`/`combat_action` condividono `CombatActionMessage`.
 
 ### 1. StandardMessage
 
@@ -73,7 +75,7 @@ flowchart TB
   characterName: string;
   characterAvatar?: string;
   content: string;
-  messageType: 'standard';
+  actionType: 'standard';
   visibility: 'public';
   timestamp: Date;
   tags?: string[];
@@ -106,7 +108,7 @@ Lord Blackwood: "I've been investigating the disappearances. The pattern is dist
   characterId: string;
   characterName: string;
   content: string;
-  messageType: 'ooc';
+  actionType: 'ooc';
   visibility: 'public';
   timestamp: Date;
 }
@@ -137,7 +139,7 @@ Lord Blackwood: "I've been investigating the disappearances. The pattern is dist
   characterId: string;
   characterName: string;
   content: string;
-  messageType: 'whisper';
+  actionType: 'whisper';
   visibility: 'whisper';
   targetCharacters: string[]; // IDs destinatari
   timestamp: Date;
@@ -170,7 +172,7 @@ Lord Blackwood: "I've been investigating the disappearances. The pattern is dist
   characterId: string;
   characterName: string;
   content: string;
-  messageType: 'master';
+  actionType: 'master';
   visibility: 'master_only' | 'public';
   timestamp: Date;
 }
@@ -202,7 +204,7 @@ Lord Blackwood: "I've been investigating the disappearances. The pattern is dist
   characterId: string;
   characterName: string;
   content?: string;
-  messageType: 'dice_roll';
+  actionType: 'dice_roll';
   diceResult: {
     dice: string; // "1d100"
     result: number; // 1-100
@@ -226,156 +228,82 @@ Result: 73/100
 
 ---
 
-### 6. SkillCheckMessage
+### 6. StatCheckMessage
 
-**Purpose**: Tiri contrapposti (attaccante vs difensore)
+**Purpose**: Tiro su caratteristica o abilità (`stat_check`; anche `skill_check`, vedi nota)
 
-**Payload**:
+**Payload** (`StatCheckPayload` in `types/chat.ts`):
 ```typescript
 {
-  _id: string;
-  characterId: string;
-  characterName: string;
-  content: string;
-  messageType: 'skill_check';
-  socialConflict: {
-    attackSkill: string;    // "Persuade"
-    attackRoll: number;
-    attackDegree: string;   // "Success", "Hard Success"
-    defenseSkill: string;   // "Psychology"
-    defenseRoll: number;
-    defenseDegree: string;
-    isSuccess: boolean;
-    margin: number;
-  };
-  hiddenContent?: string; // Intento nascosto (solo master)
-  timestamp: Date;
-}
-```
-
-**Visual Features**:
-- ⚔️ Icona skill check
-- Visualizzazione contrapposto: `Persuade (73) VS Psychology (45)`
-- Gradi di successo (Normal, Hard, Extreme)
-- Esito (✅ Success / ❌ Failure)
-- Margine di successo/fallimento
-- 🔒 Sezione intento nascosto (solo master)
-
-**File**: [SkillCheckMessage.tsx](../../../apps/game/src/components/chat/message-types/SkillCheckMessage.tsx)
-
-**Esempio**:
-```
-⚔️ Lord Blackwood: "I attempt to convince the guard."
-Persuade (73) VS Psychology (45)
-✅ Success (margin: +28)
-🔒 True Intent (master): "Actually lying about identity."
-```
-
----
-
-### 7. StatCheckMessage
-
-**Purpose**: Check su caratteristiche (STR, DEX, INT, etc.)
-
-**Payload**:
-```typescript
-{
-  _id: string;
-  characterId: string;
-  characterName: string;
-  content: string;
-  messageType: 'stat_check';
+  actionType: 'stat_check';
+  content: string;          // frase intera generata dal server (StatCheckActionHandler), tiro incluso
   statCheck: {
-    stat: 'STR' | 'DEX' | 'INT' | 'CON' | 'APP' | 'POW' | 'SIZ' | 'EDU';
+    attribute: string;      // "Strength", "Dexterity"…
+    difficulty: string;     // "Easy", "Moderate", "Hard"
     roll: number;
-    targetValue: number;
+    target: number;
     success: boolean;
-    degree: string;
   };
-  timestamp: Date;
 }
 ```
 
-**Visual Features**:
-- 💪 Icona stat (varia per tipo)
-- Display: `Roll: 45 / Target: 60`
-- Indicatore successo/fallimento
-- Grado di successo
+**Visual Features**: riga compatta, senza avatar né footer: «{personaggio} tira {caratteristica} facendo un {esito} ({tiro}/100)». Solo contenuto e menu.
+
+**Nota su `skill_check`**: ha una voce in `config/chatActionTypes.ts` e viene inviato da `SkillStatRollModal`, ma `MessageCard` non ha un `case` dedicato: ricade nel ramo `default` e si mostra con `StandardMessage` (il contenuto è già la frase completa generata dal server). Non esiste un componente `SkillCheckMessage`.
 
 **File**: [StatCheckMessage.tsx](../../../apps/game/src/components/chat/message-types/StatCheckMessage.tsx)
 
 ---
 
-### 8. CombatActionMessage
+### 7. CombatActionMessage
 
-**Purpose**: Azioni di combattimento
+**Purpose**: Esito di un confronto risolto, di combattimento o sociale. Gestisce **due** `actionType`: `combat_action` e `social_confrontation` (il «tiro contrapposto» attaccante contro difensore).
 
-**Payload**:
+**Payload** (`ConfrontationPayload`, campo `confrontation`):
 ```typescript
 {
-  _id: string;
-  characterId: string;
-  characterName: string;
-  content: string;
-  messageType: 'combat_action';
-  combatAction: {
-    actionType: 'attack' | 'dodge' | 'parry' | 'damage';
-    attackRoll?: number;
-    defenseRoll?: number;
-    damage?: number;
-    weapon?: string;
-    success: boolean;
+  actionType: 'combat_action' | 'social_confrontation';
+  confrontation: {
+    type: 'social' | 'combat';
+    phase: 'waiting_reaction' | 'result';
+    attackerCharacterId: string;
+    defenderCharacterId: string;
+    attackSkill?: string; defenseSkill?: string; weaponName?: string;
+    attackRoll?: number;  defenseRoll?: number;
+    attackSuccessLevel?: 'critical' | 'extreme' | 'hard' | 'normal' | 'failure' | 'fumble';
+    defenseSuccessLevel?: /* come sopra */;
+    outcome?: 'hit' | 'miss' | 'parry' | 'dodge' | 'disarm' | 'attacker_wins' | 'defender_wins' | 'draw';
+    damageDealt?: number;
   };
-  timestamp: Date;
+  hiddenContent?: string;   // intento nascosto, visibile solo al master
 }
 ```
+
+Il backend decide chi vede cosa (`hiddenResultForAttacker`, `visibleToAttackerOnly`, `visibleToDefenderOnly`): il frontend non ri-controlla i permessi.
 
 **File**: [CombatActionMessage.tsx](../../../apps/game/src/components/chat/message-types/CombatActionMessage.tsx)
 
 ---
 
-### 9. ItemUseMessage
+### 8. ItemUseMessage
 
 **Purpose**: Uso oggetti ed effetti
 
-**Payload**:
-```typescript
-{
-  _id: string;
-  characterId: string;
-  characterName: string;
-  content: string;
-  messageType: 'item_use';
-  itemEffect: {
-    itemId: string;
-    itemName: string;
-    effect: string;
-  };
-  timestamp: Date;
-}
-```
+**Payload** (`ItemUsePayload`, campo `itemEffect`): `itemId`, `itemName`, `itemDescription?`, `targetCharacterId?`, `targetCharacterName?`.
 
 **File**: [ItemUseMessage.tsx](../../../apps/game/src/components/chat/message-types/ItemUseMessage.tsx)
 
 ---
 
-### 10. ReactionRequestMessage
+### 9. ReactionRequestMessage
 
-**Purpose**: Richiesta reazione player
+**Purpose**: Attacco in attesa della reazione del difensore (`confrontation_reaction_request`, `visibility: 'whisper'`): il difensore vede i pulsanti delle `availableDefenseSkills` fra cui scegliere, l'attaccante lo stato «in attesa». Non esiste un componente separato per la notifica al difensore.
 
 **File**: [ReactionRequestMessage.tsx](../../../apps/game/src/components/chat/message-types/ReactionRequestMessage.tsx)
 
 ---
 
-### 11. DefenderNotification
-
-**Purpose**: Notifica difensore in combattimento
-
-**File**: [DefenderNotification.tsx](../../../apps/game/src/components/chat/message-types/DefenderNotification.tsx)
-
----
-
-### 12. ModerationMessage
+### 10. ModerationMessage
 
 **Purpose**: Azioni moderazione
 
