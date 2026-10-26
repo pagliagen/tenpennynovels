@@ -29,7 +29,7 @@
 
 | Documento | Descrizione | Status |
 |-----------|-------------|--------|
-| [game-app](./frontend/game-app.md) | Gameplay, chat, sheet (12 tipi messaggio, 9 store) | Completo |
+| [game-app](./frontend/game-app.md) | Gameplay, chat, sheet (12 actionType, 11 store) | Completo |
 | [documents-app](./frontend/documents-app.md) | Knowledge base, ricerca semantica | Completo |
 | [management-app](./frontend/management-app.md) | Admin, ConfigurableDataTable | Completo |
 | [landing-app](./frontend/landing-app.md) | Marketing + auth | ✅ Complete |
@@ -41,7 +41,6 @@
 | Documento | Descrizione | Status |
 |-----------|-------------|--------|
 | [seeders](./scripts/seeders.md) | 10 script seeder in `scripts/seeders` | Completo |
-| [glass-ball](./scripts/glass-ball.md) | Processing immagini | Storico (strumento rimosso) |
 
 ---
 

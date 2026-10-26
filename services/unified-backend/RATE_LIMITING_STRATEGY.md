@@ -14,7 +14,7 @@ All external requests are rate-limited at the API Gateway level:
 This is the **primary line of defense** for all external traffic.
 
 ### Tier 2: Backend Endpoints (Critical Write Operations)
-**Location**: `services/unified-backend/src/modules/*/routes/`
+**Location**: `services/unified-backend/src/core/*/routes/` e `services/unified-backend/src/features/*/routes/` (middleware condiviso: `core/auth/middleware/rateLimit.ts`)
 
 Selective rate limiting on critical endpoints that modify data:
 - **POST endpoints** (create data): 20-30 req/min per user
@@ -84,13 +84,12 @@ grep "RATE_LIMIT_EXCEEDED" services/unified-backend/logs/*.log
 ## Adjusting Limits
 
 To increase/decrease rate limits:
-1. Edit `services/unified-backend/src/modules/*/routes/*.ts`
+1. Edit `services/unified-backend/src/features/*/routes/*.ts` (o `core/*/routes/*.ts`)
 2. Modify `max: <number>` in rate limiter configuration
-3. Test with `/verify` endpoint
+3. Verify with the feature's tests or a manual request against the route
 4. Deploy via CI/CD
 
 ## Related Documentation
 
-- [API Gateway Rate Limiting](../../services/api-gateway/docs/rate-limiting.md)
-- [Security Best Practices](../../SECURITY.md)
-- [Performance Guidelines](../services/README.md#performance)
+- [API Gateway](../../docs/tecnica/backend/api-gateway.md) — rate limit e timeout dei proxy
+- [Regole backend](../../.claude/rules/20-backend.md)

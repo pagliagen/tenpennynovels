@@ -141,6 +141,9 @@ export default function RegisterPage() {
         }, 5000);
       } else {
         handleApiFormErrors(result, setFormError, setError);
+        // Nome o email già in uso: evidenzia anche il campo, oltre al banner
+        if (result.code === 'USERNAME_TAKEN') setFormError('username', { type: 'server', message: 'Nome utente già in uso' });
+        if (result.code === 'EMAIL_TAKEN') setFormError('email', { type: 'server', message: 'Email già registrata' });
       }
     } catch (error) {
       setError('Si è verificato un errore imprevisto');

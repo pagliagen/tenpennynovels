@@ -34,13 +34,12 @@
 
 #### Frontend
 - [Landing App](./tecnica/frontend/landing-app.md) — marketing e auth
-- [Game App](./tecnica/frontend/game-app.md) — 12 tipi messaggio location chat, 9 store Zustand
+- [Game App](./tecnica/frontend/game-app.md) — 12 `actionType` di messaggio (10 componenti), 11 store Zustand
 - [Documents App](./tecnica/frontend/documents-app.md) — knowledge base e ricerca semantica (porta 4002)
 - [Management App](./tecnica/frontend/management-app.md) — pannello admin (porta 4003)
 
 #### Scripts
 - [Seeders](./tecnica/scripts/seeders.md) — 10 seed TypeScript in `scripts/seeders`
-- [Glass Ball](./tecnica/scripts/glass-ball.md) - Image processing *(storico: strumento rimosso)*
 
 #### Infrastructure
 - [Docker Compose](./tecnica/infrastructure/docker-compose.md)

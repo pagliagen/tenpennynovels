@@ -73,7 +73,7 @@ const UserSchema = new Schema<IUser>({
     trim: true,
     minlength: 3,
     maxlength: 20,
-    match: /^[a-zA-Z0-9_]+$/
+    match: /^[a-zA-Z0-9_-]+$/
   },
   email: {
     type: String,

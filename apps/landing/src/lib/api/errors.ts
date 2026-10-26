@@ -205,6 +205,9 @@ export function getErrorMessage(code: string): string {
     EMAIL_ALREADY_VERIFIED: 'Email già verificata.',
     USER_NOT_FOUND: 'Username o email non trovati.',
     INVALID_PASSWORD: 'Password errata.',
+    USERNAME_TAKEN: 'Nome utente già in uso. Scegline un altro.',
+    EMAIL_TAKEN: 'Indirizzo email già registrato. Se hai già un account, accedi o reimposta la password.',
+    REGISTRATION_ERROR: 'Registrazione non riuscita. Riprova più tardi.',
     UNKNOWN_ERROR: 'Errore sconosciuto. Riprova più tardi.',
   };
 
