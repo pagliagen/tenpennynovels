@@ -11,6 +11,12 @@
  * Si rimuove il colore, non lo si forza a bianco: un bianco hardcoded
  * renderebbe il testo invisibile sul fondo chiaro di `apps/documents`.
  *
+ * Toglie anche la **dimensione del carattere**: Word incolla `font-size:12pt`
+ * e simili, che con l'estensione FontSize diventerebbero dimensioni a caso
+ * fuori dalla scala dell'editor (e `HtmlGenerator` le scarterebbe comunque alla
+ * pubblicazione). Le dimensioni si scelgono solo dal menu. La copia di
+ * `apps/game` non ha questa parte: il forum non ha FontSize.
+ *
  * ⚠️ Copia gemella di `apps/game/src/lib/tiptap/pasteColorCleanup.ts`:
  * niente npm workspace, il file non è condivisibile. Modificare entrambe.
  */
@@ -21,6 +27,9 @@ import { Plugin, PluginKey } from '@tiptap/pm/state';
 
 /** Chiave del plugin: esportata per poterlo recuperare nei test. */
 export const pasteColorCleanupPluginKey = new PluginKey('pasteColorCleanup');
+
+/** Attributi da azzerare: colori e dimensione del carattere (vedi sopra). */
+const STRIPPED_ATTRIBUTE = /color|font-?size/i;
 
 /** Mark rimossi in blocco: esistono solo per trasportare un colore. */
 const DROPPED_MARKS = new Set(['highlight']);
@@ -35,7 +44,7 @@ function stripColorAttributes(mark: Mark): Mark | null {
   let hasOtherValue = false;
 
   for (const [key, value] of Object.entries(mark.attrs)) {
-    if (/color/i.test(key)) {
+    if (STRIPPED_ATTRIBUTE.test(key)) {
       attrs[key] = null;
       continue;
     }
@@ -54,7 +63,7 @@ function cleanMarks(marks: readonly Mark[]): Mark[] {
   for (const mark of marks) {
     if (DROPPED_MARKS.has(mark.type.name)) continue;
 
-    const hasColorAttribute = Object.keys(mark.attrs).some((key) => /color/i.test(key));
+    const hasColorAttribute = Object.keys(mark.attrs).some((key) => STRIPPED_ATTRIBUTE.test(key));
     if (!hasColorAttribute) {
       cleaned.push(mark);
       continue;

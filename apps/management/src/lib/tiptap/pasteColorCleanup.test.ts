@@ -7,7 +7,7 @@ import { Editor } from '@tiptap/core';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import Link from '@tiptap/extension-link';
-import { TextStyle } from '@tiptap/extension-text-style';
+import { FontSize, TextStyle } from '@tiptap/extension-text-style';
 import { DOMParser as ProseMirrorDOMParser, Slice } from '@tiptap/pm/model';
 import StarterKit from '@tiptap/starter-kit';
 
@@ -19,6 +19,7 @@ function createEditor(): Editor {
     extensions: [
       StarterKit.configure({ link: false, underline: false }),
       TextStyle,
+      FontSize,
       Color,
       Highlight.configure({ multicolor: true }),
       Link.configure({ openOnClick: false }),
@@ -105,6 +106,28 @@ describe('PasteColorCleanup', () => {
     const nodes = pasteAndDescribe(editor, container.innerHTML);
 
     expect(nodes[0]?.marks).toEqual(['link']);
+  });
+
+  it('rimuove la dimensione del carattere incollata da Word (12pt, px)', () => {
+    for (const size of ['12pt', '18px', '1.4em']) {
+      const nodes = pasteAndDescribe(editor, `<p><span style="font-size:${size}">testo</span></p>`);
+      expect(nodes).toEqual([{ text: 'testo', marks: [] }]);
+    }
+  });
+
+  it('rimuove dimensione e colore insieme, conservando il grassetto', () => {
+    const nodes = pasteAndDescribe(
+      editor,
+      '<p><b><span style="font-size:14pt;color:#000000">titolo</span></b></p>'
+    );
+
+    expect(nodes[0]?.marks).toEqual(['bold']);
+  });
+
+  it('non tocca la dimensione già presente nel documento, solo ciò che si incolla', () => {
+    editor.commands.setContent('<p><span style="font-size: 1.5em">grande</span></p>');
+
+    expect(editor.getHTML()).toMatch(/font-size:\s*1\.5em/);
   });
 
   it('non tocca il contenuto già presente nel documento, solo ciò che si incolla', () => {

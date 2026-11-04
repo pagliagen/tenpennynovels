@@ -132,6 +132,15 @@
   line-height: 1.25;
   color: #0d0d0d;
 
+  // Dimensione del carattere scelta nell'editor del gestionale. Il contenuto è
+  // HTML iniettato (nomi di classe non hashati, quindi :global) e relativo al
+  // testo che lo circonda (em). Scala e valori ammessi: FONT_SIZE_CLASSES in
+  // services/unified-backend/.../HtmlGenerator.ts; DOMPurify ammette già `class`.
+  :global(.fs-sm) { font-size: 0.85em; }
+  :global(.fs-lg) { font-size: 1.2em; }
+  :global(.fs-xl) { font-size: 1.5em; }
+  :global(.fs-xxl) { font-size: 2em; }
+
   h1,
   h2,
   h3,

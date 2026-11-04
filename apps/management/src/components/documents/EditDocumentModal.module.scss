@@ -1,10 +1,39 @@
 @use 'sass:color';
 @use '../../styles/variables' as *;
 
-.modalContent {
+.workspace {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+}
+
+// Titolo, slug e sottotipo: non occupano più l'area di scrittura.
+.sidePanel {
   display: flex;
   flex-direction: column;
-  gap: $spacing-lg;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  overflow-y: auto;
+  background-color: $color-bg-secondary;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+
+  @media (max-width: 900px) {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.editorArea {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
 .loading {
@@ -13,13 +42,6 @@
   justify-content: center;
   padding: $spacing-2xl;
   color: $color-text-secondary;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: flex-end;
-  gap: $spacing-sm;
-  margin-bottom: -$spacing-md; // Reduce gap to title section
 }
 
 .previewButton {
@@ -32,6 +54,7 @@
   font-size: 14px;
   font-weight: 600;
   transition: all $transition-fast;
+  width: 100%;
 
   &:hover {
     background-color: rgba(255, 255, 255, 0.1);
@@ -55,7 +78,7 @@
     border-radius: $radius-md;
     background-color: rgba(255, 255, 255, 0.05);
     color: $color-text-primary;
-    font-size: 18px;
+    font-size: 15px;
 
     &:focus {
       outline: none;

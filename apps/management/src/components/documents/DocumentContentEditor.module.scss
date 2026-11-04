@@ -1,169 +1,161 @@
 @use '../../styles/variables' as *;
 
 .editorWrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: $radius-md;
-  overflow: clip; // Changed from hidden to preserve position: sticky on .toolbar
+  overflow: hidden;
 }
 
-.toolbar {
-  position: sticky;
-  top: -$spacing-lg;
-  z-index: 10;
-  display: flex;
-  gap: $spacing-xs;
-  padding: $spacing-sm;
-  background-color: rgba(40, 30, 20, 0.98); // More opaque for sticky
-  backdrop-filter: blur(8px); // Blur effect for content underneath
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  flex-wrap: wrap;
-  align-items: center;
-
-  button {
-    padding: $spacing-xs $spacing-sm;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: $radius-sm;
-    background-color: rgba(255, 255, 255, 0.05);
-    color: $color-text-secondary;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all $transition-fast;
-    height: 35px;
-
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-      color: $color-text-primary;
-    }
-
-    &.active {
-      background-color: $color-primary;
-      color: white;
-      border-color: $color-primary;
-    }
-  }
+// Dentro il modal a tutto schermo: occupa tutta l'altezza disponibile.
+.fill {
+  flex: 1;
+  height: 100%;
+  border: none;
+  border-radius: 0;
 }
 
-.colorPicker {
-  width: 35px;
-  height: 35px;
-  padding: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: $radius-sm;
-  background-color: rgba(255, 255, 255, 0.05);
-  cursor: pointer;
-  transition: all $transition-fast;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.3);
-  }
-
-  // Hide the default color picker appearance on Webkit browsers
-  &::-webkit-color-swatch-wrapper {
-    padding: 0;
-  }
-
-  &::-webkit-color-swatch {
-    border: none;
-    border-radius: 2px;
-  }
-
-  // Hide the default color picker appearance on Firefox
-  &::-moz-color-swatch {
-    border: none;
-    border-radius: 2px;
-  }
-}
-
-.separator {
-  width: 1px;
-  height: 24px;
-  background-color: rgba(255, 255, 255, 0.1);
-  margin: 0 $spacing-xs;
-}
-
-.editorContent {
-  padding: $spacing-lg;
+// Area scorrevole sotto la toolbar (la toolbar resta sempre visibile).
+.page {
+  flex: 1;
   min-height: 400px;
-  max-height: 600px;
+  max-height: 640px;
+  padding: $spacing-lg $spacing-md;
   overflow-y: auto;
   background-color: $color-bg-primary;
 
-  // TipTap prose styles
+  .fill & {
+    min-height: 0;
+    max-height: none;
+    padding: $spacing-xl $spacing-md;
+  }
+}
+
+// Il "foglio" imita il sito pubblico (fondo chiaro, serif): quello che vedi è
+// vicino a quello che leggerà il giocatore.
+.sheet {
+  max-width: 820px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: $spacing-xl 48px;
+  background-color: #f6f1e7;
+  color: #1c1a17;
+  border-radius: $radius-sm;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.45);
+}
+
+.editorContent {
   :global(.ProseMirror) {
     outline: none;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 17px;
+    line-height: 1.6;
+    color: #1c1a17;
 
     h2 {
-      font-size: 24px;
-      margin: $spacing-lg 0 $spacing-md;
-      color: $color-text-primary;
+      margin: 1.2em 0 0.5em;
+      font-size: 26px;
     }
 
     h3 {
-      font-size: 20px;
-      margin: $spacing-md 0 $spacing-sm;
-      color: $color-text-primary;
+      margin: 1em 0 0.4em;
+      font-size: 21px;
     }
 
     p {
-      margin: $spacing-sm 0;
-      line-height: 1.6;
-      color: $color-text-secondary;
+      margin: 0 0 0.9em;
     }
 
-    ul, ol {
+    ul,
+    ol {
+      margin: 0 0 0.9em;
       padding-left: $spacing-xl;
-      margin: $spacing-sm 0;
     }
 
     blockquote {
+      margin: 1em 0;
+      padding-left: 14px;
       border-left: 3px solid $color-primary;
-      padding-left: $spacing-md;
-      margin: $spacing-md 0;
       font-style: italic;
-      color: $color-text-secondary;
     }
 
     code {
-      background-color: rgba(255, 255, 255, 0.1);
       padding: 2px 6px;
+      background-color: rgba(0, 0, 0, 0.08);
       border-radius: $radius-sm;
       font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.9em;
     }
 
     pre {
-      background-color: rgba(255, 255, 255, 0.05);
       padding: $spacing-md;
+      background-color: rgba(0, 0, 0, 0.07);
       border-radius: $radius-md;
       overflow-x: auto;
 
       code {
-        background: none;
         padding: 0;
+        background: none;
       }
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    a {
+      color: #7a4b00;
+      text-decoration: underline;
+    }
+
+    mark {
+      padding: 0 2px;
+      border-radius: 2px;
     }
 
     table {
       width: 100%;
+      margin: 1em 0;
       border-collapse: collapse;
-      margin: $spacing-md 0;
 
-      th, td {
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        padding: $spacing-sm $spacing-md;
-        text-align: left;
+      th,
+      td {
         min-width: 80px;
+        padding: 6px 10px;
+        border: 1px solid #b9ad94;
+        text-align: left;
+        vertical-align: top;
       }
 
       th {
-        background-color: rgba(255, 255, 255, 0.08);
+        background-color: #e7dcc4;
         font-weight: 600;
-        color: $color-text-primary;
       }
 
-      td {
-        color: $color-text-secondary;
+      .selectedCell {
+        background-color: rgba($color-primary, 0.25);
       }
     }
   }
+}
+
+.status {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px $spacing-md;
+  background-color: $color-bg-secondary;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: $color-text-secondary;
+  font-size: 12px;
+}
+
+.statusOk {
+  color: #7fc47f;
+}
+
+.statusError {
+  color: #e08080;
 }

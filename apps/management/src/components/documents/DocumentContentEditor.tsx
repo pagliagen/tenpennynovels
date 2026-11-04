@@ -7,7 +7,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import Image from '@tiptap/extension-image';
-import { TextStyle } from '@tiptap/extension-text-style';
+import { FontSize, TextStyle } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import { Table } from '@tiptap/extension-table';
@@ -15,10 +15,20 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 
-import { PasteHardBreakSplit, toggleHeadingOnLine } from '@/lib/tiptap/hardBreaks';
+import { PasteHardBreakSplit } from '@/lib/tiptap/hardBreaks';
 import { PasteColorCleanup } from '@/lib/tiptap/pasteColorCleanup';
+import { EditorToolbar } from './editor/EditorToolbar';
 
 import styles from './DocumentContentEditor.module.scss';
+
+export type EditorSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+const SAVE_STATUS_LABEL: Record<EditorSaveStatus, string> = {
+  idle: '',
+  saving: 'Salvataggio…',
+  saved: '● Salvato',
+  error: 'Salvataggio non riuscito'
+};
 
 interface DocumentContentEditorProps {
   contentDelta: any;
@@ -26,16 +36,25 @@ interface DocumentContentEditorProps {
   readOnly?: boolean;
   /** When true, contentDelta is treated as an HTML string and onChange emits HTML */
   htmlMode?: boolean;
+  /** Riempie l'altezza del contenitore (modal a tutto schermo) invece di avere un'altezza propria. */
+  fill?: boolean;
+  /** Stato dell'autosave, mostrato nella barra in basso. */
+  saveStatus?: EditorSaveStatus;
 }
 
 export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
   contentDelta,
   onChange,
   readOnly = false,
-  htmlMode = false
+  htmlMode = false,
+  fill = false,
+  saveStatus = 'idle'
 }) => {
   const editor = useEditor({
     immediatelyRender: false,
+    // In TipTap v3 il componente non si ridisegna a ogni transazione: senza questo
+    // i pulsanti della toolbar (attivo, annulla, tabella) non seguono il cursore.
+    shouldRerenderOnTransaction: true,
     extensions: [
       StarterKit.configure({
         heading: {
@@ -66,6 +85,8 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
         allowBase64: true
       }),
       TextStyle,
+      // Dimensione del carattere: scala a 5 gradini (lib/tiptap/fontSizes.ts).
+      FontSize,
       Color,
       Highlight.configure({
         multicolor: true
@@ -111,187 +132,27 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
   }, [contentDelta, editor, htmlMode]);
 
   if (!editor) {
-    return <div>Loading editor...</div>;
+    return <div>Caricamento editor…</div>;
   }
 
+  const words = editor.getText().split(/\s+/).filter(Boolean).length;
+
   return (
-    <div className={styles.editorWrapper}>
-      {/* Toolbar */}
-      {!readOnly && (
-        <div className={styles.toolbar}>
-          {/* Headings (H2-H6 only, H1 reserved for document title) */}
-          <button
-            onClick={() => toggleHeadingOnLine(editor, 2)}
-            className={editor.isActive('heading', { level: 2 }) ? styles.active : ''}
-            type="button"
-          >
-            H2
-          </button>
-          <button
-            onClick={() => toggleHeadingOnLine(editor, 3)}
-            className={editor.isActive('heading', { level: 3 }) ? styles.active : ''}
-            type="button"
-          >
-            H3
-          </button>
+    <div className={`${styles.editorWrapper} ${fill ? styles.fill : ''}`}>
+      {!readOnly && <EditorToolbar editor={editor} />}
 
-          <div className={styles.separator} />
-
-          {/* Text Formatting */}
-          <button
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            className={editor.isActive('bold') ? styles.active : ''}
-            type="button"
-          >
-            <strong>B</strong>
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={editor.isActive('italic') ? styles.active : ''}
-            type="button"
-          >
-            <em>I</em>
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={editor.isActive('underline') ? styles.active : ''}
-            type="button"
-          >
-            <u>U</u>
-          </button>
-
-          <div className={styles.separator} />
-
-          {/* Link: se il cursore è già dentro un link il bottone lo rimuove
-              invece di chiedere un altro URL - prima non c'era alcun modo
-              di togliere un link dall'interfaccia. */}
-          <button
-            onClick={() => {
-              if (editor.isActive('link')) {
-                editor.chain().focus().extendMarkRange('link').unsetLink().run();
-                return;
-              }
-              const url = window.prompt('URL:');
-              if (url) {
-                editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-              }
-            }}
-            className={editor.isActive('link') ? styles.active : ''}
-            type="button"
-            title={editor.isActive('link') ? 'Rimuovi link' : 'Inserisci link'}
-          >
-            🔗 Link
-          </button>
-
-          {/* Image */}
-          <button
-            onClick={() => {
-              const url = window.prompt('Image URL:');
-              if (url) {
-                editor.chain().focus().setImage({ src: url }).run();
-              }
-            }}
-            type="button"
-          >
-            🖼️ Img
-          </button>
-
-          <div className={styles.separator} />
-
-          {/* Lists */}
-          <button
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={editor.isActive('bulletList') ? styles.active : ''}
-            type="button"
-          >
-            • List
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            className={editor.isActive('orderedList') ? styles.active : ''}
-            type="button"
-          >
-            1. List
-          </button>
-
-          <div className={styles.separator} />
-
-          {/* Quote & Code */}
-          <button
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={editor.isActive('blockquote') ? styles.active : ''}
-            type="button"
-          >
-            " Quote
-          </button>
-          <button
-            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-            className={editor.isActive('codeBlock') ? styles.active : ''}
-            type="button"
-          >
-            {'<>'} Code
-          </button>
-
-          <div className={styles.separator} />
-
-          {/* Table */}
-          <button
-            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-            type="button"
-          >
-            ⊞ Table
-          </button>
-
-          <div className={styles.separator} />
-
-          {/* Text Color */}
-          <input
-            type="color"
-            onInput={(e) => editor.chain().focus().setColor((e.target as HTMLInputElement).value).run()}
-            value={editor.getAttributes('textStyle').color || '#000000'}
-            className={styles.colorPicker}
-            title="Text Color"
-          />
-
-          {/* Rimuovi colore: l'<input type="color"> nativo non ha uno stato
-              "nessun colore", mostra sempre un hex - una volta scelto un
-              colore lo swatch non lo toglie più. Serve anche a recuperare i
-              documenti dove il colore di Word era già stato salvato prima
-              dell'introduzione di PasteColorCleanup. Senza selezione agisce
-              sull'intero documento. */}
-          <button
-            onClick={() => {
-              const { from, empty } = editor.state.selection;
-              const chain = editor.chain().focus();
-              // Ripristina il cursore dopo il selectAll: lasciare tutto il
-              // documento selezionato significa che il tasto successivo lo
-              // cancella.
-              if (empty) {
-                chain.selectAll().unsetColor().unsetHighlight().setTextSelection(from);
-              } else {
-                chain.unsetColor().unsetHighlight();
-              }
-              chain.run();
-            }}
-            type="button"
-            title="Rimuovi i colori dal testo selezionato (o da tutto il documento)"
-          >
-            ✕ Rimuovi colore
-          </button>
-
-          {/* Highlight */}
-          <button
-            onClick={() => editor.chain().focus().toggleHighlight().run()}
-            className={editor.isActive('highlight') ? styles.active : ''}
-            type="button"
-          >
-            🖍️ Highlight
-          </button>
+      <div className={styles.page}>
+        <div className={styles.sheet}>
+          <EditorContent editor={editor} className={styles.editorContent} />
         </div>
-      )}
+      </div>
 
-      {/* Editor Content */}
-      <EditorContent editor={editor} className={styles.editorContent} />
+      <div className={styles.status}>
+        <span>{words} {words === 1 ? 'parola' : 'parole'}</span>
+        <span className={saveStatus === 'saved' ? styles.statusOk : saveStatus === 'error' ? styles.statusError : ''} role="status">
+          {SAVE_STATUS_LABEL[saveStatus]}
+        </span>
+      </div>
     </div>
   );
 };

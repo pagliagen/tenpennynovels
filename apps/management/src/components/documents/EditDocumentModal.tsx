@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Modal } from '@/components/shared/Modal';
 import { PreviewPanel } from '@/components/shared/PreviewPanel';
-import { DocumentContentEditor } from './DocumentContentEditor';
+import { DocumentContentEditor, type EditorSaveStatus } from './DocumentContentEditor';
 import { DocumentIframePreview } from './DocumentIframePreview';
 import { useDocument, useUpdateDocument, useAutosaveDocument, useSubtypes, documentKeys } from '@/hooks/api/useDocuments';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -42,6 +42,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [originalSlug, setOriginalSlug] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState<EditorSaveStatus>('idle');
   const [refreshSignal, setRefreshSignal] = useState(0);
   const updateDocument = useUpdateDocument();
   const autosaveDocument = useAutosaveDocument();
@@ -90,6 +91,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
       setOriginalSlug(document.slug || '');
       originalSnapshotRef.current = { title: initialTitle, contentDelta: initialContentDelta };
       hasAutosavedRef.current = false;
+      setAutosaveStatus('idle');
     }
   }, [document]);
 
@@ -114,15 +116,18 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
     if (savingRef.current) return;
 
     const { title: currentTitle, contentDelta: currentDelta } = latestRef.current;
+    setAutosaveStatus('saving');
     const promise = autosaveDocument
       .mutateAsync({ id: documentId, data: { title: currentTitle, contentDelta: currentDelta } })
       .then(() => {
         hasAutosavedRef.current = true;
+        setAutosaveStatus('saved');
         scheduleReload();
       })
       .catch((err) => {
         // Autosave silenzioso: nessun toast ad ogni tick, solo log. Il
         // prossimo giro di digitazione (o "Salva") ritenterà comunque.
+        setAutosaveStatus('error');
         addNotification({ type: 'error', message: 'Autosave non riuscito, verrà ritentato' });
         throw err;
       })
@@ -312,7 +317,7 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
       isOpen={isOpen}
       onClose={handleCancel}
       title="Modifica Documento"
-      size="large"
+      size="fullscreen"
       footer={
         <>
           <button onClick={handleCancel} className={styles.cancelButton}>
@@ -328,74 +333,78 @@ export const EditDocumentModal: React.FC<EditDocumentModalProps> = ({
         </>
       }
     >
-      <div className={styles.modalContent}>
-        {/* Preview Button */}
-        <div className={styles.toolbar}>
+      <div className={styles.workspace}>
+        {/* Pannello laterale: i dati del documento non occupano più l'area di scrittura */}
+        <aside className={styles.sidePanel}>
           <button
             onClick={() => setPreviewOpen(true)}
             className={styles.previewButton}
             type="button"
           >
-            👁️ Preview
+            👁️ Anteprima
           </button>
-        </div>
 
-        {/* Title Input */}
-        <div className={styles.titleSection}>
-          <label htmlFor="doc-title">Titolo Documento</label>
-          <input
-            id="doc-title"
-            type="text"
-            value={title}
-            onChange={handleTitleChange}
-            className={styles.titleInput}
-            placeholder="Inserisci titolo..."
-          />
-        </div>
+          {/* Title Input */}
+          <div className={styles.titleSection}>
+            <label htmlFor="doc-title">Titolo Documento</label>
+            <input
+              id="doc-title"
+              type="text"
+              value={title}
+              onChange={handleTitleChange}
+              className={styles.titleInput}
+              placeholder="Inserisci titolo..."
+            />
+          </div>
 
-        {/* Slug (URL pubblico) */}
-        <div className={styles.titleSection}>
-          <label htmlFor="doc-slug">Slug (URL)</label>
-          <input
-            id="doc-slug"
-            type="text"
-            value={slug}
-            onChange={handleSlugChange}
-            className={styles.titleInput}
-            placeholder="slug-documento"
-          />
-          <small className={styles.slugHint}>
-            {urlOf(slug)} · {slugManuallyEdited ? 'modificato a mano' : 'segue il titolo'}
-          </small>
-          {slugChanged && !document.isDraft && (
-            <p className={styles.slugWarning} role="alert">
-              Il documento è pubblicato: cambiando lo slug il vecchio URL smetterà di funzionare.
-            </p>
-          )}
-        </div>
+          {/* Slug (URL pubblico) */}
+          <div className={styles.titleSection}>
+            <label htmlFor="doc-slug">Slug (URL)</label>
+            <input
+              id="doc-slug"
+              type="text"
+              value={slug}
+              onChange={handleSlugChange}
+              className={styles.titleInput}
+              placeholder="slug-documento"
+            />
+            <small className={styles.slugHint}>
+              {urlOf(slug)} · {slugManuallyEdited ? 'modificato a mano' : 'segue il titolo'}
+            </small>
+            {slugChanged && !document.isDraft && (
+              <p className={styles.slugWarning} role="alert">
+                Il documento è pubblicato: cambiando lo slug il vecchio URL smetterà di funzionare.
+              </p>
+            )}
+          </div>
 
-        {/* Subtype Selector */}
-        <div className={styles.titleSection}>
-          <label htmlFor="doc-subtype">Sottotipo</label>
-          <select
-            id="doc-subtype"
-            value={subtypeId}
-            onChange={(e) => setSubtypeId(e.target.value)}
-            className={styles.titleInput}
-          >
-            {subtypes.map((st) => (
-              <option key={st._id} value={st._id}>
-                {st.title} ({st.slug})
-              </option>
-            ))}
-          </select>
-        </div>
+          {/* Subtype Selector */}
+          <div className={styles.titleSection}>
+            <label htmlFor="doc-subtype">Sottotipo</label>
+            <select
+              id="doc-subtype"
+              value={subtypeId}
+              onChange={(e) => setSubtypeId(e.target.value)}
+              className={styles.titleInput}
+            >
+              {subtypes.map((st) => (
+                <option key={st._id} value={st._id}>
+                  {st.title} ({st.slug})
+                </option>
+              ))}
+            </select>
+          </div>
+        </aside>
 
         {/* TipTap Editor */}
-        <DocumentContentEditor
-          contentDelta={contentDelta}
-          onChange={handleContentChange}
-        />
+        <div className={styles.editorArea}>
+          <DocumentContentEditor
+            fill
+            contentDelta={contentDelta}
+            onChange={handleContentChange}
+            saveStatus={updateDocument.isPending ? 'saving' : autosaveStatus}
+          />
+        </div>
       </div>
 
       {/* Preview Panel */}

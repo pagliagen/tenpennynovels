@@ -202,6 +202,19 @@ function nodeToHtml(node: TipTapNode, injectHeadingIds: boolean): string {
 }
 
 /**
+ * Scala della dimensione del carattere: valore scritto da TipTap (estensione
+ * FontSize, `apps/management/src/lib/tiptap/fontSizes.ts`) → classe CSS.
+ * Le classi sono definite in `apps/documents/.../DocumentDetail.module.scss`.
+ * Tre posti da tenere allineati (niente npm workspace per condividerli).
+ */
+export const FONT_SIZE_CLASSES: Record<string, string> = {
+  '0.85em': 'fs-sm',
+  '1.2em': 'fs-lg',
+  '1.5em': 'fs-xl',
+  '2em': 'fs-xxl'
+};
+
+/**
  * Convert inline TipTap node to HTML (text with marks)
  */
 function inlineNodeToHtml(node: TipTapNode): string {
@@ -274,16 +287,25 @@ function inlineNodeToHtml(node: TipTapNode): string {
           break;
         }
         case 'textStyle': {
-          // Handle custom text styles (color, font size, etc.)
+          // La dimensione esce come classe, non come `style`: DocumentDetail.tsx
+          // (apps/documents) sanifica senza `style`, quindi un font-size inline
+          // non arriverebbe mai ai lettori. Valori fuori scala (es. i `12pt`
+          // incollati da Word) vengono scartati.
+          const classes: string[] = [];
+          const fontSizeClass = FONT_SIZE_CLASSES[String(mark.attrs?.fontSize ?? '')];
+          if (fontSizeClass) {
+            classes.push(fontSizeClass);
+          }
+
           const styles: string[] = [];
           if (mark.attrs?.color) {
             styles.push(`color: ${escapeHtml(mark.attrs.color)}`);
           }
-          if (mark.attrs?.fontSize) {
-            styles.push(`font-size: ${escapeHtml(mark.attrs.fontSize)}`);
-          }
-          if (styles.length > 0) {
-            html = `<span style="${styles.join('; ')}">${html}</span>`;
+
+          if (classes.length > 0 || styles.length > 0) {
+            const classAttr = classes.length > 0 ? ` class="${classes.join(' ')}"` : '';
+            const styleAttr = styles.length > 0 ? ` style="${styles.join('; ')}"` : '';
+            html = `<span${classAttr}${styleAttr}>${html}</span>`;
           }
           break;
         }

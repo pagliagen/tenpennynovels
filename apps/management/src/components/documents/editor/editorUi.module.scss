@@ -1,0 +1,238 @@
+@use '../../../styles/variables' as *;
+
+// Toolbar, popover e barre dell'editor documenti.
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  padding: 6px $spacing-sm;
+  background-color: $color-bg-secondary;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.separator {
+  width: 1px;
+  height: 22px;
+  margin: 0 6px;
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 $spacing-sm;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: $radius-md;
+  color: $color-text-secondary;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: $color-text-primary;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  &.on {
+    background-color: rgba($color-primary, 0.2);
+    border-color: rgba($color-primary, 0.55);
+    color: #f0c75e;
+  }
+}
+
+.select {
+  height: 32px;
+  padding: 0 $spacing-sm;
+  background-color: $color-bg-tertiary;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: $radius-md;
+  color: $color-text-primary;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+  }
+}
+
+.wrap {
+  position: relative;
+}
+
+.colorDot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+}
+
+.popover {
+  position: absolute;
+  top: 38px;
+  left: 0;
+  z-index: 30;
+  width: 248px;
+  padding: $spacing-md;
+  background-color: $color-bg-tertiary;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $radius-lg;
+  box-shadow: $shadow-lg;
+}
+
+.popLabel {
+  display: block;
+  margin: $spacing-md 0 6px;
+  color: $color-text-secondary;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.swatchRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.swatchGrid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    outline: 2px solid #f0c75e;
+    outline-offset: 1px;
+  }
+}
+
+.linkButton {
+  display: block;
+  margin-top: $spacing-sm;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  color: #f0c75e;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.custom {
+  margin-top: $spacing-sm;
+
+  :global(.react-colorful) {
+    width: 100%;
+    height: 140px;
+  }
+}
+
+.hexRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-top: $spacing-sm;
+
+  input {
+    flex: 1;
+    padding: 6px $spacing-sm;
+    background-color: $color-bg-primary;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: $radius-md;
+    color: $color-text-primary;
+    font-family: monospace;
+  }
+}
+
+.textInput {
+  width: 100%;
+  padding: 7px 9px;
+  background-color: $color-bg-primary;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $radius-md;
+  color: $color-text-primary;
+}
+
+.popActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-top: $spacing-sm;
+}
+
+.primaryButton {
+  padding: 6px $spacing-md;
+  background-color: $color-primary;
+  border: none;
+  border-radius: $radius-md;
+  color: #fff;
+  cursor: pointer;
+}
+
+.tableBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 5px $spacing-sm;
+  background-color: rgba($color-primary, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.tableBarTitle {
+  margin-right: 6px;
+  color: $color-text-secondary;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tableButton {
+  padding: 3px 9px;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: $radius-sm;
+  color: $color-text-secondary;
+  cursor: pointer;
+  font-size: 12px;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: $color-text-primary;
+  }
+
+  &.danger:hover {
+    border-color: $color-error;
+    color: #e08080;
+  }
+}
