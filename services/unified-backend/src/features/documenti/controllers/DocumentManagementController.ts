@@ -1,3 +1,4 @@
+import { nextSiblingOrder } from '../utils/documentOrder';
 import { Request, Response } from 'express';
 import { db } from '@database/models';
 import Document from '../models/Document';
@@ -838,6 +839,13 @@ export class DocumentManagementController {
         }
       }
 
+      // Senza `order` esplicito il documento va in coda ai fratelli (stesso
+      // genitore, o stesso sottotipo se è una radice), non in cima.
+      const lastSibling = await Document.findOne({
+        parentId: parentId || null,
+        subtypeId
+      }).sort({ order: -1 }).select('order').lean();
+
       const newDocument = new Document({
         title,
         slug,
@@ -852,7 +860,7 @@ export class DocumentManagementController {
         // default dello schema (Document.ts) — prima era `false`, disallineato.
         isPublic: isPublic !== undefined ? isPublic : true,
         tags: tags || [],
-        order: order !== undefined ? order : 0,
+        order: typeof order === 'number' ? order : nextSiblingOrder(lastSibling?.order),
         createdAt: new Date(),
         lastUpdated: new Date()
       });
