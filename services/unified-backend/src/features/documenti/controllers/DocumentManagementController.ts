@@ -11,7 +11,7 @@ import { logger } from '@modules/admin/utils/logger';
 import { successResponse, errorResponse, getRequestId } from '@shared/utils/apiResponse';
 
 import { Types } from 'mongoose';
-import { ALL_DOCUMENT_TYPES, isDocumentType, type DocumentType } from '../constants/documentTypes';
+import { ALL_DOCUMENT_TYPES, isDocumentType, isPublicDocumentType, type DocumentType } from '../constants/documentTypes';
 import { validateSlug } from '../utils/slugValidation';
 import { saveSeoDescription } from '../services/DocumentSeoService';
 
@@ -496,18 +496,16 @@ export class DocumentManagementController {
   }
 
   /**
-   * Soft delete document
+   * Elimina un documento (archiviato in `DeletedRecord`, ripristinabile a mano)
    * DELETE /admin/documents/:id
    *
-   * BUG PREESISTENTE, preservato esattamente su decisione dell'utente (Fase 6.5
-   * del refactor): imposta `deleted: true` via findByIdAndUpdate, ma `deleted`
-   * non è dichiarato nello schema Document — Mongoose in strict mode lo scarta
-   * silenziosamente. Il documento non viene MAI realmente eliminato o nascosto
-   * (l'unico effetto osservabile è il bump di lastUpdated): il bottone "elimina"
-   * del pannello admin oggi non fa nulla. Esiste già un meccanismo funzionante
-   * (Document.prototype.softDelete(), da softDeletePlugin — stesso usato da
-   * Character/Location/Item/Occupation, registrato in database/models/index.ts
-   * ma mai chiamato qui) — non collegato in questa fase.
+   * Usa `softDelete()` del softDeletePlugin: copia il documento in
+   * `DeletedRecord` e lo rimuove dalla collection, in transazione. Il
+   * `findOneAndDelete` interno fa partire l'hook di Document.ts che toglie
+   * chunk e vettori da Mongo/Qdrant/Elasticsearch. La revalidation ISR di
+   * pagina e padre si fa qui, perché nessun hook di save la copre.
+   * (Prima impostava `deleted: true`, campo che lo schema non ha: Mongoose lo
+   * scartava e il pulsante non eliminava nulla.)
    */
   static async deleteDocument(req: Request, res: Response): Promise<void> {
     try {
@@ -520,21 +518,16 @@ export class DocumentManagementController {
         return;
       }
 
-      const hasChildren = await Document.countDocuments({ parentId: new Types.ObjectId(id), deleted: { $ne: true } });
-      if (hasChildren > 0) {
+      const childCount = await Document.countDocuments({ parentId: new Types.ObjectId(id) });
+      if (childCount > 0) {
         res.status(400).json(errorResponse(
           'Impossibile eliminare un documento con figli. Eliminare prima i documenti figli.',
-          'DOCUMENT_HAS_CHILDREN', { childCount: hasChildren }, 400, getRequestId(req)
+          'DOCUMENT_HAS_CHILDREN', { childCount }, 400, getRequestId(req)
         ));
         return;
       }
 
-      const document = await Document.findByIdAndUpdate(
-        id,
-        { $set: { deleted: true, lastUpdated: new Date() } },
-        { returnDocument: 'after' }
-      );
-
+      const document = await Document.findById(id);
       if (!document) {
         res.status(404).json(errorResponse(
           'Documento non trovato', 'DOCUMENT_NOT_FOUND', undefined, 404, getRequestId(req)
@@ -542,7 +535,24 @@ export class DocumentManagementController {
         return;
       }
 
-      logger.info(`Document ${id} soft deleted`);
+      const { type, path, parentId } = document;
+      const parent = parentId ? await Document.findById(parentId).select('path').lean<{ path?: string }>() : null;
+
+      await document.softDelete(
+        new Types.ObjectId(String(req.user?.userId)),
+        req.user?.username ?? 'Unknown Admin',
+        'Eliminato dal gestionale'
+      );
+
+      // Pagina eliminata e pagina del padre (che ne elenca il link): senza,
+      // restano in cache ISR fino a un'ora. Il sitemap si rigenera alle 03:00.
+      if (isPublicDocumentType(type)) {
+        import('@shared/services/DocumentsRevalidator')
+          .then(({ revalidateDocumentPaths }) => revalidateDocumentPaths(type, [path, parent?.path]))
+          .catch((error) => logger.error('[Document] Revalidation dopo eliminazione fallita:', error));
+      }
+
+      logger.info(`Document ${id} eliminato (archiviato in DeletedRecord)`);
       res.json(successResponse(null, undefined, getRequestId(req)));
     } catch (error: any) {
       logger.error('Error deleting document:', error);

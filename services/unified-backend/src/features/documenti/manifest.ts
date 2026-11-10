@@ -29,11 +29,8 @@ import adminSubtypesRoutes from './routes/admin-subtypes';
  *
  * Bug preesistenti preservati esattamente (documentati nei file, confermati
  * con lettura diretta del codice in Fase 6.5), non corretti in questa fase:
- * - DocumentManagementController.deleteDocument imposta `deleted: true` su
- *   un campo che non esiste nello schema Document — Mongoose strict mode lo
- *   scarta silenziosamente, il bottone "elimina" del pannello admin non
- *   elimina/nasconde nulla. Deciso con l'utente: preservato, non collegato
- *   al softDeletePlugin.softDelete() già esistente e funzionante.
+ * - (Risolto 2026-11-10) DocumentManagementController.deleteDocument ora usa
+ *   softDelete(): prima impostava `deleted: true`, campo non nello schema.
  * - Filtri no-op su `deleted`/`deletedAt` (due nomi diversi per un campo
  *   inesistente) in ~13 punti sparsi fra HierarchyService, DocumentController,
  *   DocumentManagementController, admin-subtypes.ts e SitemapService.ts —
