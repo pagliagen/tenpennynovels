@@ -842,8 +842,9 @@ export class DocumentManagementController {
       // Senza `order` esplicito il documento va in coda ai fratelli (stesso
       // genitore, o stesso sottotipo se è una radice), non in cima.
       const lastSibling = await Document.findOne({
-        parentId: parentId || null,
-        subtypeId
+        // ObjectId costruiti da stringhe già validate: non passano operatori Mongo.
+        parentId: parentId ? new Types.ObjectId(String(parentId)) : null,
+        subtypeId: new Types.ObjectId(String(subtypeId))
       }).sort({ order: -1 }).select('order').lean();
 
       const newDocument = new Document({
