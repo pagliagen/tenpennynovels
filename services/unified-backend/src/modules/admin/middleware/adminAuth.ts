@@ -118,14 +118,17 @@ export class AdminAuthMiddleware {
                 .exec();
 
               if (char && req.user) {
-                const isApprovedGestore = char.isGestore && char.playerStatus === 'approved';
+                // Nel pannello admin `isGestore` vince su tutto, anche sullo stato del
+                // personaggio (scelta del titolare, 2026-11-10): l'account amministrativo
+                // di produzione è in `draft` e perdeva i permessi che il ruolo master non ha.
+                const gestoreFlag = char.isGestore === true;
                 const adminRoles = gameplayRolesToAdminRoles(char.gameplayRoles || []);
-                if (isApprovedGestore) adminRoles.push('amministratore');
+                if (gestoreFlag) adminRoles.push('amministratore');
                 req.user.characterRoles = adminRoles;
                 req.user.gameplayRoles = (char.gameplayRoles || []) as ('player' | 'master' | 'moderatore')[];
                 req.user.adminPermissions = char.adminPermissions || [];
-                req.user.isGestore = isApprovedGestore || false;
-                req.user.canAccessAdminPanel = char.canAccessAdminPanel || isApprovedGestore || false;
+                req.user.isGestore = gestoreFlag || false;
+                req.user.canAccessAdminPanel = char.canAccessAdminPanel || gestoreFlag || false;
 
                 logger.info(`[AdminAuth] Character loaded: id=${finalCharacterId} | isGestore=${char.isGestore} | roles=${JSON.stringify(char.gameplayRoles)} | canAccess=${char.canAccessAdminPanel}`);
               } else {

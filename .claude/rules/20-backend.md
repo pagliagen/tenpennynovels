@@ -84,6 +84,8 @@ Catena middleware: `authenticateUser()` → `authenticateCharacter()` → `requi
 | `hasAdminPermission()` | `config/permissions/admin.ts` | bypass `isGestore` **non** filtrato per stato ⚠️ |
 | `requireGameplayRoles()` / `requireGameplayRole()` | `modules/game/middleware/auth.ts`, `core/auth/middleware/auth.ts` | filtra da 2026-08-22 (`requireApproved`, default `true`) |
 
+**Eccezione voluta (2026-11-10): nel pannello admin `isGestore` vince anche su un personaggio non approvato** (`modules/admin/middleware/adminAuth.ts`, `requireAdminAccess`). L'admin di produzione (`System Administrator`) è in `draft` e senza questo eliminava documenti con 403 `documents.delete` (aveva solo i permessi del ruolo master). Il gioco (`hasGamePermission`, `requireGameplayRole`) continua a richiedere `approved`. Rischio accettato: un PG draft con `isGestore: true` ha tutto il pannello.
+
 Per un check di ruolo preferire **`hasGamePermission()`**: risolve già stato, override e bypass gestore in un punto solo.
 
 **Incidente 2026-08-19** — `/auth/session` restituiva tutti i `game:admin:*` a un PG in bozza con `gameplayRoles: ['master']`. Due bypass distinti nello stesso file, entrambi valutati **prima** dello stato: `if (isGestore) return ...` e i permessi di ruolo mai filtrati per stato. Il primo era già stato corretto in #59, il secondo no.
