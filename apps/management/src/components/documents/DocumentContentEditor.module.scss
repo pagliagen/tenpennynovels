@@ -68,6 +68,14 @@
       margin: 0 0 0.9em;
     }
 
+    // TipTap mette un <p> dentro ogni <li>/<td>: senza questo ogni voce
+    // ha il margine dei paragrafi e le liste risultano spaziatissime.
+    li > p,
+    td > p,
+    th > p {
+      margin: 0;
+    }
+
     ul,
     ol {
       margin: 0 0 0.9em;

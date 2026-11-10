@@ -65,6 +65,21 @@ export function splitParagraphsOnHardBreaks(fragment: Fragment): Fragment {
   return Fragment.fromArray(nodes);
 }
 
+/**
+ * Toglie i paragrafi vuoti al primo livello dell'incollato: sono le righe
+ * vuote usate da Word per spaziare e qui, con il margine dei paragrafi,
+ * diventerebbero buchi enormi. Dentro liste e tabelle non si tocca nulla
+ * (una voce deve avere almeno un paragrafo).
+ */
+export function dropEmptyParagraphs(fragment: Fragment): Fragment {
+  const kept: ProseMirrorNode[] = [];
+  fragment.forEach((node) => {
+    if (node.type.name === 'paragraph' && node.content.size === 0) return;
+    kept.push(node);
+  });
+  return kept.length === 0 ? fragment : Fragment.fromArray(kept);
+}
+
 export const PasteHardBreakSplit = Extension.create({
   name: 'pasteHardBreakSplit',
 
@@ -74,7 +89,11 @@ export const PasteHardBreakSplit = Extension.create({
         key: pasteHardBreakSplitPluginKey,
         props: {
           transformPasted: (slice) =>
-            new Slice(splitParagraphsOnHardBreaks(slice.content), slice.openStart, slice.openEnd)
+            new Slice(
+              dropEmptyParagraphs(splitParagraphsOnHardBreaks(slice.content)),
+              slice.openStart,
+              slice.openEnd
+            )
         }
       })
     ];

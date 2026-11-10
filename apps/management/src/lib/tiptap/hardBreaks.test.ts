@@ -129,4 +129,13 @@ describe('PasteHardBreakSplit', () => {
     const editor = createEditor('<p></p>');
     expect(pasteHtml(editor, '<p>Solo testo</p>')).toEqual(['paragraph:Solo testo']);
   });
+
+  it('toglie le righe vuote incollate da Word', () => {
+    const editor = createEditor('<p></p>');
+    expect(pasteHtml(editor, '<p>Titolo</p><p></p><p></p><p>Corpo<br><br>Fine</p>')).toEqual([
+      'paragraph:Titolo',
+      'paragraph:Corpo',
+      'paragraph:Fine'
+    ]);
+  });
 });
