@@ -133,6 +133,36 @@
   @include victorian-scrollbar;
 }
 
+/* Variante «Presenti»: cornice e pannello con la palette dedicata (le altre finestre non cambiano) */
+.themePresenti {
+  &:not(.mobile) {
+    border-radius: 8px;
+  }
+  background: $presenti-modal-bg;
+  border: 2px solid $presenti-gold;
+
+  .header {
+    border-bottom-color: $presenti-gold;
+  }
+
+  .title,
+  .minimizeBtn,
+  .closeBtn {
+    color: $presenti-gold;
+  }
+
+  .minimizeBtn,
+  .closeBtn {
+    border-color: $presenti-gold;
+  }
+
+  .body {
+    background: $presenti-surface;
+    border-color: $presenti-gold;
+    border-radius: 15px;
+  }
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .window {

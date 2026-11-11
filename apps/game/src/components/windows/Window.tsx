@@ -190,9 +190,14 @@ export function Window({ windowState, children }: WindowProps): JSX.Element {
     }
   };
 
+  const isPresenti =
+    windowState.type === 'utility' &&
+    windowState.data.type === 'utility' &&
+    windowState.data.utilityName === 'presenti';
+
   return (
     <div
-      className={`${styles.window} ${isMobile ? styles.mobile : ''}`}
+      className={classNames(styles.window, isMobile && styles.mobile, isPresenti && styles.themePresenti)}
       style={{
         left: isMobile ? 0 : windowState.position.x,
         top: isMobile ? 0 : windowState.position.y,

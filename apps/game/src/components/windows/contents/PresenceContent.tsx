@@ -157,10 +157,7 @@ export function PresenceContent(): JSX.Element {
       </div>
 
       <div className={styles.divider} aria-hidden="true">
-        <span className={styles.dividerLine} />
-        {/* TODO: sostituire con l'immagine della falena */}
-        <span className={styles.dividerIcon}>✦</span>
-        <span className={styles.dividerLine} />
+        <img src="/images/presenti/barra-farfalla.png" alt="" className={styles.dividerImage} />
       </div>
 
       <div className={styles.content}>

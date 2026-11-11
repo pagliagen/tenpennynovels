@@ -16,50 +16,40 @@
 
 .tab {
   padding: 6px 18px;
-  background: transparent;
-  border: 1px solid $frame-gold-line;
+  background: $presenti-surface;
+  border: 1px solid $presenti-gold;
   border-radius: 4px;
   font-family: 'Bahnschrift SemiLight', $font-sans;
   font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: $frame-muted;
+  color: $presenti-gold;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s;
 
   &:hover {
-    color: $text-primary;
+    background: rgba(7, 53, 46, 0.5);
   }
 
   &:focus-visible {
-    outline: 2px solid $frame-gold-title;
+    outline: 2px solid $presenti-gold;
     outline-offset: 2px;
   }
 }
 
 .tabActive {
-  background: $frame-teal-dim;
-  border-color: $frame-teal;
-  color: $text-primary;
+  background: $presenti-teal;
 }
 
 .divider {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  margin: $spacing-md 0 $spacing-sm;
-  color: $frame-gold-title;
+  margin: 20px 0 0;
+  padding: 0 60px;
 }
 
-.dividerLine {
-  flex: 1;
-  height: 1px;
-  background: $frame-gold-line;
-}
-
-.dividerIcon {
-  font-size: 22px;
-  line-height: 1;
+.dividerImage {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .content {
@@ -67,8 +57,23 @@
   min-height: 0;
   overflow-y: auto;
   padding-right: $spacing-md;
-  @include victorian-scrollbar;
-  padding: 0 10px;
+  padding: 0 20px;
+  scrollbar-width: thin;
+  scrollbar-color: $presenti-gold $presenti-modal-bg;
+
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $presenti-modal-bg;
+    border-radius: 5px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $presenti-gold;
+    border-radius: 5px;
+  }
 }
 
 .group {
@@ -79,19 +84,20 @@
   display: flex;
   align-items: center;
   gap: $spacing-md;
-  margin: $spacing-md 0 $spacing-sm;
-  font-family: 'Les Mystères de Paris', serif;
+  margin: 20px 0 10px;
+  font-family: 'Thrifted Attire', serif;
   font-weight: 400;
   font-size: 22px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: $frame-teal;
+  color: $presenti-teal;
+  padding: 0 40px;
 
   &::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: $frame-teal-dim;
+    background: $presenti-teal;
   }
 }
 
@@ -136,7 +142,7 @@
   width: 26px;
   height: 26px;
   transform: translateY(-50%);
-  fill: $frame-teal;
+  fill: $presenti-teal;
 }
 
 .avatarButton {
@@ -162,12 +168,12 @@
 
 .avatar {
   display: block;
-  width: 56px;
-  height: 56px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   object-fit: cover;
   background: #1c1c1c;
-  border: 1px solid $frame-orange;
+  border: 1px solid $presenti-orange;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
@@ -178,12 +184,12 @@
   display: flex;
   align-items: center;
   gap: $spacing-md;
-  margin-left: -28px;
-  padding: 0 $spacing-lg 0 calc(28px + #{$spacing-md});
-  height: 52px;
-  background: #101010;
-  border: 1px solid $frame-gold-line;
-  border-radius: 14px;
+  margin-left: -45px;
+  padding: 0 $spacing-lg 0 calc(45px + #{$spacing-md});
+  height: 66px;
+  background: $presenti-surface;
+  border: 1px solid $presenti-gold;
+  border-radius: 5px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
@@ -208,10 +214,10 @@
   box-shadow: 0 0 8px rgba(25, 211, 95, 0.75);
 }
 
-// Non disponibile: lo stesso verde, spento
+// Non disponibile: arancione, come nel mockup
 .statusDotOff {
-  background: #1d4a30;
-  box-shadow: none;
+  background: $presenti-orange;
+  box-shadow: 0 0 8px rgba(255, 167, 72, 0.6);
 }
 
 .status {
@@ -252,7 +258,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: $spacing-sm $spacing-md;
-  margin: $spacing-sm 0 0 28px;
+  margin: $spacing-sm 0 0 45px;
   padding: $spacing-md;
   background: #0b0b0b;
   border: 1px solid $frame-gold-line;
@@ -372,6 +378,21 @@
 }
 
 @media (max-width: 560px) {
+  .avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .row {
+    margin-left: -32px;
+    padding-left: calc(32px + #{$spacing-md});
+    height: 52px;
+  }
+
+  .editor {
+    margin-left: 32px;
+  }
+
   .status {
     display: none;
   }
