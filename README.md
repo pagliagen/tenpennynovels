@@ -167,7 +167,7 @@ npm run backend:all
 npm run frontend:all
 
 # Or start everything together
-npm run all
+npm run all 
 ```
 
 ### Access the Platform
