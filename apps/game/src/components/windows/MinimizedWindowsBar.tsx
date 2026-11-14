@@ -41,6 +41,8 @@ function getWindowTitle(window: WindowState): string {
             return '📖 Anagrafica Personaggi';
           case 'character-faceclaim':
             return '🎭 Gestione Prestavolto';
+          case 'market':
+            return 'Mercato';
           default:
             return window.data.utilityName;
         }

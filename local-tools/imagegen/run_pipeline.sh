@@ -2,7 +2,8 @@
 # Avvia il server una volta e genera tutti gli artifact di un tipo in un solo
 # giro (nessun riavvio tra un elemento e l'altro):
 #
-# Uso:  bash run_pipeline.sh --type items|locations [altri flag di generate_artifacts.py]
+# Uso:  bash run_pipeline.sh --type items|occupations|locations|all [altri flag di generate_artifacts.py]
+#   items/occupations: via Ollama (nessun server da avviare); locations/all: avvia il server diffusers.
 #   bash run_pipeline.sh --type items --test --steps 8               # test veloce
 #   bash run_pipeline.sh --type items                                # tutti gli item (400x400)
 #   bash run_pipeline.sh --type locations                            # tutte le location (1024x1024)
@@ -15,6 +16,18 @@
 #   IMAGEGEN_LORA / IMAGEGEN_LORA_SCALE   LoRA opzionale (solo SDXL/SD)
 set -euo pipefail
 cd "$(dirname "$0")"
+
+# items e occupations usano Ollama (x/z-image-turbo): niente server diffusers da avviare.
+# Il server serve solo per le location (Qwen-Image 2.1 / SDXL / SD1.5), vedi server.py.
+if ! printf '%s\n' "$@" | grep -qE '^(locations|all)$'; then
+  [ -d .venv ] || { echo "❌ manca .venv — lancia prima 'bash run.sh' una volta"; exit 1; }
+  # shellcheck disable=SC1091
+  source .venv/bin/activate
+  python generate_artifacts.py "$@"
+  echo ""
+  echo "✨ Fatto. Artifact in ../../apps/game/public/artifacts/"
+  exit 0
+fi
 
 MODEL="${IMAGEGEN_MODEL:-runwayml/stable-diffusion-v1-5}"
 PORT="${PORT:-8791}"
