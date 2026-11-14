@@ -23,6 +23,17 @@ export const ITEM_CATEGORY_LABELS: Record<ItemCategory, string> = {
   services: 'Servizi',
 };
 
+export type MarketSection = 'servizi' | 'farmacia' | 'camuffamento' | 'armi' | 'trasporti' | 'mestiere';
+
+export const MARKET_SECTION_LABELS: Record<MarketSection, string> = {
+  servizi: 'Servizi',
+  farmacia: 'Farmacia e medicina',
+  camuffamento: 'Camuffamento',
+  armi: 'Armi',
+  trasporti: 'Trasporti',
+  mestiere: 'Attrezzi del mestiere',
+};
+
 export interface ItemPrerequisites {
   minimumStats?: Record<string, number>;
   minimumSkills?: Record<string, number>;
@@ -71,6 +82,7 @@ export interface Item {
   category: ItemCategory;
   categoryLabel?: string;
   subcategory?: string;
+  marketSection?: MarketSection;
   imageUrl?: string;
   isPublic: boolean;
   availableLocations: string[];
@@ -115,6 +127,7 @@ export interface CreateItemData {
   description: string;
   category: ItemCategory;
   subcategory?: string;
+  marketSection?: MarketSection | '';
   imageUrl?: string;
   isPublic?: boolean;
   isAdminOnly?: boolean;

@@ -20,6 +20,23 @@ export enum ItemCategory {
   SERVICES = 'services'
 }
 
+/**
+ * Reparti dello scaffale del Mercato (apps/game). Esplicito e separato da
+ * `category`: la categoria governa equip e uso (ItemController, WeaponService),
+ * il reparto è solo la vista dello scaffale. Il reparto «servizi» non ha item:
+ * usa la collection Service, ma resta nell'enum perché lo scaffale lo conosce.
+ */
+export const MARKET_SECTIONS = [
+  'servizi',
+  'farmacia',
+  'camuffamento',
+  'armi',
+  'trasporti',
+  'mestiere'
+] as const;
+
+export type MarketSection = (typeof MARKET_SECTIONS)[number];
+
 export const ITEM_CATEGORY_LABELS: Record<ItemCategory, string> = {
   [ItemCategory.CLOTHING]: 'Abbigliamento',
   [ItemCategory.ACCESSORIES]: 'Accessori',
@@ -45,6 +62,8 @@ export interface IItem extends Document, SoftDeleteMethods {
   description: string;
   category: ItemCategory;
   subcategory?: string;
+  marketSection?: MarketSection;          // Reparto dello scaffale del Mercato
+  tradeOccupations?: Schema.Types.ObjectId[]; // Occupazioni a cui l'attrezzo è associato (solo evidenza, non restrizione)
 
   // Visual representation
   imageUrl?: string;              // URL CDN (upload manuale via pannello gestione)
@@ -270,6 +289,14 @@ const ItemSchema = new Schema<IItem>({
     type: String,
     trim: true
   },
+  marketSection: {
+    type: String,
+    enum: MARKET_SECTIONS
+  },
+  tradeOccupations: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Occupation'
+  }],
 
   // Visual representation
   imageUrl: {

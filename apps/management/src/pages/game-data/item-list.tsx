@@ -14,8 +14,13 @@ import { useItems, useCreateItem, useUpdateItem, useDeleteItem } from '@/hooks/a
 import { useLocations } from '@/hooks/api/useLocations';
 import { useNotificationStore } from '@/store/notificationStore';
 import type { Item, ItemListParams, CreateItemData, ItemCategory } from '@/types/api/Item';
-import { ITEM_CATEGORY_LABELS } from '@/types/api/Item';
+import { ITEM_CATEGORY_LABELS, MARKET_SECTION_LABELS } from '@/types/api/Item';
 import styles from '@/styles/pages/ItemList.module.scss';
+
+const MARKET_SECTION_OPTIONS = [
+  { value: '', label: 'Nessuno (non in mercato)' },
+  ...Object.entries(MARKET_SECTION_LABELS).map(([value, label]) => ({ value, label })),
+];
 
 const CATEGORY_OPTIONS = Object.entries(ITEM_CATEGORY_LABELS).map(([value, label]) => ({
   value,
@@ -43,6 +48,7 @@ const EMPTY_FORM: CreateItemData = {
   description: '',
   category: 'clothing' as ItemCategory,
   subcategory: '',
+  marketSection: '',
   imageUrl: '',
   isPublic: false,
   isAdminOnly: false,
@@ -72,6 +78,7 @@ function itemToFormData(item: Item): CreateItemData {
     description: item.description,
     category: item.category,
     subcategory: item.subcategory || '',
+    marketSection: item.marketSection || '',
     imageUrl: item.imageUrl || '',
     isPublic: item.isPublic,
     isAdminOnly: item.isAdminOnly,
@@ -307,6 +314,10 @@ export default function ItemList() {
                         value={formData.basePrice ?? 0}
                         onChange={(e: any) => handleChange('basePrice', parseInt(e.target.value) || 0)} />
                     </div>
+                    <FormField label="Reparto mercato" name="marketSection" type="select"
+                      value={formData.marketSection || ''}
+                      onChange={(e: any) => handleChange('marketSection', e.target.value)}
+                      options={MARKET_SECTION_OPTIONS} />
                     <FormField label="Descrizione" name="description" type="textarea" required
                       value={formData.description}
                       onChange={(e: any) => handleChange('description', e.target.value)}
