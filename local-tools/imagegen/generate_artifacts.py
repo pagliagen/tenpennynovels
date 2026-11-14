@@ -96,6 +96,7 @@ LOCATION_NEGATIVE = ("photo, photorealistic, oil painting, 3d render, people, pe
 # bene sullo scaffale del Mercato e nelle card; oggetto singolo e centrato, mai mani o persone.
 ICON_STYLE = ("single object centered, isolated on a plain dark charcoal background, Victorian 1895 "
               "museum catalogue illustration, detailed, soft studio lighting, muted warm colors, "
+              "dark background filling the entire frame edge to edge, no border, no frame, "
               "no text, no watermark, no people, no hands")
 
 # Config per tipo: csv sorgente, cartella output, dimensione icona di default.
@@ -387,8 +388,9 @@ def generate_type(artifact_type, args):
             rows = [r for r in rows if r not in present]
             print(f"⏭️  [{artifact_type}] {len(present)} già presenti in {config['output_dir'].name}/, saltati")
     if args.only:
-        wanted = args.only.strip().lower()
-        rows = [r for r in rows if wanted in ((r.get("name") or "").lower(), (r.get("filename") or "").lower())]
+        # più nomi separati da "|" (i nomi item contengono virgole, mai "|")
+        wanted = {w.strip().lower() for w in args.only.split("|") if w.strip()}
+        rows = [r for r in rows if (r.get("name") or "").lower() in wanted or (r.get("filename") or "").lower() in wanted]
     if args.test:
         rows = rows[:1]
     elif args.limit:
@@ -443,7 +445,7 @@ def main():
                      help="Tipo di artifact da generare, o 'all' per farli tutti in sequenza")
     ap.add_argument("--test", action="store_true", help="Solo 1 elemento (per tipo, se --type all)")
     ap.add_argument("--limit", type=int, help="Massimo N elementi (per tipo, se --type all)")
-    ap.add_argument("--only", help="Solo la location/item con questo name o filename (es. \"Borough Market\")")
+    ap.add_argument("--only", help="Solo la location/item con questo name o filename; più valori separati da | (es. \"Borough Market\")")
     ap.add_argument("--out-dir", help="Scrivi qui invece che in apps/game/public/artifacts/<tipo> (per i giri di prova)")
     ap.add_argument("--no-reference", action="store_true", help="Qwen: non usare le immagini di riferimento di stile")
     ap.add_argument("--skip-existing", action="store_true",
