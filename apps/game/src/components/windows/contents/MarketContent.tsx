@@ -1,25 +1,26 @@
 /**
  * Market Content Component
  *
- * Mercato: catalogo strumenti (general-store) + servizi continuativi
- * (servitù, comunicazioni, trasporti, sicurezza).
+ * Mercato: schermata a scaffale con i reparti (servizi, farmacia, camuffamento, armi,
+ * trasporti, attrezzi del mestiere). Ogni etichetta apre il proprio reparto.
  *
  * @module components/windows/contents/MarketContent
  */
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { useEconomyServices } from '@/hooks/useEconomyServices';
 import { useGeneralStore } from '@/hooks/useMarketCatalog';
 
-import { MarketItemsTab } from './market/MarketItemsTab';
-import { MarketServicesTab } from './market/MarketServicesTab';
+import { MarketSectionView } from './market/MarketSectionView';
+import { MarketShelf } from './market/MarketShelf';
+import type { MarketSectionId } from './market/shelfConfig';
 import styles from '@/styles/components/windows/market/Market.module.scss';
 
 export function MarketContent(): React.ReactElement {
-  const [activeTab, setActiveTab] = useState<'strumenti' | 'servizi'>('strumenti');
+  const [section, setSection] = useState<MarketSectionId | null>(null);
 
   const generalStore = useGeneralStore();
   const services = useEconomyServices();
@@ -29,45 +30,53 @@ export function MarketContent(): React.ReactElement {
 
   const finances = generalStore.data?.character?.finances;
 
+  // Conteggi per reparto, mostrati al passaggio sulle etichette
+  const counts = useMemo(() => {
+    const result: Partial<Record<MarketSectionId, number>> = {};
+    if (generalStore.data) {
+      for (const item of generalStore.data.items) {
+        if (!item.marketSection) continue;
+        const id = item.marketSection as MarketSectionId;
+        result[id] = (result[id] ?? 0) + 1;
+      }
+    }
+    if (services.data) result.servizi = services.data.catalog.length;
+    return result;
+  }, [generalStore.data, services.data]);
+
+  // Lo scaffale è a tutta finestra, senza intestazione: titolo e riepilogo dei penny compaiono solo dentro un reparto.
   return (
     <div className={styles.marketContainer}>
-      <div className={styles.header}>
-        <h2 className={styles.title}>🏪 Mercato</h2>
+      {section === null ? (
+        <>
+          {error && <p className={styles.modalWarning}>⚠️ Errore nel caricamento del mercato. Riprova più tardi.</p>}
+          <MarketShelf counts={counts} onSelect={setSection} />
+        </>
+      ) : (
+        <>
+          <div className={styles.header}>
+            <h2 className={styles.title}>🏪 Mercato</h2>
 
-        {finances && (
-          <div className={styles.walletBar}>
-            <span>Contanti: {finances.cash} penny</span>
-            <span>Deposito: {finances.bankDeposit} penny</span>
-            <span>Classe sociale: {finances.socialClass}</span>
-            <span>Rendita settimanale: {finances.creditLine.currentAvailable}/{finances.creditLine.maxWeekly} penny</span>
-            {services.data && <span>Valore di Credito: {services.data.available}/{services.data.capacity}</span>}
+            {finances && (
+              <div className={styles.walletBar}>
+                <span>Contanti: {finances.cash} penny</span>
+                <span>Deposito: {finances.bankDeposit} penny</span>
+                <span>Classe sociale: {finances.socialClass}</span>
+                <span>Rendita settimanale: {finances.creditLine.currentAvailable}/{finances.creditLine.maxWeekly} penny</span>
+                {services.data && <span>Valore di Credito: {services.data.available}/{services.data.capacity}</span>}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <div className={styles.tabs}>
-        <button
-          className={`${styles.tab} ${activeTab === 'strumenti' ? styles.tabActive : ''}`}
-          onClick={() => setActiveTab('strumenti')}
-        >
-          Strumenti
-        </button>
-        <button
-          className={`${styles.tab} ${activeTab === 'servizi' ? styles.tabActive : ''}`}
-          onClick={() => setActiveTab('servizi')}
-        >
-          Servizi
-        </button>
-      </div>
-
-      {isLoading && <p className={styles.emptyState}>Caricamento del mercato in corso…</p>}
-      {error && <p className={styles.modalWarning}>⚠️ Errore nel caricamento del mercato. Riprova più tardi.</p>}
-
-      {!isLoading && !error && activeTab === 'strumenti' && generalStore.data && (
-        <MarketItemsTab data={generalStore.data} />
-      )}
-      {!isLoading && !error && activeTab === 'servizi' && services.data && (
-        <MarketServicesTab data={services.data} />
+          <MarketSectionView
+            section={section}
+            generalStore={generalStore.data}
+            services={services.data}
+            isLoading={isLoading}
+            hasError={Boolean(error)}
+            onBack={() => setSection(null)}
+          />
+        </>
       )}
     </div>
   );

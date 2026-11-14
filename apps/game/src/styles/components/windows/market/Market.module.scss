@@ -9,7 +9,9 @@
  */
 
 .marketContainer {
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
   font-family: 'Playfair Display', serif;
   color: $text-primary;
   background: transparent;
@@ -18,51 +20,29 @@
 }
 
 .header {
-  margin-bottom: 16px;
+  flex: none;
+  margin-bottom: 12px;
   border-bottom: 2px solid $gold-30;
-  padding-bottom: 16px;
+  padding-bottom: 12px;
 }
 
 .title {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: bold;
-  margin: 0 0 12px 0;
+  margin: 0 0 8px 0;
   color: $text-primary;
 }
 
 .walletBar {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  font-size: 14px;
+  gap: 6px 16px;
+  font-size: 13px;
   color: $text-secondary;
   background: $brown-20;
   border: 1px solid $gold-20;
   border-radius: 4px;
-  padding: 10px 14px;
-}
-
-.tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.tab {
-  padding: 8px 20px;
-  border: 1px solid $gold-30;
-  background: $brown-20;
-  color: $text-secondary;
-  cursor: pointer;
-  border-radius: 4px 4px 0 0;
-  font-family: inherit;
-  font-size: 15px;
-}
-
-.tabActive {
-  background: $gold-70;
-  color: #1a1612;
-  font-weight: bold;
+  padding: 8px 12px;
 }
 
 .tabContent {
@@ -271,4 +251,224 @@
 .serviceCost {
   color: $text-secondary;
   font-size: 13px;
+}
+
+/* ========================================
+   SCAFFALE — schermata principale del Mercato
+   Le etichette sono in percentuale dell'immagine (vedi market/shelfConfig.ts);
+   il font-size è in cqw (larghezza dello scaffale), quindi scala con la finestra.
+   ======================================== */
+
+.shelfStage {
+  flex: 1 1 0;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+}
+
+.shelf {
+  position: relative;
+  // Il più grande che sta nello spazio disponibile, mantenendo le proporzioni dell'immagine (422×263)
+  width: min(100cqw, calc(100cqh * 422 / 263));
+  container-type: inline-size;
+  border: 1px solid $gold-30;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #0d0c0a;
+}
+
+.shelfImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  pointer-events: none;
+}
+
+.shelfLabel {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: 'Thrifted Attire', 'Playfair Display', serif;
+  line-height: 1.05;
+  text-align: center;
+  white-space: nowrap;
+  color: $parchment;
+  cursor: pointer;
+  transition: color 0.18s ease, text-shadow 0.18s ease, transform 0.18s ease;
+
+  // Area cliccabile più ampia del solo testo (le scritte piccole, come «Armi», restano facili da colpire)
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -1cqw -1.6cqw;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: #f3c75a;
+    text-shadow: 0 0 0.5cqw rgba(243, 199, 90, 0.85), 0 0 1.6cqw rgba(184, 134, 11, 0.75);
+    transform: scale(1.05);
+    z-index: 2;
+  }
+
+  &:focus-visible {
+    outline: 1px solid $gold-70;
+    outline-offset: 0.6cqw;
+    border-radius: 2px;
+  }
+
+  &:active {
+    transform: scale(1.01);
+  }
+}
+
+.shelfLabelText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.shelfLabelLine {
+  display: block;
+}
+
+.shelfCount {
+  position: absolute;
+  top: calc(100% + 0.8cqw);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.25em 0.7em;
+  font-size: 0.55em;
+  letter-spacing: 0.04em;
+  color: $parchment;
+  background: rgba(10, 8, 6, 0.9);
+  border: 1px solid $gold-30;
+  border-radius: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+
+  .shelfLabel:hover &,
+  .shelfLabel:focus-visible & {
+    opacity: 1;
+  }
+}
+
+.shelfDebug .shelfLabel {
+  outline: 1px dashed #ff00ff;
+
+  &::after {
+    outline: 1px dotted #00e5ff;
+  }
+}
+
+.shelfLabelDark {
+  color: #2e2a24;
+
+  &:hover,
+  &:focus-visible {
+    color: #6b3a0a;
+    text-shadow: 0 0 0.5cqw rgba(255, 244, 214, 0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shelfLabel,
+  .shelfCount {
+    transition: none;
+  }
+
+  .shelfLabel:hover,
+  .shelfLabel:focus-visible {
+    transform: none;
+  }
+}
+
+/* ========================================
+   VISTA DI REPARTO
+   ======================================== */
+
+.sectionView {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.backButton {
+  padding: 6px 14px;
+  border: 1px solid $gold-30;
+  border-radius: 4px;
+  background: $brown-20;
+  color: $text-secondary;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    color: $parchment;
+    border-color: $gold-70;
+  }
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 22px;
+  color: $text-primary;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 4px 12px;
+  border: 1px solid $gold-30;
+  border-radius: 999px;
+  background: transparent;
+  color: $text-secondary;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: $gold-70;
+    color: $parchment;
+  }
+}
+
+.chipActive {
+  background: $gold-70;
+  border-color: $gold-70;
+  color: #1a1612;
+}
+
+.mineBadge {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border: 1px solid $gold-50;
+  border-radius: 999px;
+  background: $gold-20;
+  color: $parchment;
+  font-size: 11px;
+  letter-spacing: 0.04em;
 }
