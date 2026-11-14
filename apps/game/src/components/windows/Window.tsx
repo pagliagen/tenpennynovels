@@ -180,6 +180,8 @@ export function Window({ windowState, children }: WindowProps): JSX.Element {
               return '🎭 Gestione Prestavolto';
             case 'presenti':
               return 'Presenti';
+            case 'market':
+              return 'Mercato';
             default:
               return windowState.data.utilityName;
           }
