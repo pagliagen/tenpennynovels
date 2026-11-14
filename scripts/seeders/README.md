@@ -268,8 +268,13 @@ npm run seed:prod:locations
 
 **Source**: `data/items.csv`
 
+Colonne in coda al CSV: `marketSection` (reparto dello scaffale del Mercato: `farmacia|camuffamento|armi|trasporti|mestiere`; `servizi` non ha item) e `tradeOccupations` (nomi di occupazione separati da `|`, risolti in `_id`: sono solo un'evidenza, non una restrizione). La colonna `prerequisites` non viene più letta: nessun prerequisito, né di lavoro né di abilità.
+
+Il seeder valida il CSV prima di toccare il DB: nomi e filename unici, reparto valido, ogni reparto con item, **ogni occupazione con almeno 3 attrezzi**. Le occupazioni devono essere già nel DB: ordine `skills → occupations → items`.
+
 **Usage**:
 ```bash
+npm run seed:check:items   # solo validazione, senza DB
 npm run seed:dev:items
 npm run seed:prod:items
 ```
