@@ -201,7 +201,11 @@ export const useWindowManagerStore = create<WindowManagerStore>()((set) => ({
             windowSize = { width: 1200, height: 700 };
             break;
           case 'market':
-            windowSize = { width: 900, height: 650 };
+            // Serve spazio per lo scaffale illustrato; tetto al viewport (il window manager non clampa)
+            windowSize = {
+              width: Math.min(1000, window.innerWidth - 40),
+              height: Math.min(780, window.innerHeight - 40),
+            };
             break;
           case 'presenti':
             // Orizzontale come nel mockup; tetto al viewport (il window manager non clampa)

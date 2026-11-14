@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Character } from '@core/character/models/Character';
 import { Location } from '@core/location/models/Location';
 import { Item, ShopItem, CharacterInventory } from '../models/Item';
+import { occupationIn } from '../utils/marketHelpers';
 import { getCharacterFinancesSnapshot, deductCash, deductCredit } from '@features/economia/api';
 import { getCorporationTreasuryRaw, debitTreasuryUnsafe } from '@features/corporazioni/api';
 import { logger } from '@modules/game/logger';
@@ -43,7 +44,7 @@ export class ShopController {
 
       // Get all public items
       const items = await Item.find({ isPublic: true })
-        .select('name description category subcategory basePrice properties prerequisites financialSettings image imageUrl')
+        .select('name description category subcategory marketSection tradeOccupations basePrice properties prerequisites financialSettings image imageUrl')
         .lean();
 
       // Format with financial info if authenticated
@@ -67,6 +68,9 @@ export class ShopController {
           description: item.description,
           category: item.category,
           subcategory: item.subcategory,
+          marketSection: item.marketSection,
+          tradeOccupations: (item.tradeOccupations || []).map((id: any) => id.toString()),
+          forMyOccupation: character ? occupationIn(item.tradeOccupations, character.occupation) : false,
           price: item.basePrice,
           priceFormatted: ShopController.formatCurrency(item.basePrice),
           properties: item.properties,
@@ -780,7 +784,8 @@ export class ShopController {
 
     // Check occupation requirements
     if (item.requirements.occupations && item.requirements.occupations.length > 0) {
-      if (!item.requirements.occupations.includes(character.occupation)) {
+      // character.occupation è un ObjectId: confronto per stringa (prima includes() non combaciava mai)
+      if (!occupationIn(item.requirements.occupations, character.occupation)) {
         return false;
       }
     }

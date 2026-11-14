@@ -22,6 +22,12 @@ export interface MarketItem {
   description: string;
   category: string;
   subcategory?: string;
+  /** Reparto dello scaffale del Mercato (assente per gli item fuori mercato). */
+  marketSection?: string;
+  /** Id delle occupazioni a cui l'attrezzo è associato (solo evidenza, non restrizione). */
+  tradeOccupations?: string[];
+  /** true se l'attrezzo è associato al mestiere del personaggio. */
+  forMyOccupation?: boolean;
   price: number;
   priceFormatted: string;
   properties?: Record<string, unknown>;

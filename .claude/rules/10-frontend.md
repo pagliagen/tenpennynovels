@@ -70,6 +70,8 @@ Dettaglio delle responsabilità: `docs/tecnica/frontend/game-app.md`.
 
 **Typing indicator**: emit throttled a 2s, indicatori scaduti ripuliti dopo 3s.
 
+**Mercato (`windows/contents/market/`) = scaffale illustrato + reparti.** La schermata principale è lo sfondo `public/images/market/sfondo-mercato.jpg` con 6 bottoni HTML posizionati in **percentuale** (`shelfConfig.ts`, unica sorgente: coordinate misurate sul mockup, `?marketDebug=1` in sviluppo ne disegna i riquadri). Il reparto di un item è `Item.marketSection`, **non** `category` (che governa equip e uso). `tradeOccupations` è solo evidenza («Il tuo mestiere»): per scelta di prodotto non ci sono prerequisiti, né di lavoro né di abilità. L'intestazione con i penny compare solo dentro un reparto, mai sullo scaffale.
+
 **12 `actionType` di messaggio** in location chat (standard, whisper, ooc, master, moderation, dice_roll, stat_check, skill_check, item_use, social_confrontation, combat_action, confrontation_reaction_request; 10 componenti, `skill_check` usa `StandardMessage`): catalogo in `docs/tecnica/frontend/game-app.md`.
 
 ---

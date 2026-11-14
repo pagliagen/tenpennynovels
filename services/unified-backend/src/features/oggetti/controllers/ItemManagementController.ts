@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { AdminAuthMiddleware } from '@modules/admin/middleware/adminAuth';
 import { logger } from '@modules/admin/utils/logger';
-import { Item, ItemCategory, ITEM_CATEGORY_LABELS, CharacterInventory, ShopItem } from '../models/Item';
+import { Item, ItemCategory, ITEM_CATEGORY_LABELS, CharacterInventory, ShopItem, MARKET_SECTIONS } from '../models/Item';
 import { successResponse, errorResponse, listResponse, createResponse, updateResponse, getRequestId, deleteResponse } from '@shared/utils/apiResponse';
 
 import { escapeRegex } from '@shared/utils/validation';
@@ -68,6 +68,7 @@ export class ItemManagementController {
             category: item.category,
             categoryLabel: ITEM_CATEGORY_LABELS[item.category as ItemCategory] || item.category,
             subcategory: item.subcategory,
+            marketSection: item.marketSection,
             imageUrl: item.imageUrl || null,
             basePrice: item.basePrice,
             isPublic: item.isPublic,
@@ -339,8 +340,11 @@ export class ItemManagementController {
         return;
       }
 
+      // Reparto vuoto dal form = nessun reparto (la stringa vuota non è nell'enum)
+      const { marketSection, ...rest } = req.body;
       const item = new Item({
-        ...req.body,
+        ...rest,
+        ...(marketSection ? { marketSection } : {}),
         createdBy: auditInfo!.adminId
       });
 
@@ -394,7 +398,7 @@ export class ItemManagementController {
     try {
       const itemId = req.params.itemId;
       const {
-        reason, name, description, category, subcategory, imageUrl,
+        reason, name, description, category, subcategory, marketSection, imageUrl,
         isPublic, isAdminOnly, availableLocations, basePrice,
         properties, financialSettings, shopSettings
       } = req.body;
@@ -409,6 +413,7 @@ export class ItemManagementController {
         ...(typeof description === 'string' && { description }),
         ...(typeof category === 'string' && { category }),
         ...(typeof subcategory === 'string' && { subcategory }),
+        ...(typeof marketSection === 'string' && (MARKET_SECTIONS as readonly string[]).includes(marketSection) && { marketSection }),
         ...(typeof imageUrl === 'string' && { imageUrl }),
         ...(typeof isPublic === 'boolean' && { isPublic }),
         ...(typeof isAdminOnly === 'boolean' && { isAdminOnly }),
