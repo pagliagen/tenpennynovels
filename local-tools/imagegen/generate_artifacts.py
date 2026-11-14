@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """
-Genera artifact grafici (item, location, ...) di TenpennyNovels con un SINGOLO
+Genera artifact grafici (item, occupazioni, location) di TenpennyNovels con un SINGOLO
 passo txt2img. Sostituisce generate_items.py, generalizzato per tipo.
+
+DUE BACKEND (per tipo, vedi TYPE_CONFIG):
+  - "ollama" (items, occupations): modello di immagini di Ollama (default x/z-image-turbo,
+    stesso approccio di bot-telegram-gdr). Niente server Python: basta Ollama acceso e
+    `ollama pull x/z-image-turbo` (circa 12 GB). ~30 s a immagine su Apple Silicon.
+  - "local" (locations): il server diffusers di server.py (Qwen-Image 2.1 / SDXL / SD1.5),
+    con le immagini di riferimento di stile. Va avviato con run.sh / run_pipeline.sh.
 
 Storia breve (vedi git log): prompt lunghi/discorsivi → soggetto irriconoscibile
 o composizioni confuse. Un secondo passo img2img "atmosfera" → artefatti di
@@ -55,6 +62,13 @@ WEBP_METHOD = 6
 
 API_BASE = "http://127.0.0.1:8791"
 
+# Backend Ollama (items, occupations). Override via env.
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+if not OLLAMA_HOST.startswith("http"):  # OLLAMA_HOST puo' essere "host:porta" senza schema
+    OLLAMA_HOST = f"http://{OLLAMA_HOST}"
+OLLAMA_IMAGE_MODEL = os.environ.get("IMAGEGEN_OLLAMA_MODEL", "x/z-image-turbo")
+OLLAMA_STEPS = 9  # valore consigliato per z-image-turbo (modello a pochi step, senza CFG)
+
 ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = ROOT / "scripts" / "seeders" / "data"
 ARTIFACTS_DIR = ROOT / "apps" / "game" / "public" / "artifacts"
@@ -77,13 +91,24 @@ LOCATION_NEGATIVE = ("photo, photorealistic, oil painting, 3d render, people, pe
                       "text, letters, watermark, frame, border, blurry, low quality, deformed, "
                       "bright colors, daylight, multiple copies")
 
+# Stile delle icone item/occupazione con z-image-turbo. Il modello NON ha prompt negativo
+# (turbo, senza CFG): i divieti vanno nel prompt positivo. Sfondo scuro e neutro, per stare
+# bene sullo scaffale del Mercato e nelle card; oggetto singolo e centrato, mai mani o persone.
+ICON_STYLE = ("single object centered, isolated on a plain dark charcoal background, Victorian 1895 "
+              "museum catalogue illustration, detailed, soft studio lighting, muted warm colors, "
+              "no text, no watermark, no people, no hands")
+
 # Config per tipo: csv sorgente, cartella output, dimensione icona di default.
 # Aggiungere qui nuovi tipi (es. "characters") quando servirà.
 TYPE_CONFIG = {
     "items": {
         "csv": DATA_DIR / "items.csv",
         "output_dir": ARTIFACTS_DIR / "items",
-        "size": 400,
+        "backend": "ollama",
+        # Si genera a 512 (multiplo comodo per il modello) e si porta a 400x400 in uscita.
+        "size": 512,
+        "output_size": (400, 400),
+        "style": ICON_STYLE,
     },
     "locations": {
         "csv": DATA_DIR / "locations.csv",
@@ -100,7 +125,10 @@ TYPE_CONFIG = {
     "occupations": {
         "csv": DATA_DIR / "occupations.csv",
         "output_dir": ARTIFACTS_DIR / "occupations",
-        "size": 100,
+        "backend": "ollama",
+        "size": 512,
+        "output_size": (100, 100),
+        "style": ICON_STYLE,
     },
 }
 
@@ -233,7 +261,44 @@ def post_txt2img(payload, timeout, retries=2):
     return _post("txt2img", payload, timeout, retries)
 
 
-def save_as_webp(png_bytes, out_path, output_size=None):
+class _OllamaServerError(RuntimeError):
+    """Errore 5xx di Ollama: il runner delle immagini ogni tanto cade, vale la pena riprovare."""
+
+
+def ollama_txt2img(prompt, width, height, steps, timeout, attempts=3):
+    """Genera un'immagine con un modello di immagini di Ollama (POST /api/generate).
+
+    Sugli errori 5xx e sulle immagini nere riprova (come bot-telegram-gdr). Solleva RuntimeError
+    con un messaggio leggibile se Ollama non risponde o il modello non produce un'immagine.
+    """
+    last = None
+    for n in range(attempts):
+        try:
+            r = requests.post(f"{OLLAMA_HOST}/api/generate", json={
+                "model": OLLAMA_IMAGE_MODEL, "prompt": prompt, "stream": False,
+                "width": width, "height": height, "steps": steps,
+            }, timeout=timeout)
+            if r.status_code >= 500:
+                raise _OllamaServerError(f"Ollama ha risposto {r.status_code}: {r.text[:200]}")
+            if r.status_code >= 400:
+                raise RuntimeError(f"Ollama ha risposto {r.status_code}: {r.text[:200]}")
+            data = r.json()
+            b64 = data.get("image") or (data.get("images") or [None])[0]
+            if not b64:
+                raise RuntimeError(data.get("error") or f"'{OLLAMA_IMAGE_MODEL}' non ha restituito un'immagine")
+            png = base64.b64decode(b64)
+            if _looks_black(png):
+                raise _OllamaServerError("immagine nera")
+            return png
+        except _OllamaServerError as e:
+            last = e
+            time.sleep(3)
+        except requests.exceptions.RequestException as e:
+            raise RuntimeError(f"Ollama non raggiungibile: {e}") from e
+    raise RuntimeError(str(last))
+
+
+def save_as_webp(png_bytes, out_path, output_size=None, overwrite=False):
     """Il server risponde sempre in PNG (vedi server.py); qui si converte e
     si salva in WebP, che per queste illustrazioni pesa 60-80% in meno a
     parità di qualità percepita. Niente canale alpha: sono scene/icone
@@ -242,10 +307,13 @@ def save_as_webp(png_bytes, out_path, output_size=None):
     if output_size and img.size != tuple(output_size):
         img = img.resize(tuple(output_size), Image.LANCZOS)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    # Rete di sicurezza: le immagini esistenti non si sovrascrivono MAI.
-    if out_path.exists():
+    # Rete di sicurezza: le immagini esistenti non si sovrascrivono, salvo --overwrite esplicito.
+    if out_path.exists() and not overwrite:
         raise FileExistsError(f"{out_path.name} esiste già, non lo sovrascrivo")
-    img.save(out_path, "WEBP", quality=WEBP_QUALITY, method=WEBP_METHOD)
+    # Scrittura atomica: un'interruzione (Ctrl-C, crash) non lascia mai un file a metà.
+    tmp = out_path.with_name(out_path.name + ".tmp")
+    img.save(tmp, "WEBP", quality=WEBP_QUALITY, method=WEBP_METHOD)
+    tmp.replace(out_path)
 
 
 def run_row(row, config, width, height, args):
@@ -259,9 +327,16 @@ def run_row(row, config, width, height, args):
         return "no-prompt"
 
     out_path = config["output_dir"] / filename
-    # Le location esistenti non vanno toccate: per quel tipo si salta sempre.
-    if (args.skip_existing or config.get("source") == "db") and out_path.exists():
+    # Le immagini esistenti non si rigenerano (a meno di --overwrite); le location mai.
+    overwrite = getattr(args, "overwrite", False) and config.get("source") != "db"
+    if out_path.exists() and not overwrite:
         return "skip"
+
+    if config.get("backend") == "ollama":
+        png = ollama_txt2img(f"{prompt}, {config.get('style', ICON_STYLE)}", width, height,
+                             args.ollama_steps, args.timeout)
+        save_as_webp(png, out_path, config.get("output_size"), overwrite=overwrite)
+        return "ok"
 
     refs = getattr(args, "references", None)
     if config.get("source") == "db":
@@ -283,7 +358,7 @@ def run_row(row, config, width, height, args):
         "height": height,
     }, args.timeout)
 
-    save_as_webp(data, out_path, config.get("output_size"))
+    save_as_webp(data, out_path, config.get("output_size"), overwrite=overwrite)
     return "ok"
 
 
@@ -303,6 +378,14 @@ def generate_type(artifact_type, args):
         rows = [r for r in rows if not (config["output_dir"] / r["filename"]).exists()]
     else:
         rows = read_rows(config["csv"])
+        # Le immagini esistenti non si sovrascrivono mai (vedi save_as_webp): si scartano subito,
+        # PRIMA di --only/--test/--limit, altrimenti si spende GPU per un file che poi non si salva
+        # e `--test` pesca proprio la prima riga, già presente.
+        present = [] if args.overwrite else [r for r in rows if (r.get("filename") or "").strip()
+                   and (config["output_dir"] / (r.get("filename") or "").strip()).exists()]
+        if present:
+            rows = [r for r in rows if r not in present]
+            print(f"⏭️  [{artifact_type}] {len(present)} già presenti in {config['output_dir'].name}/, saltati")
     if args.only:
         wanted = args.only.strip().lower()
         rows = [r for r in rows if wanted in ((r.get("name") or "").lower(), (r.get("filename") or "").lower())]
@@ -314,9 +397,21 @@ def generate_type(artifact_type, args):
         print(f"Nessun elemento trovato in {config['csv']}.")
         return 0, 0, 0
 
+    if args.dry_run:
+        print(f"📝 [{artifact_type}] DRY RUN: {len(rows)} da generare in {config['output_dir']}")
+        for r in rows:
+            problem = ("" if (r.get("filename") or "").strip() and (r.get("prompt") or "").strip()
+                       else "  ⚠️  manca filename o prompt (verrebbe saltato)")
+            print(f"   {(r.get('filename') or '?'):52} {(r.get('prompt') or '')[:60]}{problem}")
+        return 0, 0, 0
+
     total = len(rows)
-    print(f"🎨 [{artifact_type}] {total} elementi · steps={args.steps} "
-          f"size={width}x{height} guidance={args.guidance}\n")
+    if config.get("backend") == "ollama":
+        print(f"🎨 [{artifact_type}] {total} elementi · {OLLAMA_IMAGE_MODEL} · steps={args.ollama_steps} "
+              f"size={width}x{height} → {'x'.join(map(str, config.get('output_size', (width, height))))}\n")
+    else:
+        print(f"🎨 [{artifact_type}] {total} elementi · steps={args.steps} "
+              f"size={width}x{height} guidance={args.guidance}\n")
 
     ok = failed = skipped = 0
     t0 = time.time()
@@ -351,7 +446,12 @@ def main():
     ap.add_argument("--only", help="Solo la location/item con questo name o filename (es. \"Borough Market\")")
     ap.add_argument("--out-dir", help="Scrivi qui invece che in apps/game/public/artifacts/<tipo> (per i giri di prova)")
     ap.add_argument("--no-reference", action="store_true", help="Qwen: non usare le immagini di riferimento di stile")
-    ap.add_argument("--skip-existing", action="store_true", help="Salta elementi il cui file esiste già")
+    ap.add_argument("--skip-existing", action="store_true",
+                     help="(compatibilità) ora è sempre attivo: i file esistenti non vengono mai rigenerati né sovrascritti")
+    ap.add_argument("--overwrite", action="store_true",
+                     help="Rigenera anche i file già presenti (items/occupations; mai le location). Da usare con --only o --limit")
+    ap.add_argument("--dry-run", action="store_true",
+                     help="Elenca cosa verrebbe generato, senza avviare il server né il modello")
     ap.add_argument("--steps", type=int, default=None, help="Step di inferenza (default: 30, 20 con Qwen)")
     ap.add_argument("--guidance", type=float, default=None, help="Guidance (default: 7.5, 1.0 con Qwen = senza CFG)")
     ap.add_argument("--width", type=int, help="Larghezza (default: dipende dal tipo)")
@@ -359,26 +459,43 @@ def main():
     ap.add_argument("--timeout", type=int, default=3600, help="Timeout HTTP per richiesta (s)")
     args = ap.parse_args()
 
-    try:
-        h = requests.get(f"{API_BASE}/health", timeout=10).json()
-        print(f"✅ Server: {h}\n")
-        is_qwen = h.get("type") == "qwen"
-        if args.steps is None:
-            args.steps = 20 if is_qwen else 30
-        if args.guidance is None:
-            args.guidance = 1.0 if is_qwen else 7.5
-        # Qwen regge una risoluzione di generazione più alta di SD1.5; si porta comunque a 1536x1024.
-        if is_qwen and args.width is None and args.height is None:
-            args.width, args.height = 1152, 768
-        args.references = load_reference_images() if is_qwen and not args.no_reference else None
-    except Exception as e:  # noqa: BLE001
-        print(f"❌ Server non raggiungibile: {e}\n   Avvia: cd local-tools/imagegen && bash run.sh")
-        sys.exit(1)
+    # Ordine: dal più veloce al più lento (vedi sotto); qui si decide quali backend servono.
+    types = ["items", "occupations", "locations"] if args.type == "all" else [args.type]
+    needs_local = any(TYPE_CONFIG[t].get("backend", "local") == "local" for t in types)
+    needs_ollama = any(TYPE_CONFIG[t].get("backend") == "ollama" for t in types)
+    args.ollama_steps = args.steps if args.steps is not None else OLLAMA_STEPS
+
+    if not args.dry_run and needs_ollama:
+        try:
+            tags = requests.get(f"{OLLAMA_HOST}/api/tags", timeout=10).json()
+            names = {m.get("name", "") for m in tags.get("models", [])}
+            if OLLAMA_IMAGE_MODEL not in names and f"{OLLAMA_IMAGE_MODEL}:latest" not in names:
+                print(f"❌ Il modello '{OLLAMA_IMAGE_MODEL}' non è in Ollama. Scaricalo: ollama pull {OLLAMA_IMAGE_MODEL}")
+                sys.exit(1)
+            print(f"✅ Ollama: {OLLAMA_IMAGE_MODEL} · steps={args.ollama_steps}\n")
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Ollama non raggiungibile ({OLLAMA_HOST}): {e}\n   Avvia l'app Ollama (o: ollama serve)")
+            sys.exit(1)
+
+    if not args.dry_run and needs_local:
+        try:
+            h = requests.get(f"{API_BASE}/health", timeout=10).json()
+            print(f"✅ Server: {h}\n")
+            is_qwen = h.get("type") == "qwen"
+            if args.steps is None:
+                args.steps = 20 if is_qwen else 30
+            if args.guidance is None:
+                args.guidance = 1.0 if is_qwen else 7.5
+            # Qwen regge una risoluzione di generazione più alta di SD1.5; si porta comunque a 1536x1024.
+            if is_qwen and args.width is None and args.height is None:
+                args.width, args.height = 1152, 768
+            args.references = load_reference_images() if is_qwen and not args.no_reference else None
+        except Exception as e:  # noqa: BLE001
+            print(f"❌ Server non raggiungibile: {e}\n   Avvia: cd local-tools/imagegen && bash run.sh")
+            sys.exit(1)
 
     # Ordine: dal più veloce al più lento (items ~7s, occupations ~4s, locations
     # ~121s/immagine) — così si vede subito qualcosa mentre gira il resto.
-    types = ["items", "occupations", "locations"] if args.type == "all" else [args.type]
-
     totals = {"ok": 0, "skipped": 0, "failed": 0}
     t0 = time.time()
     for t in types:

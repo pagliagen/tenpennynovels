@@ -1,57 +1,50 @@
 # imagegen — generazione artifact grafici (locale, nessuna API cloud)
 
-Fork adattato di `cthulhucardgame/tools/imagegen`: un server locale di inferenza
-Stable Diffusion (via HuggingFace `diffusers`, girato su GPU/MPS/CPU della tua
-macchina — **nessuna chiave API, nessun costo cloud**) più uno script che legge
-`scripts/seeders/data/{tipo}.csv` e genera un'icona/scena WebP per ogni riga in
-`apps/game/public/artifacts/{tipo}/`.
+Legge `scripts/seeders/data/{tipo}.csv` e genera un'icona/scena WebP per ogni riga in
+`apps/game/public/artifacts/{tipo}/`. Tutto gira sulla tua macchina: **nessuna chiave API,
+nessun costo cloud**.
 
-Tipi supportati oggi: `items` (icone oggetto, 400×400) e `locations` (scene
-ambientazione, 1024×1024). Aggiungere un nuovo tipo = una entry in
-`TYPE_CONFIG` dentro `generate_artifacts.py`.
+Due backend, scelti per tipo (`TYPE_CONFIG` in `generate_artifacts.py`):
 
-A differenza dell'originale (pipeline a 3 step per illustrazioni di carte in
-bianco e nero), qui la pipeline è un **singolo passo txt2img a colori** — vedi
-"Note tecniche" più sotto sul perché.
+| Tipo | Backend | Modello | Dimensione |
+|---|---|---|---|
+| `items` | **Ollama** | `x/z-image-turbo` | 512 → 400×400 |
+| `occupations` | **Ollama** | `x/z-image-turbo` | 512 → 100×100 |
+| `locations` | server diffusers (`server.py`) | Qwen-Image 2.1 (o SDXL/SD1.5) | 1536×1024 |
 
-Vive fuori da `scripts/` (che è codice Node/TS versionato ed eseguito in CI)
-perché è uno strumento Python, pesante (richiede modelli ML multi-GB scaricati
-da HuggingFace al primo avvio) e lanciato manualmente, non come parte della
-pipeline di seeding automatica.
+Per items e occupazioni non c'è nessun server da avviare: basta Ollama acceso (stesso approccio
+di `bot-telegram-gdr`). Aggiungere un nuovo tipo = una entry in `TYPE_CONFIG`.
+
+Vive fuori da `scripts/` (codice Node/TS versionato ed eseguito in CI) perché è uno strumento
+Python, pesante e lanciato a mano, non parte della pipeline di seeding.
 
 ## Setup (una volta sola)
 
 ```bash
+ollama pull x/z-image-turbo      # circa 12 GB; richiede macOS con Apple Silicon e Ollama >= 0.14
 cd local-tools/imagegen
-bash run.sh        # crea la venv, installa le dipendenze, avvia il server su :8791
-# attendi "[imagegen] pronto.", poi Ctrl-C
+python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
 ```
+
+Per le sole location serve anche il server diffusers (`bash run.sh`, vedi più sotto).
 
 ## Uso
 
-**Un solo comando** (avvia il server, genera, lo spegne alla fine):
-
 ```bash
-bash run_pipeline.sh --type items --test                          # 1 sola icona, giro di prova
-bash run_pipeline.sh --type items                                 # tutti gli item (400x400)
-bash run_pipeline.sh --type locations                              # tutte le location (1024x1024)
-bash run_pipeline.sh --type occupations                            # tutte le professioni (100x100)
-bash run_pipeline.sh --type all --skip-existing                    # tutto in sequenza (items → occupations → locations, dal più veloce), salta quelli già generati
-bash run_pipeline.sh --type items --limit 10                      # solo i primi 10
+bash run_pipeline.sh --type items --dry-run          # elenca cosa verrebbe generato, senza generare
+bash run_pipeline.sh --type items --test             # 1 sola icona (la prima mancante)
+bash run_pipeline.sh --type items                    # tutte le mancanti (~30 s l'una su M5 Pro)
+bash run_pipeline.sh --type items --only "Stetoscopio" --overwrite   # rifà una sola immagine
+bash run_pipeline.sh --type items --out-dir /tmp/prova --limit 5     # giro di prova fuori dal repo
+bash run_pipeline.sh --type occupations
+bash run_pipeline.sh --type locations                # avvia il server diffusers (vedi sotto)
 ```
 
-Oppure manuale (due terminali, utile per iterare senza il costo di riavviare il
-server ad ogni prova):
-
-```bash
-# Terminale 1
-bash run.sh
-
-# Terminale 2 (con .venv attiva: source .venv/bin/activate)
-python generate_artifacts.py --type items --test
-python generate_artifacts.py --type locations --limit 5
-python generate_artifacts.py --type items --skip-existing
-```
+- **Si può interrompere e rilanciare**: i file già presenti vengono saltati (e mai sovrascritti
+  senza `--overwrite`); la scrittura è atomica, quindi un Ctrl-C non lascia file a metà.
+- Mentre genera, Ollama usa GPU e memoria: i modelli di testo rallentano. Lascialo girare da solo.
+- Variabili: `OLLAMA_HOST` (default `http://localhost:11434`), `IMAGEGEN_OLLAMA_MODEL`
+  (default `x/z-image-turbo`), `--steps` (default 9).
 
 ## Input: `scripts/seeders/data/{items,locations}.csv`
 
@@ -60,9 +53,10 @@ Lo script legge le colonne `filename` (nome del file WebP di output, es.
 **non va a DB**, esiste solo per pilotare la generazione). Righe senza
 `prompt` vengono saltate.
 
-Ad ogni prompt viene appeso un suffisso di stile fisso (vedi `STYLE_SUFFIX` in
-`generate_artifacts.py`) per coerenza visiva. Modificalo lì se vuoi cambiare
-lo stile globale.
+Ad ogni prompt viene appeso uno stile fisso: `ICON_STYLE` per items/occupazioni (oggetto singolo
+centrato su sfondo scuro neutro, illustrazione da catalogo vittoriano), `LOCATION_STYLE` per le
+location. Modificalo in `generate_artifacts.py` per cambiare lo stile globale. z-image-turbo non
+ha prompt negativo (senza CFG): i divieti stanno nel prompt positivo.
 
 **Importante — tieni i prompt CORTI**: `prompt` deve essere una lista di 3-6
 descrittori concreti separati da virgola (es. `"brass compass, magnetic
@@ -74,24 +68,23 @@ confuse.
 
 ## Output
 
-`apps/game/public/artifacts/{tipo}/{filename}` — WebP (qualità 85, RGB senza
-alpha) alla dimensione di default del tipo (items: 400×400, locations:
-1024×1024, override con `--width`/`--height`), stile pittorico realistico
-coerente con `apps/game/public/locations/london_boroughs.png` (non
-cartoon/flat/vettoriale). Il server genera sempre in PNG (vedi `server.py`);
-la conversione a WebP avviene lato client in `generate_artifacts.py` prima
-del salvataggio su disco.
+`apps/game/public/artifacts/{tipo}/{filename}` — WebP (qualità 85, RGB senza alpha). Il modello
+genera in PNG; la conversione a WebP e il ridimensionamento (items 400×400, occupations 100×100,
+locations 1536×1024) avvengono in `generate_artifacts.py` prima del salvataggio.
 
-## Modello
+**Limite noto:** per soggetti con scritte (biglietti, lettere, registri, timbri) il modello
+inventa testo anche se il prompt dice «no text». Se una icona esce con parole sbagliate,
+rigenerala con `--only ... --overwrite` o semplifica il `prompt` nel CSV (niente nomi di luoghi).
 
-Default **SD1.5** (`runwayml/stable-diffusion-v1-5`, già in cache locale se hai
-usato `cthulhucardgame`). **Non SDXL**, deliberatamente: SDXL su MPS (bf16 +
-upcast VAE + tiling) produce artefatti di corruzione a strisce/griglia in modo
-intermittente e dipendente dal seed — capita anche con hardware potente (M5 Pro
-24GB), non è un problema di risorse. SD1.5 in fp32 puro, senza VAE tiling
-(rimossa da questo fork), è stabile — stessa configurazione usata con successo
-in `thekeeperarchive/poc/imagegen`. Override con `IMAGEGEN_MODEL=...` se vuoi
-comunque provare SDXL o FLUX, sapendo che potresti rivedere artefatti.
+## Modelli
+
+- **Items e occupazioni: `x/z-image-turbo` via Ollama.** Veloce (8-9 step), buon realismo e luce
+  morbida a 512 px; sostituisce SD1.5 (2022), le cui icone erano pittura a olio con inquadrature
+  tagliate e soggetti illeggibili.
+- **Location: server diffusers** (`server.py`). Default storico SD1.5; per le location si usa
+  **Qwen-Image 2.1** (`IMAGEGEN_MODEL=Qwen/Qwen-Image-2.1`, transformer GGUF opzionale con
+  `IMAGEGEN_GGUF`) con le immagini di riferimento di stile. SDXL resta sconsigliato su MPS
+  (artefatti a strisce intermittenti con bf16).
 
 ## Note tecniche ereditate dall'originale
 
