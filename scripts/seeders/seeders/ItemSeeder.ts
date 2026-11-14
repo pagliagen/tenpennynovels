@@ -182,7 +182,9 @@ async function seedItems() {
         // Nessun prerequisito per ora (decisione di prodotto): né di lavoro né di abilità.
         marketSection: row.marketSection,
         tradeOccupations: splitList(row.tradeOccupations).map((n) => occupationIds.get(n)),
-        isPublic: true,
+        // Gli item solo admin (es. «Documento falso», prezzo variabile) non vanno al banco:
+        // il negozio filtra per isPublic, sia nel catalogo sia all'acquisto.
+        isPublic: row.isAdminOnly !== 'true',
         isAdminOnly: row.isAdminOnly === 'true',
         availableLocations: [],
         weaponStats,
@@ -222,7 +224,7 @@ async function seedItems() {
     });
     console.log('');
 
-    console.log(`   isPublic: true (tutti), isAdminOnly: false (tutti)`);
+    console.log('   isPublic: true, tranne gli item isAdminOnly (non in vendita al banco)');
 
   } catch (error) {
     console.error('❌ Failed:', error);
