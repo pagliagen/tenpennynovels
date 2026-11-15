@@ -1,21 +1,9 @@
 #!/usr/bin/env python3
 """
 Genera artifact grafici (item, occupazioni, location) di TenpennyNovels con un SINGOLO
-passo txt2img. Sostituisce generate_items.py, generalizzato per tipo.
-
-DUE BACKEND (per tipo, vedi TYPE_CONFIG):
-  - "ollama" (items, occupations): modello di immagini di Ollama (default x/z-image-turbo,
-    stesso approccio di bot-telegram-gdr). Niente server Python: basta Ollama acceso e
-    `ollama pull x/z-image-turbo` (circa 12 GB). ~30 s a immagine su Apple Silicon.
-  - "local" (locations): il server diffusers di server.py (Qwen-Image 2.1 / SDXL / SD1.5),
-    con le immagini di riferimento di stile. Va avviato con run.sh / run_pipeline.sh.
-
-Storia breve (vedi git log): prompt lunghi/discorsivi → soggetto irriconoscibile
-o composizioni confuse. Un secondo passo img2img "atmosfera" → artefatti di
-duplicazione. La causa vera era il prompt sovraccarico: con un prompt CORTO
-(soggetto + 4-5 parole di stile) un solo txt2img basta. Anche SDXL è stato
-scartato (vedi server.py): su MPS produce artefatti a strisce/griglia
-intermittenti — si usa SD1.5, stabile.
+passo txt2img su un modello di immagini di Ollama (default x/z-image-turbo, stesso approccio
+di bot-telegram-gdr). Niente server Python: basta Ollama acceso e
+`ollama pull x/z-image-turbo` (circa 12 GB). ~30 s a immagine su Apple Silicon.
 
 Legge scripts/seeders/data/{tipo}.csv (stesso formato usato dai seeder TS via
 csv-parse: delimitatore ";", righe commento con "#") e per ogni riga con un
@@ -23,23 +11,18 @@ campo "prompt" non vuoto genera apps/game/public/artifacts/{tipo}/{filename}.
 
 Uso:
   python generate_artifacts.py --type items                    # tutti gli item (400x400)
-  python generate_artifacts.py --type locations                # tutte le location (1024x1024)
+  python generate_artifacts.py --type locations                # le location mancanti (1536x1024)
   python generate_artifacts.py --type items --test              # 1 solo, giro completo di prova
   python generate_artifacts.py --type items --limit 5
   python generate_artifacts.py --type items --skip-existing     # riprende un run interrotto
-
-Il modello si sceglie all'avvio del server (env IMAGEGEN_MODEL, default SD1.5 —
-vedi server.py). Avviare prima il server con: bash run.sh
 """
 
 import argparse
 import base64
 import csv
-import hashlib
 import io
 import json
 import os
-import re
 import sys
 import time
 from pathlib import Path
@@ -60,8 +43,6 @@ except ImportError:
 WEBP_QUALITY = 85
 WEBP_METHOD = 6
 
-API_BASE = "http://127.0.0.1:8791"
-
 # Backend Ollama (items, occupations). Override via env.
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
 if not OLLAMA_HOST.startswith("http"):  # OLLAMA_HOST puo' essere "host:porta" senza schema
@@ -80,16 +61,13 @@ ARTIFACTS_DIR = ROOT / "apps" / "game" / "public" / "artifacts"
 # UNICA fonte di luce calda ambra (lampioni a gas, finestre accese), grana da
 # stampa, prospettiva centrale, inquadratura ampia 3:2, mai persone né testo.
 LOCATION_STYLE = (
-    "Victorian London 1889, night. Flat 2D graphic illustration, noir graphic-novel poster style, "
-    "bold dark silhouettes, minimal texture, subtle film grain and vignette. Strictly limited palette: "
-    "deep teal-green and near-black, with warm amber-yellow glow from gas lamps and lit windows as the "
-    "only light, softly reflected on the ground in the foreground (wet cobblestones, planks, pavement) so the "
-    "lower part of the image is not pitch black. One-point perspective, wide cinematic composition, foggy "
-    "distance, completely empty of people, no text"
+    "flat 2D screen-print poster illustration, noir graphic-novel style, large flat shapes of solid color, "
+    "bold black silhouettes, no soft gradients, no painterly rendering, visible paper grain and vignette. "
+    "Strictly limited palette: deep teal-green and near-black, with warm amber-yellow glow from gas lamps and "
+    "lit windows as the only light, softly reflected on the ground in the foreground. One-point perspective, "
+    "wide cinematic composition, foggy distance, Victorian London at night. "
+    "Deserted and uninhabited, nobody in sight, no people, no figures, no text, no letters"
 )
-LOCATION_NEGATIVE = ("photo, photorealistic, oil painting, 3d render, people, person, crowd, face, "
-                      "text, letters, watermark, frame, border, blurry, low quality, deformed, "
-                      "bright colors, daylight, multiple copies")
 
 # Stile delle icone item/occupazione con z-image-turbo. Il modello NON ha prompt negativo
 # (turbo, senza CFG): i divieti vanno nel prompt positivo. Sfondo scuro e neutro, per stare
@@ -114,14 +92,17 @@ TYPE_CONFIG = {
     "locations": {
         "csv": DATA_DIR / "locations.csv",
         "output_dir": ARTIFACTS_DIR / "locations",
-        # Le immagini esistenti sono 1536x1024 (3:2). SD1.5 regge bene ~768x512
-        # (oltre duplica i soggetti): si genera piccolo e si porta a 1536x1024
-        # in uscita. Con FLUX/SDXL si può generare nativo (--width/--height).
-        "size": (768, 512),
+        "backend": "ollama",
+        # Le immagini esistenti sono 1536x1024 (3:2). Si genera a 1152x768 (multipli di 16,
+        # stesso rapporto) e si porta a 1536x1024 in uscita.
+        "size": (1152, 768),
         "output_size": (1536, 1024),
-        "source": "db",
+        # Le 13 immagini già presenti sono il riferimento di stile: mai sovrascritte, nemmeno con --overwrite.
+        "protect_existing": True,
+        # Il modello a volte incornicia la scena con un bordo sottile (chiaro o più scuro): si ritaglia
+        # sempre il 5% per lato prima di riportare a 1536x1024.
+        "crop_frac": 0.05,
         "style": LOCATION_STYLE,
-        "negative": LOCATION_NEGATIVE,
     },
     "occupations": {
         "csv": DATA_DIR / "occupations.csv",
@@ -132,32 +113,6 @@ TYPE_CONFIG = {
         "style": ICON_STYLE,
     },
 }
-
-# Suffisso di stile fisso, appeso a ogni prompt. CORTO DI PROPOSITO: un prompt
-# lungo e impilato di aggettivi diluisce l'attenzione del modello sul soggetto
-# (verificato empiricamente). Stile allineato a
-# apps/game/public/locations/london_boroughs.png.
-STYLE_SUFFIX = "oil painting, moody dramatic lighting, muted colors"
-
-# Anche qui, corto di proposito (vedi server.py per il perché). Ridondante col
-# default del server (DEFAULT_NEG) ma esplicito qui per chiarezza/override facile.
-NEGATIVE_PROMPT = ("cartoon, flat colors, vector art, anime, comic, sticker, "
-                    "text, watermark, frame, border, blurry, low quality, deformed")
-
-
-# Parole che nel soggetto spingono il modello a popolare la scena (verificato su
-# Borough Market: "crowded" → folla di sagome, battendo "empty of people").
-_PEOPLE_WORDS = re.compile(r"\b(crowded|busy|bustling|packed|crowd|people|merchants|shoppers)\b,?\s*", re.I)
-
-
-def clean_subject(prompt):
-    return _PEOPLE_WORDS.sub("", prompt).strip(" ,")
-
-
-def stable_seed(filename, salt=0):
-    h = hashlib.md5(f"{salt}:{filename}".encode()).hexdigest()
-    return int(h[:8], 16)
-
 
 def read_rows(csv_path):
     """Legge un CSV saltando righe vuote e commenti (#...), come i seeder TS."""
@@ -181,60 +136,6 @@ def read_rows(csv_path):
 # CSV (3-6 parole) vengono sovrastati dallo stile. Chiave = filename. Fallback: CSV.
 RICH_PROMPTS_FILE = Path(__file__).resolve().parent / "location_prompts.json"
 
-# Immagini esistenti usate come riferimento di stile (solo Qwen). Una esterna, una interna.
-REFERENCE_IMAGES = ["wapping-docks.webp", "british-museum.webp"]
-REFERENCE_STYLE = (
-    "Create a new scene in exactly the same illustration style, color palette, amber lighting, "
-    "film grain and flat graphic look as the reference images, but showing a different place: "
-)
-REFERENCE_SUFFIX = ". Wide cinematic composition, no people, no text"
-
-
-def load_reference_images(max_side=768):
-    out = []
-    for name in REFERENCE_IMAGES:
-        img = Image.open(ARTIFACTS_DIR / "locations" / name).convert("RGB")
-        img.thumbnail((max_side, max_side))
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        out.append(base64.b64encode(buf.getvalue()).decode())
-    return out
-
-
-def read_location_rows_from_db(csv_path):
-    """Elenco location dal DB (fonte di verità), prompt dal CSV.
-
-    Il DB ha name/image ma non il prompt (esiste solo per pilotare la
-    generazione, vedi README): lo si recupera dal CSV via `filename`, con
-    fallback sul nome della location se la riga non c'è (location create da
-    gestionale). Nessuna scrittura sul DB: solo lettura.
-    """
-    try:
-        from pymongo import MongoClient
-    except ImportError:
-        print("❌ manca pymongo: cd local-tools/imagegen && .venv/bin/pip install -r requirements.txt")
-        sys.exit(1)
-
-    uri = os.environ.get(
-        "MONGODB_URI", "mongodb://admin:admin123@localhost:27017/tenpennynovels?authSource=admin")
-    db = MongoClient(uri, serverSelectionTimeoutMS=5000).get_default_database()
-    docs = list(db.locations.find(
-        {"deletedAt": None, "image": {"$nin": [None, ""]}},
-        {"name": 1, "image": 1, "parentLocationId": 1}).sort("_id", 1))
-    names = {d["_id"]: d["name"] for d in db.locations.find({}, {"name": 1})}
-
-    rich = json.loads(RICH_PROMPTS_FILE.read_text(encoding="utf-8")) if RICH_PROMPTS_FILE.exists() else {}
-    csv_prompts = {(r.get("filename") or "").strip(): (r.get("prompt") or "").strip()
-                   for r in read_rows(csv_path)}
-    rows = []
-    for d in docs:
-        filename = d["image"].strip()
-        prompt = rich.get(filename) or csv_prompts.get(filename) or d["name"]
-        rows.append({"name": d["name"], "filename": filename, "prompt": prompt,
-                     "parent": names.get(d.get("parentLocationId"), "")})
-    return rows
-
-
 def _looks_black(img_bytes):
     """True se l'immagine è (quasi) tutta nera — sintomo di NaN nel VAE su MPS."""
     if not HAS_PIL:
@@ -244,22 +145,6 @@ def _looks_black(img_bytes):
         return ImageStat.Stat(img).mean[0] < 1.5
     except Exception:  # noqa: BLE001
         return False
-
-
-def _post(endpoint, payload, timeout, retries=2):
-    """POST con retry anti-nero: se l'output è nero (NaN su MPS), rigenera con altro seed."""
-    for attempt in range(retries + 1):
-        r = requests.post(f"{API_BASE}/{endpoint}", json=payload, timeout=timeout)
-        r.raise_for_status()
-        if not _looks_black(r.content):
-            return r.content
-        payload = {**payload, "seed": int(payload.get("seed", 0)) + 9973 * (attempt + 1)}
-        print("↻", end="", flush=True)  # ritento (nero)
-    return r.content  # ultima chance anche se nera
-
-
-def post_txt2img(payload, timeout, retries=2):
-    return _post("txt2img", payload, timeout, retries)
 
 
 class _OllamaServerError(RuntimeError):
@@ -299,12 +184,36 @@ def ollama_txt2img(prompt, width, height, steps, timeout, attempts=3):
     raise RuntimeError(str(last))
 
 
-def save_as_webp(png_bytes, out_path, output_size=None, overwrite=False):
+def trim_light_margins(img, light=150, max_frac=0.15):
+    """Il modello a volte «incornicia» la scena con un margine bianco/crema (anche se il prompt lo vieta).
+    Si ritagliano le righe/colonne di bordo chiare, al massimo max_frac per lato, poi si ridimensiona."""
+    g = img.convert("L")
+    w, h = g.size
+    def edge_mean(box):
+        return ImageStat.Stat(g.crop(box)).mean[0]
+    l, t, r, b = 0, 0, w, h
+    while t < h * max_frac and edge_mean((l, t, r, t + 1)) > light: t += 1
+    while (h - b) < h * max_frac and edge_mean((l, b - 1, r, b)) > light: b -= 1
+    while l < w * max_frac and edge_mean((l, t, l + 1, b)) > light: l += 1
+    while (w - r) < w * max_frac and edge_mean((r - 1, t, r, b)) > light: r -= 1
+    if (l, t, r, b) == (0, 0, w, h):
+        return img
+    # qualche pixel in più: il bordo ha spesso un'ombra sfumata verso l'interno
+    pad = 4
+    return img.crop((min(l + pad if l else 0, w // 2), min(t + pad if t else 0, h // 2),
+                     max(r - pad if r < w else w, w // 2), max(b - pad if b < h else h, h // 2)))
+
+
+def save_as_webp(png_bytes, out_path, output_size=None, overwrite=False, crop_frac=0.0):
     """Il server risponde sempre in PNG (vedi server.py); qui si converte e
     si salva in WebP, che per queste illustrazioni pesa 60-80% in meno a
     parità di qualità percepita. Niente canale alpha: sono scene/icone
     opache in stile pittorico, RGB piatto risparmia ulteriore spazio."""
-    img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+    img = trim_light_margins(Image.open(io.BytesIO(png_bytes)).convert("RGB"))
+    if crop_frac:
+        w, h = img.size
+        dx, dy = round(w * crop_frac), round(h * crop_frac)
+        img = img.crop((dx, dy, w - dx, h - dy))
     if output_size and img.size != tuple(output_size):
         img = img.resize(tuple(output_size), Image.LANCZOS)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -329,37 +238,14 @@ def run_row(row, config, width, height, args):
 
     out_path = config["output_dir"] / filename
     # Le immagini esistenti non si rigenerano (a meno di --overwrite); le location mai.
-    overwrite = getattr(args, "overwrite", False) and config.get("source") != "db"
+    overwrite = getattr(args, "overwrite", False) and not config.get("protect_existing")
     if out_path.exists() and not overwrite:
         return "skip"
 
-    if config.get("backend") == "ollama":
-        png = ollama_txt2img(f"{prompt}, {config.get('style', ICON_STYLE)}", width, height,
-                             args.ollama_steps, args.timeout)
-        save_as_webp(png, out_path, config.get("output_size"), overwrite=overwrite)
-        return "ok"
-
-    refs = getattr(args, "references", None)
-    if config.get("source") == "db":
-        prompt = clean_subject(prompt)
-    if refs:
-        full_prompt = f"{REFERENCE_STYLE}{prompt}{REFERENCE_SUFFIX}"
-    elif config.get("source") == "db":
-        full_prompt = f"{prompt}. {config.get('style', STYLE_SUFFIX)}"
-    else:
-        full_prompt = f"{prompt}, {config.get('style', STYLE_SUFFIX)}"
-    data = post_txt2img({
-        **({"images": refs} if refs else {}),
-        "prompt": full_prompt,
-        "negative_prompt": config.get("negative", NEGATIVE_PROMPT),
-        "steps": args.steps,
-        "guidance": args.guidance,
-        "seed": stable_seed(filename),
-        "width": width,
-        "height": height,
-    }, args.timeout)
-
-    save_as_webp(data, out_path, config.get("output_size"), overwrite=overwrite)
+    png = ollama_txt2img(f"{prompt}, {config.get('style', ICON_STYLE)}", width, height,
+                         args.ollama_steps, args.timeout)
+    save_as_webp(png, out_path, config.get("output_size"), overwrite=overwrite,
+                 crop_frac=config.get("crop_frac", 0.0))
     return "ok"
 
 
@@ -373,20 +259,19 @@ def generate_type(artifact_type, args):
     width = args.width if args.width is not None else default_w
     height = args.height if args.height is not None else default_h
 
-    if config.get("source") == "db":
-        rows = read_location_rows_from_db(config["csv"])
-        # Solo quelle senza file su disco: le esistenti non rientrano nemmeno nel conteggio.
-        rows = [r for r in rows if not (config["output_dir"] / r["filename"]).exists()]
-    else:
-        rows = read_rows(config["csv"])
-        # Le immagini esistenti non si sovrascrivono mai (vedi save_as_webp): si scartano subito,
-        # PRIMA di --only/--test/--limit, altrimenti si spende GPU per un file che poi non si salva
-        # e `--test` pesca proprio la prima riga, già presente.
-        present = [] if args.overwrite else [r for r in rows if (r.get("filename") or "").strip()
-                   and (config["output_dir"] / (r.get("filename") or "").strip()).exists()]
-        if present:
-            rows = [r for r in rows if r not in present]
-            print(f"⏭️  [{artifact_type}] {len(present)} già presenti in {config['output_dir'].name}/, saltati")
+    rows = read_rows(config["csv"])
+    if config.get("protect_existing"):
+        # prompt scritti a mano (15-25 parole concrete) al posto di quelli, troppo corti, del CSV
+        rich = json.loads(RICH_PROMPTS_FILE.read_text(encoding="utf-8")) if RICH_PROMPTS_FILE.exists() else {}
+        rows = [{**r, "prompt": rich.get((r.get("filename") or "").strip()) or r.get("prompt")} for r in rows]
+    # Le immagini esistenti non si sovrascrivono mai (vedi save_as_webp): si scartano subito,
+    # PRIMA di --only/--test/--limit, altrimenti si spende GPU per un file che poi non si salva
+    # e `--test` pesca proprio la prima riga, già presente.
+    present = [] if (args.overwrite and not config.get("protect_existing")) else [r for r in rows if (r.get("filename") or "").strip()
+               and (config["output_dir"] / (r.get("filename") or "").strip()).exists()]
+    if present:
+        rows = [r for r in rows if r not in present]
+        print(f"⏭️  [{artifact_type}] {len(present)} già presenti in {config['output_dir'].name}/, saltati")
     if args.only:
         # più nomi separati da "|" (i nomi item contengono virgole, mai "|")
         wanted = {w.strip().lower() for w in args.only.split("|") if w.strip()}
@@ -408,12 +293,8 @@ def generate_type(artifact_type, args):
         return 0, 0, 0
 
     total = len(rows)
-    if config.get("backend") == "ollama":
-        print(f"🎨 [{artifact_type}] {total} elementi · {OLLAMA_IMAGE_MODEL} · steps={args.ollama_steps} "
-              f"size={width}x{height} → {'x'.join(map(str, config.get('output_size', (width, height))))}\n")
-    else:
-        print(f"🎨 [{artifact_type}] {total} elementi · steps={args.steps} "
-              f"size={width}x{height} guidance={args.guidance}\n")
+    print(f"🎨 [{artifact_type}] {total} elementi · {OLLAMA_IMAGE_MODEL} · steps={args.ollama_steps} "
+          f"size={width}x{height} → {'x'.join(map(str, config.get('output_size', (width, height))))}\n")
 
     ok = failed = skipped = 0
     t0 = time.time()
@@ -447,15 +328,13 @@ def main():
     ap.add_argument("--limit", type=int, help="Massimo N elementi (per tipo, se --type all)")
     ap.add_argument("--only", help="Solo la location/item con questo name o filename; più valori separati da | (es. \"Borough Market\")")
     ap.add_argument("--out-dir", help="Scrivi qui invece che in apps/game/public/artifacts/<tipo> (per i giri di prova)")
-    ap.add_argument("--no-reference", action="store_true", help="Qwen: non usare le immagini di riferimento di stile")
     ap.add_argument("--skip-existing", action="store_true",
                      help="(compatibilità) ora è sempre attivo: i file esistenti non vengono mai rigenerati né sovrascritti")
     ap.add_argument("--overwrite", action="store_true",
                      help="Rigenera anche i file già presenti (items/occupations; mai le location). Da usare con --only o --limit")
     ap.add_argument("--dry-run", action="store_true",
-                     help="Elenca cosa verrebbe generato, senza avviare il server né il modello")
-    ap.add_argument("--steps", type=int, default=None, help="Step di inferenza (default: 30, 20 con Qwen)")
-    ap.add_argument("--guidance", type=float, default=None, help="Guidance (default: 7.5, 1.0 con Qwen = senza CFG)")
+                     help="Elenca cosa verrebbe generato, senza avviare il modello")
+    ap.add_argument("--steps", type=int, default=None, help="Step di inferenza (default: 9, quelli di z-image-turbo)")
     ap.add_argument("--width", type=int, help="Larghezza (default: dipende dal tipo)")
     ap.add_argument("--height", type=int, help="Altezza (default: dipende dal tipo)")
     ap.add_argument("--timeout", type=int, default=3600, help="Timeout HTTP per richiesta (s)")
@@ -463,11 +342,9 @@ def main():
 
     # Ordine: dal più veloce al più lento (vedi sotto); qui si decide quali backend servono.
     types = ["items", "occupations", "locations"] if args.type == "all" else [args.type]
-    needs_local = any(TYPE_CONFIG[t].get("backend", "local") == "local" for t in types)
-    needs_ollama = any(TYPE_CONFIG[t].get("backend") == "ollama" for t in types)
     args.ollama_steps = args.steps if args.steps is not None else OLLAMA_STEPS
 
-    if not args.dry_run and needs_ollama:
+    if not args.dry_run:
         try:
             tags = requests.get(f"{OLLAMA_HOST}/api/tags", timeout=10).json()
             names = {m.get("name", "") for m in tags.get("models", [])}
@@ -477,23 +354,6 @@ def main():
             print(f"✅ Ollama: {OLLAMA_IMAGE_MODEL} · steps={args.ollama_steps}\n")
         except requests.exceptions.RequestException as e:
             print(f"❌ Ollama non raggiungibile ({OLLAMA_HOST}): {e}\n   Avvia l'app Ollama (o: ollama serve)")
-            sys.exit(1)
-
-    if not args.dry_run and needs_local:
-        try:
-            h = requests.get(f"{API_BASE}/health", timeout=10).json()
-            print(f"✅ Server: {h}\n")
-            is_qwen = h.get("type") == "qwen"
-            if args.steps is None:
-                args.steps = 20 if is_qwen else 30
-            if args.guidance is None:
-                args.guidance = 1.0 if is_qwen else 7.5
-            # Qwen regge una risoluzione di generazione più alta di SD1.5; si porta comunque a 1536x1024.
-            if is_qwen and args.width is None and args.height is None:
-                args.width, args.height = 1152, 768
-            args.references = load_reference_images() if is_qwen and not args.no_reference else None
-        except Exception as e:  # noqa: BLE001
-            print(f"❌ Server non raggiungibile: {e}\n   Avvia: cd local-tools/imagegen && bash run.sh")
             sys.exit(1)
 
     # Ordine: dal più veloce al più lento (items ~7s, occupations ~4s, locations

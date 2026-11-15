@@ -11,7 +11,6 @@
 .marketContainer {
   display: flex;
   flex-direction: column;
-  padding: 20px 24px;
   font-family: 'Playfair Display', serif;
   color: $text-primary;
   background: transparent;
@@ -272,11 +271,8 @@
   position: relative;
   // Il più grande che sta nello spazio disponibile, mantenendo le proporzioni dell'immagine (422×263)
   width: min(100cqw, calc(100cqh * 422 / 263));
-  container-type: inline-size;
-  border: 1px solid $gold-30;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #0d0c0a;
+  container-type: inline-size; 
+  overflow: hidden;  
 }
 
 .shelfImage {
