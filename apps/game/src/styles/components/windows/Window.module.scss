@@ -56,10 +56,9 @@
 }
 
 .title {
-  grid-column: 2;
   font-family: 'Les Mystères de Paris', 'Georgia', serif;
-  font-size: 30px;
-  line-height: 52px;
+  font-size: 20px;
+  line-height: 35px;
   font-weight: 400;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -67,7 +66,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: center;
 }
 
 .actions {
@@ -126,6 +124,7 @@
   border-radius: 28px;
   color: #e8e0d5;
   font-family: 'Georgia', 'Times New Roman', serif;
+  background: #070707;
 
   @include victorian-scrollbar;
 }
