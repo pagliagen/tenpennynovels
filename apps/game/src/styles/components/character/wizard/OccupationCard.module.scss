@@ -46,6 +46,9 @@
   position: absolute;
   top: -14px;
   left: 0;
+  // Le immagini delle occupazioni sono quadrate, su fondo rosso: la tacca a V in basso
+  // (il «triangolino» del segnalibro) si ritaglia qui, così resta uguale per tutte.
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
 }
 
 .title {

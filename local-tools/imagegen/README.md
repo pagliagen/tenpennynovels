@@ -9,7 +9,7 @@ Un solo backend, **Ollama**, per tutti i tipi (`TYPE_CONFIG` in `generate_artifa
 | Tipo | Backend | Modello | Dimensione |
 |---|---|---|---|
 | `items` | **Ollama** | `x/z-image-turbo` | 512 → 400×400 |
-| `occupations` | **Ollama** | `x/z-image-turbo` | 512 → 100×100 |
+| `occupations` | **Ollama** | `x/z-image-turbo` | 512 → 256×256 |
 | `locations` | **Ollama** | `x/z-image-turbo` | 1152×768 → 1536×1024 |
 
 Non c'è nessun server da avviare: basta Ollama acceso (stesso approccio
@@ -51,9 +51,12 @@ Lo script legge le colonne `filename` (nome del file WebP di output, es.
 **non va a DB**, esiste solo per pilotare la generazione). Righe senza
 `prompt` vengono saltate.
 
-Ad ogni prompt viene appeso uno stile fisso: `ICON_STYLE` per items/occupazioni (oggetto singolo
-centrato su sfondo scuro neutro, illustrazione da catalogo vittoriano), `LOCATION_STYLE` per le
-location. Modificalo in `generate_artifacts.py` per cambiare lo stile globale. z-image-turbo non
+Ad ogni prompt viene appeso uno stile fisso: `ICON_STYLE` per gli item (oggetto singolo
+centrato su sfondo scuro neutro, illustrazione da catalogo vittoriano), `OCCUPATION_STYLE` per le
+occupazioni (pittogramma crema su rosso mattone, come `images/occupations/default-image.png`: il
+modello non rispetta i colori, quindi `to_duotone` li riporta a #963224/#cfd4bb; la tacca a V in
+basso è un `clip-path` negli SCSS, non sta nell'immagine; soggetti in `occupation_prompts.json`),
+`LOCATION_STYLE` per le location. Modificalo in `generate_artifacts.py` per cambiare lo stile globale. z-image-turbo non
 ha prompt negativo (senza CFG): i divieti stanno nel prompt positivo.
 
 **Importante — tieni i prompt CORTI**: `prompt` deve essere una lista di 3-6
@@ -67,7 +70,7 @@ confuse.
 ## Output
 
 `apps/game/public/artifacts/{tipo}/{filename}` — WebP (qualità 85, RGB senza alpha). Il modello
-genera in PNG; la conversione a WebP e il ridimensionamento (items 400×400, occupations 100×100,
+genera in PNG; la conversione a WebP e il ridimensionamento (items 400×400, occupations 256×256,
 locations 1536×1024) avvengono in `generate_artifacts.py` prima del salvataggio.
 
 **Limite noto:** per soggetti con scritte (biglietti, lettere, registri, timbri) il modello
