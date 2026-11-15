@@ -11,8 +11,11 @@ dist/
 # escluderebbe silenziosamente e le suite tornerebbero a non partire altrove)
 !apps/*/jest.config.js
 !apps/*/jest.setup.js
+# Policy CSP condivisa dai next.config.ts delle app: sorgente, non output di build
+!apps/cspReportOnly.js
 *.d.ts
 !**/src/types/*.d.ts
+!apps/cspReportOnly.d.ts
 *.d.ts.map 
 .env
 .env.*
