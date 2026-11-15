@@ -19,7 +19,7 @@ const queryClientConfig: QueryClientConfig = {
       refetchOnMount: true
     },
     mutations: {
-      retry: 1 // Retry mutations once
+      retry: false // mai ritentare una scrittura: vedi NO_RETRY in client.ts
     }
   }
 };

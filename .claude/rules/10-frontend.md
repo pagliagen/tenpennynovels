@@ -36,6 +36,10 @@ Su redirect cross-origin arriva come query param: leggerlo, salvarlo in `session
 2. **Gli effect dei figli girano prima di quelli del padre.** `AuthInitializer` è dentro `_app`: il suo `GET /auth/session` partiva prima che l'effect di `_app` scrivesse `sessionStorage`, tornava senza `gamePermissions` e non riprovava mai (effect a dipendenze stabili). Non affidarsi all'ordine: leggere il sessionId dall'URL al momento della richiesta (`getCharacterSessionId()`), non da un effect.
 3. **`router.pathname` non è `router.asPath`.** La pulizia dell'URL faceva `router.replace(router.pathname)`, che su una rotta dinamica è il template `/ambientazione/[...slug]`: non ripuliva niente e il sessionId restava nell'URL, in cronologia e nei link copiati. Usare `router.asPath.split('?')[0]`.
 
+**Tutto ciò che dipende dal personaggio e finisce in `localStorage` va legato al suo id.** `localStorage` è condiviso fra schede, personaggi e utenti dello stesso browser, mentre il personaggio è per scheda. `apps/game` `locationStore` tiene `cachedCharacterId`: cache di un altro personaggio = svuotata prima del render; oltre 5 minuti si rilegge in background (gli eventi WebSocket che la aggiornano arrivano solo a chi è online e non esiste un evento di revoca); il logout la azzera. Fino al 2026-11-15 un personaggio vedeva per 7 giorni le location accessibili del precedente, private comprese. `authStore` persiste ancora `selectedCharacter` nello stesso spazio (debito aperto).
+
+**Content-Security-Policy: oggi solo in segnalazione.** I quattro `next.config.ts` mandano `Content-Security-Policy-Report-Only` (solo in produzione) e il browser segnala le violazioni a `POST /csp-report` dell'api-gateway, che le scrive nei log come `[CSP] violazione segnalata`. Un dominio esterno nuovo (script, iframe, API) va aggiunto alla policy dell'app che lo usa. Passare alla policy vera solo a log puliti: gli script inline di Google Analytics (landing, documents) vanno prima spostati o autorizzati con hash.
+
 **Stili**: solo SCSS Modules (`*.module.scss`). CSS globale solo in `globals.scss`. Variabili CSS in `:root`.
 
 **Error boundary**: ogni app deve averne uno per evitare il crash totale.
@@ -81,6 +85,8 @@ Dettaglio delle responsabilità: `docs/tecnica/frontend/game-app.md`.
 **Auth**: su 401 redirect alla landing per il login. I permessi sono verificati dal backend; `isGestore` bypassa i controlli.
 
 **Tab «Bot» di `characters/character-list`**: compare solo con `featureFlagsStore.botAdminEnabled` (`ENABLE_BOT_CHARACTERS`; mostra solo i bot del proprio ambiente; vedi `30-ai-services.md`) e mostra `BotsPanel`, non la tabella dei personaggi. Il filtro precedente su `char.isBot` non faceva nulla: quel campo non è mai esistito nel modello né nel DB (i bot sono i personaggi dell'utente `system-bot`). La generazione legge un flusso **SSE con `fetch`** (`lib/api/bots.ts`, `takeSseEvents`): Axios non lo legge. In locale i personaggi dei bot compaiono anche in «Tutti» e «PG Principale» (`characterType: 'pg_principale'`).
+
+**Le scritture non si ritentano mai da sole** (`lib/api/client.ts`, `NO_RETRY`; `mutations.retry: false`). Un timeout o un 5xx non dice se il backend ha eseguito: il proxy `/admin` taglia a 30 s mentre l'operazione può completarsi, e prima una POST poteva ripartire fino a 6 volte (3 di `withRetry` × 2 di React Query). Solo le letture hanno il retry.
 
 **Mutazioni con audit**: create/update/delete tracciano l'autore (`createdBy`, `lastModifiedBy`, `deletedBy`). Preferire **soft delete** (`deletedAt`) all'eliminazione fisica.
 

@@ -55,6 +55,8 @@ if (!res.headersSent && typeof res.status === 'function') { res.status(502).json
 
 **SSE**: per la ricerca semantica va rimosso `accept-encoding`, la compressione rompe lo stream.
 
+**`POST /csp-report`**: raccoglie le segnalazioni CSP dei quattro siti (vedi `10-frontend.md`). È l'unica rotta anonima che scrive nei log: limite 30/min per IP, corpo ≤ 16 kb letto grezzo, campi troncati, sempre 204 (anche su corpo illeggibile).
+
 **CORS**: attivo solo in sviluppo con whitelist; in produzione lo gestisce Nginx. Header necessari: `X-Session-Id`, `X-Tenpenny-Documents-Build`.
 
 ---

@@ -310,6 +310,11 @@ export const useAuthStore = create<AuthStore>()(
         import('@/store/gameStateStore').then(({ useGameStateStore }) => {
           useGameStateStore.getState().reset();
         });
+
+        // La cache delle location è per personaggio e sta in localStorage: non deve sopravvivere al logout.
+        import('@/store/locationStore').then(({ useLocationStore }) => {
+          useLocationStore.getState().reset();
+        });
       },
 
       /**

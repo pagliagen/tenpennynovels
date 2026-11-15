@@ -381,6 +381,55 @@ for (const [name, svc] of Object.entries(services)) {
   app.use(`/${name}`, createServiceProxy(name, svc));
 }
 
+// ---------------------------------------------------------------------------
+// Segnalazioni CSP dai quattro siti (header Content-Security-Policy-Report-Only nei next.config)
+// ---------------------------------------------------------------------------
+// Il browser le manda senza credenziali: nessuna autenticazione possibile, quindi limite stretto per IP, corpo
+// piccolo e nei log solo i campi utili, troncati (il contenuto è scelto da chi chiama).
+const cspReportLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => !config.isProduction,
+  handler: (_req, res) => { res.status(204).end(); },
+});
+
+const cspField = (value: unknown): string | undefined =>
+  typeof value === 'string' ? value.slice(0, 300) : undefined;
+
+app.post(
+  '/csp-report',
+  cspReportLimiter,
+  // Corpo letto grezzo e interpretato qui sotto: chiunque può chiamare questa rotta, e un JSON malformato o troppo
+  // grande non deve diventare un 500 con stack nei log.
+  express.raw({ type: () => true, limit: '16kb' }),
+  (req: express.Request, res: express.Response) => {
+    let body: unknown;
+    try {
+      body = JSON.parse(Buffer.isBuffer(req.body) ? req.body.toString('utf8') : '');
+    } catch {
+      res.status(204).end();
+      return;
+    }
+    const first: unknown = Array.isArray(body) ? body[0] : body;
+    const envelope = (first && typeof first === 'object' ? first : {}) as Record<string, unknown>;
+    const raw = envelope['csp-report'] ?? envelope.body;
+    const report = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+    logger.warn('[CSP] violazione segnalata', {
+      page: cspField(report['document-uri'] ?? report.documentURL),
+      directive: cspField(report['effective-directive'] ?? report['violated-directive'] ?? report.effectiveDirective),
+      blocked: cspField(report['blocked-uri'] ?? report.blockedURL),
+      source: cspField(report['source-file'] ?? report.sourceFile),
+    });
+    res.status(204).end();
+  },
+  // Corpo oltre il limite o illeggibile: si scarta in silenzio.
+  (_err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    res.status(204).end();
+  },
+);
+
 // Body parsing (solo per rotte NON proxied, come /, /health)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
