@@ -150,8 +150,26 @@ export class AuthMiddleware {
               return next();
             }
 
-            // 3. CRITICAL: Ownership validation (defense in depth)
-            if (req.user && session.userId !== req.user.userId) {
+            // 3. CRITICAL: Ownership validation (defense in depth).
+            // Senza utente autenticato il sessionId da solo non vale nulla: viaggia in URL (?sessionId=) e in
+            // sessionStorage, non è un segreto. Fino al 2026-11-15 il controllo era `req.user && ...` e saltava
+            // proprio quando mancava il cookie: bastava l'header per leggere i documenti riservati al master.
+            if (!req.user) {
+              logSecurity('session_without_user', { ipAddress: req.ip });
+
+              if (required) {
+                const response: ApiResponse = {
+                  result: false,
+                  error: 'Autenticazione richiesta',
+                  code: 'AUTH_REQUIRED',
+                  timestamp: new Date().toISOString()
+                };
+                return res.status(401).json(response);
+              }
+              return next();
+            }
+
+            if (session.userId !== req.user.userId) {
               logSecurity('session_ownership_mismatch', {
                 sessionId,
                 sessionUserId: session.userId,

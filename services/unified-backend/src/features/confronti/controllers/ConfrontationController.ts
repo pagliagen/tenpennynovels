@@ -24,6 +24,7 @@ import { ConfigurationService } from '@shared/services/ConfigurationService';
 import { redis } from '@config/runtime/redis';
 import { calculateSuccessDegree, compareSuccessDegrees } from '@modules/game/utils/successDegrees';
 import { getSocketIO } from '@modules/game/websocket/socketInstance';
+import { CHAT_MASTERS_ROOM } from '@core/chat/liveRooms';
 import { WeaponService } from '@modules/game/services/WeaponService';
 
 export class ConfrontationController {
@@ -146,7 +147,7 @@ export class ConfrontationController {
       if (otherTargetRooms.length > 0) {
         io.to(otherTargetRooms).emit('location_message_notification', { message: otherTargetsMessage, locationId });
       }
-      io.to('staff').emit('location_message_notification', { message: staffMessage, locationId });
+      io.to(CHAT_MASTERS_ROOM).emit('location_message_notification', { message: staffMessage, locationId });
     } else {
       // Public: rollType 'open' confrontations only (Raggirare is always 'whisper'),
       // visible to everyone in the room including bystanders by design — no masking.

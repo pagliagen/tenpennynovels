@@ -1,6 +1,6 @@
 import { Socket, Server as SocketIOServer } from 'socket.io';
 import { logger } from '../logger';
-import { Location } from '@core/location/models/Location';
+import { authorizeLocationJoin } from '@core/location/services/authorizeLocationJoin';
 import { OffGameChat } from '@features/offGameMessages/api';
 
 /**
@@ -30,6 +30,19 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
         return;
       }
       
+      // La room è l'unica autorità sulla consegna dei messaggi: l'ingresso va autorizzato qui, con le stesse
+      // regole di POST /game/locations/:id/enter e con dati letti ora dal DB (non la fotografia dell'handshake).
+      const join = await authorizeLocationJoin(character.characterId, locationId);
+      if (!join.ok) {
+        logger.warn('join_location rifiutato', {
+          characterId: character.characterId,
+          locationId,
+          reason: join.reason
+        });
+        socket.emit('error', { code: 'LOCATION_ACCESS_DENIED', message: 'Non puoi entrare in questa location' });
+        return;
+      }
+
       // Leave previous location if any
       if (socket.data.currentLocationId) {
         socket.leave(`location_${socket.data.currentLocationId}`);
@@ -60,16 +73,7 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
       // ✅ ROOM-BASED: Only notify players in the same location
       socket.to(`location_${locationId}`).emit('player_entered', playerEnteredEvent);
 
-      // Get location name from database
-      let locationName = 'Unknown Location';
-      try {
-        const location = await Location.findById(locationId);
-        if (location) {
-          locationName = location.name;
-        }
-      } catch (error: any) {
-        logger.warn('Impossibile recuperare il nome della location', { locationId, error: error?.message });
-      }
+      const locationName = join.locationName;
 
       // Get list of characters already in this location
       const socketsInLocation = await io.in(`location_${locationId}`).fetchSockets();
@@ -112,6 +116,12 @@ export function setupChatHandlers(socket: Socket, io: SocketIOServer): void {
 
       if (!character) {
         socket.emit('error', { code: 'CHARACTER_REQUIRED', message: 'Contesto personaggio richiesto' });
+        return;
+      }
+
+      // Chi non è nella room non può annunciare un'uscita che non è avvenuta.
+      if (!socket.rooms.has(`location_${locationId}`)) {
+        socket.emit('location_left', { locationId, timestamp: new Date().toISOString() });
         return;
       }
 

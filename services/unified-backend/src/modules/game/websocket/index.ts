@@ -7,6 +7,7 @@ import { RedisSubscriber } from '../events/RedisSubscriber';
 import { RequestUser } from '@shared/types';
 import { hasAdminPermission, AdminPermissions } from '@config/permissions';
 import { appConfig } from '@config/runtime';
+import { resolveLiveRooms, CHAT_MASTERS_ROOM, STAFF_ROOM } from '@core/chat/liveRooms';
 
 interface CharacterContextPayload {
   userId: string;
@@ -183,15 +184,18 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
     socket.join(`user_${user.userId}`);
 
     // Join role-specific rooms: gameplayRoles sono solo player | master | moderatore (mai "amministratore")
-    const roles = character?.gameplayRoles || [];
-    const isStaff =
-      character?.isGestore || roles.includes('master') || roles.includes('moderatore');
+    // Lo stato del personaggio conta: un ruolo su un personaggio non approvato non dà nulla (vedi core/chat/liveRooms.ts).
+    const liveRooms = resolveLiveRooms(character);
+    const isStaff = liveRooms.staff;
+    if (liveRooms.chatMasters) {
+      socket.join(CHAT_MASTERS_ROOM);
+    }
     if (isStaff) {
       socket.join('admin');
-      socket.join('staff');
+      socket.join(STAFF_ROOM);
       socket.join(`staff_${user.userId}`);
 
-      if (character?.isGestore) {
+      if (liveRooms.leadership) {
         socket.join('staff_leadership');
       }
     }
@@ -204,12 +208,11 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
         const adminChar = await Character.findOne({
           userId: user.userId,
           canAccessAdminPanel: true
-        }).select('isGestore gameplayRoles adminPermissions').lean();
+        }).select('isGestore gameplayRoles adminPermissions playerStatus').lean();
 
         if (adminChar) {
           const adminRoles = adminChar.gameplayRoles || [];
-          const isAdminStaff = adminChar.isGestore ||
-            adminRoles.includes('master') || adminRoles.includes('moderatore');
+          const isAdminStaff = resolveLiveRooms(adminChar).staff;
           const hasApprovePerm = hasAdminPermission(
             adminRoles,
             adminChar.adminPermissions || [],
@@ -219,7 +222,7 @@ export async function setupWebSocket(io: SocketIOServer): Promise<void> {
 
           if (isAdminStaff || hasApprovePerm) {
             socket.join('admin');
-            socket.join('staff');
+            socket.join(STAFF_ROOM);
             socket.join(`staff_${user.userId}`);
 
             if (adminChar.isGestore) {

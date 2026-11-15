@@ -89,7 +89,8 @@ export function setupGameHandlers(socket: Socket, io: SocketIOServer): void {
 
     const character = socket.data.character;
     
-    if (!character || !character.isApproved) {
+    // Solo chi è nella room della location può segnalare che sta scrivendo lì.
+    if (!character || !character.isApproved || !socket.rooms.has(`location_${locationId}`)) {
       return;
     }
     
@@ -109,7 +110,8 @@ export function setupGameHandlers(socket: Socket, io: SocketIOServer): void {
 
     const character = socket.data.character;
     
-    if (!character || !character.isApproved) {
+    // Solo chi è nella room della location può segnalare che sta scrivendo lì.
+    if (!character || !character.isApproved || !socket.rooms.has(`location_${locationId}`)) {
       return;
     }
     

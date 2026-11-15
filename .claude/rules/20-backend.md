@@ -76,13 +76,14 @@ Catena middleware: `authenticateUser()` → `authenticateCharacter()` → `requi
 
 **I poteri elevati valgono solo su un personaggio `playerStatus: 'approved'`.** Vale sia per `isGestore` sia per i `gameplayRoles` master/moderatore: un personaggio draft/pending va trattato come un giocatore normale. `StatusRestrictions` in `config/permissions/game.ts` **non** è la sede giusta per farlo rispettare (elenca permessi bloccati uno per uno e non conteneva i `game:admin:*`).
 
-**Ci sono tre percorsi indipendenti che concedono poteri di ruolo, non uno.** Ogni fix va applicato a tutti e tre, o resta un buco:
+**Ci sono quattro percorsi indipendenti che concedono poteri di ruolo, non uno.** Ogni fix va applicato a tutti, o resta un buco:
 
 | Percorso | Dove | Stato |
 |---|---|---|
 | `hasGamePermission()` / `resolveEffectiveRoles()` | `config/permissions/game.ts` | filtra per stato ✅ |
 | `hasAdminPermission()` | `config/permissions/admin.ts` | bypass `isGestore` **non** filtrato per stato ⚠️ |
 | `requireGameplayRoles()` / `requireGameplayRole()` | `modules/game/middleware/auth.ts`, `core/auth/middleware/auth.ts` | filtra da 2026-08-22 (`requireApproved`, default `true`) |
+| room Socket.IO all'handshake (`resolveLiveRooms()`) | `core/chat/liveRooms.ts`, `modules/game/websocket/index.ts` | filtra da 2026-11-15 |
 
 **Eccezione voluta (2026-11-10): nel pannello admin `isGestore` vince anche su un personaggio non approvato** (`modules/admin/middleware/adminAuth.ts`, `requireAdminAccess`). L'admin di produzione (`System Administrator`) è in `draft` e senza questo eliminava documenti con 403 `documents.delete` (aveva solo i permessi del ruolo master). Il gioco (`hasGamePermission`, `requireGameplayRole`) continua a richiedere `approved`. Rischio accettato: un PG draft con `isGestore: true` ha tutto il pannello.
 
@@ -98,6 +99,9 @@ Per un check di ruolo preferire **`hasGamePermission()`**: risolve già stato, o
 Il cookie `character_context` è **deprecato**: usare `X-Session-Id`. Flusso completo: `docs/tecnica/backend/authentication.md`.
 
 **WebSocket**: Socket.IO con adapter Redis (scaling orizzontale). All'handshake verifica JWT dai cookie + `sessionId` dalla query, poi join della room `character:<id>`. Broadcast per room.
+
+**La room è l'unica autorità sulla consegna dal vivo: ogni `socket.join` va autorizzato.** `join_location` passa da `authorizeLocationJoin()` (`core/location/services/`: stesse regole di `POST /game/locations/:id/enter`, lette dal DB al momento). Sussurri, `master_only` e confronti non mascherati vanno a `CHAT_MASTERS_ROOM` (permesso `CHAT_MASTER_ACTION`, solo approvati), **mai a `staff`**, che porta solo notifiche di ticket e approvazioni e ammette il gestore in bozza. Il `sessionId` senza cookie utente non identifica nessuno (`authenticateCharacter` lo ignora).
+**Incidente 2026-11-15** (trovato in revisione, nessun abuso noto) — tre falle della stessa classe: `join_location` senza alcun controllo (qualunque personaggio leggeva dal vivo una location privata); room `staff` assegnata da `gameplayRoles` senza lo stato (un master in bozza riceveva i sussurri); controllo di proprietà della sessione scritto `req.user && ...`, quindi saltato senza cookie (bastava l'header `X-Session-Id` di un master per leggere il manuale riservato). In più `ws.tenpennynovels.com` inoltrava tutto il backend e non solo `/socket.io/`.
 
 **Redis pub/sub** per la comunicazione cross-service (es. `embeddings:document:new` verso embeddings-worker).
 
