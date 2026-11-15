@@ -86,6 +86,13 @@ apiClient.interceptors.response.use(
 /**
  * Retry function with exponential backoff
  */
+/**
+ * Le scritture non si ritentano mai da sole. Un timeout o un 5xx non dice se il server ha eseguito l'operazione
+ * (il proxy /admin dell'api-gateway taglia a 30 s mentre il backend può completare): rimandarla può creare due volte
+ * lo stesso personaggio, bot o accredito. Chi vuole riprovare lo decide la persona, dal pulsante.
+ */
+const NO_RETRY = 1;
+
 export async function withRetry<T>(
   fn: () => Promise<T>,
   retries: number = API_CONFIG.RETRY_COUNT,
@@ -162,7 +169,7 @@ export async function post<T = unknown, D = unknown>(
   config?: AxiosRequestConfig
 ): Promise<ApiResponse<T>> {
   try {
-    const response = await withRetry(() => apiClient.post<ApiResponse<T>>(url, data, config));
+    const response = await withRetry(() => apiClient.post<ApiResponse<T>>(url, data, config), NO_RETRY);
     return response.data;
   } catch (error) {
     throw normalizeError(error);
@@ -178,7 +185,7 @@ export async function put<T = unknown, D = unknown>(
   config?: AxiosRequestConfig
 ): Promise<ApiResponse<T>> {
   try {
-    const response = await withRetry(() => apiClient.put<ApiResponse<T>>(url, data, config));
+    const response = await withRetry(() => apiClient.put<ApiResponse<T>>(url, data, config), NO_RETRY);
     return response.data;
   } catch (error) {
     throw normalizeError(error);
@@ -194,7 +201,7 @@ export async function patch<T = unknown, D = unknown>(
   config?: AxiosRequestConfig
 ): Promise<ApiResponse<T>> {
   try {
-    const response = await withRetry(() => apiClient.patch<ApiResponse<T>>(url, data, config));
+    const response = await withRetry(() => apiClient.patch<ApiResponse<T>>(url, data, config), NO_RETRY);
     return response.data;
   } catch (error) {
     throw normalizeError(error);
@@ -209,7 +216,7 @@ export async function del<T = unknown>(
   config?: AxiosRequestConfig
 ): Promise<ApiResponse<T>> {
   try {
-    const response = await withRetry(() => apiClient.delete<ApiResponse<T>>(url, config));
+    const response = await withRetry(() => apiClient.delete<ApiResponse<T>>(url, config), NO_RETRY);
     return response.data;
   } catch (error) {
     throw normalizeError(error);

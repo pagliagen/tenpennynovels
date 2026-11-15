@@ -1,8 +1,9 @@
 import bundleAnalyzer from '@next/bundle-analyzer';
 import type { NextConfig } from 'next';
 
-const withAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
+import { cspReportOnlyHeaders, GOOGLE_ANALYTICS } from '../cspReportOnly.js';
 
+const withAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -15,6 +16,7 @@ const nextConfig: NextConfig = {
   // quindi basta questo header qui: nessuna modifica Nginx richiesta.
   headers() {
     return [
+      ...cspReportOnlyHeaders(GOOGLE_ANALYTICS),
       {
         source: '/preview/:path*',
         headers: [

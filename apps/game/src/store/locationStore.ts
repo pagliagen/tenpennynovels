@@ -23,7 +23,16 @@ import { logger } from '@/lib/logger';
  * Cache Configuration
  */
 const CACHE_VERSION = '1.12.0'; // Bump when ILocation schema/data changes (v1.12.0: new 'quartiere' locationLevel; Suburbs/Country Side flattened, no quartiere tier)
-const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days: oltre, la cache non si mostra nemmeno
+// Entro il TTL la cache si mostra subito, ma oltre questa età si rilegge in background: gli eventi WebSocket che la
+// aggiornano arrivano solo a chi è online e non esiste un evento di revoca dell'accesso.
+const CACHE_STALE_MS = 5 * 60 * 1000;
+
+/**
+ * Il personaggio dell'ultima lettura richiesta. Una risposta che arriva dopo un cambio di personaggio o un logout
+ * appartiene a qualcun altro e va scartata, altrimenti sovrascriverebbe la cache giusta.
+ */
+let pendingCharacterId: string | null = null;
 
 /**
  * Location Store State
@@ -37,6 +46,12 @@ interface LocationStore {
   // Cache metadata
   cacheVersion: string;
   lastFetched: number;
+  /**
+   * Il personaggio a cui appartiene la cache. Le location accessibili dipendono dal personaggio (private comprese) e
+   * localStorage è condiviso fra schede, personaggi e utenti dello stesso browser: senza questa chiave un personaggio
+   * vedeva per 7 giorni l'elenco di quello precedente.
+   */
+  cachedCharacterId: string | null;
 
   // Loading state
   isLoading: boolean;
@@ -131,6 +146,7 @@ export const useLocationStore = create<LocationStore>()(
       rootLocation: null,
       cacheVersion: CACHE_VERSION,
       lastFetched: 0,
+      cachedCharacterId: null,
       isLoading: false,
       error: null,
 
@@ -144,6 +160,13 @@ export const useLocationStore = create<LocationStore>()(
         const state = get();
         const now = Date.now();
 
+        // La cache è di un altro personaggio (o di nessuno): via subito, prima di qualunque render.
+        if (state.cachedCharacterId !== characterId) {
+          set({ locations: [], locationTree: [], rootLocation: null, lastFetched: 0, cachedCharacterId: null });
+          await get().forceRefresh(characterId);
+          return;
+        }
+
         // Check cache validity
         const isCacheValid =
           state.cacheVersion === CACHE_VERSION && // Schema match
@@ -155,6 +178,9 @@ export const useLocationStore = create<LocationStore>()(
         if (isCacheValid) {
           const cacheAgeMinutes = Math.round((now - state.lastFetched) / 1000 / 60);
           logger.info(`✅ Using cached locations (age: ${cacheAgeMinutes} min, ${state.locations.length} locations)`);
+          if (now - state.lastFetched > CACHE_STALE_MS) {
+            void get().forceRefresh(characterId);
+          }
           return;
         }
 
@@ -169,7 +195,8 @@ export const useLocationStore = create<LocationStore>()(
        * Bypasses cache and fetches fresh data.
        * Use when admin updates locations or cache is invalidated.
        */
-      forceRefresh: async () => {
+      forceRefresh: async (characterId: string) => {
+        pendingCharacterId = characterId;
         set({ isLoading: true, error: null });
 
         try {
@@ -177,6 +204,11 @@ export const useLocationStore = create<LocationStore>()(
             api.get<{ result: boolean; data: LocationsResponse }>('/game/locations'),
             api.get<{ result: boolean; data: RootLocationResponse }>('/game/locations/root'),
           ]);
+
+          // Nel frattempo il personaggio è cambiato o la cache è stata azzerata (logout): la risposta non serve più.
+          if (pendingCharacterId !== characterId) {
+            return;
+          }
 
           // Enrich with computed fields
           const enrichedLocations = enrichLocations(locationsResponse.data.locations);
@@ -189,6 +221,7 @@ export const useLocationStore = create<LocationStore>()(
             locationTree: tree,
             rootLocation: rootLocationResponse.data.rootLocation,
             lastFetched: Date.now(),
+            cachedCharacterId: characterId,
             cacheVersion: CACHE_VERSION,
             isLoading: false,
             error: null,
@@ -197,6 +230,9 @@ export const useLocationStore = create<LocationStore>()(
           logger.info(`✅ Locations refreshed: ${enrichedLocations.length} total, ${tree.length} root nodes`);
         } catch (error) {
           logger.error('❌ Failed to fetch locations:', { error });
+          if (pendingCharacterId !== characterId) {
+            return;
+          }
           set({
             isLoading: false,
             error: error instanceof Error ? error.message : 'Failed to fetch locations',
@@ -226,12 +262,14 @@ export const useLocationStore = create<LocationStore>()(
        * Clears all data and cache metadata.
        */
       reset: () => {
+        pendingCharacterId = null;
         set({
           locations: [],
           locationTree: [],
           rootLocation: null,
           cacheVersion: CACHE_VERSION,
           lastFetched: 0,
+          cachedCharacterId: null,
           isLoading: false,
           error: null,
         });
@@ -248,6 +286,7 @@ export const useLocationStore = create<LocationStore>()(
         rootLocation: state.rootLocation,
         cacheVersion: state.cacheVersion,
         lastFetched: state.lastFetched,
+        cachedCharacterId: state.cachedCharacterId,
       }),
     }
   )
