@@ -121,11 +121,8 @@
 /* Pannello interno: i contenuti vivono qui dentro, non a filo cornice. */
 .body {
   flex: 1;
-  min-height: 0;
-  margin: 12px;
-  overflow: auto;
-  background: $frame-surface;
-  border: 1px solid $frame-gold-line;
+  min-height: 0; 
+  overflow: auto; 
   border-radius: 28px;
   color: #e8e0d5;
   font-family: 'Georgia', 'Times New Roman', serif;
