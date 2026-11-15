@@ -77,6 +77,16 @@ ICON_STYLE = ("single object centered, isolated on a plain dark charcoal backgro
               "dark background filling the entire frame edge to edge, no border, no frame, "
               "no text, no watermark, no people, no hands")
 
+# Occupazioni: riferimento = apps/game/public/images/occupations/default-image.png (24x35 px):
+# campo rosso mattone piatto (#963224) con un pittogramma crema (#cfd4bb) a linea unica. Nel gioco
+# compaiono a 28-32 px: un solo simbolo, tratto spesso, nessun dettaglio.
+OCCUPATION_STYLE = (
+    "minimalist flat vector icon, a single simple pictogram drawn with thick uniform cream-colored outlines "
+    "(color #cfd4bb), centered, on a solid flat brick red background (color #963224) filling the whole picture, "
+    "no shading, no gradients, no texture, no shadow, very simple, readable at a very small size. "
+    "No people, no hands, no text, no letters, no border"
+)
+
 # Config per tipo: csv sorgente, cartella output, dimensione icona di default.
 # Aggiungere qui nuovi tipi (es. "characters") quando servirà.
 TYPE_CONFIG = {
@@ -99,6 +109,7 @@ TYPE_CONFIG = {
         "output_size": (1536, 1024),
         # Le 13 immagini già presenti sono il riferimento di stile: mai sovrascritte, nemmeno con --overwrite.
         "protect_existing": True,
+        "prompts_file": Path(__file__).resolve().parent / "location_prompts.json",
         # Il modello a volte incornicia la scena con un bordo sottile (chiaro o più scuro): si ritaglia
         # sempre il 5% per lato prima di riportare a 1536x1024.
         "crop_frac": 0.05,
@@ -109,8 +120,11 @@ TYPE_CONFIG = {
         "output_dir": ARTIFACTS_DIR / "occupations",
         "backend": "ollama",
         "size": 512,
-        "output_size": (100, 100),
-        "style": ICON_STYLE,
+        "output_size": (256, 256),
+        "prompts_file": Path(__file__).resolve().parent / "occupation_prompts.json",
+        # sfondo e simbolo esatti di images/occupations/default-image.png
+        "duotone": ((0x96, 0x32, 0x24), (0xcf, 0xd4, 0xbb)),
+        "style": OCCUPATION_STYLE,
     },
 }
 
@@ -134,7 +148,6 @@ def read_rows(csv_path):
 
 # Prompt del soggetto scritti a mano (15-25 parole concrete) per location: quelli del
 # CSV (3-6 parole) vengono sovrastati dallo stile. Chiave = filename. Fallback: CSV.
-RICH_PROMPTS_FILE = Path(__file__).resolve().parent / "location_prompts.json"
 
 def _looks_black(img_bytes):
     """True se l'immagine è (quasi) tutta nera — sintomo di NaN nel VAE su MPS."""
@@ -204,12 +217,30 @@ def trim_light_margins(img, light=150, max_frac=0.15):
                      max(r - pad if r < w else w, w // 2), max(b - pad if b < h else h, h // 2)))
 
 
-def save_as_webp(png_bytes, out_path, output_size=None, overwrite=False, crop_frac=0.0):
+def to_duotone(img, bg, fg):
+    """Il modello non rispetta i codici colore: si riporta l'immagine a due colori esatti (sfondo, simbolo).
+    Lo sfondo è la luminanza mediana dei bordi, il simbolo il 99° percentile; in mezzo si interpola."""
+    g = img.convert("L")
+    w, h = g.size
+    edge = sorted(list(g.crop((0, 0, w, 6)).getdata()) + list(g.crop((0, h - 6, w, h)).getdata())
+                  + list(g.crop((0, 0, 6, h)).getdata()) + list(g.crop((w - 6, 0, w, h)).getdata()))
+    lo = edge[len(edge) // 2]
+    px = sorted(g.getdata())
+    hi = px[int(len(px) * 0.99)]
+    if hi - lo < 40:  # simbolo assente o sfondo non uniforme: meglio non inventare
+        raise RuntimeError("duotone: contrasto insufficiente")
+    mask = g.point(lambda v: max(0, min(255, round((v - lo) * 255 / (hi - lo)))))
+    return Image.composite(Image.new("RGB", img.size, fg), Image.new("RGB", img.size, bg), mask)
+
+
+def save_as_webp(png_bytes, out_path, output_size=None, overwrite=False, crop_frac=0.0, duotone=None):
     """Il server risponde sempre in PNG (vedi server.py); qui si converte e
     si salva in WebP, che per queste illustrazioni pesa 60-80% in meno a
     parità di qualità percepita. Niente canale alpha: sono scene/icone
     opache in stile pittorico, RGB piatto risparmia ulteriore spazio."""
     img = trim_light_margins(Image.open(io.BytesIO(png_bytes)).convert("RGB"))
+    if duotone:
+        img = to_duotone(img, *duotone)
     if crop_frac:
         w, h = img.size
         dx, dy = round(w * crop_frac), round(h * crop_frac)
@@ -245,7 +276,7 @@ def run_row(row, config, width, height, args):
     png = ollama_txt2img(f"{prompt}, {config.get('style', ICON_STYLE)}", width, height,
                          args.ollama_steps, args.timeout)
     save_as_webp(png, out_path, config.get("output_size"), overwrite=overwrite,
-                 crop_frac=config.get("crop_frac", 0.0))
+                 crop_frac=config.get("crop_frac", 0.0), duotone=config.get("duotone"))
     return "ok"
 
 
@@ -260,9 +291,10 @@ def generate_type(artifact_type, args):
     height = args.height if args.height is not None else default_h
 
     rows = read_rows(config["csv"])
-    if config.get("protect_existing"):
-        # prompt scritti a mano (15-25 parole concrete) al posto di quelli, troppo corti, del CSV
-        rich = json.loads(RICH_PROMPTS_FILE.read_text(encoding="utf-8")) if RICH_PROMPTS_FILE.exists() else {}
+    pf = config.get("prompts_file")
+    if pf:
+        # prompt scritti a mano (15-30 parole concrete) al posto di quelli, troppo corti, del CSV
+        rich = json.loads(pf.read_text(encoding="utf-8")) if pf.exists() else {}
         rows = [{**r, "prompt": rich.get((r.get("filename") or "").strip()) or r.get("prompt")} for r in rows]
     # Le immagini esistenti non si sovrascrivono mai (vedi save_as_webp): si scartano subito,
     # PRIMA di --only/--test/--limit, altrimenti si spende GPU per un file che poi non si salva
