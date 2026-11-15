@@ -67,6 +67,19 @@ function isBlockedForScope(
   return false;
 }
 
+/**
+ * Stesso controllo del middleware, per i punti che non passano da Express (es. gli handler WebSocket).
+ * Un personaggio inesistente conta come bloccato.
+ */
+export async function isCharacterBlockedForScope(
+  characterId: string,
+  scope: BanCheckOptions['requiredScope']
+): Promise<boolean> {
+  const { character, user } = await loadBanContext(characterId);
+  if (!character) return true;
+  return isBlockedForScope(scope, character, user);
+}
+
 function buildBanInfo(character: LeanChar | null, user: LeanUser | null) {
   const charActive = isCharacterBanActive(character);
   if (charActive) {

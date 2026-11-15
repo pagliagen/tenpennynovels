@@ -25,6 +25,7 @@ import { CharacterSkillService } from '../services/CharacterSkillService';
 
 // Message Transformer (Phase 2 refactoring)
 import { ChatMessageService } from '../services/ChatMessageService';
+import { CHAT_MASTERS_ROOM } from '@core/chat/liveRooms';
 
 // Chat Scene Service (segmentazione chat in scene narrative per personaggio)
 import { ChatSceneService } from '@features/fineSessione/api';
@@ -441,21 +442,21 @@ export class ChatController {
         const isHiddenUntilRevealed = !!savedAction.isHidden && !savedAction.revealedAt;
 
         if (savedAction.visibility === 'whisper') {
-          // "staff" reaches every connected master — canSeeAction grants master
+          // CHAT_MASTERS_ROOM reaches every connected approved master — canSeeAction grants master
           // visibility into every whisper, so live delivery must match.
           const recipientRooms = [
             `character_${savedAction.characterId}`,
-            'staff',
+            CHAT_MASTERS_ROOM,
             ...(savedAction.targetCharacters || []).map((id: string) => `character_${id}`),
           ];
           io.to(recipientRooms).emit('location_message_notification', notification);
           logger.debug(`ChatsController: Emitted whisper notification to ${recipientRooms.length} character room(s) + staff`, { messageId: chatMessage._id });
         } else if (savedAction.visibility === 'master_only') {
-          // "staff" reaches every connected master; targetCharacters (if the
+          // CHAT_MASTERS_ROOM reaches every connected approved master; targetCharacters (if the
           // master picked specific pg for an "esito riservato") are added on top.
           const recipientRooms = [
             `character_${savedAction.characterId}`,
-            'staff',
+            CHAT_MASTERS_ROOM,
             ...(savedAction.targetCharacters || []).map((id: string) => `character_${id}`),
           ];
           io.to(recipientRooms).emit('location_message_notification', notification);
@@ -758,14 +759,14 @@ export class ChatController {
         if (action.visibility === 'whisper') {
           const recipientRooms = [
             `character_${action.characterId}`,
-            'staff',
+            CHAT_MASTERS_ROOM,
             ...(action.targetCharacters || []).map((id: string) => `character_${id}`),
           ];
           io.to(recipientRooms).emit('location_message_notification', notification);
         } else if (action.visibility === 'master_only') {
           const recipientRooms = [
             `character_${action.characterId}`,
-            'staff',
+            CHAT_MASTERS_ROOM,
             ...(action.targetCharacters || []).map((id: string) => `character_${id}`),
           ];
           io.to(recipientRooms).emit('location_message_notification', notification);
