@@ -262,7 +262,7 @@
 
   blockquote {
     font-size: inherit;
-    color: #c1272d;
+    color: #a23925;
     background-color: unset;
     padding: unset;
     border: none;
@@ -287,15 +287,18 @@
       display: inline-block;
     }
 
+    // Doppia linea (lunga sopra, corta sotto): prima era nb_border.png,
+    // sgranata quando veniva scalata. Due gradienti pieni restano nitidi a ogni larghezza.
     &::after {
+      $quote-rule-color: #3a6b59;
+      $quote-rule-thickness: 2px;
+
       content: "";
-      background-image: url('/images/nb_border.png');
-      background-position: bottom;
-      background-repeat: no-repeat;
-      background-size: contain;
+      background:
+        linear-gradient($quote-rule-color, $quote-rule-color) top center / 100% $quote-rule-thickness no-repeat,
+        linear-gradient($quote-rule-color, $quote-rule-color) bottom center / 64% $quote-rule-thickness no-repeat;
       width: 50%;
-      height: 20px;
-      min-height: 20px;
+      height: 10px;
       position: absolute;
       bottom: 0;
       left: 50%;
