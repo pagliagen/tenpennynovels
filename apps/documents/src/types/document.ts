@@ -105,6 +105,8 @@ export interface DocumentSection {
   content: string;
   order: number;
   depth?: number;
+  /** Livello del titolo della sezione (2 o 3). Assente sui titoli dei documenti figli. */
+  headingLevel?: number;
   isDocumentTitle?: boolean;
   isRootChunk?: boolean;
   parentDocumentId?: string;

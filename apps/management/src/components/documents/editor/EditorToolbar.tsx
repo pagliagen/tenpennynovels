@@ -1,7 +1,7 @@
 import React from 'react';
 import type { Editor } from '@tiptap/react';
 import {
-  Bold, Code2, Italic, List, ListOrdered, Quote, Redo2, RemoveFormatting, Strikethrough, Table2, Underline, Undo2
+  AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Code2, Italic, List, ListOrdered, Quote, Redo2, RemoveFormatting, Strikethrough, Table2, Underline, Undo2
 } from 'lucide-react';
 
 import { toggleHeadingOnLine } from '@/lib/tiptap/hardBreaks';
@@ -14,6 +14,23 @@ import { UrlPopover } from './UrlPopover';
 import styles from './editorUi.module.scss';
 
 type Block = 'p' | 'h2' | 'h3';
+
+type Alignment = 'left' | 'center' | 'right' | 'justify';
+
+const ALIGNMENTS: ReadonlyArray<{ value: Alignment; label: string; icon: typeof AlignLeft }> = [
+  { value: 'left', label: 'Allinea a sinistra', icon: AlignLeft },
+  { value: 'center', label: 'Centra', icon: AlignCenter },
+  { value: 'right', label: 'Allinea a destra', icon: AlignRight },
+  { value: 'justify', label: 'Giustifica', icon: AlignJustify }
+];
+
+/** Sinistra è il default: un blocco senza attributo è allineato a sinistra. */
+function currentAlignment(editor: Editor): Alignment {
+  for (const { value } of ALIGNMENTS) {
+    if (value !== 'left' && editor.isActive({ textAlign: value })) return value;
+  }
+  return 'left';
+}
 
 function currentBlock(editor: Editor): Block {
   if (editor.isActive('heading', { level: 2 })) return 'h2';
@@ -92,6 +109,19 @@ export const EditorToolbar: React.FC<{ editor: Editor }> = ({ editor }) => {
           label="Rimuovi formattazione"
           onClick={() => chain().unsetAllMarks().clearNodes().run()}
         />
+
+        <span className={styles.separator} />
+
+        {ALIGNMENTS.map(({ value, label, icon }) => (
+          <ToolbarButton
+            key={value}
+            icon={icon}
+            label={label}
+            active={currentAlignment(editor) === value}
+            // Sinistra toglie l'attributo invece di salvarlo: è il default del sito.
+            onClick={() => (value === 'left' ? chain().unsetTextAlign().run() : chain().setTextAlign(value).run())}
+          />
+        ))}
 
         <span className={styles.separator} />
 
