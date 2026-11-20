@@ -145,12 +145,7 @@ function nodeToHtml(node: TipTapNode, injectHeadingIds: boolean): string {
 
     // ========== IMAGE ==========
     case 'image': {
-      const src = node.attrs?.src || '';
-      const alt = node.attrs?.alt || '';
-      const title = node.attrs?.title;
-      return title
-        ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" title="${escapeHtml(title)}">`
-        : `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}">`;
+      return imageToHtml(node);
     }
 
     // ========== TABLE (basic support) ==========
@@ -245,6 +240,45 @@ export function safeCssColor(value: unknown): string | null {
   return CSS_COLOR.test(trimmed) ? trimmed : null;
 }
 
+// Posizione dell'immagine rispetto al testo (attributo `align` di
+// apps/management/src/lib/tiptap/documentImage.ts). Esce come classe, come
+// l'allineamento del testo; le classi `img-*` sono in DocumentDetail.module.scss.
+// Senza valore l'immagine resta nel testo, come prima.
+export const IMAGE_ALIGN_CLASSES: Record<string, string> = {
+  left: 'img-left',
+  center: 'img-center',
+  right: 'img-right'
+};
+
+/** Larghezza oltre la quale non ha senso fidarsi del valore: il sito la limita comunque a 100%. */
+const MAX_IMAGE_WIDTH = 4000;
+
+/**
+ * Larghezza scelta trascinando le maniglie nell'editor, in px interi; `null` se
+ * assente o non sensata. L'altezza non esce: la decide la proporzione
+ * (`height: auto` sul sito), così un'immagine limitata dalla colonna non si deforma.
+ */
+export function imageWidth(value: unknown): number | null {
+  const width = typeof value === 'string' ? Number(value) : value;
+  if (typeof width !== 'number' || !Number.isFinite(width)) return null;
+  const rounded = Math.round(width);
+  return rounded >= 1 && rounded <= MAX_IMAGE_WIDTH ? rounded : null;
+}
+
+function imageToHtml(node: TipTapNode): string {
+  const src = node.attrs?.src || '';
+  const alt = node.attrs?.alt || '';
+  const title = node.attrs?.title;
+  const width = imageWidth(node.attrs?.width);
+  const alignClass = IMAGE_ALIGN_CLASSES[String(node.attrs?.align ?? '')];
+
+  let attrs = `src="${escapeHtml(src)}" alt="${escapeHtml(alt)}"`;
+  if (title) attrs += ` title="${escapeHtml(title)}"`;
+  if (width) attrs += ` width="${width}"`;
+  if (alignClass) attrs += ` class="${alignClass}"`;
+  return `<img ${attrs}>`;
+}
+
 export const FONT_SIZE_CLASSES: Record<string, string> = {
   '0.85em': 'fs-sm',
   '1.2em': 'fs-lg',
@@ -265,12 +299,7 @@ function inlineNodeToHtml(node: TipTapNode): string {
   }
 
   if (node.type === 'image') {
-    const src = node.attrs?.src || '';
-    const alt = node.attrs?.alt || '';
-    const title = node.attrs?.title;
-    return title
-      ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" title="${escapeHtml(title)}">`
-      : `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}">`;
+    return imageToHtml(node);
   }
 
   // Handle nested content (for complex inline nodes)

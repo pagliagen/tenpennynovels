@@ -262,7 +262,7 @@
 
   blockquote {
     font-size: inherit;
-    color: #c1272d;
+    color: #a23925;
     background-color: unset;
     padding: unset;
     border: none;
@@ -287,15 +287,18 @@
       display: inline-block;
     }
 
+    // Doppia linea (lunga sopra, corta sotto): prima era nb_border.png,
+    // sgranata quando veniva scalata. Due gradienti pieni restano nitidi a ogni larghezza.
     &::after {
+      $quote-rule-color: #3a6b59;
+      $quote-rule-thickness: 2px;
+
       content: "";
-      background-image: url('/images/nb_border.png');
-      background-position: bottom;
-      background-repeat: no-repeat;
-      background-size: contain;
+      background:
+        linear-gradient($quote-rule-color, $quote-rule-color) top center / 100% $quote-rule-thickness no-repeat,
+        linear-gradient($quote-rule-color, $quote-rule-color) bottom center / 64% $quote-rule-thickness no-repeat;
       width: 50%;
-      height: 20px;
-      min-height: 20px;
+      height: 10px;
       position: absolute;
       bottom: 0;
       left: 50%;
@@ -330,6 +333,52 @@
     height: auto;
     border-radius: $radius-md;
     margin: $spacing-lg 0;
+  }
+
+  // Posizione scelta nell'editor del gestionale (classi da IMAGE_ALIGN_CLASSES
+  // in HtmlGenerator.ts). La larghezza arriva come attributo `width` e
+  // `max-width: 100%` la tiene nella colonna. Da mobile niente testo a lato:
+  // in una colonna stretta resterebbero due parole per riga.
+  :global(.img-left),
+  :global(.img-right),
+  :global(.img-center) {
+    display: block;
+  }
+
+  :global(.img-left) {
+    float: left;
+    margin: 0.3em $spacing-lg $spacing-md 0;
+  }
+
+  :global(.img-right) {
+    float: right;
+    margin: 0.3em 0 $spacing-md $spacing-lg;
+  }
+
+  :global(.img-center) {
+    margin: $spacing-lg auto;
+  }
+
+  @include mobile {
+    :global(.img-left),
+    :global(.img-right) {
+      float: none;
+      margin: $spacing-lg auto;
+    }
+  }
+
+  // Un'immagine a lato non scavalca la sezione successiva né esce dal documento.
+  h1,
+  h2,
+  h3,
+  hr {
+    clear: both;
+  }
+
+  &::after {
+    content: '';
+    display: block;
+    clear: both;
   }
 
   table {

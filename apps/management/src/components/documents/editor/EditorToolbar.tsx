@@ -7,6 +7,7 @@ import {
 import { toggleHeadingOnLine } from '@/lib/tiptap/hardBreaks';
 import { CUSTOM_SIZE_VALUE, FONT_SIZES, isKnownFontSize, NORMAL_SIZE_VALUE } from '@/lib/tiptap/fontSizes';
 import { ColorPopover } from './ColorPopover';
+import { ImageBar } from './ImageBar';
 import { TableBar } from './TableBar';
 import { ToolbarButton } from './ToolbarButton';
 import { UrlPopover } from './UrlPopover';
@@ -141,6 +142,7 @@ export const EditorToolbar: React.FC<{ editor: Editor }> = ({ editor }) => {
         />
       </div>
 
+      {editor.isActive('image') && <ImageBar editor={editor} />}
       {editor.isActive('table') && <TableBar editor={editor} />}
     </>
   );

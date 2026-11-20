@@ -6,7 +6,6 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
-import Image from '@tiptap/extension-image';
 import { FontSize, TextStyle } from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
 import Color from '@tiptap/extension-color';
@@ -16,6 +15,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 
+import { DocumentImage } from '@/lib/tiptap/documentImage';
 import { PasteHardBreakSplit } from '@/lib/tiptap/hardBreaks';
 import { PasteColorCleanup } from '@/lib/tiptap/pasteColorCleanup';
 import { EditorToolbar } from './editor/EditorToolbar';
@@ -81,10 +81,8 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
         }
       }),
       Underline,
-      Image.configure({
-        inline: true,
-        allowBase64: true
-      }),
+      // Ridimensionabile e posizionabile (lib/tiptap/documentImage.ts).
+      DocumentImage,
       TextStyle,
       // Dimensione del carattere: scala a 5 gradini (lib/tiptap/fontSizes.ts).
       FontSize,
