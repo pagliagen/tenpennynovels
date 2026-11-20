@@ -35,11 +35,24 @@ interface TableOfContentsProps {
 
 const SCROLL_OFFSET = 30;
 
+/**
+ * Voci dell'indice in modalità 'anchors': titoli dei documenti figli e
+ * sezioni H2. Gli H3 restano nella pagina (con il loro id) ma non nell'indice;
+ * la sezione attiva resta quella dell'H2 che li contiene. Senza `headingLevel`
+ * (risposta di un backend precedente) la sezione si mostra come prima.
+ */
+export function tocSections(sections: DocumentSection[]): DocumentSection[] {
+  return sections.filter(
+    (s) => !s.isRootChunk && (s.isDocumentTitle || s.headingLevel === undefined || s.headingLevel <= 2)
+  );
+}
+
 export function TableOfContents({ mode, items, sections, childDocuments, currentPath, baseUrl, scrollContainerRef }: TableOfContentsProps): JSX.Element {
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
   useEffect(() => {
     if (mode !== 'anchors' || !sections) return;
+    const entries = tocSections(sections);
 
     const container = scrollContainerRef?.current;
     if (!container) return;
@@ -47,8 +60,8 @@ export function TableOfContents({ mode, items, sections, childDocuments, current
     const handleScroll = () => {
       const scrollTop = container.scrollTop + SCROLL_OFFSET;
 
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const section = sections[i];
+      for (let i = entries.length - 1; i >= 0; i--) {
+        const section = entries[i];
         if (!section) continue;
 
         const element = document.getElementById(section.slug);
@@ -101,16 +114,15 @@ export function TableOfContents({ mode, items, sections, childDocuments, current
 
   // Anchors mode: TOC with anchor links within same page
   if (mode === 'anchors' && sections) {
-    // Filter out root chunks, only show document titles and child sections
-    const tocSections = sections.filter(s => !s.isRootChunk);
+    const entries = tocSections(sections);
 
-    if (tocSections.length === 0) return <></>;
+    if (entries.length === 0) return <></>;
 
     return (
       <nav className={styles.toc}>
         <h3 className={styles.tocTitle}>Indice</h3>
         <ul className={styles.tocList}>
-          {tocSections.map(section => (
+          {entries.map(section => (
             <li
               key={section._id}
               className={`${styles.tocItem} ${activeSection === section.slug ? styles.active : ''}`}

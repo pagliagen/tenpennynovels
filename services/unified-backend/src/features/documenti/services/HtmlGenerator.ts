@@ -67,18 +67,20 @@ function nodeToHtml(node: TipTapNode, injectHeadingIds: boolean): string {
       const tag = `h${level}`;
       const text = extractTextContent(node);
 
+      const align = alignClassAttr(node);
+
       // Use existing ID if present
       if (node.attrs?.id) {
-        return `<${tag} id="${node.attrs.id}">${text}</${tag}>`;
+        return `<${tag} id="${node.attrs.id}"${align}>${text}</${tag}>`;
       }
 
       // Inject slug-based ID on all heading levels for anchor navigation
       if (injectHeadingIds) {
         const slug = generateSlug(text);
-        return `<${tag} id="${slug}">${text}</${tag}>`;
+        return `<${tag} id="${slug}"${align}>${text}</${tag}>`;
       }
 
-      return `<${tag}>${text}</${tag}>`;
+      return `<${tag}${align}>${text}</${tag}>`;
     }
 
     // ========== PARAGRAPHS ==========
@@ -86,7 +88,7 @@ function nodeToHtml(node: TipTapNode, injectHeadingIds: boolean): string {
       const content = node.content
         ? node.content.map(child => inlineNodeToHtml(child)).join('')
         : '';
-      return content ? `<p>${content}</p>` : '';
+      return content ? `<p${alignClassAttr(node)}>${content}</p>` : '';
     }
 
     // ========== LISTS ==========
@@ -207,6 +209,42 @@ function nodeToHtml(node: TipTapNode, injectHeadingIds: boolean): string {
  * Le classi sono definite in `apps/documents/.../DocumentDetail.module.scss`.
  * Tre posti da tenere allineati (niente npm workspace per condividerli).
  */
+// Allineamento di paragrafi e titoli (estensione TextAlign del gestionale).
+// Esce come classe, come la dimensione del carattere: insieme chiuso, e il
+// sanitizer di apps/documents ammette `style` solo per i colori. Sinistra è il
+// default e non ha classe. Le classi `ta-*` sono in DocumentDetail.module.scss.
+export const ALIGN_CLASSES: Record<string, string> = {
+  center: 'ta-center',
+  right: 'ta-right',
+  justify: 'ta-justify'
+};
+
+function alignClassAttr(node: TipTapNode): string {
+  const cls = ALIGN_CLASSES[String(node.attrs?.textAlign ?? '')];
+  return cls ? ` class="${cls}"` : '';
+}
+
+// Solo esadecimale o rgb()/rgba(): il valore finisce dentro `style`, e
+// `escapeHtml` non impedisce di aggiungere altre dichiarazioni
+// (`red; background: url(...)`). Stesso criterio del sanitizer di
+// apps/documents (src/lib/sanitizeDocumentHtml.ts), che ammette `style` solo
+// per `color` e `background-color`: se cambia uno va allineato l'altro.
+const BYTE = '(?:25[0-5]|2[0-4]\\d|1\\d\\d|\\d?\\d)';
+const ALPHA = '(?:0|1|0?\\.\\d+|1\\.0+)';
+const CSS_COLOR = new RegExp(
+  `^(?:#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})` +
+    `|rgb\\(\\s*${BYTE}\\s*,\\s*${BYTE}\\s*,\\s*${BYTE}\\s*\\)` +
+    `|rgba\\(\\s*${BYTE}\\s*,\\s*${BYTE}\\s*,\\s*${BYTE}\\s*,\\s*${ALPHA}\\s*\\))$`,
+  'i'
+);
+
+/** Il colore se è un valore CSS ammesso, altrimenti `null` (il mark resta senza colore). */
+export function safeCssColor(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return CSS_COLOR.test(trimmed) ? trimmed : null;
+}
+
 export const FONT_SIZE_CLASSES: Record<string, string> = {
   '0.85em': 'fs-sm',
   '1.2em': 'fs-lg',
@@ -280,16 +318,16 @@ function inlineNodeToHtml(node: TipTapNode): string {
           html = `<sup>${html}</sup>`;
           break;
         case 'highlight': {
-          const color = mark.attrs?.color;
+          const color = safeCssColor(mark.attrs?.color);
           html = color
-            ? `<mark style="background-color: ${escapeHtml(color)}">${html}</mark>`
+            ? `<mark style="background-color: ${color}">${html}</mark>`
             : `<mark>${html}</mark>`;
           break;
         }
         case 'textStyle': {
-          // La dimensione esce come classe, non come `style`: DocumentDetail.tsx
-          // (apps/documents) sanifica senza `style`, quindi un font-size inline
-          // non arriverebbe mai ai lettori. Valori fuori scala (es. i `12pt`
+          // La dimensione esce come classe, non come `style`: il sanitizer di
+          // apps/documents ammette `style` solo per i colori, quindi un
+          // font-size inline non arriverebbe mai ai lettori. Valori fuori scala (es. i `12pt`
           // incollati da Word) vengono scartati.
           const classes: string[] = [];
           const fontSizeClass = FONT_SIZE_CLASSES[String(mark.attrs?.fontSize ?? '')];
@@ -298,8 +336,9 @@ function inlineNodeToHtml(node: TipTapNode): string {
           }
 
           const styles: string[] = [];
-          if (mark.attrs?.color) {
-            styles.push(`color: ${escapeHtml(mark.attrs.color)}`);
+          const color = safeCssColor(mark.attrs?.color);
+          if (color) {
+            styles.push(`color: ${color}`);
           }
 
           if (classes.length > 0 || styles.length > 0) {

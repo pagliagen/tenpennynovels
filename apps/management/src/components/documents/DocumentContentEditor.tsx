@@ -8,6 +8,7 @@ import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import Image from '@tiptap/extension-image';
 import { FontSize, TextStyle } from '@tiptap/extension-text-style';
+import TextAlign from '@tiptap/extension-text-align';
 import Color from '@tiptap/extension-color';
 import Highlight from '@tiptap/extension-highlight';
 import { Table } from '@tiptap/extension-table';
@@ -90,6 +91,13 @@ export const DocumentContentEditor: React.FC<DocumentContentEditorProps> = ({
       Color,
       Highlight.configure({
         multicolor: true
+      }),
+      // Allineamento di paragrafi e titoli. Sinistra è il default e non si
+      // salva: il sito riceve solo center/right/justify, come classe `ta-*`
+      // (ALIGN_CLASSES in HtmlGenerator.ts).
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+        alignments: ['left', 'center', 'right', 'justify']
       }),
       Table.configure({ resizable: true }),
       TableRow,

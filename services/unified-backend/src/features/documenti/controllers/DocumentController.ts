@@ -163,6 +163,8 @@ export class DocumentController {
       slug: chunk.slug,
       content: DocumentController.convertPlainTextToHTML(chunk.content, chunk.headingLevel),
       order: chunk.order,
+      // 2 = H2, 3 = H3: l'indice del sito mostra solo gli H2 (tocSections).
+      headingLevel: chunk.headingLevel,
       depth
     });
 

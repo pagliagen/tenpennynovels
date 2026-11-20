@@ -141,6 +141,12 @@
   :global(.fs-xl) { font-size: 1.5em; }
   :global(.fs-xxl) { font-size: 2em; }
 
+  // Allineamento di paragrafi e titoli scelto nell'editor (sinistra è il
+  // default e non ha classe). Valori ammessi: ALIGN_CLASSES in HtmlGenerator.ts.
+  :global(.ta-center) { text-align: center; }
+  :global(.ta-right) { text-align: right; }
+  :global(.ta-justify) { text-align: justify; hyphens: auto; }
+
   h1,
   h2,
   h3,

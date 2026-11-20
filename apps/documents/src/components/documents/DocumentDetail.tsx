@@ -1,13 +1,13 @@
 'use client';
 
-import DOMPurify from 'isomorphic-dompurify';
 import { useEffect, useRef } from 'react';
 
 import { useIsDesktop } from '@/hooks/useIsDesktop';
+import { sanitizeDocumentHtml } from '@/lib/sanitizeDocumentHtml';
 import styles from '@/styles/components/documents/DocumentDetail.module.scss';
 import type { DocumentDetail as DocumentDetailType } from '@/types/document'; 
 
-import { TableOfContents } from './TableOfContents';
+import { TableOfContents, tocSections } from './TableOfContents';
 
 
 interface DocumentDetailProps {
@@ -21,7 +21,7 @@ export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
   // abbastanza materiale per mostrarlo: altrimenti il contenuto si allarga a
   // piena larghezza e la larghezza dell'articolo cambia documento per
   // documento in modo inconsistente.
-  const showTOC = isDesktop && sections && sections.length >= 2;
+  const showTOC = isDesktop && sections && tocSections(sections).length >= 2;
   const articleRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -48,14 +48,7 @@ export function DocumentDetail({ data }: DocumentDetailProps): JSX.Element {
             <div
               className={styles.documentContent}
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(document.content || '', {
-                  ALLOWED_TAGS: [
-                    'p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-                    'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'code', 'pre', 'hr',
-                    'table', 'thead', 'tbody', 'tr', 'th', 'td', 's', 'mark', 'sub', 'sup', 'span'
-                  ],
-                  ALLOWED_ATTR: ['href', 'title', 'alt', 'src', 'class', 'id', 'target', 'rel']
-                })
+                __html: sanitizeDocumentHtml(document.content || '')
               }}
             />
  
