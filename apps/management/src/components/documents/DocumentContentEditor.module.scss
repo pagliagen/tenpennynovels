@@ -114,6 +114,82 @@
       height: auto;
     }
 
+    // Immagine ridimensionabile (lib/tiptap/documentImage.ts). Il NodeView di
+    // TipTap avvolge l'<img> in container > wrapper > img + maniglie e scrive
+    // width/height in px inline: l'altezza la decide la proporzione (come sul
+    // sito, che riceve solo la larghezza).
+    [data-resize-container][data-node='image'] {
+      max-width: 100%;
+      vertical-align: bottom;
+
+      img {
+        display: block;
+        height: auto !important;
+        cursor: pointer;
+      }
+    }
+
+    // Selezionata: bordo e maniglie agli angoli. Le maniglie non hanno uno
+    // stile proprio in TipTap: senza queste regole sono invisibili.
+    :global(.ProseMirror-selectednode) img,
+    [data-resize-state='true'] img {
+      outline: 2px solid $color-primary;
+      outline-offset: 1px;
+    }
+
+    [data-resize-handle] {
+      width: 12px;
+      height: 12px;
+      background-color: #fff;
+      border: 2px solid $color-primary;
+      border-radius: 2px;
+      opacity: 0;
+      z-index: 1;
+    }
+
+    [data-resize-handle='top-left'] { margin: -6px 0 0 -6px; cursor: nwse-resize; }
+    [data-resize-handle='bottom-right'] { margin: 0 -6px -6px 0; cursor: nwse-resize; }
+    [data-resize-handle='top-right'] { margin: -6px -6px 0 0; cursor: nesw-resize; }
+    [data-resize-handle='bottom-left'] { margin: 0 0 -6px -6px; cursor: nesw-resize; }
+
+    :global(.ProseMirror-selectednode) [data-resize-handle],
+    [data-resize-container]:hover [data-resize-handle],
+    [data-resize-state='true'] [data-resize-handle] {
+      opacity: 1;
+    }
+
+    // Posizione rispetto al testo: stesse regole delle classi img-* del sito
+    // (apps/documents/.../DocumentDetail.module.scss). Il NodeView mette
+    // data-align sull'<img>, ma a muoversi deve essere il container. Il
+    // display inline del container è uno style inline di TipTap: serve !important.
+    [data-resize-container]:has(img[data-align='left']) {
+      float: left;
+      margin: 0.3em 1.5em 0.8em 0;
+    }
+
+    [data-resize-container]:has(img[data-align='right']) {
+      float: right;
+      margin: 0.3em 0 0.8em 1.5em;
+    }
+
+    [data-resize-container]:has(img[data-align='center']) {
+      display: flex !important;
+      justify-content: center;
+      margin: 0.8em 0;
+    }
+
+    // Una sezione nuova non affianca l'immagine della precedente (come sul sito).
+    h2,
+    h3 {
+      clear: both;
+    }
+
+    &::after {
+      content: '';
+      display: block;
+      clear: both;
+    }
+
     a {
       color: #7a4b00;
       text-decoration: underline;

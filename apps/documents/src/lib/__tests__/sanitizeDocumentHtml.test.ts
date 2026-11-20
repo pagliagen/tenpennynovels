@@ -44,3 +44,17 @@ void describe('sanitizeDocumentHtml: colori', () => {
     assert.doesNotMatch(html, /onclick|onerror|script/);
   });
 });
+
+void describe('sanitizeDocumentHtml: immagini', () => {
+  void it('conserva larghezza e posizione scelte nell\'editor', () => {
+    const html = sanitizeDocumentHtml('<p><img src="/a.png" alt="mappa" width="320" class="img-left">testo</p>');
+    assert.match(html, /<img src="\/a.png" alt="mappa" width="320" class="img-left">/);
+  });
+
+  void it('scarta larghezze non intere e width fuori da <img>', () => {
+    for (const width of ['100%', '0', '320px', '99999', '1e3']) {
+      assert.doesNotMatch(sanitizeDocumentHtml(`<img src="/a.png" width="${width}">`), /width=/, width);
+    }
+    assert.doesNotMatch(sanitizeDocumentHtml('<table width="900"><tr><td>x</td></tr></table>'), /width=/);
+  });
+});

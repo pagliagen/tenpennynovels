@@ -335,6 +335,52 @@
     margin: $spacing-lg 0;
   }
 
+  // Posizione scelta nell'editor del gestionale (classi da IMAGE_ALIGN_CLASSES
+  // in HtmlGenerator.ts). La larghezza arriva come attributo `width` e
+  // `max-width: 100%` la tiene nella colonna. Da mobile niente testo a lato:
+  // in una colonna stretta resterebbero due parole per riga.
+  :global(.img-left),
+  :global(.img-right),
+  :global(.img-center) {
+    display: block;
+  }
+
+  :global(.img-left) {
+    float: left;
+    margin: 0.3em $spacing-lg $spacing-md 0;
+  }
+
+  :global(.img-right) {
+    float: right;
+    margin: 0.3em 0 $spacing-md $spacing-lg;
+  }
+
+  :global(.img-center) {
+    margin: $spacing-lg auto;
+  }
+
+  @include mobile {
+    :global(.img-left),
+    :global(.img-right) {
+      float: none;
+      margin: $spacing-lg auto;
+    }
+  }
+
+  // Un'immagine a lato non scavalca la sezione successiva né esce dal documento.
+  h1,
+  h2,
+  h3,
+  hr {
+    clear: both;
+  }
+
+  &::after {
+    content: '';
+    display: block;
+    clear: both;
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;

@@ -8,6 +8,9 @@ import DOMPurify from 'isomorphic-dompurify';
  * valore esadecimale o `rgb()/rgba()`. Ogni altra dichiarazione viene tolta;
  * se non ne resta nessuna, cade l'intero attributo. La dimensione del
  * carattere non passa da qui: esce come classe `fs-*`.
+ *
+ * `width` (solo su `<img>`, intero in px) è la larghezza scelta trascinando le
+ * maniglie nell'editor; la posizione dell'immagine è una classe `img-*`.
  */
 
 const ALLOWED_TAGS = [
@@ -16,7 +19,10 @@ const ALLOWED_TAGS = [
   'table', 'thead', 'tbody', 'tr', 'th', 'td', 's', 'mark', 'sub', 'sup', 'span'
 ];
 
-const ALLOWED_ATTR = ['href', 'title', 'alt', 'src', 'class', 'id', 'target', 'rel', 'style'];
+const ALLOWED_ATTR = ['href', 'title', 'alt', 'src', 'class', 'id', 'target', 'rel', 'style', 'width'];
+
+/** Stesso limite di `imageWidth` in HtmlGenerator.ts. */
+const IMAGE_WIDTH = /^[1-9]\d{0,3}$/;
 
 const ALLOWED_STYLE_PROPERTIES = new Set(['color', 'background-color']);
 
@@ -50,7 +56,11 @@ interface AttributeHookData {
   keepAttr: boolean;
 }
 
-function restrictStyleToColors(_node: Element, data: AttributeHookData): void {
+function restrictStyleToColors(node: Element, data: AttributeHookData): void {
+  if (data.attrName === 'width') {
+    data.keepAttr = node.nodeName === 'IMG' && IMAGE_WIDTH.test(data.attrValue.trim());
+    return;
+  }
   if (data.attrName !== 'style') return;
   const filtered = filterColorStyle(data.attrValue);
   if (filtered) {

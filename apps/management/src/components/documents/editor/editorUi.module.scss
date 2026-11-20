@@ -235,4 +235,18 @@
     border-color: $color-error;
     color: #e08080;
   }
+
+  // Scelta corrente (posizione dell'immagine).
+  &.selected {
+    border-color: $color-primary;
+    background-color: rgba($color-primary, 0.25);
+    color: $color-text-primary;
+  }
+}
+
+.barSeparator {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background-color: rgba(255, 255, 255, 0.15);
 }
