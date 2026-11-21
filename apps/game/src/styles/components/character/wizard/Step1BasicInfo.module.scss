@@ -105,7 +105,7 @@
   svg {
     width: 12px;
     height: 12px;
-    color: #c1272d;
+    color: #a23925;
     flex-shrink: 0;
     margin-left: -16px; // Pull back into the padding space
     margin-right: 4px;
@@ -120,7 +120,7 @@
 }
 
 .required {
-  color: #c1272d;
+  color: #a23925;
   margin-left: 2px;
 }
 
@@ -193,13 +193,13 @@
 }
 
 .error {
-  color: #c1272d;
+  color: #a23925;
   font-size: 0.7rem;
   margin-top: 2px;
 }
 
 .inputError {
-  border-bottom-color: #c1272d !important;
+  border-bottom-color: #a23925 !important;
 }
 
 .formRow + .formGroupFull {

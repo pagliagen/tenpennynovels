@@ -119,7 +119,7 @@
   position: sticky;
   top: 0;
   overflow-y: auto;
-  max-height: calc(100vh - #{$header-height} - #{$sticky-bar-height} - #{$spacing-lg});
+  max-height: calc(100vh - 300px);
 }
 
 .body {

@@ -18,14 +18,14 @@
 // ERROR STATE: Validation errors box
 .errorBox {
   background: #e8e2d5; // Beige background like wizard6.png
-  border: 2px solid #c1272d;
+  border: 2px solid #a23925;
   border-radius: 8px;
   padding: var(--spacing-xl);
   max-width: 600px;
   width: 100%;
 
   h4 {
-    color: #c1272d;
+    color: #a23925;
     font-size: var(--font-size-lg);
     font-family: 'Thrifted Attire', var(--font-primary);
     margin: 0 0 var(--spacing-md);
@@ -52,7 +52,7 @@
     font-family: var(--font-primary);
 
     strong {
-      color: #c1272d;
+      color: #a23925;
       font-weight: 600;
     }
 

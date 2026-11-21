@@ -27,7 +27,7 @@
   margin-bottom: $spacing-sm;
 
   &:hover {
-    color: #c1272d;
+    color: #a23925;
   }
 
   &::before {
@@ -98,7 +98,7 @@
   }
 
   &.active {
-    color: #c1272d;
+    color: #a23925;
     font-weight: $font-weight-semibold;
 
     &::after {
